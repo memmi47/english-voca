@@ -6,6 +6,7 @@ import { Store, memoryStorage } from '../game/js/store.js';
 import { Catalog } from '../game/js/catalog.js';
 import { planSession, Session } from '../game/js/session.js';
 import { mulberry32, clozeParts, makeQuestion } from '../game/js/questions.js';
+import { applyScore, nextDepth } from '../game/js/srs.js';
 
 const cat = new Catalog(JSON.parse(fs.readFileSync('game/data/catalog.json', 'utf8')));
 const pack = (p) => JSON.parse(fs.readFileSync(`game/data/demo_pack_${p}.json`, 'utf8'));
@@ -84,4 +85,26 @@ test('B11: corrupted stored profile is backed up, not silently replaced', () => 
   const p = st.profile('son'); assert.deepEqual(p.cards, {});
   assert.ok([...m._map.keys()].some((k) => k.startsWith('catchup.v1.corrupt.son')));
   assert.ok(st.corrupt);
+});
+
+test('R1: missing a spelling/cloze step does not mark a word unknown or reset its streak', () => {
+  const rec = { tier: 'T1', depthTarget: 4, depthDone: 3, known: '앎', streak: 3, due: '2026-11-20', lastScoredDay: '2026-11-13' };
+  const r = applyScore(rec, 'wrong', '2026-11-20', 4);
+  assert.equal(r.known, '앎'); assert.equal(r.streak, 3); assert.equal(r.due, '2026-11-21'); assert.equal(r.lastOutcome, 'wrong_step_up');
+  assert.equal(nextDepth(r, '2026-11-21'), 3);                 // hold: keep reviewing at the passed depth
+  assert.equal(nextDepth(r, '2026-11-27'), 4);                 // retried after the hold
+  const pass = applyScore(r, 'independent', '2026-11-21', 3);
+  assert.equal(pass.streak, 4); assert.equal(pass.due, '2026-12-05');
+  // a miss at the reading level still resets
+  const miss = applyScore({ ...rec, depthDone: 2 }, 'wrong', '2026-11-20', 2);
+  assert.equal(miss.known, '모름'); assert.equal(miss.streak, 0);
+  // a card never passed at meaning level is not protected
+  const early = applyScore({ ...rec, depthDone: 1, known: '모름', streak: 0 }, 'wrong', '2026-11-20', 3);
+  assert.equal(early.known, '모름');
+});
+test('R2: nextDepth steps up one level per review and stops at the tier cap', () => {
+  assert.equal(nextDepth({ tier: 'T1', depthTarget: 4, depthDone: 0 }, 'x'), 1);
+  assert.equal(nextDepth({ tier: 'T1', depthTarget: 4, depthDone: 2 }, 'x'), 3);
+  assert.equal(nextDepth({ tier: 'T2', depthTarget: 4, depthDone: 3 }, 'x'), 3);
+  assert.equal(nextDepth({ tier: 'T3', depthTarget: 4, depthDone: 2 }, 'x'), 2);
 });

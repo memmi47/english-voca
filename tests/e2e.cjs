@@ -1,11 +1,20 @@
-// Browser E2E (Chromium via Playwright). Run: node tests/e2e.cjs  (server: python3 -m http.server 8077 -d game)
+// Browser E2E (Chromium via Playwright). Run: node tests/e2e.cjs
+// Starts its own tools/serve.py on a spare port with a throwaway state directory.
 const { chromium } = require('playwright');
-const BASE = process.env.BASE || 'http://localhost:8077/';
+const { spawn } = require('child_process');
+const fs = require('fs'), os = require('os'), path = require('path');
+const PORT = 8078; const BASE = `http://localhost:${PORT}/`;
+const STATE = fs.mkdtempSync(path.join(os.tmpdir(), 'catchup-state-'));
+let server = null;
+function startServer() { server = spawn('python3', [path.join(__dirname, '..', 'tools', 'serve.py'), '--port', String(PORT), '--state-dir', STATE], { stdio: 'ignore' }); }
+async function waitServer(up = true) { for (let i = 0; i < 50; i++) { const ok = await fetch(BASE + 'api/ping').then((r) => r.ok, () => false); if (ok === up) return; await new Promise((r) => setTimeout(r, 100)); } throw new Error('server state'); }
 const results = []; const errs = [];
 const ok = (name, cond, extra = '') => { results.push([cond ? 'PASS' : 'FAIL', name, extra]); console.log(cond ? 'PASS' : 'FAIL', name, extra); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function newPage(browser, ctx, q = '') {
+// Most tests run with nosync=1 (pure on-device behaviour); the sync tests pass sync=true.
+async function newPage(browser, ctx, q = '', sync = false) {
+  if (!sync) q = (q ? q + '&' : '') + 'nosync=1';
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
@@ -49,6 +58,7 @@ async function playAll(page, opts = {}) {
 const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('catchup.v1.p.' + i)), id);
 
 (async () => {
+  startServer(); await waitServer();
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
   const ctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
   let page = await newPage(browser, ctx, 'today=2026-11-11&seed=3');
@@ -106,14 +116,14 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   const p3 = await newPage(browser, ctx, 'today=2026-11-11&seed=9');
   await p3.click('[data-act=pick][data-id=daughter]'); await p3.click('[data-act=start]'); await p3.waitForSelector('#sc-yes');
   await p3.click('[data-act=sc-play]'); await p3.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await p3.click('[data-act=sc-yes]');
+  await p3.waitForSelector('#learn-next:not([disabled])');     // card 1 was heard
   await p3.route('**/audio/dev/**', (r) => r.fulfill({ status: 404, body: 'no' }));
-  await p3.click('[data-act=learn-next]');          // learn card 1 (heard fine earlier? navigates to learn 2)
+  await p3.click('#learn-next');                                // card 2 cannot load its audio
   await p3.waitForSelector('#banner:not([hidden])', { timeout: 8000 });
   ok('failure shows banner with retry', (await p3.textContent('#banner')).includes('다시 듣기'));
-  ok('learn view still on same card after failure', !!(await p3.$('[data-act=learn-next]')));
-  // advance to the first sound question with audio down
-  p3.on('dialog', (d) => d.accept());
-  while (await p3.$('[data-act=learn-next]')) { await p3.click('[data-act=learn-next]'); await sleep(150); }
+  ok('learn view stays on the card and "다음" stays closed until the word is heard', await p3.$eval('#learn-next', (b) => b.disabled));
+  // parent override moves on without sound (logged as not heard)
+  while (await p3.$('#learn-next')) { await p3.waitForSelector('#banner:not([hidden]) [data-act=skip-audio]'); await p3.click('[data-act=skip-audio]'); await sleep(150); }
   await p3.waitForSelector('.opt', { timeout: 8000 }); await sleep(800);
   const locked = await p3.evaluate(() => [...document.querySelectorAll('.opt')].every((b) => b.classList.contains('locked')));
   ok('sound question options locked while audio is down', locked);
@@ -122,7 +132,8 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   ok('tap on locked option is ignored (question kept)', await p3.evaluate(() => window.__cu.sess.index) === before && !(await p3.$('#qnext')));
   await p3.unroute('**/audio/dev/**'); await p3.click('[data-act=retry-audio]'); await sleep(600);
   ok('retry restores sound and unlocks', await p3.evaluate(() => [...document.querySelectorAll('.opt')].every((b) => !b.classList.contains('locked'))) && await p3.$eval('#banner', (b) => b.hidden));
-  const issues = (await prof(p3, 'daughter')).audioIssues; ok('audio issue logged', issues.length >= 1);
+  const d3 = await prof(p3, 'daughter'); ok('audio issue logged', d3.audioIssues.length >= 1);
+  ok('cards learned without sound are logged as not heard', d3.log.filter((e) => e.type === 'learn').some((e) => e.audioOk === false) && d3.log.filter((e) => e.type === 'learn')[0].audioOk === true);
   await p3.close();
 
   // 7. 15-minute end (virtual time) : speed 900 => 1 real sec = 15 virtual min
@@ -144,7 +155,7 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   const p5 = await newPage(browser, ctx5, 'today=2026-11-30&seed=2');
   await gate(p5); await p5.click('[data-act=demo]'); await p5.waitForSelector('#imp-r .right'); await p5.click('#app [data-act=home]');
   await startAs(p5, 'son');
-  for (let i = 0; i < 5; i++) { await p5.click('[data-act=learn-next]'); }       // no waiting
+  for (let i = 0; i < 5; i++) { await p5.click('#learn-next'); }       // as fast as the button opens
   await sleep(1200);
   const hist5 = await p5.evaluate(() => window.__cu.engine.history.filter((e) => e.type === 'play' || e.type === 'fail').length);
   ok('rapid next x5 -> still consistent', await p5.evaluate(() => window.__cu.sess.index) === 5, 'plays/fails=' + hist5);
@@ -161,9 +172,50 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   ok('cards introduced in an interrupted session are re-planned (5 new again)', /새 단어 5개/.test(await p6.textContent('.card')), (await p6.textContent('.card')).replace(/\s+/g, ' ').slice(0, 40));
   await p6.close(); await ctx6.close();
 
+  // 10. server copy: progress made on one browser ("Mac") is there on another ("iPad"), and survives a wiped browser
+  const mac = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  const m1 = await newPage(browser, mac, 'today=2026-12-10&seed=3', true);
+  ok('home shows server-backed storage', /Mac 서버/.test(await m1.textContent('#syncline')), await m1.textContent('#syncline'));
+  await loadDemo(m1); await startAs(m1, 'son'); await playAll(m1); await m1.waitForSelector('#app h1');
+  await m1.waitForFunction(() => window.__cu.syncStatus.available && window.__cu.syncStatus.pending.length === 0, null, { timeout: 8000 });
+  const macSon = await prof(m1, 'son');
+  ok('state file written on the server side', fs.existsSync(path.join(STATE, 'p.son.json')) && JSON.parse(fs.readFileSync(path.join(STATE, 'p.son.json'), 'utf8')).data.sessions.length === 1);
+  const ipad = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  const i1 = await newPage(browser, ipad, 'today=2026-12-11&seed=4', true);
+  const ipadSon = await prof(i1, 'son');
+  ok('second browser starts with the first one\'s progress', JSON.stringify(ipadSon.cards) === JSON.stringify(macSon.cards) && Object.values(ipadSon.cards).filter((c) => c.streak === 1).length === 5);
+  await i1.click('[data-act=pick][data-id=son]'); await i1.waitForSelector('[data-act=start]');
+  ok('second browser plans reviews from that progress', /복습 5개/.test(await i1.textContent('.card')), (await i1.textContent('.card')).replace(/\s+/g, ' ').slice(0, 30));
+  await i1.click('[data-act=start]'); await i1.waitForSelector('#sc-yes'); await i1.click('[data-act=sc-play]'); await i1.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await i1.click('[data-act=sc-yes]');
+  await playAll(i1); await i1.waitForFunction(() => window.__cu.syncStatus.pending.length === 0, null, { timeout: 8000 });
+  await m1.evaluate(() => localStorage.clear());                   // the browser threw its storage away
+  await m1.goto(BASE + '?today=2026-12-12&seed=5'); await m1.waitForSelector('.profiles');
+  const restored = await prof(m1, 'son');
+  ok('wiped browser gets everything back, including the other device\'s day', restored && Object.values(restored.cards).filter((c) => c.streak === 2).length >= 3 && restored.sessions.length === 2, restored ? 'sessions=' + restored.sessions.length : 'null');
+  ok('sibling document untouched by son\'s sessions', (await prof(m1, 'daughter')).log.length === 0);
+
+  ok('a finished session leaves no in-progress marker (time is not counted twice)', !restored.activeSession && !macSon.activeSession);
+
+  // 11. state API unreachable mid-use: the game keeps saving on the device and says so; data uploads when it is back
+  const m2 = await newPage(browser, mac, 'today=2026-12-13&seed=6', true);
+  await m2.route('**/api/**', (r) => r.abort());
+  await startAs(m2, 'daughter'); await playAll(m2); await m2.waitForSelector('#app h1');
+  const offline = await prof(m2, 'daughter'); ok('session completes and saves locally while the server copy is unreachable', offline.sessions.length === 1);
+  ok('pending upload is tracked', await m2.evaluate(() => window.__cu.sync.pending.includes('p.daughter')));
+  ok('nothing reached the server yet', !fs.existsSync(path.join(STATE, 'p.daughter.json')) || JSON.parse(fs.readFileSync(path.join(STATE, 'p.daughter.json'), 'utf8')).data.sessions.length === 0);
+  await m2.unroute('**/api/**'); await m2.evaluate(() => window.__cu.sync.flush());
+  await m2.waitForFunction(() => window.__cu.sync.pending.length === 0, null, { timeout: 8000 });
+  ok('pending session reaches the server once it is reachable', JSON.parse(fs.readFileSync(path.join(STATE, 'p.daughter.json'), 'utf8')).data.sessions.length === 1);
+  // 12. static hosting without the state API (e.g. plain file server): device-only, clearly labelled
+  const m3 = await ctx.newPage(); await m3.route('**/api/**', (r) => r.fulfill({ status: 404, body: 'nope' }));
+  await m3.goto(BASE + '?today=2026-12-14'); await m3.waitForSelector('.profiles');
+  ok('without a state API the home screen says device-only', /이 기기만/.test(await m3.textContent('#syncline')), await m3.textContent('#syncline'));
+  await m3.close();
+  await mac.close(); await ipad.close();
+
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
-  await browser.close();
+  await browser.close(); server.kill();
   const fails = results.filter((r) => r[0] === 'FAIL').length;
   require('fs').writeFileSync(__dirname + '/e2e-results.json', JSON.stringify(results, null, 1));
   console.log(`\n${results.length - fails}/${results.length} passed`); process.exit(fails ? 1 : 0);
-})().catch((e) => { console.error('E2E crashed', e); process.exit(2); });
+})().catch((e) => { console.error('E2E crashed', e); try { server.kill(); } catch {} process.exit(2); });

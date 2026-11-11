@@ -37,7 +37,7 @@ export class Store {
     }
   }
   _write(k, v) {
-    try { this.s.setItem(k, JSON.stringify(v)); this.lastError = null; return true; }
+    try { this.s.setItem(k, JSON.stringify(v)); this.lastError = null; this.onWrite?.(k.replace('catchup.v1.', '')); return true; }
     catch (e) { this.lastError = 'write:' + e.message; return false; }
   }
   meta() {

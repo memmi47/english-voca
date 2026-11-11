@@ -4,13 +4,14 @@ import { AudioEngine } from './audio.js';
 import { planSession, Session } from './session.js';
 import { mulberry32 } from './questions.js';
 import { ART, SCENE_BG, artFor } from './art.js';
+import { Sync } from './sync.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const SPEED = Number(qs.get('speed') || 1);
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const G = { store: null, meta: null, cat: null, scenes: {}, engine: null, sess: null, pid: null, today: todayISO(), ms: 0, view: 'home', fb: null, spell: null, soundOk: false };
+const G = { store: null, meta: null, cat: null, scenes: {}, engine: null, sess: null, pid: null, today: todayISO(), ms: 0, view: 'home', fb: null, spell: null };
 window.__cu = G;
 
 async function boot() {
@@ -18,6 +19,12 @@ async function boot() {
   catch { storage = null; }
   const { memoryStorage } = await import('./store.js');
   G.volatile = !storage; G.store = new Store(storage || memoryStorage());
+  G.syncStatus = { available: false, pending: [] };
+  if (storage && qs.get('nosync') !== '1') {
+    G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, onMerged, onStatus: (st) => { G.syncStatus = st; paintSync(); } });
+    await G.sync.init();
+    G.store.onWrite = (name) => G.sync.changed(name);
+  }
   G.meta = G.store.meta();
   const [cat, scenes, man] = await Promise.all(['data/catalog.json', 'data/scenes.json', 'audio/manifest.json'].map((u) => fetch(u).then((r) => r.json()).catch(() => null)));
   G.cat = new Catalog(cat); G.scenes = scenes || {};
@@ -29,6 +36,22 @@ async function boot() {
   route();
   window.addEventListener('hashchange', route);
 }
+
+// ---- server copy ----------------------------------------------------------------
+// Another device saved newer data: fold it into what this page holds in memory.
+function onMerged(name, data) {
+  if (name === 'meta') { G.meta = G.store.meta(); return; }
+  const p = G.sessProfile;
+  if (p && name === 'p.' + p.id && data) { for (const k of Object.keys(p)) if (!(k in data)) delete p[k]; Object.assign(p, data); }
+}
+function syncLine() {
+  const st = G.syncStatus;
+  if (G.volatile) return '이 브라우저는 저장을 막고 있어요. 기록이 새로고침 후 사라질 수 있습니다.';
+  if (!G.sync) return '기록 저장: 이 기기만 (서버 저장 꺼짐)';
+  if (!st.available) return '기록 저장: 이 기기만. Mac의 서버(tools/serve.py)에 연결되지 않았어요.';
+  return st.pending.length ? '기록 저장: 서버에 올리는 중…' : '기록 저장: 이 기기 + Mac 서버';
+}
+function paintSync() { const el = document.getElementById('syncline'); if (el) el.textContent = syncLine(); }
 
 // ---- timer -------------------------------------------------------------------
 const usedMs = (p) => p.sessions.filter((x) => x.day === G.today).reduce((a, x) => a + x.ms, 0) + (p.activeSession?.day === G.today ? p.activeSession.ms : 0);
@@ -45,19 +68,22 @@ function updateClock() {
 }
 function onVisibility() {
   lastTick = Date.now();
-  if (!document.hidden && G.sess && G.view === 'question') {
-    // After lock/app switch the unlocked element may be stale: ask for a fresh tap-to-replay.
-    G.engine.status = 'idle'; showBanner(G.sess.current?.q?.audioKey, 'return');
-  }
+  if (document.hidden) { G.sync?.flush().catch(() => {}); return; }
+  G.sync?.flush().catch(() => {});
+  // Back from lock / app switch: try the prompt again. If the browser refuses to play
+  // without a tap, the normal failure banner offers "다시 듣기".
+  const t = G.sess?.current; if (!t) return;
+  if (G.view === 'learn') say(t.cardId, { force: true });
+  else if (G.view === 'question' && !G.fb && t.q.autoAudio) say(t.q.audioKey, { force: true });
 }
 
 // ---- helpers -----------------------------------------------------------------
 const name = (id) => G.meta.names[id];
-const scene = (pack) => G.scenes[pack?.scene] || null;
 function curScene() {
-  const p = G.store.profile(G.pid); const pk = Object.values(p.packs).find((x) => x.scene); return pk ? G.scenes[pk.scene] : null;
+  const pk = Object.values(viewProfile().packs).find((x) => x.scene && G.scenes[x.scene]); return pk ? { id: pk.scene, ...G.scenes[pk.scene] } : null;
 }
-const art = (cardId, form) => artFor(cardId, form, G.sessScene, G.cat.with(G.store.profile(G.pid).localCards));
+const viewProfile = () => G.sessProfile && G.sessProfile.id === G.pid ? G.sessProfile : (G.viewP && G.viewP.id === G.pid ? G.viewP : (G.viewP = G.store.profile(G.pid)));
+const art = (cardId, form) => artFor(cardId, form, G.sessScene, G.cat.with(viewProfile().localCards));
 const hasArt = (c) => !!artFor(c.id, c.form, G.sessScene, G.cat);
 function artHtml(cardId, form) { const a = art(cardId, form); return a ? a.html : ''; }
 function showBanner(key, mode) {
@@ -67,15 +93,17 @@ function showBanner(key, mode) {
 }
 function hideBanner() { $('#banner').hidden = true; G.sess?.audioRecovered(); lock(false); }
 function lock(on) { document.querySelectorAll('.opt,.tile').forEach((b) => b.classList.toggle('locked', on && !!G.sess?.current?.q?.needsSound)); }
-function textFor(key) { const id = key.split('#')[0]; const c = G.cat.with(G.store.profile(G.pid).localCards).card(id);
-  if (!c) return ''; return key.endsWith('#s') ? G.store.profile(G.pid).cards[id]?.context || c.form : c.form; }
+function textFor(key) { const id = key.split('#')[0]; if (!G.pid) return ''; const p = viewProfile(); const c = G.cat.with(p.localCards).card(id);
+  if (!c) return ''; return key.endsWith('#s') ? p.cards[id]?.context || c.form : c.form; }
 async function say(key, opts = {}) {
   if (!key) return { ok: true };
   const r = await G.engine.play(key, { text: textFor(key), ...opts });
   if (!r.ok && !r.stale) { G.sess?.audioFailed(); showBanner(key); lock(true); }
   else if (r.ok) {
     if (!r.deduped) hideBanner();
-    const t = G.sess?.current; if (t?.kind === 'question' && key === (t.q.audioKey || null)) { G.sess.audioPlayed(); lock(false); }
+    const t = G.sess?.current;
+    if (t?.kind === 'question' && key === (t.q.audioKey || null)) { G.sess.audioPlayed(); lock(false); }
+    if (t?.kind === 'learn' && key === t.cardId) { G.sess.audioPlayed(); const b = document.getElementById('learn-next'); if (b) b.disabled = false; }
   }
   return r;
 }
@@ -83,7 +111,8 @@ function setBar(on) { $('#bar').hidden = !on; $('#who').textContent = G.pid ? na
 const sessionSample = (p) => { const ids = [...new Set(p.log.filter((e) => e.day === G.today && e.type !== 'learn').map((e) => e.card))]; return ids.length > 0 && ids.every((i) => p.cards[i]?.sample); };
 function hideBannerQuiet() { $('#banner').hidden = true; }
 function save() {
-  if (G.sess && G.sessProfile) G.sessProfile.activeSession = { day: G.today, ms: Math.round(G.ms), sample: sessionSample(G.sessProfile) };
+  // In-progress marker so a reload mid-session still counts the time. Never written once the session has ended.
+  if (G.sess && !G.sess.ended && G.sessProfile) G.sessProfile.activeSession = { day: G.today, ms: Math.round(G.ms), sample: sessionSample(G.sessProfile) };
   if (!G.store.saveProfile(G.sessProfile)) { const b = $('#banner'); b.hidden = false; b.textContent = '저장에 실패했어요. 부모에게 알려 주세요: ' + G.store.lastError; } }
 
 // ---- routing -----------------------------------------------------------------
@@ -104,7 +133,7 @@ function counts(id) {
     fresh: recs.filter((r) => !r.introduced).length, sample: recs.some((r) => r.sample) };
 }
 function home() {
-  G.today = todayISO(); G.view = 'home'; G.sess = null; G.pid = null; setBar(false);
+  G.today = todayISO(); G.view = 'home'; G.sess = null; G.sessProfile = null; G.viewP = null; G.pid = null; setBar(false);
   const c = PROFILES.map(counts); const family = c.reduce((a, x) => a + x.lit, 0);
   $('#app').innerHTML = `<h1>Catch-up 어휘 탐험</h1>
   <p class="mut">누가 할까요?</p>
@@ -113,10 +142,11 @@ function home() {
     ${c[i].sample ? '<span class="pill sample">데모 데이터</span>' : ''}</button>`).join('')}</div>
   <div class="card center"><b>우리 집에 켜진 불: ${family}개</b><div class="small mut">두 사람이 함께 모은 숫자예요.</div></div>
   <p class="center"><button class="ghost" data-act="parent">부모 메뉴</button></p>
-  ${G.volatile ? '<p class="fb wrong">이 브라우저는 저장을 막고 있어요. 기록이 새로고침 후 사라질 수 있습니다.</p>' : ''}`;
+  <p class="center small mut" id="syncline">${esc(syncLine())}</p>`;
 }
-function profileView(id) {
-  G.today = todayISO(); G.pid = id; G.view = 'profile'; G.sessScene = curScene(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none';
+async function profileView(id) {
+  if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} }
+  G.today = todayISO(); G.pid = id; G.viewP = null; G.sessProfile = null; G.view = 'profile'; G.sessScene = curScene(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none';
   const p = G.store.profile(id); const s = G.meta.settings;
   const usedToday = usedMs(p);
   const plan = planSession({ profile: p, today: G.today, settings: s, catalog: G.cat });
@@ -124,7 +154,7 @@ function profileView(id) {
   const empty = !plan.reviews.length && !plan.newIds.length;
   const sc = G.sessScene;
   $('#app').innerHTML = `<h2>${esc(name(id))}의 오늘</h2>
-  ${sc ? `<div class="scene">${SCENE_BG['haunted-house']}${sc.items.map((it) => { const r = p.cards[it.card]; const on = r && r.known === '앎' && r.streak > 0;
+  ${sc ? `<div class="scene">${SCENE_BG[sc.id] || ''}${sc.items.map((it) => { const r = p.cards[it.card]; const on = r && r.known === '앎' && r.streak > 0;
     return r ? `<div class="item ${on ? 'on' : 'off'}" style="left:${it.x}%;top:${it.y}%">${ART[it.art]}</div>` : ''; }).join('')}</div>
   <p class="small mut">${esc(sc.title)}${sc.sample ? ' (자작 데모 장면)' : ''} · 불이 켜진 물건은 혼자 맞힌 단어예요.</p>` : ''}
   <div class="card"><div>새 단어 <b>${plan.newIds.length}</b>개 · 복습 <b>${plan.reviews.length}</b>개${plan.dueTotal > plan.reviews.length ? ` (밀린 복습 ${plan.dueTotal - plan.reviews.length}개는 다음에)` : ''}</div>
@@ -168,12 +198,12 @@ function next() {
 }
 function learnView(t) {
   G.view = 'learn'; const s = G.sess; const p = s.p; const c = s.cat.card(t.cardId); const r = p.cards[t.cardId]; const sc = G.sessScene;
-  const first = !p.cards[t.cardId].introduced; const idx = s.plan.newIds.indexOf(t.cardId);
+  const idx = s.plan.newIds.indexOf(t.cardId);
   const parts = r.context && new RegExp(`\\b(${c.form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'i');
   const sent = r.context ? esc(r.context).replace(parts, '<mark>$1</mark>') : '';
   $('#app').innerHTML = `<div class="pill">새 단어 ${idx + 1} / ${s.plan.newIds.length}</div>
-  ${sc ? `<div class="scene">${SCENE_BG['haunted-house']}${sc.items.map((it) => {
-      const known = s.plan.newIds.includes(it.card) || p.cards[it.card]?.introduced; if (!p.cards[it.card]) return '';
+  ${sc ? `<div class="scene">${SCENE_BG[sc.id] || ''}${sc.items.map((it) => {
+      if (!p.cards[it.card]) return '';
       const cls = it.card === t.cardId ? 'focus' : (p.cards[it.card].introduced || s.plan.newIds.includes(it.card)) ? '' : 'dim';
       return `<button class="item ${cls}" data-act="tap-item" data-id="${esc(it.card)}" style="left:${it.x}%;top:${it.y}%" aria-label="그림">${ART[it.art]}</button>`; }).join('')}</div>`
     : `<div class="card center"><div style="font-size:80px">${artHtml(c.id, c.form)}</div></div>`}
@@ -184,9 +214,8 @@ function learnView(t) {
     <div class="row" style="justify-content:center"><button class="sec" data-act="hear" data-key="${esc(c.id)}">🔊 단어</button>
     ${sent ? `<button class="sec" data-act="hear" data-key="${esc(c.id)}#s">🔊 문장</button>` : ''}</div>
     ${r.sample ? '<div class="small mut">자작 예문 · 데모</div>' : r.page ? `<div class="small mut">책 p.${esc(r.page)}에서 찾아보기</div>` : ''}
-  </div><p class="center"><button data-act="learn-next">다음 ▶</button></p>`;
-  say(c.id, { ctx: 'learn:' + G.sess.index });
-  G.learnHeard = true;
+  </div><p class="center"><button data-act="learn-next" id="learn-next" disabled>다음 ▶</button></p>`;
+  say(c.id, { ctx: 'learn:' + G.sess.index });                 // "다음" opens only after the word was actually played
 }
 function questionView(t) {
   G.view = 'question'; const s = G.sess; const q = t.q; t.startMs = null; G.fb = null;
@@ -210,7 +239,7 @@ function questionView(t) {
   if (q.autoAudio) say(q.audioKey, { ctx: 'q:' + s.index + ':' + (t.retry ? 'r' : '') });
 }
 async function answer(val) {
-  const s = G.sess; const t = s.current; const q = t.q; if (!t || G.fb) return;
+  const s = G.sess; const t = s.current; if (!t || G.fb) return; const q = t.q;
   const v = s.submit(val); if (v.blocked) return;
   const right = v.correct; G.fb = v;
   const btns = [...document.querySelectorAll('.opt')];
@@ -223,6 +252,7 @@ async function answer(val) {
     <div class="row"><button class="sec" data-act="hear" data-key="${esc(c.id)}">🔊 단어</button>${r.context ? `<button class="sec" data-act="hear" data-key="${esc(c.id)}#s">🔊 문장</button>` : ''}</div></div>
     <p class="center"><button data-act="q-next" id="qnext">다음 ▶</button></p>`;
   document.getElementById('hintbtn').style.display = 'none';
+  document.getElementById('qnext').scrollIntoView({ block: 'end' });      // keep "다음" on screen on iPad landscape
   // feedback audio: wrong -> the correct word; cloze -> the full sentence afterwards.
   say(q.type === 'cloze' && right ? c.id + '#s' : c.id, { ctx: 'fb:' + s.index, force: !right });
 }
@@ -231,7 +261,7 @@ function endSession(reason) {
   const s = G.sess; const sum = s.finish(reason); G.view = 'end'; G.engine.stop();
   const p = s.p; p.sessions.push({ day: G.today, ms: Math.round(G.ms), reason, sample: sessionSample(p), newIntroduced: sum.newIntroduced, reviewed: sum.reviewed,
     independent: sum.independent, hinted: sum.hinted, wrong: sum.wrong, audioFail: sum.audioFail, endedAt: new Date().toISOString() });
-  delete p.activeSession; save(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none'; hideBannerQuiet();
+  delete p.activeSession; save(); G.sync?.flush().catch(() => {}); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none'; hideBannerQuiet();
   const todayIds = new Set(p.log.filter((e) => e.day === G.today && e.type !== 'learn').map((e) => e.card));
   const seen = [...todayIds].map((id) => ({ id, c: s.cat.card(id), r: p.cards[id] })).filter((x) => x.c);
   const lit = seen.filter((x) => x.r.lastOutcome === 'independent' && x.r.lastScoredDay === G.today);
@@ -260,7 +290,7 @@ function parent() {
     <textarea id="imp-t" placeholder="또는 JSON을 붙여넣기"></textarea><div class="row"><button data-act="import">가져오기</button><button class="sec" data-act="demo">데모 팩 불러오기(자작, 두 아이)</button></div><div id="imp-r"></div></div>
   <div class="card col"><b>현황</b><table><tr><th>아이</th><th>팩</th><th>카드</th><th>세션</th></tr>${prof}</table>
     <div class="small">음원 매니페스트: ${Object.entries(cnt).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'}. 사람이 검수한 음원만 '검수 완료'로 표시됩니다.</div>
-    <div class="small">저장소: ${G.volatile ? '<b>사용 불가(새로고침 시 사라짐)</b>' : 'localStorage'}</div></div>
+    <div class="small" id="syncline">${esc(syncLine())}</div>${G.store.corrupt ? '<div class="fb wrong small">이 기기의 저장 데이터 일부를 읽지 못해 사본을 따로 보관했습니다.</div>' : ''}</div>
   <div class="card col"><b>내보내기(아이별)</b><div class="row">${PROFILES.map((id) => `<button class="sec" data-act="export" data-id="${id}">${esc(name(id))} JSON</button>`).join('')}</div>
     <p class="small mut">게임 결과는 소리 도움을 받은 결과입니다. 종이 책에서 혼자 읽은 결과와 합치지 마세요.</p></div>
   <div class="card col"><b>설정</b><div class="row"><label>아들 이름 <input id="nm-son" value="${esc(name('son'))}" size="8"></label><label>딸 이름 <input id="nm-daughter" value="${esc(name('daughter'))}" size="8"></label></div>
@@ -307,14 +337,16 @@ async function onClick(e) {
     case 'parent': return go('#/parent');
     case 'start': return startSession();
     case 'sc-play': return soundCheck();
-    case 'sc-yes': G.soundOk = true; return next();
+    case 'sc-yes': return next();
     case 'sc-no': $('#sc-msg').textContent = '아이패드 옆의 무음 스위치, 볼륨, 블루투스 연결을 확인한 뒤 다시 눌러요.'; return;
     case 'tap-item': return say(b.dataset.id, { force: true });
     case 'hear': return say(b.dataset.key, { force: true });
     case 'replay': { const t = s?.current; const key = t?.kind === 'learn' ? t.cardId : t?.q?.audioKey || t?.q?.cardId; return say(key, { force: true }); }
     case 'retry-audio': { const t = s?.current; const key = t?.kind === 'learn' ? t.cardId : t?.q?.audioKey || t?.q?.cardId || G.engine.lastFail?.key; await G.engine.unlock(); return say(key, { force: true }); }
-    case 'skip-audio': if (s?.current?.kind === 'question') { s.skipNoAudio(); hideBannerQuiet(); return next(); } hideBannerQuiet(); return;
-    case 'learn-next': { const t = s.current; if (G.engine.status === 'failed' && !confirm('소리가 나지 않았어요. 그래도 다음으로 갈까요?(부모 확인)')) return; s.completeLearn(t.cardId); s.advance(); return next(); }
+    case 'skip-audio': { const t = s?.current; hideBannerQuiet(); if (!t) return;
+      if (t.kind === 'question') s.skipNoAudio(); else { s.completeLearn(t.cardId); s.advance(); }   // logged with audioOk:false
+      return next(); }
+    case 'learn-next': { const t = s.current; if (!t.heard) return; s.completeLearn(t.cardId); s.advance(); return next(); }
     case 'ans': if (b.classList.contains('locked')) return; return answer(Number(b.dataset.i));
     case 'tile': { if (b.disabled || b.classList.contains('locked')) return; const q = s.current.q; G.spell.letters.push(q.tiles[b.dataset.i].ch); G.spell.used.add(b.dataset.i); b.disabled = true;
       document.querySelectorAll('.slot').forEach((el, i) => { el.textContent = G.spell.letters[i] || ''; });

@@ -11,6 +11,8 @@ python3 tools/serve.py --host 0.0.0.0       # iPad에서: http://Mac의-사설-I
 
 기본 `python3 -m http.server`는 Range 요청을 처리하지 못해 iPad Safari에서 음원이 재생되지 않을 수 있으므로 위 서버를 사용한다. `file://`로는 열 수 없다.
 
+진도는 브라우저와 Mac의 `state/` 폴더 양쪽에 저장된다. `state/`와 `state/backup/`(직전 30개 버전)을 보관하면 브라우저 기록이 지워져도 복원되고, Mac과 iPad가 같은 진도를 쓴다. `state/`는 git에 올리지 않는다. 인증이 없으므로 가정 내 Wi-Fi에서만 `--host 0.0.0.0`을 사용한다. iPad에서는 Safari 공유 메뉴의 "홈 화면에 추가"로 여는 것을 권한다.
+
 1. 첫 화면 아래 "부모 메뉴" (덧셈 문제) → "데모 팩 불러오기" → 처음으로 → 아이 선택 → "소리 켜고 시작".
 2. 실제 주차: 주간 도구 `app.py`의 `/export?profile=son` 및 `daughter` JSON을 부모 메뉴에서 아이별로 가져온다.
 3. 날짜 시험용 쿼리: `?today=2026-11-12&seed=3&speed=60`.
@@ -18,8 +20,8 @@ python3 tools/serve.py --host 0.0.0.0       # iPad에서: http://Mac의-사설-I
 ## 테스트
 
 ```sh
-node --test tests/unit.test.mjs tests/audio.test.mjs   # 규칙·오디오 엔진 단위 테스트
-node tests/e2e.cjs                          # Chromium 통합 테스트 (서버 실행 중, Playwright 필요)
+node --test tests/*.test.mjs                 # 규칙·오디오·동기화 단위 테스트
+node tests/e2e.cjs                          # Chromium 통합 테스트 (자체 서버를 8078 포트에 띄움, Playwright 필요)
 ```
 
 ## 재생성

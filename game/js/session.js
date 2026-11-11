@@ -1,4 +1,4 @@
-import { applyScore, effectiveDepth, isLong } from './srs.js';
+import { applyScore, effectiveDepth, isLong, nextDepth } from './srs.js';
 import { makeQuestion, hintFor, shuffle } from './questions.js';
 
 // ---- planning ---------------------------------------------------------------
@@ -50,9 +50,7 @@ export class Session {
   _build() {
     const { reviews, newIds } = this.plan; const t = [];
     for (const id of reviews) {
-      const r = this.rec(id); const eff = effectiveDepth(r.tier, r.depthTarget);
-      const d = Math.max(1, r.depthDone < eff ? r.depthDone + 1 : eff);
-      t.push(this._q(id, d, { scoring: true, round: 'review' }));
+      t.push(this._q(id, nextDepth(this.rec(id), this.today), { scoring: true, round: 'review' }));
     }
     if (newIds.length) {
       for (const id of newIds) t.push({ kind: 'learn', cardId: id });
@@ -74,9 +72,9 @@ export class Session {
   get index() { return this.i; }
 
   completeLearn(cardId) {
-    const r = this.rec(cardId);
+    const r = this.rec(cardId); const t = this.current;
     if (!r.introduced) { r.introduced = this.today; this.stats.newIntroduced++; }
-    this._log({ card: cardId, type: 'learn', outcome: 'introduced' });
+    this._log({ card: cardId, type: 'learn', outcome: 'introduced', audioOk: !!(t && t.kind === 'learn' && t.heard) });
     this.onChange();
   }
   useHint() {
@@ -88,7 +86,11 @@ export class Session {
     if (t.kind === 'question') t.audioFailed = true;
     this.stats.audioFail++; this._issue(t.kind === 'learn' ? t.cardId : (t.q.audioKey || t.q.cardId)); this.onChange();
   }
-  audioPlayed() { const t = this.current; if (t && t.kind === 'question') { t.audioPlayedOk = true; t.audioFailed = false; } }
+  audioPlayed() {
+    const t = this.current; if (!t) return;
+    if (t.kind === 'learn') t.heard = true;
+    else { t.audioPlayedOk = true; t.audioFailed = false; }
+  }
   audioRecovered() { const t = this.current; if (t && t.kind === 'question') t.audioFailed = false; }
   _issue(key) { this.p.audioIssues.push({ day: this.today, key, sample: !!this.rec(key.split('#')[0])?.sample }); }
 
@@ -106,7 +108,6 @@ export class Session {
       // Wrong earlier today (e.g. depth 1) then right at depth 2: a recovery, not a pass.
       if (outcome === 'independent' && r.dayFail === this.today) { outcome = 'hinted'; t.recovered = true; }
       const { changed, ...next } = applyScore(r, outcome, this.today, q.depth, !!t.audioPlayedOk);
-      Object.assign(r, next);
       Object.assign(r, next);
       if (outcome === 'wrong') r.dayFail = this.today;
       this.stats[outcome]++; if (t.round === 'review') this.stats.reviewed++;
@@ -146,7 +147,6 @@ export class Session {
     this.ended = { reason, day: this.today, ms, ...this.stats };
     return this.ended;
   }
-  remainingQuestionsFor(cardId) { return this.tasks.slice(this.i).filter((t) => t.kind === 'question' && t.q.cardId === cardId).length; }
   _log(e) {
     const rec = this.rec(e.card);
     this.p.log.push({ t: new Date(this.now()).toISOString(), day: this.today, sample: !!rec?.sample, ...e });

@@ -15,8 +15,24 @@ export function effectiveDepth(tier, depthTarget) {
 }
 export function isLong(tier) { return LONG_TIERS.includes(tier); }
 
+// Which depth to ask at the next review. Steps up one level per due review until the
+// effective target; a failed step-up is put on hold so reading-level review continues.
+export const STEP_UP_HOLD_DAYS = 7;
+export function nextDepth(rec, today) {
+  const eff = effectiveDepth(rec.tier, rec.depthTarget);
+  const done = rec.depthDone || 0;
+  if (done >= eff) return eff;
+  if (done >= 2 && rec.holdStepUpUntil && rec.holdStepUpUntil > today) return done;
+  return Math.max(1, done + 1);
+}
+
 // outcome: 'independent' | 'hinted' | 'wrong'
 // Returns a new record; never mutates. Same card is scored at most once per day.
+//
+// Reading knowledge (known/streak) is decided at depth 1-2 (sound/word -> meaning).
+// A miss at depth 3-4 (cloze, spelling) on a card whose meaning was already recalled
+// independently does not mark the word unknown: it is checked again tomorrow at the
+// reading level and the harder step is retried after STEP_UP_HOLD_DAYS.
 export function applyScore(rec, outcome, day, depth, heard = true) {
   const origin = heard ? '게임 인출(소리 동반)' : '게임 인출(소리 없음)';
   if (rec.lastScoredDay === day) return { ...rec, changed: false };
@@ -35,6 +51,10 @@ export function applyScore(rec, outcome, day, depth, heard = true) {
     // Assumption: hinted success is neither a pass nor a reset. Seen again tomorrow.
     r.known = rec.known === '앎' ? '앎' : '모름';
     r.origin = '게임 인출(힌트)';
+    r.due = long ? addDays(day, 1) : null;
+  } else if (depth >= 3 && (rec.depthDone || 0) >= 2 && rec.known === '앎') {
+    r.lastOutcome = 'wrong_step_up';                      // harder task missed, meaning still known
+    r.holdStepUpUntil = addDays(day, STEP_UP_HOLD_DAYS);
     r.due = long ? addDays(day, 1) : null;
   } else {
     r.streak = 0; r.known = '모름'; r.origin = origin;
