@@ -1,25 +1,9 @@
-import { applyScore, effectiveDepth, isLong, nextDepth } from './srs.js';
+import { effectiveDepth, nextDepth } from './srs.js';
 import { makeQuestion, hintFor, shuffle } from './questions.js';
+import { planToday, recordIntroduction, recordAttempt, recordSkipNoAudio } from './engine.js';
 
-// ---- planning ---------------------------------------------------------------
-export function planSession({ profile, today, settings, catalog }) {
-  const recs = profile.cards;
-  const norm = (id) => catalog.with(profile.localCards).card(id);
-  const reviews = Object.entries(recs)
-    .filter(([id, r]) => isLong(r.tier) && r.introduced && r.due && r.due <= today && norm(id))
-    .sort((a, b) => a[1].due.localeCompare(b[1].due) || a[0].localeCompare(b[0]))
-    .slice(0, settings.reviewMax).map(([id]) => id);
-  const newPool = [];
-  for (const pk of Object.values(profile.packs))
-    for (const id of pk.order) {
-      const r = recs[id];
-      // introduced-but-never-scored cards (left early / skipped) come back as new
-      const unscored = r && r.introduced && !r.lastScoredDay && r.known !== '앎';
-      if (r && (!r.introduced || unscored) && norm(id) && !(r.known === '앎' && !r.inferred && r.introduced == null)) newPool.push(id);
-    }
-  const newIds = newPool.slice(0, settings.newPerSession);
-  return { reviews, newIds, newRemaining: newPool.length - newIds.length, dueTotal: Object.values(recs).filter((r) => isLong(r.tier) && r.introduced && r.due && r.due <= today).length };
-}
+// Planning and scoring rules live in engine.js; kept under the old name for existing callers.
+export const planSession = planToday;
 
 // ---- session ----------------------------------------------------------------
 export class Session {
@@ -72,9 +56,9 @@ export class Session {
   get index() { return this.i; }
 
   completeLearn(cardId) {
-    const r = this.rec(cardId); const t = this.current;
-    if (!r.introduced) { r.introduced = this.today; this.stats.newIntroduced++; }
-    this._log({ card: cardId, type: 'learn', outcome: 'introduced', audioOk: !!(t && t.kind === 'learn' && t.heard) });
+    const t = this.current;
+    const { newlyIntroduced } = recordIntroduction(this.p, cardId, { today: this.today, now: this.now(), heard: !!(t && t.kind === 'learn' && t.heard) });
+    if (newlyIntroduced) this.stats.newIntroduced++;
     this.onChange();
   }
   useHint() {
@@ -102,23 +86,14 @@ export class Session {
     if (t.startMs == null) t.startMs = this.now();
     t.attempts++;
     const correct = q.type === 'spell' ? String(answer).toLowerCase() === q.target : answer === q.answer;
-    const r = this.rec(q.cardId); let outcome = null;
-    if (t.attempts === 1 && t.scoring) {
-      outcome = !correct ? 'wrong' : t.hint ? 'hinted' : 'independent';
-      // Wrong earlier today (e.g. depth 1) then right at depth 2: a recovery, not a pass.
-      if (outcome === 'independent' && r.dayFail === this.today) { outcome = 'hinted'; t.recovered = true; }
-      const { changed, ...next } = applyScore(r, outcome, this.today, q.depth, !!t.audioPlayedOk);
-      Object.assign(r, next);
-      if (outcome === 'wrong') r.dayFail = this.today;
-      this.stats[outcome]++; if (t.round === 'review') this.stats.reviewed++;
-    } else if (t.retry) { outcome = correct ? 'retry_success' : 'retry_wrong'; if (correct) this.stats.retried++; }
-    else if (t.attempts === 1 && !correct && !t.scoring) { outcome = 'wrong'; this.stats.wrong++; r.dayFail = this.today; }
-    else if (correct && t.attempts > 1) { outcome = 'retry'; this.stats.retried++; }
-    else if (correct) { outcome = t.hint ? 'hinted' : 'independent'; }
+    const res = recordAttempt(this.p, { cardId: q.cardId, type: q.type, depth: q.depth, correct, hint: t.hint,
+      heard: !!t.audioPlayedOk, audioOk: !t.audioFailed, scoring: t.scoring, retry: t.retry, attempt: t.attempts,
+      round: t.round, ms: this.now() - t.startMs }, { today: this.today, now: this.now() });
+    const { outcome } = res;
+    if (res.recovered) t.recovered = true;
+    if (res.stat) this.stats[res.stat]++;
+    if (res.scored && t.round === 'review') this.stats.reviewed++;
     t.firstWrong = t.firstWrong || (t.attempts === 1 && !correct);
-    this._log({ card: q.cardId, type: q.type, depth: q.depth, outcome: t.recovered ? 'recovered_same_day' : (outcome || (correct ? 'independent' : 'wrong')),
-      attempts: t.attempts, hint: t.hint, audioOk: !t.audioFailed, scoring: t.scoring, round: t.round, ms: this.now() - t.startMs,
-      correct, assist: t.audioPlayedOk ? 'audio' : 'none', retryTask: t.retry });
     if (correct) t.done = true;
     if (!correct && t.attempts === 1) t.done = true;   // answer is revealed; a spaced retry task follows
     this.onChange();
@@ -129,7 +104,7 @@ export class Session {
     const t = this.current; if (!t) return;
     if (t.done) { this.advance(); return; }          // already answered: nothing to skip
     this.stats.skippedNoAudio++;
-    this._log({ card: t.q.cardId, type: t.q.type, depth: t.q.depth, outcome: 'skipped_no_audio', scoring: false, audioOk: false, assist: 'none' });
+    recordSkipNoAudio(this.p, { cardId: t.q.cardId, type: t.q.type, depth: t.q.depth }, { today: this.today, now: this.now() });
     this.tasks.push({ ...t, attempts: 0, hint: false, hintData: null, startMs: null, audioFailed: false, scoring: false, retry: true });
     this.i++; this.onChange();
   }
@@ -146,9 +121,5 @@ export class Session {
     const ms = this.now() - this.startedAt;
     this.ended = { reason, day: this.today, ms, ...this.stats };
     return this.ended;
-  }
-  _log(e) {
-    const rec = this.rec(e.card);
-    this.p.log.push({ t: new Date(this.now()).toISOString(), day: this.today, sample: !!rec?.sample, ...e });
   }
 }
