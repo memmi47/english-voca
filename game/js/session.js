@@ -6,11 +6,12 @@ import { planToday, recordIntroduction, recordAttempt, recordSkipNoAudio } from 
 export const planSession = planToday;
 
 // ---- session ----------------------------------------------------------------
+export const REVIEW_EVERY = 2;
 export class Session {
   constructor({ profile, catalog, plan, today, rng, hasArt, now = () => Date.now(), onChange = () => {} }) {
     this.p = profile; this.cat = catalog.with(profile.localCards); this.plan = plan; this.today = today;
     this.rng = rng; this.hasArt = hasArt; this.now = now; this.onChange = onChange;
-    this.stats = { newIntroduced: 0, reviewed: 0, independent: 0, hinted: 0, wrong: 0, retried: 0, audioFail: 0, skippedNoAudio: 0 };
+    this.stats = { newIntroduced: 0, reviewed: 0, independent: 0, hinted: 0, wrong: 0, retried: 0, audioFail: 0, skippedNoAudio: 0, answered: 0 };
     this.startedAt = now(); this.tasks = []; this.i = 0; this.ended = null; this._pool();
     this._build();
   }
@@ -31,24 +32,28 @@ export class Session {
     const q = makeQuestion({ card, depth, pool: this.pool, rec: this.rec(cardId), rng: this.rng, hasArt: this.hasArt });
     return { kind: 'question', q, scoring: false, retry: false, attempts: 0, hint: false, startMs: null, audioFailed: false, ...extra };
   }
+  // This week's words come first. One due review follows every REVIEW_EVERY new-word questions and the
+  // rest of the reviews go last, so the tail is what the daily time cap cuts.
   _build() {
-    const { reviews, newIds } = this.plan; const t = [];
-    for (const id of reviews) {
-      t.push(this._q(id, nextDepth(this.rec(id), this.today), { scoring: true, round: 'review' }));
-    }
+    const { reviews, newIds } = this.plan;
+    const rev = reviews.map((id) => this._q(id, nextDepth(this.rec(id), this.today), { scoring: true, round: 'review' }));
+    const t = newIds.map((id) => ({ kind: 'learn', cardId: id }));
+    const fresh = [];
     if (newIds.length) {
-      for (const id of newIds) t.push({ kind: 'learn', cardId: id });
       const orderA = shuffle(newIds, this.rng); let orderB = shuffle(newIds, this.rng);
       if (orderB[0] === orderA[orderA.length - 1] && orderB.length > 1) orderB = orderB.slice(1).concat(orderB[0]);
       for (const id of orderA) {
         const eff = effectiveDepth(this.rec(id).tier, this.rec(id).depthTarget);
-        t.push(this._q(id, 1, { scoring: eff <= 1, round: 'A' }));
+        fresh.push(this._q(id, 1, { scoring: eff <= 1, round: 'A' }));
       }
       for (const id of orderB) {
         const eff = effectiveDepth(this.rec(id).tier, this.rec(id).depthTarget);
-        if (eff >= 2) t.push(this._q(id, 2, { scoring: true, round: 'B' }));
+        if (eff >= 2) fresh.push(this._q(id, 2, { scoring: true, round: 'B' }));
       }
     }
+    let r = 0;
+    fresh.forEach((q, i) => { t.push(q); if ((i + 1) % REVIEW_EVERY === 0 && r < rev.length) t.push(rev[r++]); });
+    while (r < rev.length) t.push(rev[r++]);
     this.tasks = t;
   }
   get current() { return this.ended ? null : this.tasks[this.i] || null; }
@@ -84,7 +89,7 @@ export class Session {
     const q = t.q;
     if (q.needsSound && (t.audioFailed || !t.audioPlayedOk)) return { blocked: 'audio' };
     if (t.startMs == null) t.startMs = this.now();
-    t.attempts++;
+    t.attempts++; this.stats.answered++;
     const correct = q.type === 'spell' ? String(answer).toLowerCase() === q.target : answer === q.answer;
     const res = recordAttempt(this.p, { cardId: q.cardId, type: q.type, depth: q.depth, correct, hint: t.hint,
       heard: !!t.audioPlayedOk, audioOk: !t.audioFailed, scoring: t.scoring, retry: t.retry, attempt: t.attempts,

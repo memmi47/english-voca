@@ -5,6 +5,7 @@ import { planSession, Session } from './session.js';
 import { mulberry32 } from './questions.js';
 import { ART, SCENE_BG, artFor } from './art.js';
 import { Sync } from './sync.js';
+import { caseStatus, currentCaseId, familyProgress, stageLabel, isLit } from './case.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -79,9 +80,18 @@ function onVisibility() {
 
 // ---- helpers -----------------------------------------------------------------
 const name = (id) => G.meta.names[id];
-function curScene() {
-  const pk = Object.values(viewProfile().packs).find((x) => x.scene && G.scenes[x.scene]); return pk ? { id: pk.scene, ...G.scenes[pk.scene] } : null;
+const cardOfFor = (p) => { const c = G.cat.with(p.localCards); return (id) => c.card(id); };
+// The case being worked on: one pack, its scene art if any, and a status derived from card records.
+function curCase() {
+  const p = viewProfile(); const id = currentCaseId(p, cardOfFor(p)); if (!id) return null;
+  const pk = p.packs[id]; const scene = pk.scene && G.scenes[pk.scene] ? { id: pk.scene, ...G.scenes[pk.scene] } : null;
+  const text = scene?.case || {};
+  return { id, scene, sample: !!pk.sample, title: text.title || `'${id}' 사건`, text, st: caseStatus(p, id, cardOfFor(p)) };
 }
+const allCaseStatus = (p) => Object.fromEntries(Object.keys(p.packs).map((id) => [id, caseStatus(p, id, cardOfFor(p))]));
+const caseLine = (st) => `단서 확보 ${st.secured}/${st.total}${st.vaultTotal ? ` · 금고 ${st.vaultOpen}/${st.vaultTotal}` : ''}`;
+const sceneHtml = (sc, itemFn, cls = '') => `<div class="scene ${cls}">${SCENE_BG[sc.id] || ''}${sc.items.map(itemFn).join('')}</div>`;
+const pos = (it) => `left:${it.x}%;top:${it.y}%`;
 const viewProfile = () => G.sessProfile && G.sessProfile.id === G.pid ? G.sessProfile : (G.viewP && G.viewP.id === G.pid ? G.viewP : (G.viewP = G.store.profile(G.pid)));
 const art = (cardId, form) => artFor(cardId, form, G.sessScene, G.cat.with(viewProfile().localCards));
 const hasArt = (c) => !!artFor(c.id, c.form, G.sessScene, G.cat);
@@ -134,34 +144,34 @@ function counts(id) {
 }
 function home() {
   G.today = todayISO(); G.view = 'home'; G.sess = null; G.sessProfile = null; G.viewP = null; G.pid = null; setBar(false);
-  const c = PROFILES.map(counts); const family = c.reduce((a, x) => a + x.lit, 0);
-  $('#app').innerHTML = `<h1>Catch-up 어휘 탐험</h1>
+  const c = PROFILES.map(counts);
+  const fam = familyProgress(PROFILES.map((id) => { const p = G.store.profile(id); return { profile: p, cardOf: cardOfFor(p) }; }));
+  $('#app').innerHTML = `<h1>Catch-up 어휘 탐정단</h1>
   <p class="mut">누가 할까요?</p>
   <div class="profiles">${PROFILES.map((id, i) => `<button class="profile" data-act="pick" data-id="${id}"><span>${esc(name(id))}</span>
     <span class="small mut">${c[i].total ? `오늘 새 단어 ${Math.min(c[i].fresh, G.meta.settings.newPerSession)}개 · 복습 ${c[i].due}개` : '아직 단어 팩이 없어요'}</span>
     ${c[i].sample ? '<span class="pill sample">데모 데이터</span>' : ''}</button>`).join('')}</div>
-  <div class="card center"><b>우리 집에 켜진 불: ${family}개</b><div class="small mut">두 사람이 함께 모은 숫자예요.</div></div>
+  <div class="card center" id="family"><b>우리 탐정단: 해결한 사건 ${fam.solved}건 · 확보한 단서 ${fam.secured}개</b><div class="small mut">두 사람이 함께 모은 숫자예요.</div></div>
   <p class="center"><button class="ghost" data-act="parent">부모 메뉴</button></p>
   <p class="center small mut" id="syncline">${esc(syncLine())}</p>`;
 }
 async function profileView(id) {
   if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} }
-  G.today = todayISO(); G.pid = id; G.viewP = null; G.sessProfile = null; G.view = 'profile'; G.sessScene = curScene(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none';
+  G.today = todayISO(); G.pid = id; G.viewP = null; G.sessProfile = null; G.view = 'profile'; G.case = curCase(); G.sessScene = G.case?.scene || null; setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none';
   const p = G.store.profile(id); const s = G.meta.settings;
   const usedToday = usedMs(p);
   const plan = planSession({ profile: p, today: G.today, settings: s, catalog: G.cat });
   const left = Math.max(0, s.sessionMinutes * 6e4 - usedToday);
   const empty = !plan.reviews.length && !plan.newIds.length;
-  const sc = G.sessScene;
-  $('#app').innerHTML = `<h2>${esc(name(id))}의 오늘</h2>
-  ${sc ? `<div class="scene">${SCENE_BG[sc.id] || ''}${sc.items.map((it) => { const r = p.cards[it.card]; const on = r && r.known === '앎' && r.streak > 0;
-    return r ? `<div class="item ${on ? 'on' : 'off'}" style="left:${it.x}%;top:${it.y}%">${ART[it.art]}</div>` : ''; }).join('')}</div>
-  <p class="small mut">${esc(sc.title)}${sc.sample ? ' (자작 데모 장면)' : ''} · 불이 켜진 물건은 혼자 맞힌 단어예요.</p>` : ''}
+  const sc = G.sessScene; const cs = G.case;
+  $('#app').innerHTML = `<h2>${esc(name(id))}의 사건 수첩</h2>
+  ${sc ? sceneHtml(sc, (it) => { const r = p.cards[it.card]; return r ? `<div class="item ${isLit(r) ? 'on' : 'off'}" style="${pos(it)}">${ART[it.art]}</div>` : ''; }) : ''}
+  ${cs ? `<p class="small mut"><b>${esc(cs.title)}</b>${cs.sample ? ' (자작 데모 사건)' : ''} · ${stageLabel(cs.st)}${sc ? ' · 불이 켜진 단서는 지금 혼자 떠올릴 수 있는 단어예요.' : ''}</p>` : ''}
   <div class="card"><div>새 단어 <b>${plan.newIds.length}</b>개 · 복습 <b>${plan.reviews.length}</b>개${plan.dueTotal > plan.reviews.length ? ` (밀린 복습 ${plan.dueTotal - plan.reviews.length}개는 다음에)` : ''}</div>
-  <div class="small mut">장면에 남은 새 단어 ${plan.newRemaining}개 · 오늘 남은 시간 ${Math.floor(left / 6e4)}분</div></div>
-  <p class="row"><button data-act="start" ${empty || left <= 0 ? 'disabled' : ''}>소리 켜고 시작</button>
+  <div class="small mut">${cs ? caseLine(cs.st) + ' · ' : ''}사건에 남은 새 단어 ${plan.newRemaining}개 · 오늘 남은 시간 ${Math.floor(left / 6e4)}분</div></div>
+  <p class="row"><button data-act="start" ${empty || left <= 0 ? 'disabled' : ''}>소리 켜고 수사 시작</button>
   <button class="sec" data-act="home">돌아가기</button></p>
-  ${empty ? '<p class="mut">오늘 할 단어가 없어요. 부모 메뉴에서 단어 팩을 가져오세요.</p>' : ''}
+  ${empty ? '<p class="mut">오늘 조사할 단어가 없어요. 부모 메뉴에서 단어 팩을 가져오세요.</p>' : ''}
   ${left <= 0 ? '<p class="mut">오늘 15분을 다 썼어요. 내일 만나요.</p>' : ''}`;
 }
 
@@ -170,7 +180,7 @@ async function startSession() {
   G.today = todayISO(); const id = G.pid; const p = G.store.profile(id); G.sessProfile = p;
   const ok = await G.engine.unlock();                     // inside the tap handler
   if (p.activeSession) { p.sessions.push({ ...p.activeSession, reason: 'interrupted' }); delete p.activeSession; }
-  G.usedToday = usedMs(p);
+  G.usedToday = usedMs(p); G.casesBefore = allCaseStatus(p);
   G.ms = 0; lastTick = Date.now();
   const plan = planSession({ profile: p, today: G.today, settings: G.meta.settings, catalog: G.cat });
   const seed = Number(qs.get('seed')) || Math.floor(Math.random() * 1e9);
@@ -196,44 +206,74 @@ function next() {
   if (t.kind === 'learn') return learnView(t);
   questionView(t);
 }
+// First visit to a case: one briefing screen, then clue collection.
+function afterSoundCheck() {
+  const cs = G.case;
+  if (cs && !cs.st.started && G.sess.plan.newIds.length) return briefView();
+  next();
+}
+function briefView() {
+  G.view = 'brief'; const cs = G.case; const sc = cs.scene; $('#prog').textContent = '';
+  $('#app').innerHTML = `<div class="pill">사건 접수</div><h2>${esc(cs.title)}</h2>
+  ${sc ? sceneHtml(sc, (it) => (G.sess.p.cards[it.card] ? `<div class="item dim" style="${pos(it)}">${ART[it.art]}</div>` : ''), 'compact') : ''}
+  <div class="card"><p>${esc(cs.text.brief || '책 속에 단서가 숨어 있어요. 단어를 하나씩 조사해서 사건을 해결해요.')}</p>
+  <p class="small mut">단서 ${cs.st.cards}개를 조사해요. 혼자 떠올린 단서가 모두 모이면 사건이 해결돼요.</p></div>
+  <p class="center"><button data-act="brief-go">수사 시작 ▶</button></p>`;
+}
+// Clue collection: the word is shown with its sound, meaning and book sentence. Not a retrieval.
 function learnView(t) {
-  G.view = 'learn'; const s = G.sess; const p = s.p; const c = s.cat.card(t.cardId); const r = p.cards[t.cardId]; const sc = G.sessScene;
+  G.view = 'learn'; window.scrollTo(0, 0); const s = G.sess; const p = s.p; const c = s.cat.card(t.cardId); const r = p.cards[t.cardId]; const sc = G.sessScene;
   const idx = s.plan.newIds.indexOf(t.cardId);
   const parts = r.context && new RegExp(`\\b(${c.form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})\\b`, 'i');
   const sent = r.context ? esc(r.context).replace(parts, '<mark>$1</mark>') : '';
-  $('#app').innerHTML = `<div class="pill">새 단어 ${idx + 1} / ${s.plan.newIds.length}</div>
-  ${sc ? `<div class="scene">${SCENE_BG[sc.id] || ''}${sc.items.map((it) => {
+  $('#app').innerHTML = `<div class="pill">🔎 단서 수집 ${idx + 1} / ${s.plan.newIds.length}</div>
+  ${sc ? sceneHtml(sc, (it) => {
       if (!p.cards[it.card]) return '';
       const cls = it.card === t.cardId ? 'focus' : (p.cards[it.card].introduced || s.plan.newIds.includes(it.card)) ? '' : 'dim';
-      return `<button class="item ${cls}" data-act="tap-item" data-id="${esc(it.card)}" style="left:${it.x}%;top:${it.y}%" aria-label="그림">${ART[it.art]}</button>`; }).join('')}</div>`
+      return `<button class="item ${cls}" data-act="tap-item" data-id="${esc(it.card)}" style="${pos(it)}" aria-label="그림">${ART[it.art]}</button>`; }, 'compact learn')
     : `<div class="card center"><div style="font-size:80px">${artHtml(c.id, c.form)}</div></div>`}
   <div class="card center"><div class="big">${esc(c.form)}</div>
     <div class="ipa">${c.ipa ? esc(c.ipa) + ' <span class="small">(참고 표기)</span>' : ''}</div>
     <div class="meaning">${esc(c.meaning)}</div>
     ${sent ? `<div class="sent">${sent}</div>` : ''}
     <div class="row" style="justify-content:center"><button class="sec" data-act="hear" data-key="${esc(c.id)}">🔊 단어</button>
-    ${sent ? `<button class="sec" data-act="hear" data-key="${esc(c.id)}#s">🔊 문장</button>` : ''}</div>
+    ${sent ? `<button class="sec" data-act="hear" data-key="${esc(c.id)}#s">🔊 문장</button>` : ''}
+    <button data-act="learn-next" id="learn-next" disabled>다음 ▶</button></div>
     ${r.sample ? '<div class="small mut">자작 예문 · 데모</div>' : r.page ? `<div class="small mut">책 p.${esc(r.page)}에서 찾아보기</div>` : ''}
-  </div><p class="center"><button data-act="learn-next" id="learn-next" disabled>다음 ▶</button></p>`;
+  </div>`;
   say(c.id, { ctx: 'learn:' + G.sess.index });                 // "다음" opens only after the word was actually played
 }
+// One retrieval per screen. The five question types are unchanged; only the framing differs.
+const FRAME = {
+  'sound-pic': ['🔍 현장 확인', '소리가 가리키는 단서를 찾아 눌러요'],
+  'sound-meaning': ['👂 증언 듣기', '들은 말의 뜻을 골라요'],
+  'word-meaning': ['🗣 증언', '증인이 한 말의 뜻을 골라요'],
+  cloze: ['📄 진술서', '빈칸에 들어갈 말을 골라요'],
+  spell: ['🔒 금고 암호', '들은 단어를 순서대로 눌러요'],
+};
 function questionView(t) {
-  G.view = 'question'; const s = G.sess; const q = t.q; t.startMs = null; G.fb = null;
-  const lbl = { 'sound-pic': '듣고 그림 찾기', 'sound-meaning': '듣고 뜻 고르기', 'word-meaning': '단어의 뜻은?', cloze: '빈칸에 알맞은 단어', spell: '들은 단어를 쓰기' }[q.type];
+  G.view = 'question'; window.scrollTo(0, 0); const s = G.sess; const q = t.q; t.startMs = null; G.fb = null;
+  const [frame, ask] = FRAME[q.type]; const sc = G.sessScene;
+  const spot = (cid) => sc?.items.find((it) => it.card === cid);
+  const inScene = q.type === 'sound-pic' && sc && q.options.every((o) => spot(o.cardId));   // all four candidates are objects in this scene
+  const listen = '<button data-act="replay" class="listen">🔊 듣기</button>';
   let body = '';
   const opts = q.options.map((o, i) => o.kind === 'art'
     ? `<button class="opt" data-act="ans" data-i="${i}" aria-label="그림 ${i + 1}"><span class="art">${artHtml(o.cardId, s.cat.card(o.cardId).form)}</span></button>`
     : `<button class="opt" data-act="ans" data-i="${i}">${esc(o.label)}</button>`).join('');
-  if (q.type === 'sound-pic') body = `<div class="center"><button data-act="replay" style="font-size:40px;min-height:90px">🔊 듣기</button></div><div class="grid g2">${opts}</div>`;
-  else if (q.type === 'sound-meaning') body = `<div class="center"><button data-act="replay" style="font-size:40px;min-height:90px">🔊 듣기</button></div><div class="grid g1">${opts}</div>`;
-  else if (q.type === 'word-meaning') body = `<div class="card center"><div class="big">${esc(q.form)}</div><button class="sec" data-act="replay">🔊</button></div><div class="grid g1">${opts}</div>`;
-  else if (q.type === 'cloze') body = `<div class="card sent">${esc(q.parts.before)}<span class="blank" id="blank">&nbsp;</span>${esc(q.parts.after)}</div><div class="grid g1">${opts}</div>`;
+  if (inScene) body = `<div class="center">${listen}</div>${sceneHtml(sc, (it) => { const i = q.options.findIndex((o) => o.cardId === it.card);
+      if (i >= 0) return `<button class="opt spot" data-act="ans" data-i="${i}" style="${pos(it)}" aria-label="단서 ${i + 1}">${ART[it.art]}</button>`;
+      return s.p.cards[it.card] ? `<div class="item dim" style="${pos(it)}">${ART[it.art]}</div>` : ''; }, 'compact')}`;
+  else if (q.type === 'sound-pic') body = `<div class="center">${listen}</div><div class="grid g2">${opts}</div>`;
+  else if (q.type === 'sound-meaning') body = `<div class="center">${listen}</div><div class="grid g1">${opts}</div>`;
+  else if (q.type === 'word-meaning') body = `<div class="card center bubble"><div class="small mut">증인의 말</div><div class="big">${esc(q.form)}</div><button class="sec" data-act="replay">🔊</button></div><div class="grid g1">${opts}</div>`;
+  else if (q.type === 'cloze') body = `<div class="card sent paper">${esc(q.parts.before)}<span class="blank" id="blank">&nbsp;</span>${esc(q.parts.after)}</div><div class="grid g1">${opts}</div>`;
   else { G.spell = { letters: [], used: new Set() };
-    body = `<div class="center"><button data-act="replay" style="font-size:40px;min-height:90px">🔊 듣기</button><div class="meaning">${esc(q.meaning)}</div></div>
+    body = `<div class="center"><span class="vault" id="vault">🔒</span> ${listen}<div class="meaning">${esc(q.meaning)}</div></div>
       <div class="slots" id="slots">${q.target.split('').map(() => '<div class="slot"></div>').join('')}</div>
       <div class="tiles" id="tiles">${q.tiles.map((x, i) => `<button class="tile" data-act="tile" data-i="${i}">${x.ch}</button>`).join('')}</div>
       <p class="center"><button class="sec" data-act="undo">지우기</button></p>`; }
-  $('#app').innerHTML = `<div class="pill">${lbl}${t.retry ? ' · 다시 도전' : ''}${t.round === 'review' ? ' · 복습' : ''}</div>${body}
+  $('#app').innerHTML = `<div class="pill">${frame}${t.retry ? ' · 다시 도전' : ''}${t.round === 'review' ? ' · 미해결 파일(복습)' : ''}</div><p class="ask">${ask}</p>${body}
     <div id="fb"></div><p class="center"><button class="ghost" data-act="hint" id="hintbtn">힌트 보기</button></p>`;
   if (q.needsSound) lock(true);
   if (q.autoAudio) say(q.audioKey, { ctx: 'q:' + s.index + ':' + (t.retry ? 'r' : '') });
@@ -242,11 +282,13 @@ async function answer(val) {
   const s = G.sess; const t = s.current; if (!t || G.fb) return; const q = t.q;
   const v = s.submit(val); if (v.blocked) return;
   const right = v.correct; G.fb = v;
-  const btns = [...document.querySelectorAll('.opt')];
-  if (q.type !== 'spell') { btns.forEach((b, i) => { b.disabled = true; if (i === q.answer) b.classList.add('right'); else if (i === val) b.classList.add('wrong'); }); }
+  if (q.type !== 'spell') document.querySelectorAll('.opt').forEach((b) => { const i = Number(b.dataset.i); b.disabled = true; if (i === q.answer) b.classList.add('right'); else if (i === val) b.classList.add('wrong'); });
   const c = s.cat.card(q.cardId); const r = s.p.cards[q.cardId];
   if (q.type === 'cloze') { $('#blank').textContent = q.parts.word; }
-  $('#fb').innerHTML = `<div class="fb ${right ? 'right' : 'wrong'}"><b>${right ? (t.hint ? '좋아요! (힌트 사용)' : '맞아요!') : '정답을 같이 볼까요?'}</b>
+  if (q.type === 'spell' && right) { $('#vault').textContent = '🔓'; }
+  const head = !right ? '정답을 같이 볼까요?' : t.hint ? '좋아요! (힌트 사용)' : q.type === 'spell' ? '금고 다이얼이 맞았어요!'
+    : (v.outcome === 'independent' && t.scoring) ? (t.round === 'review' ? '기억하고 있었네요!' : '단서 확보!') : '맞아요!';
+  $('#fb').innerHTML = `<div class="fb ${right ? 'right' : 'wrong'}"><b>${head}</b>
     <div><span class="big" style="font-size:36px">${esc(c.form)}</span> ${esc(c.meaning)}</div>
     ${q.type === 'cloze' ? `<div class="sent">${esc(r.context)}</div>` : ''}
     <div class="row"><button class="sec" data-act="hear" data-key="${esc(c.id)}">🔊 단어</button>${r.context ? `<button class="sec" data-act="hear" data-key="${esc(c.id)}#s">🔊 문장</button>` : ''}</div></div>
@@ -257,21 +299,31 @@ async function answer(val) {
   say(q.type === 'cloze' && right ? c.id + '#s' : c.id, { ctx: 'fb:' + s.index, force: !right });
 }
 
+// Investigation report. Case progress is a reward layer: derived from records, never written to them.
 function endSession(reason) {
   const s = G.sess; const sum = s.finish(reason); G.view = 'end'; G.engine.stop();
   const p = s.p; p.sessions.push({ day: G.today, ms: Math.round(G.ms), reason, sample: sessionSample(p), newIntroduced: sum.newIntroduced, reviewed: sum.reviewed,
-    independent: sum.independent, hinted: sum.hinted, wrong: sum.wrong, audioFail: sum.audioFail, endedAt: new Date().toISOString() });
+    independent: sum.independent, hinted: sum.hinted, wrong: sum.wrong, audioFail: sum.audioFail, answered: sum.answered, endedAt: new Date().toISOString() });
   delete p.activeSession; save(); G.sync?.flush().catch(() => {}); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none'; hideBannerQuiet();
   const todayIds = new Set(p.log.filter((e) => e.day === G.today && e.type !== 'learn').map((e) => e.card));
   const seen = [...todayIds].map((id) => ({ id, c: s.cat.card(id), r: p.cards[id] })).filter((x) => x.c);
   const lit = seen.filter((x) => x.r.lastOutcome === 'independent' && x.r.lastScoredDay === G.today);
   const again = seen.filter((x) => x.r.lastScoredDay === G.today && x.r.lastOutcome !== 'independent');
-  $('#app').innerHTML = `<h1>${reason === 'time' ? '오늘은 여기까지!' : '오늘 끝!'}</h1>
-  <div class="card"><p>오늘 ${Math.max(1, Math.round(G.ms / 6e4))}분 했어요. 새로 만난 단어 ${sum.newIntroduced}개, 복습 ${sum.reviewed}개.</p>
+  const before = G.casesBefore || {}; const after = allCaseStatus(p); const cs = G.case;
+  const text = (id) => { const pk = p.packs[id]; return (pk.scene && G.scenes[pk.scene]?.case) || {}; };
+  const news = Object.keys(after).map((id) => {
+    const a = after[id], b = before[id] || {}; const tx = text(id); const ttl = esc(tx.title || `'${id}' 사건`);
+    return (a.solved && !b.solved ? `<div class="fb right" data-case="solved"><b>사건 해결! ${ttl}</b><div>${esc(tx.solved || '단서를 모두 모았어요.')}</div></div>` : '')
+      + (a.closed && !b.closed && a.vaultTotal ? `<div class="fb right" data-case="closed"><b>금고 열림! ${ttl}</b><div>${esc(tx.closed || '금고를 열었어요. 사건 종결!')}</div></div>` : ''); }).join('');
+  const rate = G.ms > 0 ? (sum.answered / (G.ms / 6e4)).toFixed(1) : '0';
+  $('#app').innerHTML = `<h1>${reason === 'time' ? '오늘은 여기까지!' : '오늘 수사 끝!'}</h1>
+  <div class="card"><p>오늘 ${Math.max(1, Math.round(G.ms / 6e4))}분 수사했어요. 새로 조사한 단서 ${sum.newIntroduced}개, 다시 확인한 파일 ${sum.reviewed}개.</p>
+  ${cs && after[cs.id] ? `<p id="caseline"><b>${esc(cs.title)}</b> · ${stageLabel(after[cs.id])} · ${caseLine(after[cs.id])}</p>` : ''}${news}
   ${lit.length ? `<p><b>혼자 맞힌 단어</b> (소리 도움을 받은 게임 결과): ${lit.map((x) => esc(x.c.form)).join(', ')}</p>` : ''}
   ${again.length ? `<p><b>내일 다시 볼 단어</b>: ${again.map((x) => esc(x.c.form)).join(', ')}</p>` : ''}
   <p class="mut small">오늘 책을 읽을 때 이 단어들을 찾아보세요${seen.some((x) => x.r.page && !x.r.sample) ? ': ' + seen.filter((x) => x.r.page && !x.r.sample).map((x) => `${esc(x.c.form)} (p.${esc(x.r.page)})`).join(', ') : '.'}</p>
-  ${sum.audioFail ? `<p class="fb wrong small">소리 오류 ${sum.audioFail}번이 기록되었어요(부모 확인용).</p>` : ''}</div>
+  ${sum.audioFail ? `<p class="fb wrong small">소리 오류 ${sum.audioFail}번이 기록되었어요(부모 확인용).</p>` : ''}
+  <p class="mut small">부모 확인용: 응답 ${sum.answered}회 · 분당 ${rate}회</p></div>
   <p class="center"><button data-act="home">처음으로</button></p>`;
   G.sess = null;
 }
@@ -337,7 +389,8 @@ async function onClick(e) {
     case 'parent': return go('#/parent');
     case 'start': return startSession();
     case 'sc-play': return soundCheck();
-    case 'sc-yes': return next();
+    case 'sc-yes': return afterSoundCheck();
+    case 'brief-go': return next();
     case 'sc-no': $('#sc-msg').textContent = '아이패드 옆의 무음 스위치, 볼륨, 블루투스 연결을 확인한 뒤 다시 눌러요.'; return;
     case 'tap-item': return say(b.dataset.id, { force: true });
     case 'hear': return say(b.dataset.key, { force: true });
@@ -354,7 +407,7 @@ async function onClick(e) {
     case 'undo': { if (G.fb) return; const l = G.spell.letters; if (!l.length) return; l.pop(); const i = [...G.spell.used].pop(); G.spell.used.delete(i);
       document.querySelector(`.tile[data-i="${i}"]`).disabled = false; document.querySelectorAll('.slot').forEach((el, j) => { el.textContent = l[j] || ''; }); return; }
     case 'hint': { if (G.fb) return; const h = s.useHint(); b.disabled = true;
-      if (h.hide) document.querySelectorAll('.opt').forEach((o, i) => { if (h.hide.includes(i)) o.classList.add('gone'); });
+      if (h.hide) document.querySelectorAll('.opt').forEach((o) => { if (h.hide.includes(Number(o.dataset.i))) o.classList.add('gone'); });
       if (h.reveal) { const q = s.current.q; G.spell = { letters: [], used: new Set() };
         document.querySelectorAll('.tile').forEach((t) => { t.disabled = false; }); document.querySelectorAll('.slot').forEach((el) => { el.textContent = ''; });
         const idx = q.tiles.findIndex((x) => x.ch === q.target[0]); document.querySelector(`.tile[data-i="${idx}"]`)?.click(); }

@@ -27,9 +27,16 @@ async function gate(page) {
   await page.fill('#gate', String(a + b)); await page.click('[data-act=gate]'); await page.waitForSelector('[data-act=demo]');
 }
 async function loadDemo(page) { await gate(page); await page.click('[data-act=demo]'); await page.waitForSelector('#imp-r .right'); await page.click('#app [data-act=home]'); await page.waitForSelector('.profiles'); }
-async function startAs(page, id) {
-  await page.click(`[data-act=pick][data-id=${id}]`); await page.click('[data-act=start]'); await page.waitForSelector('#sc-yes');
+// Sound check, then the case briefing if this is the first visit to the case.
+async function soundOk(page) {
+  await page.waitForSelector('#sc-yes');
   await page.click('[data-act=sc-play]'); await page.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await page.click('[data-act=sc-yes]');
+  await page.waitForSelector('[data-act=brief-go], [data-act=learn-next], .opt, .tile, #app h1');
+  if (await page.$('[data-act=brief-go]')) { await page.click('[data-act=brief-go]'); return true; }
+  return false;
+}
+async function startAs(page, id) {
+  await page.click(`[data-act=pick][data-id=${id}]`); await page.click('[data-act=start]'); return soundOk(page);
 }
 // Plays through the session. opts: wrongOnce, quick
 async function playAll(page, opts = {}) {
@@ -39,7 +46,7 @@ async function playAll(page, opts = {}) {
     if (await page.$('#app h1')) break;
     if (await page.$('[data-act=learn-next]')) { await page.click('[data-act=learn-next]'); continue; }
     await page.waitForFunction(() => document.querySelector('.opt:not(.locked)') || document.querySelector('.tile:not(.locked)'), null, { timeout: 8000 });
-    const info = await page.evaluate(() => { const t = window.__cu.sess.current; return { type: t.q.type, answer: t.q.answer, target: t.q.target, scoring: t.scoring, card: t.q.cardId, retry: t.retry }; });
+    const info = await page.evaluate(() => { const t = window.__cu.sess.current; return { type: t.q.type, answer: t.q.answer, target: t.q.target, scoring: t.scoring, card: t.q.cardId, retry: t.retry, round: t.round, spot: !!document.querySelector('.opt.spot') }; });
     seen.push(info);
     if (info.type === 'spell') {
       const word = wrong && info.scoring ? 'zzzzz' : info.target; if (wrong && info.scoring) wrong--;
@@ -70,9 +77,12 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   ok('sample flag stored', Object.values(son.cards).every((c) => c.sample));
 
   // 2. session for son with one wrong answer
-  await startAs(page, 'son');
+  const briefed = await startAs(page, 'son');
+  ok('first visit to a case opens with the briefing screen', briefed === true);
   const t0 = Date.now(); const seen = await playAll(page, { wrongOnce: true });
   await page.waitForSelector('#app h1');
+  ok('sound -> object is answered by tapping an object inside the scene', seen.some((s) => s.type === 'sound-pic' && s.spot));
+  ok('report shows case progress: 4 of 9 clues secured after one miss', /수사 중/.test(await page.textContent('#caseline')) && /단서 확보 4\/9/.test(await page.textContent('#caseline')), await page.textContent('#caseline'));
   son = await prof(page, 'son');
   const intro = Object.values(son.cards).filter((c) => c.introduced).length;
   ok('5 new cards introduced (cap)', intro === 5, 'introduced=' + intro);
@@ -82,7 +92,7 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   const good = Object.values(son.cards).filter((c) => c.lastOutcome === 'independent');
   ok('independent correct -> due +1 day, streak 1', good.length === 4 && good.every((c) => c.streak === 1 && c.due === '2026-11-12'));
   ok('log marks sound assistance on every question entry (audio, or none for silent cloze)', son.log.filter((e) => e.type !== 'learn').every((e) => e.assist === 'audio' || e.assist === 'none') && son.log.some((e) => e.assist === 'audio'));
-  ok('session record saved', son.sessions.length === 1 && son.sessions[0].day === '2026-11-11');
+  ok('session record saved, with the number of answers for the per-minute check', son.sessions.length === 1 && son.sessions[0].day === '2026-11-11' && son.sessions[0].answered >= 10, 'answered=' + son.sessions[0].answered);
   const hist = await page.evaluate(() => window.__cu.engine.history.map((e) => e.type + ':' + (e.source || e.reason || '')));
   ok('word audio played from files (not speech)', hist.some((h) => h === 'play:file') && !hist.some((h) => h === 'play:speech'), hist.slice(0, 6).join(','));
 
@@ -104,8 +114,10 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   const p2 = await newPage(browser, ctx, 'today=2026-11-12&seed=5');
   await p2.click('[data-act=pick][data-id=son]');
   const txt = await p2.textContent('.card'); ok('day 2 plan shows 5 reviews + 4 new', /새 단어 4개/.test(txt) && /복습 5개/.test(txt), txt.replace(/\s+/g, ' ').slice(0, 80));
-  await p2.click('[data-act=start]'); await p2.waitForSelector('#sc-yes'); await p2.click('[data-act=sc-play]');
-  await p2.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await p2.click('[data-act=sc-yes]');
+  await p2.click('[data-act=start]'); const briefed2 = await soundOk(p2);
+  ok('briefing is not repeated once the case is under way', briefed2 === false);
+  const order2 = await p2.evaluate(() => window.__cu.sess.tasks.map((t) => (t.kind === 'learn' ? 'L' : t.round === 'review' ? 'R' : 'N')).join(''));
+  ok('day 2 order: new words first, reviews between new-word questions', /^L+NNR/.test(order2) && order2.lastIndexOf('N') > order2.indexOf('R'), order2);
   const seen2 = await playAll(p2);
   const son3 = await prof(p2, 'son');
   ok('day 2 review streak 2 for earlier correct cards', Object.values(son3.cards).filter((c) => c.streak === 2).length >= 3 && Object.values(son3.cards).filter((c) => c.streak === 2).every((c) => c.due === '2026-11-15'));
@@ -114,8 +126,7 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
 
   // 6. audio failure and recovery
   const p3 = await newPage(browser, ctx, 'today=2026-11-11&seed=9');
-  await p3.click('[data-act=pick][data-id=daughter]'); await p3.click('[data-act=start]'); await p3.waitForSelector('#sc-yes');
-  await p3.click('[data-act=sc-play]'); await p3.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await p3.click('[data-act=sc-yes]');
+  await startAs(p3, 'daughter');
   await p3.waitForSelector('#learn-next:not([disabled])');     // card 1 was heard
   await p3.route('**/audio/dev/**', (r) => r.fulfill({ status: 404, body: 'no' }));
   await p3.click('#learn-next');                                // card 2 cannot load its audio
@@ -139,8 +150,7 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   // 7. 15-minute end (virtual time) : speed 900 => 1 real sec = 15 virtual min
   const p4 = await newPage(browser, ctx, 'today=2026-11-20&seed=4&speed=400');
   await gate(p4); await p4.click('[data-act=demo]'); await p4.waitForSelector('#imp-r .right'); await p4.click('#app [data-act=home]');
-  await p4.click('[data-act=pick][data-id=daughter]'); await p4.click('[data-act=start]'); await p4.waitForSelector('#sc-yes');
-  await p4.click('[data-act=sc-play]'); await p4.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await p4.click('[data-act=sc-yes]');
+  await startAs(p4, 'daughter');
   await p4.waitForSelector('[data-act=learn-next]'); await sleep(3500);       // ~23 virtual minutes pass
   await p4.click('[data-act=learn-next]');
   await p4.waitForSelector('#app h1', { timeout: 8000 });
@@ -186,7 +196,7 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   ok('second browser starts with the first one\'s progress', JSON.stringify(ipadSon.cards) === JSON.stringify(macSon.cards) && Object.values(ipadSon.cards).filter((c) => c.streak === 1).length === 5);
   await i1.click('[data-act=pick][data-id=son]'); await i1.waitForSelector('[data-act=start]');
   ok('second browser plans reviews from that progress', /복습 5개/.test(await i1.textContent('.card')), (await i1.textContent('.card')).replace(/\s+/g, ' ').slice(0, 30));
-  await i1.click('[data-act=start]'); await i1.waitForSelector('#sc-yes'); await i1.click('[data-act=sc-play]'); await i1.waitForFunction(() => !document.querySelector('#sc-yes').disabled); await i1.click('[data-act=sc-yes]');
+  await i1.click('[data-act=start]'); await soundOk(i1);
   await playAll(i1); await i1.waitForFunction(() => window.__cu.syncStatus.pending.length === 0, null, { timeout: 8000 });
   await m1.evaluate(() => localStorage.clear());                   // the browser threw its storage away
   await m1.goto(BASE + '?today=2026-12-12&seed=5'); await m1.waitForSelector('.profiles');
@@ -212,6 +222,46 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   ok('without a state API the home screen says device-only', /이 기기만/.test(await m3.textContent('#syncline')), await m3.textContent('#syncline'));
   await m3.close();
   await mac.close(); await ipad.close();
+
+  // 13. the demo case can be played to the end: solved when every clue was recalled, closed when the vault opens
+  const ctx7 = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  const p7 = await newPage(browser, ctx7, 'today=2026-11-11&seed=11'); await loadDemo(p7);
+  let solvedDay = null, closedDay = null, spelled = 0, played = 0;
+  for (let d = 0; d < 16 && !closedDay; d++) {
+    const day = new Date(Date.UTC(2026, 10, 11 + d)).toISOString().slice(0, 10);
+    await p7.goto(BASE + `?today=${day}&seed=${20 + d}&nosync=1`); await p7.waitForSelector('.profiles');
+    await p7.click('[data-act=pick][data-id=son]'); await p7.waitForSelector('[data-act=start]');
+    if (await p7.$eval('[data-act=start]', (b) => b.disabled)) continue;         // nothing due that day
+    await p7.click('[data-act=start]'); await soundOk(p7);
+    const seen7 = await playAll(p7); await p7.waitForSelector('#app h1'); played++;
+    spelled += seen7.filter((x) => x.type === 'spell').length;
+    if (!solvedDay && await p7.$('[data-case=solved]')) solvedDay = day;
+    if (await p7.$('[data-case=closed]')) closedDay = day;
+  }
+  ok('case is solved on the day the last clue is recalled independently (day 2)', solvedDay === '2026-11-12', 'solved=' + solvedDay);
+  ok('vault (spelling, depth 4) closes the case', !!closedDay && spelled >= 3, `closed=${closedDay} sessions=${played} spelled=${spelled}`);
+  const son7 = await prof(p7, 'son');
+  ok('case progress wrote nothing extra into the records', Object.values(son7.cards).every((c) => !('secured' in c) && !('solved' in c)) && !('cases' in son7));
+  await p7.click('#app [data-act=home]'); await p7.waitForSelector('#family');
+  ok('home shows one combined family total and no per-child case score', /해결한 사건 1건 · 확보한 단서 9개/.test(await p7.textContent('#family')) && !/단서|사건/.test(await p7.textContent('.profiles')), await p7.textContent('#family'));
+  await p7.click('[data-act=pick][data-id=son]'); await p7.waitForSelector('[data-act=start]');
+  ok('case file shows the closed case', /사건 종결/.test(await p7.textContent('#app')) && /금고 3\/3/.test(await p7.textContent('#app')));
+  await p7.close(); await ctx7.close();
+
+  // 14. inside the scene, hint and right/wrong marks follow the option index, not the order objects are drawn in
+  const ctx8 = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  const p8 = await newPage(browser, ctx8, 'today=2026-11-11&seed=7'); await loadDemo(p8); await startAs(p8, 'son');
+  while (await p8.$('#learn-next')) { await p8.waitForSelector('#learn-next:not([disabled])'); await p8.click('#learn-next'); await p8.waitForSelector('#learn-next, .opt'); }
+  await p8.waitForSelector('.opt.spot:not(.locked)');
+  const ans8 = await p8.evaluate(() => window.__cu.sess.current.q.answer);
+  await p8.click('#hintbtn');
+  const gone8 = await p8.$$eval('.opt.spot.gone', (els) => els.map((e) => Number(e.dataset.i)));
+  ok('hint in the scene removes two wrong objects and keeps the answer', gone8.length === 2 && !gone8.includes(ans8), 'gone=' + gone8 + ' answer=' + ans8);
+  const wrong8 = [0, 1, 2, 3].find((i) => i !== ans8 && !gone8.includes(i));
+  await p8.click(`.opt.spot[data-i="${wrong8}"]`); await p8.waitForSelector('#qnext');
+  const marks8 = await p8.evaluate(() => ({ right: [...document.querySelectorAll('.opt.right')].map((e) => Number(e.dataset.i)), wrong: [...document.querySelectorAll('.opt.wrong')].map((e) => Number(e.dataset.i)) }));
+  ok('scene marks the correct object and the tapped one', marks8.right.length === 1 && marks8.right[0] === ans8 && marks8.wrong.length === 1 && marks8.wrong[0] === wrong8, JSON.stringify(marks8));
+  await p8.close(); await ctx8.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
