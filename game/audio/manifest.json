@@ -1,0 +1,165 @@
+{
+ "schema": 1,
+ "entries": {
+  "W1559:기본:ghost:1": {
+   "file": "dev/w1559_ghost_1_03348d.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "ghost",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "cbae9ed609d29eb68d9b95161446a30bd80c8dc23afea998f6e5112708e5961c"
+  },
+  "W1559:기본:ghost:1#s": {
+   "file": "dev/w1559_ghost_1_s_b8dc68.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "The ghost said, \"Boo!\"",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "efca438314ae6aefc80ae0064e8c3ba30584e6cbfae2936d5566aab1cd8a28e8"
+  },
+  "W2555:기본:owl:1": {
+   "file": "dev/w2555_owl_1_9c9b94.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "owl",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "21e9f674c04503c0a9802cec141405ccea4cdcf0fd3d7d32b349f4eab7ce3320"
+  },
+  "W2555:기본:owl:1#s": {
+   "file": "dev/w2555_owl_1_s_115639.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "Hoot, hoot! The owl is awake.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "6a73623366a6f847e35926a4680ac51af712ec910741d69ebe100a8da4891d9c"
+  },
+  "W3285:기본:shadow:1": {
+   "file": "dev/w3285_shadow_1_6e645f.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "shadow",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "f1d48bc5bdadfe0341eb418d41efea0f25f70df83a9732ad09334ba13ecc31ad"
+  },
+  "W3285:기본:shadow:1#s": {
+   "file": "dev/w3285_shadow_1_s_d26605.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "On the wall, I saw my own shadow.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "a7aa91add0d6c92eda63bf71e4880860dda541e33f619e09f7c1ac21b5689b78"
+  },
+  "W3506:기본:spider:1": {
+   "file": "dev/w3506_spider_1_b6216c.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "spider",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "0e696cfcc31c67ef20930f3226a8578886d54331aa0dcc9aea9d9e5630b5f22a"
+  },
+  "W3506:기본:spider:1#s": {
+   "file": "dev/w3506_spider_1_s_fe60f6.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "The spider has eight legs.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "9b184b309bb456908bdf735cd1ced4cc4e610ecec2d0b52c0d23a6134742f691"
+  },
+  "W0713:기본:cobweb:1": {
+   "file": "dev/w0713_cobweb_1_6251e8.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "cobweb",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "ddef0336b9d3fbf6b12ccc5bd7bc78e077c6e2246f734cb08eb05679c96c7477"
+  },
+  "W0713:기본:cobweb:1#s": {
+   "file": "dev/w0713_cobweb_1_s_4b76db.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "A fly got stuck in the cobweb.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "16bb8dda6dc8151b9fef4397aa1ac248c1e36f2ff448e25849ee711780d19587"
+  },
+  "W0877:불규칙 과거형:crept:1": {
+   "file": "dev/w0877_crept_1_9708b8.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "crept",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "d1e1ca2d4ec6a97177196c0cd82b3921ea1d5f1bfbf6a32b8b832e5856285cae"
+  },
+  "W0877:불규칙 과거형:crept:1#s": {
+   "file": "dev/w0877_crept_1_s_63ebeb.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "Lena crept into the room very quietly.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "2b2cb2d69ecd76d0d0bb06ed2b56070410bc90dfba09175953273ebf68eff8a0"
+  },
+  "W4197:기본:wind:1": {
+   "file": "dev/w4197_wind_1_819f39.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "wind",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "63ad0d7519143953b19de8d55c1dbe71e72200a506a9680b9377afed86ef89e5"
+  },
+  "W4197:기본:wind:1#s": {
+   "file": "dev/w4197_wind_1_s_ca9bf1.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "The leaves flew away in the strong wind.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "9132dd4e561415f5209e6895b3ff4e8b6860004dc6fef76a5c3dc85eb25d9b6e"
+  },
+  "W4198:기본:window:1": {
+   "file": "dev/w4198_window_1_1b749f.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "window",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "6177395416b94393c9bcd6af68c9b5ab5dc98aea7d8ad64a3f0b12fdbee478e5"
+  },
+  "W4198:기본:window:1#s": {
+   "file": "dev/w4198_window_1_s_e5f07a.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "Lena looked out of the window.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "2024b24959e9ec604cf0ee60c6d37c6c503782b937eaed088d7dc954d98de993"
+  },
+  "B925d069b05d6a3365a": {
+   "file": "dev/b925d069b05d6a3365a_aeed44.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "chandelier",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "8da5756d23b3ee01e9d564bbfd6b2330cb00c16b1ad8a0d10077d28c930191ab"
+  },
+  "B925d069b05d6a3365a#s": {
+   "file": "dev/b925d069b05d6a3365a_s_9ec12c.mp3",
+   "status": "dev_tts",
+   "kind": "sentence",
+   "text": "A shiny chandelier hung from the ceiling.",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "4a956a08e2a9e833efee04537614a9f576ce2203b050802d2e7094ade89177d7"
+  },
+  "W4197:기본:wind:2": {
+   "file": "dev/w4197_wind_2_652bfa.mp3",
+   "status": "dev_tts",
+   "kind": "word",
+   "text": "wind (감다)",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "93c681746ba2a0deb2ad47dc1a5bec2a226f8501cde83b9a4ad9115719a0b484"
+  },
+  "__soundcheck": {
+   "file": "dev/soundcheck_fa5e1d.mp3",
+   "status": "dev_tts",
+   "kind": "system",
+   "text": "Sound check. Can you hear me?",
+   "engine": "ffmpeg flite slt (dev only)",
+   "sha256": "6673e2483003c5523b3a8ed59a955b40ef3762d30c4dbcd49784f96e64a9bbb2"
+  }
+ }
+}

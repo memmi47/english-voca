@@ -1,0 +1,62 @@
+{
+ "haunted-house": {
+  "title": "유령의 집",
+  "sample": true,
+  "items": [
+   {
+    "card": "W1559:기본:ghost:1",
+    "art": "ghost",
+    "x": 20,
+    "y": 38
+   },
+   {
+    "card": "W2555:기본:owl:1",
+    "art": "owl",
+    "x": 78,
+    "y": 20
+   },
+   {
+    "card": "W3285:기본:shadow:1",
+    "art": "shadow",
+    "x": 50,
+    "y": 62
+   },
+   {
+    "card": "W3506:기본:spider:1",
+    "art": "spider",
+    "x": 36,
+    "y": 18
+   },
+   {
+    "card": "W0713:기본:cobweb:1",
+    "art": "cobweb",
+    "x": 88,
+    "y": 52
+   },
+   {
+    "card": "W0877:불규칙 과거형:crept:1",
+    "art": "crept",
+    "x": 12,
+    "y": 72
+   },
+   {
+    "card": "W4197:기본:wind:1",
+    "art": "wind",
+    "x": 64,
+    "y": 40
+   },
+   {
+    "card": "W4198:기본:window:1",
+    "art": "window",
+    "x": 44,
+    "y": 40
+   },
+   {
+    "card": "B925d069b05d6a3365a",
+    "art": "chandelier",
+    "x": 52,
+    "y": 12
+   }
+  ]
+ }
+}
