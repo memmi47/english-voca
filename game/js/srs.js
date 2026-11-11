@@ -17,7 +17,8 @@ export function isLong(tier) { return LONG_TIERS.includes(tier); }
 
 // outcome: 'independent' | 'hinted' | 'wrong'
 // Returns a new record; never mutates. Same card is scored at most once per day.
-export function applyScore(rec, outcome, day, depth) {
+export function applyScore(rec, outcome, day, depth, heard = true) {
+  const origin = heard ? '게임 인출(소리 동반)' : '게임 인출(소리 없음)';
   if (rec.lastScoredDay === day) return { ...rec, changed: false };
   const r = { ...rec, lastScoredDay: day, lastOutcome: outcome, changed: true };
   const long = isLong(rec.tier);
@@ -27,7 +28,7 @@ export function applyScore(rec, outcome, day, depth) {
   }
   if (outcome === 'independent') {
     r.streak = (rec.streak || 0) + 1;
-    r.known = '앎'; r.origin = '게임 인출(소리 동반)';
+    r.known = '앎'; r.origin = origin;
     r.depthDone = Math.max(rec.depthDone || 0, depth);
     r.due = long ? addDays(day, SRS_DAYS[Math.min(r.streak - 1, SRS_DAYS.length - 1)]) : null;
   } else if (outcome === 'hinted') {
@@ -36,7 +37,7 @@ export function applyScore(rec, outcome, day, depth) {
     r.origin = '게임 인출(힌트)';
     r.due = long ? addDays(day, 1) : null;
   } else {
-    r.streak = 0; r.known = '모름'; r.origin = '게임 인출(소리 동반)';
+    r.streak = 0; r.known = '모름'; r.origin = origin;
     r.due = long ? addDays(day, 1) : null;
   }
   return r;

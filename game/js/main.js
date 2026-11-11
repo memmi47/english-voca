@@ -31,10 +31,11 @@ async function boot() {
 }
 
 // ---- timer -------------------------------------------------------------------
+const usedMs = (p) => p.sessions.filter((x) => x.day === G.today).reduce((a, x) => a + x.ms, 0) + (p.activeSession?.day === G.today ? p.activeSession.ms : 0);
 let lastTick = Date.now();
 function tick() {
   const n = Date.now(); const d = Math.min(n - lastTick, 3000); lastTick = n;
-  if (G.sess && !document.hidden && G.view !== 'end') { G.ms += d * SPEED; updateClock(); }
+  if (G.sess && !document.hidden && G.view !== 'end') { const before = Math.floor(G.ms / 15000); G.ms += d * SPEED; updateClock(); if (Math.floor(G.ms / 15000) !== before) save(); }
 }
 const limitMs = () => Math.max(0, G.meta.settings.sessionMinutes * 6e4 - G.usedToday);
 function updateClock() {
@@ -65,19 +66,25 @@ function showBanner(key, mode) {
     <button data-act="retry-audio">다시 듣기</button>${G.sess ? '<button class="ghost" data-act="skip-audio">소리 없이 넘기기(부모)</button>' : ''}`;
 }
 function hideBanner() { $('#banner').hidden = true; G.sess?.audioRecovered(); lock(false); }
-function lock(on) { document.querySelectorAll('.opt,.tile').forEach((b) => b.classList.toggle('locked', on && G.sess?.current?.q?.needsSound)); }
+function lock(on) { document.querySelectorAll('.opt,.tile').forEach((b) => b.classList.toggle('locked', on && !!G.sess?.current?.q?.needsSound)); }
 function textFor(key) { const id = key.split('#')[0]; const c = G.cat.with(G.store.profile(G.pid).localCards).card(id);
   if (!c) return ''; return key.endsWith('#s') ? G.store.profile(G.pid).cards[id]?.context || c.form : c.form; }
 async function say(key, opts = {}) {
   if (!key) return { ok: true };
   const r = await G.engine.play(key, { text: textFor(key), ...opts });
   if (!r.ok && !r.stale) { G.sess?.audioFailed(); showBanner(key); lock(true); }
-  else if (r.ok && !r.deduped) { hideBanner(); }
+  else if (r.ok) {
+    if (!r.deduped) hideBanner();
+    const t = G.sess?.current; if (t?.kind === 'question' && key === (t.q.audioKey || null)) { G.sess.audioPlayed(); lock(false); }
+  }
   return r;
 }
 function setBar(on) { $('#bar').hidden = !on; $('#who').textContent = G.pid ? name(G.pid) : ''; $('#replay').style.display = G.sess ? '' : 'none'; $('#clock').style.display = G.sess ? '' : 'none'; if (!on) hideBannerQuiet(); }
+const sessionSample = (p) => { const ids = [...new Set(p.log.filter((e) => e.day === G.today && e.type !== 'learn').map((e) => e.card))]; return ids.length > 0 && ids.every((i) => p.cards[i]?.sample); };
 function hideBannerQuiet() { $('#banner').hidden = true; }
-function save() { if (!G.store.saveProfile(G.sessProfile)) { const b = $('#banner'); b.hidden = false; b.textContent = '저장에 실패했어요. 부모에게 알려 주세요: ' + G.store.lastError; } }
+function save() {
+  if (G.sess && G.sessProfile) G.sessProfile.activeSession = { day: G.today, ms: Math.round(G.ms), sample: sessionSample(G.sessProfile) };
+  if (!G.store.saveProfile(G.sessProfile)) { const b = $('#banner'); b.hidden = false; b.textContent = '저장에 실패했어요. 부모에게 알려 주세요: ' + G.store.lastError; } }
 
 // ---- routing -----------------------------------------------------------------
 function route() {
@@ -97,7 +104,7 @@ function counts(id) {
     fresh: recs.filter((r) => !r.introduced).length, sample: recs.some((r) => r.sample) };
 }
 function home() {
-  G.view = 'home'; G.sess = null; G.pid = null; setBar(false);
+  G.today = todayISO(); G.view = 'home'; G.sess = null; G.pid = null; setBar(false);
   const c = PROFILES.map(counts); const family = c.reduce((a, x) => a + x.lit, 0);
   $('#app').innerHTML = `<h1>Catch-up 어휘 탐험</h1>
   <p class="mut">누가 할까요?</p>
@@ -109,9 +116,9 @@ function home() {
   ${G.volatile ? '<p class="fb wrong">이 브라우저는 저장을 막고 있어요. 기록이 새로고침 후 사라질 수 있습니다.</p>' : ''}`;
 }
 function profileView(id) {
-  G.pid = id; G.view = 'profile'; G.sessScene = curScene(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none';
+  G.today = todayISO(); G.pid = id; G.view = 'profile'; G.sessScene = curScene(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none';
   const p = G.store.profile(id); const s = G.meta.settings;
-  const usedToday = p.sessions.filter((x) => x.day === G.today).reduce((a, x) => a + x.ms, 0);
+  const usedToday = usedMs(p);
   const plan = planSession({ profile: p, today: G.today, settings: s, catalog: G.cat });
   const left = Math.max(0, s.sessionMinutes * 6e4 - usedToday);
   const empty = !plan.reviews.length && !plan.newIds.length;
@@ -130,9 +137,10 @@ function profileView(id) {
 
 // ---- session -------------------------------------------------------------------
 async function startSession() {
-  const id = G.pid; const p = G.store.profile(id); G.sessProfile = p;
+  G.today = todayISO(); const id = G.pid; const p = G.store.profile(id); G.sessProfile = p;
   const ok = await G.engine.unlock();                     // inside the tap handler
-  G.usedToday = p.sessions.filter((x) => x.day === G.today).reduce((a, x) => a + x.ms, 0);
+  if (p.activeSession) { p.sessions.push({ ...p.activeSession, reason: 'interrupted' }); delete p.activeSession; }
+  G.usedToday = usedMs(p);
   G.ms = 0; lastTick = Date.now();
   const plan = planSession({ profile: p, today: G.today, settings: G.meta.settings, catalog: G.cat });
   const seed = Number(qs.get('seed')) || Math.floor(Math.random() * 1e9);
@@ -198,6 +206,7 @@ function questionView(t) {
       <p class="center"><button class="sec" data-act="undo">지우기</button></p>`; }
   $('#app').innerHTML = `<div class="pill">${lbl}${t.retry ? ' · 다시 도전' : ''}${t.round === 'review' ? ' · 복습' : ''}</div>${body}
     <div id="fb"></div><p class="center"><button class="ghost" data-act="hint" id="hintbtn">힌트 보기</button></p>`;
+  if (q.needsSound) lock(true);
   if (q.autoAudio) say(q.audioKey, { ctx: 'q:' + s.index + ':' + (t.retry ? 'r' : '') });
 }
 async function answer(val) {
@@ -220,16 +229,16 @@ async function answer(val) {
 
 function endSession(reason) {
   const s = G.sess; const sum = s.finish(reason); G.view = 'end'; G.engine.stop();
-  const p = s.p; p.sessions.push({ day: G.today, ms: Math.round(G.ms), reason, sample: Object.values(p.cards).some((c) => c.sample), newIntroduced: sum.newIntroduced, reviewed: sum.reviewed,
+  const p = s.p; p.sessions.push({ day: G.today, ms: Math.round(G.ms), reason, sample: sessionSample(p), newIntroduced: sum.newIntroduced, reviewed: sum.reviewed,
     independent: sum.independent, hinted: sum.hinted, wrong: sum.wrong, audioFail: sum.audioFail, endedAt: new Date().toISOString() });
-  save(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none'; hideBannerQuiet();
+  delete p.activeSession; save(); setBar(true); $('#clock').style.display = 'none'; $('#replay').style.display = 'none'; hideBannerQuiet();
   const todayIds = new Set(p.log.filter((e) => e.day === G.today && e.type !== 'learn').map((e) => e.card));
   const seen = [...todayIds].map((id) => ({ id, c: s.cat.card(id), r: p.cards[id] })).filter((x) => x.c);
   const lit = seen.filter((x) => x.r.lastOutcome === 'independent' && x.r.lastScoredDay === G.today);
   const again = seen.filter((x) => x.r.lastScoredDay === G.today && x.r.lastOutcome !== 'independent');
   $('#app').innerHTML = `<h1>${reason === 'time' ? '오늘은 여기까지!' : '오늘 끝!'}</h1>
   <div class="card"><p>오늘 ${Math.max(1, Math.round(G.ms / 6e4))}분 했어요. 새로 만난 단어 ${sum.newIntroduced}개, 복습 ${sum.reviewed}개.</p>
-  ${lit.length ? `<p><b>혼자 맞힌 단어</b>: ${lit.map((x) => esc(x.c.form)).join(', ')}</p>` : ''}
+  ${lit.length ? `<p><b>혼자 맞힌 단어</b> (소리 도움을 받은 게임 결과): ${lit.map((x) => esc(x.c.form)).join(', ')}</p>` : ''}
   ${again.length ? `<p><b>내일 다시 볼 단어</b>: ${again.map((x) => esc(x.c.form)).join(', ')}</p>` : ''}
   <p class="mut small">오늘 책을 읽을 때 이 단어들을 찾아보세요${seen.some((x) => x.r.page && !x.r.sample) ? ': ' + seen.filter((x) => x.r.page && !x.r.sample).map((x) => `${esc(x.c.form)} (p.${esc(x.r.page)})`).join(', ') : '.'}</p>
   ${sum.audioFail ? `<p class="fb wrong small">소리 오류 ${sum.audioFail}번이 기록되었어요(부모 확인용).</p>` : ''}</div>
@@ -255,14 +264,14 @@ function parent() {
   <div class="card col"><b>내보내기(아이별)</b><div class="row">${PROFILES.map((id) => `<button class="sec" data-act="export" data-id="${id}">${esc(name(id))} JSON</button>`).join('')}</div>
     <p class="small mut">게임 결과는 소리 도움을 받은 결과입니다. 종이 책에서 혼자 읽은 결과와 합치지 마세요.</p></div>
   <div class="card col"><b>설정</b><div class="row"><label>아들 이름 <input id="nm-son" value="${esc(name('son'))}" size="8"></label><label>딸 이름 <input id="nm-daughter" value="${esc(name('daughter'))}" size="8"></label></div>
-    <div class="row"><label>하루 새 단어 <input id="st-new" type="number" min="3" max="10" value="${G.meta.settings.newPerSession}" style="width:70px"></label>
+    <div class="row"><label>한 번에 새 단어 <input id="st-new" type="number" min="3" max="10" value="${G.meta.settings.newPerSession}" style="width:70px"></label>
     <label>복습 상한 <input id="st-rev" type="number" min="5" max="30" value="${G.meta.settings.reviewMax}" style="width:70px"></label>
     <label>하루 분 <input id="st-min" type="number" min="5" max="15" value="${G.meta.settings.sessionMinutes}" style="width:70px"></label></div><button data-act="save-settings">저장</button></div>
   <div class="card col"><b>데모 데이터 삭제</b><div class="row">${PROFILES.map((id) => `<button class="sec" data-act="clear-sample" data-id="${id}">${esc(name(id))} 데모 삭제</button>`).join('')}</div></div>`;
 }
 async function doImport(profile, text, sample) {
   const out = $('#imp-r');
-  try { const rep = G.store.importPack(profile, JSON.parse(text), { sample }); out.innerHTML = `<div class="fb right">완료: 새 카드 ${rep.added}, 갱신 ${rep.updated}, 변경 없음 ${rep.unchanged} (${rep.packs.map((x) => esc(x.book) + ':' + x.status).join(', ')})</div>`; }
+  try { const rep = G.store.importPack(profile, JSON.parse(text), { sample, today: G.today, knownCard: (id) => !!G.cat.card(id) }); out.innerHTML = `<div class="fb right">완료: 새 카드 ${rep.added}, 갱신 ${rep.updated}, 변경 없음 ${rep.unchanged} (${rep.packs.map((x) => esc(x.book) + ':' + x.status).join(', ')})</div>`; }
   catch (e) { out.innerHTML = `<div class="fb wrong">가져오기 실패: ${esc(e.message)}</div>`; }
 }
 function download(name, obj) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 1)], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
@@ -293,7 +302,7 @@ async function selftest() {
 async function onClick(e) {
   const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act; const s = G.sess;
   switch (a) {
-    case 'home': if (s && G.view !== 'end') { s.finish('left'); G.engine.stop(); const p = s.p; p.sessions.push({ day: G.today, ms: Math.round(G.ms), reason: 'left', sample: Object.values(p.cards).some((c) => c.sample) }); save(); G.sess = null; } return go('#/') || home();
+    case 'home': if (s && G.view !== 'end') { s.finish('left'); G.engine.stop(); const p = s.p; p.sessions.push({ day: G.today, ms: Math.round(G.ms), reason: 'left', sample: sessionSample(p) }); delete p.activeSession; save(); G.sess = null; } return go('#/') || home();
     case 'pick': return profileView(b.dataset.id);
     case 'parent': return go('#/parent');
     case 'start': return startSession();
@@ -314,15 +323,18 @@ async function onClick(e) {
       document.querySelector(`.tile[data-i="${i}"]`).disabled = false; document.querySelectorAll('.slot').forEach((el, j) => { el.textContent = l[j] || ''; }); return; }
     case 'hint': { if (G.fb) return; const h = s.useHint(); b.disabled = true;
       if (h.hide) document.querySelectorAll('.opt').forEach((o, i) => { if (h.hide.includes(i)) o.classList.add('gone'); });
-      if (h.reveal) { const q = s.current.q; const first = q.target[0]; const idx = q.tiles.findIndex((x) => x.ch === first); document.querySelector(`.tile[data-i="${idx}"]`)?.click(); }
+      if (h.reveal) { const q = s.current.q; G.spell = { letters: [], used: new Set() };
+        document.querySelectorAll('.tile').forEach((t) => { t.disabled = false; }); document.querySelectorAll('.slot').forEach((el) => { el.textContent = ''; });
+        const idx = q.tiles.findIndex((x) => x.ch === q.target[0]); document.querySelector(`.tile[data-i="${idx}"]`)?.click(); }
       return; }
     case 'q-next': s.advance(); return next();
     case 'gate': if (Number($('#gate').value) === G.gate) { gateOk = true; return parent(); } return alert('다시 계산해 보세요.');
     case 'import': { const f = $('#imp-f').files[0]; const text = f ? await f.text() : $('#imp-t').value; return doImport($('#imp-p').value, text, false); }
-    case 'demo': for (const id of PROFILES) { const r = await fetch(`data/demo_pack_${id}.json`); G.store.importPack(id, await r.json(), { sample: true }); } parent(); $('#imp-r').innerHTML = '<div class="fb right">데모 팩을 불러왔어요(이미 있으면 진도 유지).</div>'; return;
+    case 'demo': for (const id of PROFILES) { const r = await fetch(`data/demo_pack_${id}.json`); G.store.importPack(id, await r.json(), { sample: true, today: G.today, knownCard: (cid) => !!G.cat.card(cid) }); } parent(); $('#imp-r').innerHTML = '<div class="fb right">데모 팩을 불러왔어요(이미 있으면 진도 유지).</div>'; return;
     case 'export': return download(`catchup_${b.dataset.id}_${G.today}.json`, G.store.exportProfile(b.dataset.id));
     case 'save-settings': G.meta.names = { son: $('#nm-son').value || '아들', daughter: $('#nm-daughter').value || '딸' };
-      G.meta.settings = { ...G.meta.settings, newPerSession: Number($('#st-new').value), reviewMax: Number($('#st-rev').value), sessionMinutes: Number($('#st-min').value) };
+      const clamp = (v, a, b, d) => Math.min(b, Math.max(a, Math.round(Number(v)) || d));
+      G.meta.settings = { ...G.meta.settings, newPerSession: clamp($('#st-new').value, 3, 10, 5), reviewMax: clamp($('#st-rev').value, 5, 30, 25), sessionMinutes: clamp($('#st-min').value, 5, 15, 15) };
       G.store.saveMeta(G.meta); return parent();
     case 'clear-sample': if (confirm('데모 데이터를 삭제할까요? 실제 팩과 기록은 그대로 둡니다.')) G.store.clearSample(b.dataset.id); return parent();
     case 'rv': { const nm = $('#rv-name').value.trim(); if (!nm) return alert('검수자 이름을 입력하세요.'); localStorage.setItem('catchup.v1.reviewer', nm);

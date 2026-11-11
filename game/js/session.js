@@ -13,7 +13,9 @@ export function planSession({ profile, today, settings, catalog }) {
   for (const pk of Object.values(profile.packs))
     for (const id of pk.order) {
       const r = recs[id];
-      if (r && !r.introduced && norm(id) && !(r.known === '앎' && !r.inferred)) newPool.push(id);
+      // introduced-but-never-scored cards (left early / skipped) come back as new
+      const unscored = r && r.introduced && !r.lastScoredDay && r.known !== '앎';
+      if (r && (!r.introduced || unscored) && norm(id) && !(r.known === '앎' && !r.inferred && r.introduced == null)) newPool.push(id);
     }
   const newIds = newPool.slice(0, settings.newPerSession);
   return { reviews, newIds, newRemaining: newPool.length - newIds.length, dueTotal: Object.values(recs).filter((r) => isLong(r.tier) && r.introduced && r.due && r.due <= today).length };
@@ -35,7 +37,7 @@ export class Session {
     Object.entries(this.p.cards).filter(([, r]) => r.introduced).forEach(([id]) => add(id));
     if (arr.length < 8) {
       const starters = Object.entries(this.cat.cards).filter(([, c]) => c.s && c.k === 'vocab' && c.m).map(([id]) => id);
-      for (const id of shuffle(starters, this.rng)) { add(id); if (arr.length >= 12) break; }
+      for (const id of shuffle(starters, this.rng)) { add(id); if (arr.length >= 14 && arr.filter((c) => this.hasArt(c)).length >= 6) break; }
     }
     this.pool = arr;
   }
@@ -86,6 +88,7 @@ export class Session {
     if (t.kind === 'question') t.audioFailed = true;
     this.stats.audioFail++; this._issue(t.kind === 'learn' ? t.cardId : (t.q.audioKey || t.q.cardId)); this.onChange();
   }
+  audioPlayed() { const t = this.current; if (t && t.kind === 'question') { t.audioPlayedOk = true; t.audioFailed = false; } }
   audioRecovered() { const t = this.current; if (t && t.kind === 'question') t.audioFailed = false; }
   _issue(key) { this.p.audioIssues.push({ day: this.today, key, sample: !!this.rec(key.split('#')[0])?.sample }); }
 
@@ -93,24 +96,28 @@ export class Session {
   submit(answer) {
     const t = this.current; if (!t || t.kind !== 'question') throw new Error('no question');
     const q = t.q;
-    if (q.needsSound && t.audioFailed) return { blocked: 'audio' };
+    if (q.needsSound && (t.audioFailed || !t.audioPlayedOk)) return { blocked: 'audio' };
     if (t.startMs == null) t.startMs = this.now();
     t.attempts++;
     const correct = q.type === 'spell' ? String(answer).toLowerCase() === q.target : answer === q.answer;
     const r = this.rec(q.cardId); let outcome = null;
     if (t.attempts === 1 && t.scoring) {
       outcome = !correct ? 'wrong' : t.hint ? 'hinted' : 'independent';
-      const { changed, ...next } = applyScore(r, outcome, this.today, q.depth);
+      // Wrong earlier today (e.g. depth 1) then right at depth 2: a recovery, not a pass.
+      if (outcome === 'independent' && r.dayFail === this.today) { outcome = 'hinted'; t.recovered = true; }
+      const { changed, ...next } = applyScore(r, outcome, this.today, q.depth, !!t.audioPlayedOk);
       Object.assign(r, next);
+      Object.assign(r, next);
+      if (outcome === 'wrong') r.dayFail = this.today;
       this.stats[outcome]++; if (t.round === 'review') this.stats.reviewed++;
     } else if (t.retry) { outcome = correct ? 'retry_success' : 'retry_wrong'; if (correct) this.stats.retried++; }
-    else if (t.attempts === 1 && !correct && !t.scoring) { outcome = 'wrong'; this.stats.wrong++; }
+    else if (t.attempts === 1 && !correct && !t.scoring) { outcome = 'wrong'; this.stats.wrong++; r.dayFail = this.today; }
     else if (correct && t.attempts > 1) { outcome = 'retry'; this.stats.retried++; }
     else if (correct) { outcome = t.hint ? 'hinted' : 'independent'; }
     t.firstWrong = t.firstWrong || (t.attempts === 1 && !correct);
-    this._log({ card: q.cardId, type: q.type, depth: q.depth, outcome: outcome || (correct ? 'independent' : 'wrong'),
+    this._log({ card: q.cardId, type: q.type, depth: q.depth, outcome: t.recovered ? 'recovered_same_day' : (outcome || (correct ? 'independent' : 'wrong')),
       attempts: t.attempts, hint: t.hint, audioOk: !t.audioFailed, scoring: t.scoring, round: t.round, ms: this.now() - t.startMs,
-      correct, assist: 'audio', retryTask: t.retry });
+      correct, assist: t.audioPlayedOk ? 'audio' : 'none', retryTask: t.retry });
     if (correct) t.done = true;
     if (!correct && t.attempts === 1) t.done = true;   // answer is revealed; a spaced retry task follows
     this.onChange();
@@ -119,6 +126,7 @@ export class Session {
   // The child could not hear the prompt; parent skips. Not scored.
   skipNoAudio() {
     const t = this.current; if (!t) return;
+    if (t.done) { this.advance(); return; }          // already answered: nothing to skip
     this.stats.skippedNoAudio++;
     this._log({ card: t.q.cardId, type: t.q.type, depth: t.q.depth, outcome: 'skipped_no_audio', scoring: false, audioOk: false, assist: 'none' });
     this.tasks.push({ ...t, attempts: 0, hint: false, hintData: null, startMs: null, audioFailed: false, scoring: false, retry: true });

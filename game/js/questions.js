@@ -16,7 +16,9 @@ export function clozeParts(sentence, form) {
   const m = new RegExp(`(^|[^A-Za-z'])(${esc(form)})(?![A-Za-z])`, 'i').exec(sentence);
   if (!m) return null;
   const start = m.index + m[1].length;
-  return { before: sentence.slice(0, start), word: m[2], after: sentence.slice(start + m[2].length) };
+  // Blank every other occurrence too, otherwise the answer stays visible in the sentence.
+  const mask = (t) => t.replace(new RegExp(`(^|[^A-Za-z'])${esc(form)}(?![A-Za-z])`, 'gi'), (x, a) => a + '____');
+  return { before: mask(sentence.slice(0, start)), word: m[2], after: mask(sentence.slice(start + m[2].length)) };
 }
 export const spellable = (form) => /^[a-z]{2,10}$/i.test(form);
 
@@ -54,9 +56,11 @@ export function makeQuestion({ card, depth, pool, rec, rng, hasArt }) {
   if (d === 1) {
     if (hasArt(card)) {
       const ds = distractors(card, pool, 3, rng, hasArt, true);
+      if (ds.length >= 2) {                    // fewer than 3 pictures would make the answer trivial
       const opts = shuffle([card, ...ds], rng).map((c) => ({ cardId: c.id, kind: 'art' }));
       return { ...base, type: 'sound-pic', audioKey: card.id, autoAudio: true, needsSound: true, options: opts,
         answer: opts.findIndex((o) => o.cardId === card.id) };
+      }
     }
     const ds = distractors(card, pool, 3, rng, () => true, true);
     const opts = shuffle([card, ...ds], rng).map((c) => ({ cardId: c.id, kind: 'text', label: c.meaning }));

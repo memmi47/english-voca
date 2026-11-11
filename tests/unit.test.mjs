@@ -76,6 +76,7 @@ test('full session: wrong first answer is scored wrong, retried later, no double
   while (s.current && guard++ < 200) {
     const t = s.current;
     if (t.kind === 'learn') { s.completeLearn(t.cardId); s.advance(); continue; }
+    s.audioPlayed();
     if (!wrongOnce && t.scoring) { wrongOnce = true; flaggedCard = t.q.cardId; const w = t.q.type === 'spell' ? 'zzz' : (t.q.answer + 1) % t.q.options.length; s.submit(w); }
     const right = t.q.type === 'spell' ? t.q.target : t.q.answer;
     s.submit(right); s.advance();

@@ -31,7 +31,7 @@
  ],
  [
   "PASS",
-  "log has assist=audio on all question entries",
+  "log marks sound assistance on every question entry (audio, or none for silent cloze)",
   ""
  ],
  [
@@ -128,6 +128,16 @@
   "PASS",
   "rapid next x5 -> still consistent",
   "plays/fails=7"
+ ],
+ [
+  "PASS",
+  "reload mid-session keeps used time (left < 15 min)",
+  "left=6"
+ ],
+ [
+  "PASS",
+  "cards introduced in an interrupted session are re-planned (5 new again)",
+  "새 단어 5개 · 복습 0개 장면에 남은 새 단어 4개 · 오늘 남은 시"
  ],
  [
   "PASS",

@@ -29,6 +29,7 @@ async function playAll(page, opts = {}) {
     await page.waitForSelector('#app h1, [data-act=learn-next], .opt, .tile', { timeout: 8000 });
     if (await page.$('#app h1')) break;
     if (await page.$('[data-act=learn-next]')) { await page.click('[data-act=learn-next]'); continue; }
+    await page.waitForFunction(() => document.querySelector('.opt:not(.locked)') || document.querySelector('.tile:not(.locked)'), null, { timeout: 8000 });
     const info = await page.evaluate(() => { const t = window.__cu.sess.current; return { type: t.q.type, answer: t.q.answer, target: t.q.target, scoring: t.scoring, card: t.q.cardId, retry: t.retry }; });
     seen.push(info);
     if (info.type === 'spell') {
@@ -70,7 +71,7 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   ok('wrong first answer -> streak 0, due next day', wrongCards.length === 1 && wrongCards[0].streak === 0 && wrongCards[0].due === '2026-11-12');
   const good = Object.values(son.cards).filter((c) => c.lastOutcome === 'independent');
   ok('independent correct -> due +1 day, streak 1', good.length === 4 && good.every((c) => c.streak === 1 && c.due === '2026-11-12'));
-  ok('log has assist=audio on all question entries', son.log.filter((e) => e.type !== 'learn').every((e) => e.assist === 'audio'));
+  ok('log marks sound assistance on every question entry (audio, or none for silent cloze)', son.log.filter((e) => e.type !== 'learn').every((e) => e.assist === 'audio' || e.assist === 'none') && son.log.some((e) => e.assist === 'audio'));
   ok('session record saved', son.sessions.length === 1 && son.sessions[0].day === '2026-11-11');
   const hist = await page.evaluate(() => window.__cu.engine.history.map((e) => e.type + ':' + (e.source || e.reason || '')));
   ok('word audio played from files (not speech)', hist.some((h) => h === 'play:file') && !hist.some((h) => h === 'play:speech'), hist.slice(0, 6).join(','));
@@ -148,6 +149,17 @@ const prof = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem(
   const hist5 = await p5.evaluate(() => window.__cu.engine.history.filter((e) => e.type === 'play' || e.type === 'fail').length);
   ok('rapid next x5 -> still consistent', await p5.evaluate(() => window.__cu.sess.index) === 5, 'plays/fails=' + hist5);
   await p5.close();
+
+  // 9. reloading mid-session must not reset the daily 15-minute budget
+  const ctx6 = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  const p6 = await newPage(browser, ctx6, 'today=2026-12-05&seed=2&speed=200');
+  await gate(p6); await p6.click('[data-act=demo]'); await p6.waitForSelector('#imp-r .right'); await p6.click('#app [data-act=home]');
+  await startAs(p6, 'son'); await p6.waitForSelector('[data-act=learn-next]'); await sleep(2500);   // ~8 virtual minutes
+  await p6.reload(); await p6.waitForSelector('.profiles'); await p6.click('[data-act=pick][data-id=son]');
+  const left = Number((await p6.textContent('.card')).match(/남은 시간 (\d+)분/)[1]);
+  ok('reload mid-session keeps used time (left < 15 min)', left < 15, 'left=' + left);
+  ok('cards introduced in an interrupted session are re-planned (5 new again)', /새 단어 5개/.test(await p6.textContent('.card')), (await p6.textContent('.card')).replace(/\s+/g, ' ').slice(0, 40));
+  await p6.close(); await ctx6.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close();

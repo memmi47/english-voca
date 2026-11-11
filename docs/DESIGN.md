@@ -46,6 +46,7 @@
 - 원본 `reference/weekly-tool/vocabulary.json`, XLSX는 수정하지 않는다. `tools/build_catalog.py`가 게임용 `game/data/catalog.json`(6,591 카드, 약 1.0MB)을 만든다.
 - 팩은 주간 도구 `/export?profile=...` JSON을 그대로 읽는다 (`approved_packs`, `local_cards`, `card_states`, `reviewed_audio`). 데모 팩 두 개는 같은 형식이며 `_sample: true`로 표시된다.
 - 저장은 브라우저 localStorage, 아이별 키(`catchup.v1.p.son` / `.daughter`)와 공용 설정 키. 가져오기는 병합 전용이다. 팩 지문이 같으면 변경 없음, 다르면 tier·depth·context·page만 갱신하고 진도 필드는 건드리지 않는다. 다른 아이의 파일은 거부한다.
+- 데모(sample)와 실제 팩이 같은 card_id를 쓸 때: 데모는 실제 레코드를 건드리지 않고, 실제 팩은 데모 레코드를 새 기록으로 대체한다. 학습만 하고 채점되지 않은 카드는 다음 세션에서 새 단어로 다시 나온다.
 - 내보내기는 아이별 JSON. `card_states`는 주간 도구와 같은 `[known, origin, due, streak]` 순서이며 데모 카드는 제외한다.
 - 주의: localStorage는 브라우저·기기별이다. Mac과 iPad의 기록은 자동으로 합쳐지지 않는다. 정식 운영 전 "한 기기에서만 진행" 또는 서버 저장 도입을 결정해야 한다 (미결).
 
