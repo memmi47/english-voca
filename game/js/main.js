@@ -315,7 +315,7 @@ function endSession(reason) {
     const a = after[id], b = before[id] || {}; const tx = text(id); const ttl = esc(tx.title || `'${id}' 사건`);
     return (a.solved && !b.solved ? `<div class="fb right" data-case="solved"><b>사건 해결! ${ttl}</b><div>${esc(tx.solved || '단서를 모두 모았어요.')}</div></div>` : '')
       + (a.closed && !b.closed && a.vaultTotal ? `<div class="fb right" data-case="closed"><b>금고 열림! ${ttl}</b><div>${esc(tx.closed || '금고를 열었어요. 사건 종결!')}</div></div>` : ''); }).join('');
-  const rate = G.ms > 0 ? (sum.answered / (G.ms / 6e4)).toFixed(1) : '0';
+  const rate = G.ms >= 6e4 ? `분당 ${(sum.answered / (G.ms / 6e4)).toFixed(1)}회` : '분당 횟수는 1분 이상일 때 표시';
   $('#app').innerHTML = `<h1>${reason === 'time' ? '오늘은 여기까지!' : '오늘 수사 끝!'}</h1>
   <div class="card"><p>오늘 ${Math.max(1, Math.round(G.ms / 6e4))}분 수사했어요. 새로 조사한 단서 ${sum.newIntroduced}개, 다시 확인한 파일 ${sum.reviewed}개.</p>
   ${cs && after[cs.id] ? `<p id="caseline"><b>${esc(cs.title)}</b> · ${stageLabel(after[cs.id])} · ${caseLine(after[cs.id])}</p>` : ''}${news}
@@ -323,7 +323,7 @@ function endSession(reason) {
   ${again.length ? `<p><b>내일 다시 볼 단어</b>: ${again.map((x) => esc(x.c.form)).join(', ')}</p>` : ''}
   <p class="mut small">오늘 책을 읽을 때 이 단어들을 찾아보세요${seen.some((x) => x.r.page && !x.r.sample) ? ': ' + seen.filter((x) => x.r.page && !x.r.sample).map((x) => `${esc(x.c.form)} (p.${esc(x.r.page)})`).join(', ') : '.'}</p>
   ${sum.audioFail ? `<p class="fb wrong small">소리 오류 ${sum.audioFail}번이 기록되었어요(부모 확인용).</p>` : ''}
-  <p class="mut small">부모 확인용: 응답 ${sum.answered}회 · 분당 ${rate}회</p></div>
+  <p class="mut small">부모 확인용: 응답 ${sum.answered}회 · ${rate}</p></div>
   <p class="center"><button data-act="home">처음으로</button></p>`;
   G.sess = null;
 }
