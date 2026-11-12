@@ -17,11 +17,26 @@ python3 tools/serve.py --host 0.0.0.0       # iPad에서: http://Mac의-사설-I
 2. 실제 주차: 주간 도구 `app.py`의 `/export?profile=son` 및 `daughter` JSON을 부모 메뉴에서 아이별로 가져온다.
 3. 날짜 시험용 쿼리: `?today=2026-11-12&seed=3&speed=60`.
 
+## 단어 카드 시제품 (`cards/`)
+
+`game/`과 별개인 플래시카드 시제품이다. 기획은 `docs/PLAN_DB_PROGRAM.md`, 단어는 DB의 P1에서 고른 60개.
+
+```sh
+python3 tools/serve_cards.py                 # http://127.0.0.1:8090
+python3 tools/serve_cards.py --host 0.0.0.0  # iPad에서: http://Mac의-사설-IP:8090
+bash tools/cards_say_audio.sh                # (Mac에서 한 번) say 음성으로 음원 60개 생성. 안 만들면 기기의 시스템 음성으로 읽는다
+```
+
+- 아이 선택 → "1판 시작". 단어와 소리가 나오면 "알아요" 또는 "몰라요". 기록은 그 기기의 브라우저에만 저장된다.
+- 첫 화면의 "부모 기록"에 판별 카드 수, 분당 카드, "알아요" 확인 정답률이 있다.
+- 날짜 시험용 쿼리: `?today=2026-11-13`. 음성을 바꾸려면 `VOICE="Ava (Premium)" bash tools/cards_say_audio.sh`.
+
 ## 테스트
 
 ```sh
-node --test tests/*.test.mjs                 # 규칙·오디오·동기화 단위 테스트
+node --test tests/*.test.mjs                 # 규칙·오디오·동기화·카드 규칙 단위 테스트
 node tests/e2e.cjs                          # Chromium 통합 테스트 (자체 서버를 8078 포트에 띄움, Playwright 필요)
+node tests/cards_e2e.cjs                    # 단어 카드 시제품 통합 테스트 (8091 포트)
 ```
 
 ## 재생성
@@ -30,6 +45,7 @@ node tests/e2e.cjs                          # Chromium 통합 테스트 (자체 
 python3 -I tools/build_catalog.py           # reference 어휘 JSON -> game/data/catalog.json
 python3 -I tools/make_demo.py               # 자작 데모 장면·팩·음원 목록
 python3 -I tools/audio_tool.py build        # 개발용 합성 음원 (status dev_tts)
+python3 -I tools/make_cards_demo.py         # 단어 카드 시제품의 60단어 (cards/data/words.json)
 ```
 
 원본 `index.html`(초기 버전)은 그대로 두었다.

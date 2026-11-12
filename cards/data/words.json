@@ -1,0 +1,545 @@
+{
+ "note": "시제품용 60단어. 원본 DB의 P1에서 선별.",
+ "words": [
+  {
+   "id": "W0122:기본:animal:1",
+   "form": "animal",
+   "ko": "동물",
+   "emoji": "🐾",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "easy"
+  },
+  {
+   "id": "W0488:기본:butterfly:1",
+   "form": "butterfly",
+   "ko": "나비",
+   "emoji": "🦋",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "thing"
+  },
+  {
+   "id": "W0184:기본:arrive:1",
+   "form": "arrive",
+   "ko": "도착하다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W0944:기본:dangerous:1",
+   "form": "dangerous",
+   "ko": "위험한",
+   "emoji": "⚠️",
+   "type": "추상·기능",
+   "theme": "감정·상태·성격",
+   "group": "other"
+  },
+  {
+   "id": "W0349:기본:bird:1",
+   "form": "bird",
+   "ko": "새",
+   "emoji": "🐦",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "easy"
+  },
+  {
+   "id": "W1500:기본:frog:1",
+   "form": "frog",
+   "ko": "개구리",
+   "emoji": "🐸",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "thing"
+  },
+  {
+   "id": "W1462:기본:forget:1",
+   "form": "forget",
+   "ko": "잊다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W1045:기본:difficult:1",
+   "form": "difficult",
+   "ko": "어려운",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "감정·상태·성격",
+   "group": "other"
+  },
+  {
+   "id": "W1794:기본:horse:1",
+   "form": "horse",
+   "ko": "말",
+   "emoji": "🐎",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "easy"
+  },
+  {
+   "id": "W3424:기본:snake:1",
+   "form": "snake",
+   "ko": "뱀",
+   "emoji": "🐍",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "thing"
+  },
+  {
+   "id": "W1850:기본:imagine:1",
+   "form": "imagine",
+   "ko": "상상하다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W1818:기본:hungry:1",
+   "form": "hungry",
+   "ko": "배고픈",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "감정·상태·성격",
+   "group": "other"
+  },
+  {
+   "id": "W1677:기본:hand:1",
+   "form": "hand",
+   "ko": "손",
+   "emoji": "✋",
+   "type": "구체명사",
+   "theme": "몸·건강",
+   "group": "easy"
+  },
+  {
+   "id": "W4202:기본:wing:1",
+   "form": "wing",
+   "ko": "날개",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "동물·곤충",
+   "group": "thing"
+  },
+  {
+   "id": "W2820:기본:pretend:1",
+   "form": "pretend",
+   "ko": "~인 척하다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W3160:기본:safe:1",
+   "form": "safe",
+   "ko": "안전한",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "감정·상태·성격",
+   "group": "other"
+  },
+  {
+   "id": "W1103:기본:door:1",
+   "form": "door",
+   "ko": "문",
+   "emoji": "🚪",
+   "type": "구체명사",
+   "theme": "집·가구·생활용품",
+   "group": "easy"
+  },
+  {
+   "id": "W1394:기본:finger:1",
+   "form": "finger",
+   "ko": "손가락",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "몸·건강",
+   "group": "thing"
+  },
+  {
+   "id": "W2865:기본:protect:1",
+   "form": "protect",
+   "ko": "보호하다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W3626:기본:strong:1",
+   "form": "strong",
+   "ko": "강한",
+   "emoji": "💪",
+   "type": "추상·기능",
+   "theme": "감정·상태·성격",
+   "group": "other"
+  },
+  {
+   "id": "W1171:기본:eat:1",
+   "form": "eat",
+   "ko": "먹다",
+   "emoji": "🍽️",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "easy"
+  },
+  {
+   "id": "W2008:기본:knee:1",
+   "form": "knee",
+   "ko": "무릎",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "몸·건강",
+   "group": "thing"
+  },
+  {
+   "id": "W2878:기본:pull:1",
+   "form": "pull",
+   "ko": "당기다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W1338:기본:famous:1",
+   "form": "famous",
+   "ko": "유명한",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "관계·평가·특성",
+   "group": "other"
+  },
+  {
+   "id": "W3359:기본:sing:1",
+   "form": "sing",
+   "ko": "노래하다",
+   "emoji": "🎤",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "easy"
+  },
+  {
+   "id": "W3318:기본:shoulder:1",
+   "form": "shoulder",
+   "ko": "어깨",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "몸·건강",
+   "group": "thing"
+  },
+  {
+   "id": "W2895:기본:push:1",
+   "form": "push",
+   "ko": "밀다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W1722:기본:heavy:1",
+   "form": "heavy",
+   "ko": "무거운",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "관계·평가·특성",
+   "group": "other"
+  },
+  {
+   "id": "W3709:기본:swim:1",
+   "form": "swim",
+   "ko": "수영하다",
+   "emoji": "🏊",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "easy"
+  },
+  {
+   "id": "W4085:기본:voice:1",
+   "form": "voice",
+   "ko": "목소리",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "몸·건강",
+   "group": "thing"
+  },
+  {
+   "id": "W3025:기본:remember:1",
+   "form": "remember",
+   "ko": "기억하다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W2910:기본:quiet:1",
+   "form": "quiet",
+   "ko": "조용한",
+   "emoji": "🤫",
+   "type": "추상·기능",
+   "theme": "색·감각·재질",
+   "group": "other"
+  },
+  {
+   "id": "W1337:기본:family:1",
+   "form": "family",
+   "ko": "가족",
+   "emoji": "👨‍👩‍👧",
+   "type": "추상·기능",
+   "theme": "가족·사람·관계",
+   "group": "easy"
+  },
+  {
+   "id": "W0699:기본:clothes:1",
+   "form": "clothes",
+   "ko": "옷",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "옷·차림",
+   "group": "thing"
+  },
+  {
+   "id": "W3319:기본:shout:1",
+   "form": "shout",
+   "ko": "소리치다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "action"
+  },
+  {
+   "id": "W0097:기본:already:1",
+   "form": "already",
+   "ko": "이미",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "빈도·시간·정도",
+   "group": "other"
+  },
+  {
+   "id": "W1687:기본:happy:1",
+   "form": "happy",
+   "ko": "행복한",
+   "emoji": "😀",
+   "type": "추상·기능",
+   "theme": "감정·상태·성격",
+   "group": "easy"
+  },
+  {
+   "id": "W0425:기본:bread:1",
+   "form": "bread",
+   "ko": "빵",
+   "emoji": "🍞",
+   "type": "구체명사",
+   "theme": "음식·식사",
+   "group": "thing"
+  },
+  {
+   "id": "W0429:기본:breathe:1",
+   "form": "breathe",
+   "ko": "숨 쉬다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "이야기 행동·움직임",
+   "group": "action"
+  },
+  {
+   "id": "W0542:기본:carefully:1",
+   "form": "carefully",
+   "ko": "조심스럽게",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "빈도·시간·정도",
+   "group": "other"
+  },
+  {
+   "id": "W3209:기본:school:1",
+   "form": "school",
+   "ko": "학교",
+   "emoji": "🏫",
+   "type": "추상·기능",
+   "theme": "학교·책·수업",
+   "group": "easy"
+  },
+  {
+   "id": "W0427:기본:breakfast:1",
+   "form": "breakfast",
+   "ko": "아침 식사",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "음식·식사",
+   "group": "thing"
+  },
+  {
+   "id": "W1563:기본:giggle:1",
+   "form": "giggle",
+   "ko": "킥킥 웃다",
+   "emoji": "🤭",
+   "type": "동작",
+   "theme": "이야기 행동·움직임",
+   "group": "action"
+  },
+  {
+   "id": "W4265:기본:yesterday:1",
+   "form": "yesterday",
+   "ko": "어제",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "빈도·시간·정도",
+   "group": "other"
+  },
+  {
+   "id": "W2330:기본:morning:1",
+   "form": "morning",
+   "ko": "아침",
+   "emoji": "🌅",
+   "type": "추상·기능",
+   "theme": "시간·수·측정",
+   "group": "easy"
+  },
+  {
+   "id": "W0621:기본:cheese:1",
+   "form": "cheese",
+   "ko": "치즈",
+   "emoji": "🧀",
+   "type": "구체명사",
+   "theme": "음식·식사",
+   "group": "thing"
+  },
+  {
+   "id": "W2640:기본:peek:1",
+   "form": "peek",
+   "ko": "살짝 엿보다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "이야기 행동·움직임",
+   "group": "action"
+  },
+  {
+   "id": "W0558:기본:castle:1",
+   "form": "castle",
+   "ko": "성",
+   "emoji": "🏰",
+   "type": "구체명사",
+   "theme": "장소·지역·건물",
+   "group": "thing"
+  },
+  {
+   "id": "W2367:기본:music:1",
+   "form": "music",
+   "ko": "음악",
+   "emoji": "🎵",
+   "type": "추상·기능",
+   "theme": "학교·책·수업",
+   "group": "easy"
+  },
+  {
+   "id": "W4070:기본:village:1",
+   "form": "village",
+   "ko": "마을",
+   "emoji": "🏘️",
+   "type": "구체명사",
+   "theme": "장소·지역·건물",
+   "group": "thing"
+  },
+  {
+   "id": "W1532:기본:garden:1",
+   "form": "garden",
+   "ko": "정원",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "집·가구·생활용품",
+   "group": "thing"
+  },
+  {
+   "id": "W2003:기본:kitchen:1",
+   "form": "kitchen",
+   "ko": "부엌",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "집·가구·생활용품",
+   "group": "thing"
+  },
+  {
+   "id": "W1567:기본:give:1",
+   "form": "give",
+   "ko": "주다",
+   "emoji": "",
+   "type": "동작",
+   "theme": "기본 행동",
+   "group": "easy"
+  },
+  {
+   "id": "W2743:기본:pocket:1",
+   "form": "pocket",
+   "ko": "주머니",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "집·가구·생활용품",
+   "group": "thing"
+  },
+  {
+   "id": "W3124:기본:rope:1",
+   "form": "rope",
+   "ko": "밧줄",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "집·가구·생활용품",
+   "group": "thing"
+  },
+  {
+   "id": "W4160:기본:wheel:1",
+   "form": "wheel",
+   "ko": "바퀴",
+   "emoji": "",
+   "type": "구체명사",
+   "theme": "집·가구·생활용품",
+   "group": "thing"
+  },
+  {
+   "id": "W0065:기본:again:1",
+   "form": "again",
+   "ko": "다시",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "빈도·시간·정도",
+   "group": "easy"
+  },
+  {
+   "id": "W1461:기본:forest:1",
+   "form": "forest",
+   "ko": "숲",
+   "emoji": "🌲",
+   "type": "추상·기능",
+   "theme": "식물·자연·날씨",
+   "group": "thing"
+  },
+  {
+   "id": "W1931:기본:island:1",
+   "form": "island",
+   "ko": "섬",
+   "emoji": "🏝️",
+   "type": "추상·기능",
+   "theme": "식물·자연·날씨",
+   "group": "thing"
+  },
+  {
+   "id": "W2435:기본:noise:1",
+   "form": "noise",
+   "ko": "소음",
+   "emoji": "",
+   "type": "추상·기능",
+   "theme": "식물·자연·날씨",
+   "group": "thing"
+  }
+ ]
+}
