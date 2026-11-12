@@ -58,7 +58,7 @@ def main():
     print('# 세계 설계 dry-run\n')
     print('재현: `python3 -I tools/audit_world_design.py > docs/research/world_design_dry_run.md`. 출력만 하는 읽기 전용 검사이며 세계 생성기가 아니다.\n')
     print('원본 SHA-256: `' + hashlib.sha256(SOURCE.read_bytes()).hexdigest() + '`\n')
-    print('> 이 1절의 독립 품사 길·mixed 안은 이전 설계 이력이다. 현행은 WORLD_SCHEMA v2의 연결 그래프와 world_map_routes.md를 따른다. 표현·팔레트 집계는 계속 참고한다.\n')
+    print('> 이 1절의 독립 품사 길·mixed 안은 이전 설계 이력이다. 현행은 WORLD_SCHEMA v3의 불규칙 연결 그래프와 world_map_routes.md를 따른다. 표현·팔레트 집계는 계속 참고한다.\n')
     print('## 1. 품사 쏠림과 길 대안 (이전 안)\n')
     print('[verified] 명시한 정렬·임시 품사 규칙을 실제 DB에 적용한 결과. [estimate] 품사는 lemma.pos 첫 항목이며 첫 뜻의 품사 검수가 아니다. 마지막 집단의 주제 순환도 적용했다. 칸 수는 충돌 분리 전 최소치다.\n')
     print('원안은 명사 70장 초과 시 두 길로 나눈다. 수정안은 모든 순수 품사 길이 21~70장이면 유지하고, 아니면 같은 세계의 빈도순 단어를 세 길에 번갈아 넣어 균등한 mixed 길로 만든다. 세계 사이 이동은 없다.\n')

@@ -4,7 +4,7 @@
 
 원본 SHA-256: `38b97c372feb8585eed6b9458194294039b4f8a62990ed44b6dfffb91e123130`
 
-> 이 1절의 독립 품사 길·mixed 안은 이전 설계 이력이다. 현행은 WORLD_SCHEMA v2의 연결 그래프와 world_map_routes.md를 따른다. 표현·팔레트 집계는 계속 참고한다.
+> 이 1절의 독립 품사 길·mixed 안은 이전 설계 이력이다. 현행은 WORLD_SCHEMA v3의 불규칙 연결 그래프와 world_map_routes.md를 따른다. 표현·팔레트 집계는 계속 참고한다.
 
 ## 1. 품사 쏠림과 길 대안 (이전 안)
 
