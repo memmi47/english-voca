@@ -55,29 +55,32 @@ export function verifyRate(state) {
 }
 
 // What one run draws: due cards first by date, then words not seen yet in deck order.
-export function planRun(state, words, today, cfg = CFG) {
-  const due = [], retry = [], fresh = [];
+// scope (optional, from the map): { newIds: only these words may be new, newPerRun, duePerRun, noNew }
+export function planRun(state, words, today, cfg = CFG, scope = {}) {
+  const only = scope.newIds ? new Set(scope.newIds) : null; const due = [], retry = [], fresh = [];
   for (const w of words) {
     const r = state.words[w.id];
-    if (!r) { fresh.push(w.id); continue; }
+    if (!r) { if (!only || only.has(w.id)) fresh.push(w.id); continue; }
     if (r.lastDay === today || !r.due || r.due > today) continue;      // scored at most once a day
-    if (r.st === 'learn') retry.push(w.id); else if (r.st === 'review' || r.st === 'likely') due.push(w.id);
+    if (r.st === 'learn') { if (!only || only.has(w.id)) retry.push(w.id); } else if (r.st === 'review' || r.st === 'likely') due.push(w.id);
   }
   due.sort((a, b) => state.words[a].due.localeCompare(state.words[b].due));
-  const news = retry.concat(fresh).slice(0, cfg.newPerRun);
-  return { due: due.slice(0, cfg.reviewPerRun), news, dueLeft: Math.max(0, due.length - cfg.reviewPerRun),
-    newLeft: retry.length + fresh.length - news.length };
+  const newCap = scope.noNew ? 0 : scope.newPerRun ?? cfg.newPerRun, dueCap = scope.duePerRun ?? cfg.reviewPerRun;
+  const news = retry.concat(fresh).slice(0, newCap);
+  return { due: due.slice(0, dueCap), news, dueLeft: Math.max(0, due.length - dueCap), newLeft: retry.length + fresh.length - news.length };
 }
 
 export class Run {
-  constructor({ state, words, today, rng, now = () => Date.now(), cfg = CFG, boss = null }) {
+  // scope: see planRun; scope.castle = [ids] makes a check-only run over those words. items: { shield, flame } for this run only.
+  constructor({ state, words, today, rng, now = () => Date.now(), cfg = CFG, boss = null, scope = {}, items = {}, tag = null }) {
     this.s = state; this.words = words; this.byId = Object.fromEntries(words.map((w) => [w.id, w]));
     this.today = today; this.rng = rng; this.now = now; this.cfg = cfg;
     this.boss = boss || { idx: 0, hp: cfg.bossHp, defeated: 0 };
+    this.scope = scope; this.items = { shield: items.shield || 0, flame: !!items.flame }; this.shieldUsed = 0; this.tag = tag;
     this.combo = 0; this.i = 0; this.t0 = null; this.startedAt = now(); this.ended = null;
-    this.stats = { cards: 0, claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, ms: 0 };
+    this.stats = { cards: 0, claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, ms: 0, stars: 0, castleOk: 0, castleMiss: 0 };
     this.changed = [];                                   // [{id, from, to}] grade changes in this run
-    const plan = planRun(state, words, today, cfg); this.plan = plan;
+    const plan = planRun(state, words, today, cfg, scope); this.plan = plan;
     // A new word, then up to two due cards, so reviews space out the new words.
     const q = []; const due = plan.due.slice();
     const dueItem = (id) => { const r = state.words[id];
@@ -85,6 +88,7 @@ export class Run {
     // A word that was not learned on an earlier day comes back as a check card (role 'retry'), never as self-judgement.
     for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : { id, role: 'new', form: 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
     while (due.length) q.push(dueItem(due.shift()));
+    if (scope.castle) { this.queue = shuffle(scope.castle, rng).map((id) => ({ id, role: 'castle', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     this.queue = q;
   }
   get current() { return this.ended ? null : this.queue[this.i] || null; }
@@ -134,13 +138,15 @@ export class Run {
     else if (it.role === 'review') { this.stats.reviews++; this.stats.reviewOk++;
       g = r.step >= INTERVALS.length - 1 ? this._set(it.id, { st: 'done', due: null }) : this._set(it.id, { step: r.step + 1, due: addDays(t, INTERVALS[r.step + 1]) }); }
     else if ((it.role === 'relearn' && it.final) || it.role === 'retry') { this.stats.learned++; g = this._set(it.id, { st: 'review', step: 0, due: addDays(t, INTERVALS[0]) }); }
+    if (it.role === 'castle') this.stats.castleOk++;
     this.combo++;
-    let dmg = verified ? 3 : 1; if (this.combo >= 5) dmg++;
-    return this._done(it, { ok: true, verified, dmg, grade: g });
+    let dmg = verified ? 3 : 1; if (this.combo >= 5) dmg++; if (this.items.flame) dmg *= 2;
+    const stars = it.role === 'relearn' || it.role === 'practice' ? 0 : it.form === 'check' || verified ? 3 : 1; this.stats.stars += stars;
+    return this._done(it, { ok: true, verified, dmg, grade: g, stars });
   }
   _miss(it, { said, picked }) {
     const r = this._rec(it.id); const t = this.today; let g = null;
-    if (said === 'wrong') this.combo = 0;               // a wrong pick breaks the combo; an honest "몰라요" does not
+    if (said === 'wrong') { if (this.items.shield > 0) { this.items.shield--; this.shieldUsed++; } else this.combo = 0; }   // a wrong pick breaks the combo (a shield absorbs one); an honest "몰라요" does not
     if (it.role === 'new' || it.role === 'likely' || it.role === 'retry') {
       if (it.role === 'new') { this.stats.fresh++; this.stats.unknown++; } else if (it.role === 'likely') { this.stats.reviews++; this.stats.lapses++; }
       g = this._set(it.id, { st: 'learn', due: addDays(t, 1), lapses: (r?.lapses || 0) + (it.role === 'likely' ? 1 : 0) });
@@ -152,6 +158,8 @@ export class Run {
       this._insert(Math.min(this.i + 4, this.queue.length), { id: it.id, role: 'practice', form: 'judge' });
     } else if (it.role === 'relearn' && it.final) {
       g = this._set(it.id, { st: 'learn', due: addDays(t, 1) });         // not learned today: comes back as a new card tomorrow
+    } else if (it.role === 'castle') {
+      this.stats.castleMiss++; g = this._set(it.id, { st: 'learn', due: addDays(t, 1) });   // a failed exam card is not known: back as a check card tomorrow
     }
     return this._done(it, { ok: false, said, picked, dmg: 0, grade: g });
   }
@@ -179,7 +187,7 @@ export class Run {
   finish(reason = 'done') {
     if (this.ended) return this.ended;
     const n = this.s.runs.filter((r) => r.day === this.today).length + 1;
-    this.ended = { day: this.today, n, reason, ...this.stats, wall: this.now() - this.startedAt, changed: this.changed.length, endedAt: new Date(this.now()).toISOString() };
+    this.ended = { day: this.today, n, reason, tag: this.tag, shieldBack: this.items.shield, ...this.stats, wall: this.now() - this.startedAt, changed: this.changed.length, endedAt: new Date(this.now()).toISOString() };
     this.s.runs.push(this.ended);
     return this.ended;
   }
