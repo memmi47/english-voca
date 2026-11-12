@@ -44,8 +44,21 @@ while e or hard:
     for _ in range(3):
         if hard: order.append(hard.pop(0))
 assert len(order) == 60 and len({w['id'] for w in order}) == 60
+# World map: three roads of two tiles each, then the castle. Words are assigned so every tile mixes known and unknown words.
+by = {w['form']: w['id'] for w in order}
+def ids(forms): return [by[f] for f in forms]
+easy, things, acts, others = EASY, THINGS, ACTIONS, OTHERS
+ROADS = [
+    ('A', '물건·자연 길', '🌲', [things[:11], things[11:]]),
+    ('B', '행동 길', '🏃', [acts[:6] + easy[:3], acts[6:] + easy[3:6]]),
+    ('C', '느낌·모양 길', '🌈', [others[:6] + easy[6:10], others[6:] + easy[10:]]),
+]
+world = {'id': 'w1', 'title': '단어 마을', 'castleNeeds': 2, 'roads': [
+    {'id': rid, 'name': nm, 'icon': ic, 'tiles': [{'id': f'{rid}{i + 1}', 'words': ids(fs)} for i, fs in enumerate(tiles)]} for rid, nm, ic, tiles in ROADS]}
+used = [w for r in world['roads'] for t in r['tiles'] for w in t['words']]
+assert sorted(used) == sorted(w['id'] for w in order), 'every word belongs to exactly one tile'
 out = ROOT / 'cards/data'; out.mkdir(parents=True, exist_ok=True)
-(out / 'words.json').write_text(json.dumps({'note': '시제품용 60단어. 원본 DB의 P1에서 선별.', 'words': order}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
+(out / 'words.json').write_text(json.dumps({'note': '시제품용 60단어. 원본 DB의 P1에서 선별.', 'world': world, 'words': order}, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
 aud = ROOT / 'cards/audio'; aud.mkdir(parents=True, exist_ok=True)
 (aud / 'words.tsv').write_text(''.join(f"{i:02d}\t{w['id']}\t{w['form']}\n" for i, w in enumerate(order)), encoding='utf-8')
 print('cards deck written:', len(order), 'words;', sum(1 for w in order if w['emoji']), 'with emoji')

@@ -3,8 +3,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS } from '../cards/js/deck.js';
+import { ensureMap, mapView, nodeRun, settleRun, chooseBag, takeBag, dueCount, Lightning, settleLightning, MONSTER_AT, ITEMS } from '../cards/js/map.js';
 
-const WORDS = JSON.parse(fs.readFileSync('cards/data/words.json', 'utf8')).words;
+const DATA = JSON.parse(fs.readFileSync('cards/data/words.json', 'utf8')); const WORDS = DATA.words; const WORLD = DATA.world;
 const D1 = '2026-11-12';
 const mk = (state, today = D1, opt = {}) => new Run({ state, words: WORDS, today, rng: opt.rng || mulberry32(opt.seed || 1), now: opt.now, cfg: { ...CFG, ...(opt.cfg || {}) } });
 // Plays a run. knows(id) -> does the child really know the word; claim(id) -> what the child says on a judge card.
@@ -136,4 +137,122 @@ test('K12: run record keeps the numbers the gate needs (cards, time, claims, ver
   assert.equal(s.runs.length, 1); assert.equal(rec.n, 1); assert.equal(rec.cards, run.queue.length);
   assert.ok(rec.ms > 0 && rec.fresh === 7 && rec.known + rec.unknown === 7);
   assert.ok(s.log.every((e) => e.day === D1 && typeof e.ms === 'number'));
+});
+
+// ---- map ----
+const TILE = (id) => WORLD.roads.flatMap((r) => r.tiles).find((t) => t.id === id);
+const mkRun = (state, node, today = D1, seed = 3) => new Run({ state, words: WORDS, today, rng: mulberry32(seed), scope: node.scope, items: node.items || {}, tag: node.tag });
+function clear(state, tileId, today = D1) {              // child plays a tile honestly and knows everything
+  const node = nodeRun(WORLD, mapView(WORLD, state, today), tileId, state, WORDS, mulberry32(1)); assert.ok(node, 'tile open: ' + tileId);
+  const run = mkRun(state, node, today); play(run, () => true); const rec = run.finish(); return settleRun(WORLD, state, node, run, rec, today, mulberry32(2));
+}
+
+test('M1: world has 3 roads x 2 tiles, every deck word in exactly one tile', () => {
+  assert.equal(WORLD.roads.length, 3); const all = WORLD.roads.flatMap((r) => r.tiles.flatMap((t) => t.words));
+  assert.equal(all.length, 60); assert.equal(new Set(all).size, 60); assert.ok(WORLD.roads.every((r) => r.tiles.length === 2));
+});
+
+test('M2: first tile of each road is open, second is locked until the first is cleared; castle is locked', () => {
+  const s = newState('son'); const v = mapView(WORLD, s, D1);
+  assert.deepEqual(v.roads.map((r) => r.tiles.map((t) => t.status)), [['open', 'locked'], ['open', 'locked'], ['open', 'locked']]);
+  assert.equal(v.castle.status, 'locked'); assert.equal(v.monster.present, false); assert.equal(v.bonus.status, 'locked');
+  assert.equal(nodeRun(WORLD, v, 'A2', s, WORDS, mulberry32(1)), null);
+  clear(s, 'A1'); assert.equal(mapView(WORLD, s, D1).roads[0].tiles[1].status, 'open');
+});
+
+test('M3: a tile run introduces exactly that tile\'s words; clearing needs every word seen; stars are counted', () => {
+  const s = newState('son'); const node = nodeRun(WORLD, mapView(WORLD, s, D1), 'B1', s, WORDS, mulberry32(1));
+  assert.equal(node.scope.newIds.length, 9);
+  const r = clear(s, 'B1'); const seen = Object.keys(s.words);
+  assert.deepEqual(new Set(seen), new Set(TILE('B1').words)); assert.equal(r.cleared, true); assert.ok(r.stars > 0);
+  assert.equal(ensureMap(s).stars, r.stars); assert.equal(ensureMap(s).cleared.B1, D1);
+});
+
+test('M4: an early exit leaves the tile uncleared; the unseen words are drawn again next time', () => {
+  const s = newState('son'); const node = nodeRun(WORLD, mapView(WORLD, s, D1), 'A1', s, WORDS, mulberry32(1));
+  const run = mkRun(s, node); const it = run.show(); run.judge(true); run.advance(); const rec = run.finish('left');
+  const r = settleRun(WORLD, s, node, run, rec, D1, mulberry32(2));
+  assert.equal(r.cleared, false); assert.equal(mapView(WORLD, s, D1).roads[0].tiles[0].status, 'open');
+  const again = nodeRun(WORLD, mapView(WORLD, s, addDays(D1, 1)), 'A1', s, WORDS, mulberry32(1));
+  assert.equal(again.scope.newIds.length, 11);
+});
+
+test('M5: 8 or more due reviews put a monster on the map: tiles are blocked until it is beaten; it drops an item', () => {
+  const s = newState('son'); clear(s, 'A1'); clear(s, 'B1');
+  const d = addDays(D1, 8); assert.ok(dueCount(s, d) >= MONSTER_AT, 'due=' + dueCount(s, d));
+  let v = mapView(WORLD, s, d); assert.equal(v.monster.present, true);
+  assert.ok(v.roads.every((r) => r.tiles.every((t) => t.status !== 'open')));
+  assert.equal(nodeRun(WORLD, v, 'A2', s, WORDS, mulberry32(1)), null);
+  const node = nodeRun(WORLD, v, 'monster', s, WORDS, mulberry32(1)); assert.deepEqual([node.scope.noNew, node.kind], [true, 'monster']);
+  const run = mkRun(s, node, d); assert.ok(run.queue.every((q) => q.role === 'likely' || q.role === 'review'));
+  play(run, () => true); const rec = run.finish(); const r = settleRun(WORLD, s, node, run, rec, d, mulberry32(2));
+  assert.deepEqual([r.cleared, r.mult], [true, 2]); assert.ok(['shield', 'flame'].includes(r.item));
+  assert.equal(mapView(WORLD, s, d).monster.present, false); assert.ok(mapView(WORLD, s, d).roads[0].tiles[1].status === 'open');
+});
+
+test('M6: the castle opens after two roads; it is a check-only run; passing gives a key; leftover road tiles become bonus', () => {
+  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id);
+  let v = mapView(WORLD, s, D1); assert.equal(v.roadsDone, 2); assert.equal(v.castle.status, 'open');
+  assert.equal(v.roads[2].tiles[0].bonus, false);
+  const node = nodeRun(WORLD, v, 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
+  assert.ok(run.queue.length === 12 && run.queue.every((q) => q.role === 'castle' && q.form === 'check'));
+  play(run, () => true); const rec = run.finish(); const r = settleRun(WORLD, s, node, run, rec, D1, mulberry32(2));
+  assert.deepEqual([r.key, r.castle.pass, r.castle.ok, r.castle.total], [true, true, 12, 12]);
+  v = mapView(WORLD, s, D1); assert.equal(v.castle.status, 'cleared'); assert.equal(v.keys, 1);
+  assert.deepEqual(v.roads[2].tiles.map((t) => t.bonus), [true, true]);
+  const bonus = clear(s, 'C1'); assert.equal(bonus.mult, 2);
+});
+
+test('M7: a failed castle card is not known: it goes back to learning, due tomorrow; below 80% gives no key', () => {
+  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id);
+  const node = nodeRun(WORLD, mapView(WORLD, s, D1), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
+  const missed = []; let n = 0;
+  while (run.current) { const it = run.show(); const ans = it.options.findIndex((o) => o.id === it.id); const miss = n++ < 4; if (miss) missed.push(it.id); run.pick(miss ? (ans + 1) % 3 : ans); run.advance(); }
+  const rec = run.finish(); const r = settleRun(WORLD, s, node, run, rec, D1, mulberry32(2));
+  assert.deepEqual([r.key, r.castle.pass, r.castle.ok], [false, false, 8]);
+  for (const id of missed) assert.deepEqual([s.words[id].st, s.words[id].due], ['learn', addDays(D1, 1)]);
+  assert.equal(mapView(WORLD, s, D1).castle.status, 'open');                       // can try again
+});
+
+test('M8: items: shield absorbs one wrong check and comes back if unused; flame doubles boss damage; both come from the bag only', () => {
+  const s = newState('son'); const m = ensureMap(s); m.items.shield = 1; m.items.flame = 1;
+  assert.equal(chooseBag(s, 'shield'), 'shield'); assert.equal(chooseBag(s, 'shield'), null); chooseBag(s, 'shield');
+  const used = takeBag(s); assert.deepEqual([used.shield, m.items.shield, m.bag], [1, 0, null]);
+  // two due words -> two check cards (a "likely" word is always checked)
+  const [a, b] = WORDS.slice(0, 2).map((w) => w.id);
+  for (const id of [a, b]) s.words[id] = { st: 'likely', lstep: 0, due: D1, firstDay: '2026-11-05', lastDay: '2026-11-05', lapses: 0 };
+  const node = { kind: 'monster', tag: 'monster', scope: { noNew: true, duePerRun: 14 } };
+  const run = mkRun(s, { ...node, items: used }); run.combo = 4;
+  let it = run.show(); assert.equal(it.form, 'check');
+  const wrong = (x) => (x.options.findIndex((o) => o.id === x.id) + 1) % 3;
+  run.pick(wrong(it)); assert.deepEqual([run.combo, run.items.shield, run.shieldUsed], [4, 0, 1]);   // the shield took the hit
+  run.advance(); it = run.show(); run.pick(wrong(it)); assert.equal(run.combo, 0);                    // no shield left
+  // an unused shield returns to the bag's stock when the run is settled
+  const s3 = newState('son'); ensureMap(s3).items.shield = 1; chooseBag(s3, 'shield'); const kept = takeBag(s3);
+  const n3 = nodeRun(WORLD, mapView(WORLD, s3, D1), 'A1', s3, WORDS, mulberry32(1)); const r3 = mkRun(s3, { ...n3, items: kept }); r3.finish('left');
+  settleRun(WORLD, s3, n3, r3, r3.ended, D1, mulberry32(2)); assert.equal(s3.map.items.shield, 1);
+  // flame doubles damage
+  const s2 = newState('son'); ensureMap(s2).items.flame = 1; chooseBag(s2, 'flame'); const it3 = takeBag(s2);
+  const n2 = nodeRun(WORLD, mapView(WORLD, s2, D1), 'A1', s2, WORDS, mulberry32(1)); const r2 = mkRun(s2, { ...n2, items: it3 }); r2.show(); r2.judge(true);
+  assert.equal(r2.boss.hp, CFG.bossHp - 2);                                      // 1 damage doubled
+  assert.equal(chooseBag(s2, 'shield'), null);                                   // no shield to choose
+});
+
+test('M9: nothing on the map changes a word\'s schedule; the lightning round touches no word', () => {
+  const s = newState('son'); for (const id of ['A1', 'B1']) clear(s, id);
+  const before = JSON.stringify(s.words); const d = addDays(D1, 8);
+  const lt = new Lightning({ state: s, words: WORDS, rng: mulberry32(4) }); assert.ok(lt.ready);
+  for (let k = 0; k < 20; k++) { const c = lt.next(); lt.answer(c.truth); }
+  assert.equal(lt.score, 20); assert.equal(JSON.stringify(s.words), before);
+  const lt2 = new Lightning({ state: s, words: WORDS, rng: mulberry32(5) }); const c = lt2.next(); assert.equal(lt2.answer(!c.truth), false);
+  const r = settleLightning(s, lt, d); assert.deepEqual([r.first, r.newBest, ensureMap(s).best], [true, true, 20]); assert.ok(r.item);
+  assert.equal(settleLightning(s, lt2, d).item, null);                           // one item a day
+  assert.equal(JSON.stringify(s.words), before); assert.equal(mapView(WORLD, s, d).bonus.status, 'used');
+});
+
+test('M10: the bonus house stays locked until 6 words are ripe; false pairs never show the right meaning', () => {
+  const s = newState('son'); assert.equal(mapView(WORLD, s, D1).bonus.status, 'locked');
+  clear(s, 'A1'); assert.equal(mapView(WORLD, s, D1).bonus.status, 'open');
+  const lt = new Lightning({ state: s, words: WORDS, rng: mulberry32(9) });
+  for (let k = 0; k < 40; k++) { const c = lt.next(); const w = WORDS.find((x) => x.id === c.id); assert.equal(c.ko === w.ko, c.truth); }
 });

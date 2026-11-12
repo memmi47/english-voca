@@ -1,5 +1,123 @@
 {
  "note": "시제품용 60단어. 원본 DB의 P1에서 선별.",
+ "world": {
+  "id": "w1",
+  "title": "단어 마을",
+  "castleNeeds": 2,
+  "roads": [
+   {
+    "id": "A",
+    "name": "물건·자연 길",
+    "icon": "🌲",
+    "tiles": [
+     {
+      "id": "A1",
+      "words": [
+       "W0488:기본:butterfly:1",
+       "W1500:기본:frog:1",
+       "W3424:기본:snake:1",
+       "W4202:기본:wing:1",
+       "W1394:기본:finger:1",
+       "W2008:기본:knee:1",
+       "W3318:기본:shoulder:1",
+       "W4085:기본:voice:1",
+       "W0699:기본:clothes:1",
+       "W0425:기본:bread:1",
+       "W0427:기본:breakfast:1"
+      ]
+     },
+     {
+      "id": "A2",
+      "words": [
+       "W0621:기본:cheese:1",
+       "W0558:기본:castle:1",
+       "W4070:기본:village:1",
+       "W1532:기본:garden:1",
+       "W2003:기본:kitchen:1",
+       "W2743:기본:pocket:1",
+       "W3124:기본:rope:1",
+       "W4160:기본:wheel:1",
+       "W1461:기본:forest:1",
+       "W1931:기본:island:1",
+       "W2435:기본:noise:1"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "B",
+    "name": "행동 길",
+    "icon": "🏃",
+    "tiles": [
+     {
+      "id": "B1",
+      "words": [
+       "W0184:기본:arrive:1",
+       "W1462:기본:forget:1",
+       "W1850:기본:imagine:1",
+       "W2820:기본:pretend:1",
+       "W2865:기본:protect:1",
+       "W2878:기본:pull:1",
+       "W0122:기본:animal:1",
+       "W0349:기본:bird:1",
+       "W1794:기본:horse:1"
+      ]
+     },
+     {
+      "id": "B2",
+      "words": [
+       "W2895:기본:push:1",
+       "W3025:기본:remember:1",
+       "W3319:기본:shout:1",
+       "W0429:기본:breathe:1",
+       "W1563:기본:giggle:1",
+       "W2640:기본:peek:1",
+       "W1677:기본:hand:1",
+       "W1103:기본:door:1",
+       "W1171:기본:eat:1"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "C",
+    "name": "느낌·모양 길",
+    "icon": "🌈",
+    "tiles": [
+     {
+      "id": "C1",
+      "words": [
+       "W0944:기본:dangerous:1",
+       "W1045:기본:difficult:1",
+       "W1818:기본:hungry:1",
+       "W3160:기본:safe:1",
+       "W3626:기본:strong:1",
+       "W1338:기본:famous:1",
+       "W3359:기본:sing:1",
+       "W3709:기본:swim:1",
+       "W1337:기본:family:1",
+       "W1687:기본:happy:1"
+      ]
+     },
+     {
+      "id": "C2",
+      "words": [
+       "W1722:기본:heavy:1",
+       "W2910:기본:quiet:1",
+       "W0097:기본:already:1",
+       "W0542:기본:carefully:1",
+       "W4265:기본:yesterday:1",
+       "W3209:기본:school:1",
+       "W2330:기본:morning:1",
+       "W2367:기본:music:1",
+       "W1567:기본:give:1",
+       "W0065:기본:again:1"
+      ]
+     }
+    ]
+   }
+  ]
+ },
  "words": [
   {
    "id": "W0122:기본:animal:1",
