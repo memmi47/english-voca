@@ -1,7 +1,7 @@
 // Flashcard prototype: screens. Rules live in deck.js, audio in sound.js.
 import { Run, newState, planRun, gradeOf, gradeCounts, mulberry32, CFG } from './deck.js';
 import { Sound } from './sound.js';
-import { ensureMap, mapView, nodeRun, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, MONSTER_AT, CASTLE_PASS } from './map.js';
+import { ensureMap, dueCount, mapView, nodeRun, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, MONSTER_AT, CASTLE_PASS } from './map.js';
 import { Sync } from './sync.js';
 
 const qs = new URLSearchParams(location.search);
@@ -75,9 +75,9 @@ function home() {
   <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}">${esc(name(id))}</button>`).join('')}</div>
   <p><button class="link" data-act="parent">부모 기록</button></p><p class="mut small" id="syncline">${esc(syncLine())}</p></div>`;
 }
-const POS = { start: [7, 50], monster: [18, 50], A1: [32, 18], A2: [50, 18], B1: [32, 50], B2: [50, 50], C1: [32, 82], C2: [50, 82], bonus: [68, 20], castle: [84, 50] };
+const POS = { start: [7, 50], monster: [18, 50], A1: [32, 18], A2: [50, 18], B1: [32, 50], B2: [50, 50], C1: [32, 82], C2: [50, 82], bonus: [68, 20], bat: [68, 80], castle: [84, 50] };
 const LINES = [['start', 'A1'], ['A1', 'A2'], ['A2', 'castle'], ['start', 'B1'], ['B1', 'B2'], ['B2', 'castle'], ['start', 'C1'], ['C1', 'C2'], ['C2', 'castle']];
-const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '몬스터가 길을 막고 있어요. 먼저 물리쳐요', castleLocked: '두 길을 모두 깨면 성이 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요' };
+const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '박쥐 떼가 몰려왔어요! 먼저 쫓아내요 🦇', castleLocked: '두 길을 모두 깨면 성이 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요' };
 function today(id, msg = '') {
   G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; hideBanner(); clearTimeout(G.timer);
   const st = G.st; const m = ensureMap(st); const v = mapView(G.world, st, todayISO()); const c = gradeCounts(st, G.words);
@@ -88,13 +88,15 @@ function today(id, msg = '') {
   const lines = LINES.map(([a, b]) => `<line x1="${POS[a][0]}" y1="${POS[a][1]}" x2="${POS[b][0]}" y2="${POS[b][1]}"/>`).join('');
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
   <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip">⭐ ${v.stars}</span><span class="chip">🔑 ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span></div>
+  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 가득 차면 박쥐 시험!"><span>🦇</span><div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
   <div class="world" id="world"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>
     <div class="node start" style="left:${POS.start[0]}%;top:${POS.start[1]}%">${pimg('🚩', 56)}<span class="lbl">출발</span></div>
     ${tiles.join('')}
     ${v.monster.present ? node('monster', '👾', `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
+    ${v.bat.full ? node('bat', '🦇', '박쥐 시험', 'open', 'mon') : ''}
     ${node('bonus', '🏡', '보너스 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}
     ${node('castle', '🏰', v.worldDone ? '클리어!' : '성', v.castle.status)}</div>
-  <p class="msg" id="msg">${esc(msg || (v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터부터 물리쳐요!` : '가고 싶은 길을 골라요'))}</p>
+  <p class="msg" id="msg">${esc(msg || (v.bat.full ? '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요 🦇' : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'))}</p>
   <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${pimg(it.emoji, 40)}<b>×${m.items[k]}</b></button>`).join('')}
     <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '다음 판에 쓸 아이템을 골라요'}</span></div>
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
@@ -104,6 +106,8 @@ function today(id, msg = '') {
 }
 function nodeClick(id) {
   const st = G.st; const v = mapView(G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
+  if (id === 'bat') return v.bat.full ? start('bat') : out('박쥐 게이지가 아직 안 찼어요');
+  if (v.bat.full) return out(MSG.blocked);                  // a full gauge: the test comes first
   if (id === 'bonus') { if (v.bonus.status === 'open') return startLightning(); return out(v.bonus.status === 'used' ? MSG.used : MSG.bonusLocked); }
   if (id === 'castle' && v.castle.status === 'locked') return out(MSG.castleLocked);
   if (id === 'castle' && v.castle.status === 'cleared') return out('이 성은 이미 깼어요. 🔑');
@@ -136,7 +140,7 @@ function paintHud() {
   $('#combo').textContent = (G.run.items.shield ? '🍄 ' : '') + (G.run.items.flame ? '🌸 ' : '') + (G.run.combo >= 2 ? `연속 ${G.run.combo}` : ''); $('#combo').classList.toggle('hot', G.run.combo >= 5);
   $('#left').textContent = `남은 카드 ${G.run.left}`;
 }
-const TAG = { castle: '성 시험', new: '새 카드', review: '다시 만난 카드', likely: '다시 만난 카드', relearn: '방금 배운 카드', practice: '한 번 더', retry: '다시 도전' };
+const TAG = { castle: '박쥐·성 시험', new: '새 카드', review: '다시 만난 카드', likely: '다시 만난 카드', relearn: '방금 배운 카드', practice: '한 번 더', retry: '다시 도전' };
 function front(it, w, extra = '') {
   const g = gradeOf(G.st.words[w.id]);
   $('#card').className = `card g${g}`;
@@ -199,15 +203,17 @@ function endRun(reason) {
   clearTimeout(G.timer); G.sound.stop(); const run = G.run; const node = G.node; const rec = run.finish(reason); G.boss = { ...run.boss, day: todayISO(), pid: G.pid };
   const rw = settleRun(G.world, G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); save(); G.sync?.flush().catch(() => {});
   G.view = 'end'; hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from);
-  const title = { tile: rw.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.cleared ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: rw.key ? '성을 깼어요!' : '성 시험 결과' }[node.kind];
-  const lines = [`<div class="gain">⭐ +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`];
+  const title = { tile: rw.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.cleared ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: rw.key ? '성을 깼어요!' : '성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요' }[node.kind];
+  const lines = rw.stars > 0 ? [`<div class="gain">⭐ +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
   if (rw.item) lines.push(`<div class="gain">${pimg(ITEMS[rw.item].emoji, 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
   if (rw.key) lines.push('<div class="gain">🔑 열쇠를 얻었어요</div>');
+  if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${Math.round(rw.bat.acc * 100)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
+  if (rw.batFull && node.kind !== 'bat') lines.push('<div class="gain bat">🦇 박쥐 게이지가 가득 찼어요!</div>');
   if (rw.castle && !rw.key) lines.push(`<p class="mut">${rw.castle.ok}/${rw.castle.total}장 맞혔어요. ${Math.round(CASTLE_PASS * 100)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
   $('#app').innerHTML = `<div class="page center"><h1 class="title">${title}</h1>${lines.join('')}
   <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>${rec.bosses}</b><span>잡은 보스</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
-  <button class="go" data-act="today">▶ 지도로</button></div>`;
+  <button class="go" data-act="${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? 'bat-go' : 'today'}">${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '🦇 박쥐 시험' : '▶ 지도로'}</button>${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
   G.run = null; G.node = null;
 }
 
@@ -249,7 +255,7 @@ function parent() {
   G.view = 'parent'; hideBanner(); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs;
     const tot = R.reduce((a, r) => ({ cards: a.cards + r.cards, wall: a.wall + r.wall, claims: a.claims + r.claims, v: a.v + r.verifies, vok: a.vok + r.verifyOk }), { cards: 0, wall: 0, claims: 0, v: 0, vok: 0 });
-    return `<h2>${esc(name(id))}</h2><p class="small">별 ${ensureMap(st).stars} · 열쇠 ${ensureMap(st).keys} · 깬 칸 ${Object.keys(ensureMap(st).cleared).length}/6 · 번개 최고 ${ensureMap(st).best} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${R.length}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v})</p>
+    return `<h2>${esc(name(id))}</h2><p class="small">별 ${ensureMap(st).stars} · 열쇠 ${ensureMap(st).keys} · 깬 칸 ${Object.keys(ensureMap(st).cleared).length}/6 · 번개 최고 ${ensureMap(st).best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${ensureMap(st).bat.fill}/${ensureMap(st).bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${R.length}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v})</p>
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
     ${R.map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${r.tag || '-'}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
       <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>
@@ -268,6 +274,7 @@ async function onClick(e) {
     case 'pick': return openProfile(b.dataset.id);
     case 'today': return today(G.pid);
     case 'node': return nodeClick(b.dataset.id);
+    case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
     case 'lt-yes': return ltAnswer(true);
     case 'lt-no': return ltAnswer(false);

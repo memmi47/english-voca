@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS } from '../cards/js/deck.js';
-import { ensureMap, mapView, nodeRun, settleRun, chooseBag, takeBag, dueCount, Lightning, settleLightning, MONSTER_AT, ITEMS } from '../cards/js/map.js';
+import { ensureMap, mapView, nodeRun, settleRun, chooseBag, takeBag, dueCount, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT } from '../cards/js/map.js';
 
 const DATA = JSON.parse(fs.readFileSync('cards/data/words.json', 'utf8')); const WORDS = DATA.words; const WORLD = DATA.world;
 const D1 = '2026-11-12';
@@ -147,6 +147,14 @@ function clear(state, tileId, today = D1) {              // child plays a tile h
   const run = mkRun(state, node, today); play(run, () => true); const rec = run.finish(); return settleRun(WORLD, state, node, run, rec, today, mulberry32(2));
 }
 
+// The child takes the bat test; knows(id) decides which cards are answered correctly.
+function batTest(state, today, knows = () => true, reason = 'done') {
+  const node = nodeRun(WORLD, mapView(WORLD, state, today), 'bat', state, WORDS, mulberry32(7)); assert.ok(node, 'bat test available');
+  const run = mkRun(state, node, today); let n = 0;
+  while (run.current && (reason === 'done' || n++ < 2)) { const it = run.show(); const ans = it.options.findIndex((o) => o.id === it.id); run.pick(knows(it.id) || it.role === 'practice' ? ans : (ans + 1) % 3); run.advance(); }
+  const rec = run.finish(reason); return { run, rec, out: settleRun(WORLD, state, node, run, rec, today, mulberry32(2)), node };
+}
+
 test('M1: world has 3 roads x 2 tiles, every deck word in exactly one tile', () => {
   assert.equal(WORLD.roads.length, 3); const all = WORLD.roads.flatMap((r) => r.tiles.flatMap((t) => t.words));
   assert.equal(all.length, 60); assert.equal(new Set(all).size, 60); assert.ok(WORLD.roads.every((r) => r.tiles.length === 2));
@@ -177,23 +185,25 @@ test('M4: an early exit leaves the tile uncleared; the unseen words are drawn ag
   assert.equal(again.scope.newIds.length, 11);
 });
 
-test('M5: 8 or more due reviews put a monster on the map: tiles are blocked until it is beaten; it drops an item', () => {
+test('M5: 8 or more due reviews put an optional monster on the map: it no longer blocks; beating it drops an item', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'B1');
   const d = addDays(D1, 8); assert.ok(dueCount(s, d) >= MONSTER_AT, 'due=' + dueCount(s, d));
   let v = mapView(WORLD, s, d); assert.equal(v.monster.present, true);
-  assert.ok(v.roads.every((r) => r.tiles.every((t) => t.status !== 'open')));
-  assert.equal(nodeRun(WORLD, v, 'A2', s, WORDS, mulberry32(1)), null);
+  assert.ok(v.roads[0].tiles[1].status === 'open', 'the road is still open');
+  assert.ok(nodeRun(WORLD, v, 'A2', s, WORDS, mulberry32(1)), 'a new tile can start with the monster standing');
   const node = nodeRun(WORLD, v, 'monster', s, WORDS, mulberry32(1)); assert.deepEqual([node.scope.noNew, node.kind], [true, 'monster']);
   const run = mkRun(s, node, d); assert.ok(run.queue.every((q) => q.role === 'likely' || q.role === 'review'));
   play(run, () => true); const rec = run.finish(); const r = settleRun(WORLD, s, node, run, rec, d, mulberry32(2));
   assert.deepEqual([r.cleared, r.mult], [true, 2]); assert.ok(['shield', 'flame'].includes(r.item));
-  assert.equal(mapView(WORLD, s, d).monster.present, false); assert.ok(mapView(WORLD, s, d).roads[0].tiles[1].status === 'open');
+  assert.equal(mapView(WORLD, s, d).monster.present, false);
 });
 
-test('M6: the castle opens after two roads; it is a check-only run; passing gives a key; leftover road tiles become bonus', () => {
+test('M6: four tiles fill the bat gauge; after the bat test the castle opens: check-only run, key, leftover road is bonus', () => {
   const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id);
-  let v = mapView(WORLD, s, D1); assert.equal(v.roadsDone, 2); assert.equal(v.castle.status, 'open');
-  assert.equal(v.roads[2].tiles[0].bonus, false);
+  let v = mapView(WORLD, s, D1); assert.equal(v.roadsDone, 2); assert.equal(v.bat.full, true); assert.equal(v.castle.status, 'blocked');
+  assert.equal(nodeRun(WORLD, v, 'castle', s, WORDS, mulberry32(1)), null);
+  batTest(s, D1);
+  v = mapView(WORLD, s, D1); assert.equal(v.castle.status, 'open'); assert.equal(v.roads[2].tiles[0].bonus, false);
   const node = nodeRun(WORLD, v, 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
   assert.ok(run.queue.length === 12 && run.queue.every((q) => q.role === 'castle' && q.form === 'check'));
   play(run, () => true); const rec = run.finish(); const r = settleRun(WORLD, s, node, run, rec, D1, mulberry32(2));
@@ -204,7 +214,7 @@ test('M6: the castle opens after two roads; it is a check-only run; passing give
 });
 
 test('M7: a failed castle card is not known: it goes back to learning, due tomorrow; below 80% gives no key', () => {
-  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id);
+  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id); batTest(s, D1);
   const node = nodeRun(WORLD, mapView(WORLD, s, D1), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
   const missed = []; let n = 0;
   while (run.current) { const it = run.show(); const ans = it.options.findIndex((o) => o.id === it.id); const miss = n++ < 4; if (miss) missed.push(it.id); run.pick(miss ? (ans + 1) % 3 : ans); run.advance(); }
@@ -255,4 +265,59 @@ test('M10: the bonus house stays locked until 6 words are ripe; false pairs neve
   clear(s, 'A1'); assert.equal(mapView(WORLD, s, D1).bonus.status, 'open');
   const lt = new Lightning({ state: s, words: WORDS, rng: mulberry32(9) });
   for (let k = 0; k < 40; k++) { const c = lt.next(); const w = WORDS.find((x) => x.id === c.id); assert.equal(c.ko === w.ko, c.truth); }
+});
+
+// ---- bat gauge ----
+test('G1: the gauge gains 1 per new word and loses 1 per review answered, never below 0', () => {
+  const s = newState('son'); assert.deepEqual([ensureMap(s).bat.fill, ensureMap(s).bat.cap], [0, BAT.cap]);
+  clear(s, 'A1'); assert.equal(s.map.bat.fill, 11); assert.equal(s.map.bat.met.length, 11);
+  const d = addDays(D1, 8); assert.ok(dueCount(s, d) >= 3);
+  const node = nodeRun(WORLD, mapView(WORLD, s, d), 'monster', s, WORDS, mulberry32(1)); const run = mkRun(s, node, d); play(run, () => true);
+  const rec = run.finish(); settleRun(WORLD, s, node, run, rec, d, mulberry32(2));
+  assert.equal(s.map.bat.fill, Math.max(0, 11 - rec.reviews)); assert.ok(s.map.bat.fill < 11);
+  const s2 = newState('son'); ensureMap(s2).bat.fill = 0; const n2 = { kind: 'monster', tag: 'monster', scope: { noNew: true } };
+  const r2 = mkRun(s2, n2); r2.finish(); settleRun(WORLD, s2, n2, r2, { ...r2.ended, reviews: 5, fresh: 0 }, D1, mulberry32(2)); assert.equal(s2.map.bat.fill, 0);
+});
+
+test('G2: a full gauge stops everything but the bat test; with nothing to ask it is not "full"', () => {
+  const s = newState('son'); clear(s, 'A1'); clear(s, 'A2'); clear(s, 'B1'); assert.equal(mapView(WORLD, s, D1).bat.full, false);
+  clear(s, 'B2'); const v = mapView(WORLD, s, D1); assert.deepEqual([v.bat.fill, v.bat.cap, v.bat.full], [40, 40, true]);
+  assert.ok(v.roads.flatMap((r) => r.tiles).filter((t) => !t.cleared && t.status !== 'locked').every((t) => t.status === 'blocked'));
+  for (const id of ['C1', 'castle', 'monster']) assert.equal(nodeRun(WORLD, v, id, s, WORDS, mulberry32(1)), null, id);
+  assert.ok(nodeRun(WORLD, v, 'bat', s, WORDS, mulberry32(1)));
+  const empty = newState('son'); ensureMap(empty).bat.fill = 99; assert.equal(mapView(WORLD, empty, D1).bat.full, false);   // gauge full but no word to ask about
+});
+
+test('G3: the bat test asks overdue reviews first (oldest first), then words met since the last test; all check cards, 25 at most', () => {
+  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id);
+  const d = addDays(D1, 8);                                                       // the known words of day 1 are due again after 7 days
+  const pool = batPool(s, d); assert.ok(pool.due.length > 0 && pool.due.length + pool.fresh.length <= BAT.test);
+  const dues = pool.due.map((id) => s.words[id].due); assert.deepEqual(dues, [...dues].sort());
+  const node = nodeRun(WORLD, mapView(WORLD, s, d), 'bat', s, WORDS, mulberry32(1)); const run = mkRun(s, node, d);
+  assert.ok(run.queue.length <= BAT.test && run.queue.every((q) => q.form === 'check')); assert.ok(run.queue.slice(0, pool.due.length).every((q) => q.role === 'review' || q.role === 'likely'));
+  const fresh = batPool(s, D1); assert.equal(fresh.due.length, 0); assert.equal(fresh.fresh.length, BAT.test);   // day 1: nothing due, so it asks about words met today
+});
+
+test('G4: the test result moves the capacity (90%+ up, under 70% down, bounded); the gauge empties; leaving keeps it full', () => {
+  const fill = (s) => { for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id); };
+  const hi = newState('son'); fill(hi); const r1 = batTest(hi, D1, () => true);
+  assert.deepEqual([r1.out.bat.done, r1.out.bat.acc, hi.map.bat.cap, hi.map.bat.fill, hi.map.bat.met.length], [true, 1, BAT.cap + BAT.step, 0, 0]);
+  assert.equal(r1.out.stars, 0);                                                 // the forced test pays no stars
+  const lo = newState('son'); fill(lo); const r2 = batTest(lo, D1, () => false);
+  assert.ok(r2.out.bat.acc < BAT.down); assert.equal(lo.map.bat.cap, BAT.cap - BAT.step); assert.equal(lo.map.bat.fill, 0);
+  const mid = newState('son'); fill(mid); let k = 0; batTest(mid, D1, () => k++ % 5 !== 0);                  // 80% right
+  assert.equal(mid.map.bat.cap, BAT.cap);
+  const top = newState('son'); fill(top); top.map.bat.cap = BAT.max; top.map.bat.fill = BAT.max; batTest(top, D1, () => true); assert.equal(top.map.bat.cap, BAT.max);
+  const bot = newState('son'); fill(bot); bot.map.bat.cap = BAT.min; ensureMap(bot).bat.fill = BAT.min + 5; batTest(bot, D1, () => false); assert.equal(bot.map.bat.cap, BAT.min);
+  const left = newState('son'); fill(left); const r3 = batTest(left, D1, () => true, 'left');
+  assert.equal(r3.out.bat.done, false); assert.equal(mapView(WORLD, left, D1).bat.full, true); assert.equal(left.map.bat.cap, BAT.cap);
+});
+
+test('G5: a miss in the bat test follows the normal rules: overdue word back to tomorrow, new word back to learning', () => {
+  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id); const d = addDays(D1, 8);
+  const node = nodeRun(WORLD, mapView(WORLD, s, d), 'bat', s, WORDS, mulberry32(1)); const run = mkRun(s, node, d);
+  const dueIds = batPool(s, d).due; assert.ok(dueIds.length > 0); const was = Object.fromEntries(dueIds.map((id) => [id, s.words[id].st]));
+  while (run.current) { const it = run.show(); if (it.form === 'judge') run.judge(true); else { const ans = it.options.findIndex((o) => o.id === it.id); run.pick((ans + 1) % 3); } run.advance(); if (run.i > 400) break; }   // a miss adds "once more" cards, so the queue grows
+  for (const id of dueIds) assert.deepEqual([s.words[id].st, s.words[id].due], [was[id] === 'likely' ? 'learn' : 'review', addDays(d, 1)]);   // a missed "likely" word is not known after all
+  const freshIds = node.scope.bat.fresh; for (const id of freshIds) assert.equal(s.words[id].st, 'learn');
 });

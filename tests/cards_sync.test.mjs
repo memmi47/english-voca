@@ -109,3 +109,11 @@ test('S9: the second child\'s document is separate; names sync through meta', as
   const ipad = device(srv); await ipad.sync.init();
   assert.deepEqual(get(ipad, 'meta').names, { son: '민수', daughter: '지수' }); assert.equal(ipad.st.getItem('cards.v0.p.daughter'), null);
 });
+
+test('S10: bat gauge merge: the side that took the latest test wins (it emptied the gauge); otherwise the fuller gauge and united met words', () => {
+  const mk = (bat) => state({ map: { stars: 0, keys: 0, best: 0, items: { shield: 0, flame: 0 }, bag: null, cleared: {}, castle: null, monsterDay: null, bonusDay: null, bat } });
+  const a = mk({ fill: 0, cap: 50, met: [], last: '2026-11-12T12:00:00Z' }), b = mk({ fill: 38, cap: 40, met: ['w1', 'w2'], last: null });
+  for (const m of [mergeCards(a, b).map.bat, mergeCards(b, a).map.bat]) assert.deepEqual([m.fill, m.cap, m.met.length], [0, 50, 0]);
+  const c = mk({ fill: 12, cap: 40, met: ['w1', 'w2'], last: '2026-11-12T12:00:00Z' }), d = mk({ fill: 20, cap: 40, met: ['w2', 'w3'], last: '2026-11-12T12:00:00Z' });
+  for (const m of [mergeCards(c, d).map.bat, mergeCards(d, c).map.bat]) assert.deepEqual([m.fill, m.cap, [...m.met].sort()], [20, 40, ['w1', 'w2', 'w3']]);
+});

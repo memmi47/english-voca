@@ -100,3 +100,10 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 @keyframes down{to{transform:scale(0) rotate(240deg);opacity:0}}
 @keyframes float{0%{opacity:1;transform:translateY(8px)}100%{opacity:0;transform:translateY(-26px)}}
 @keyframes hop{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+
+/* bat gauge */
+.batgauge{display:flex;align-items:center;gap:10px;max-width:420px;margin:0 auto 12px;background:var(--card);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);padding:4px 12px}
+.batgauge span{font-size:22px}.batgauge b{font-size:16px;min-width:56px;text-align:right}
+.batbar{flex:1;height:18px;border:3px solid var(--ink);background:#e8e0d0;overflow:hidden}.batbar i{display:block;height:100%;background:#6a2c91;transition:width .3s steps(8)}
+.batgauge.full{background:#f3d9ff;animation:hop .5s steps(2) infinite}.batgauge.full .batbar i{background:#c0132b}
+.gain.bat{background:#f3d9ff}

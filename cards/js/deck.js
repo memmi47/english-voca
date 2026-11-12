@@ -76,9 +76,9 @@ export class Run {
     this.s = state; this.words = words; this.byId = Object.fromEntries(words.map((w) => [w.id, w]));
     this.today = today; this.rng = rng; this.now = now; this.cfg = cfg;
     this.boss = boss || { idx: 0, hp: cfg.bossHp, defeated: 0 };
-    this.scope = scope; this.items = { shield: items.shield || 0, flame: !!items.flame }; this.shieldUsed = 0; this.tag = tag;
+    this.met = []; this.scope = scope; this.items = { shield: items.shield || 0, flame: !!items.flame }; this.shieldUsed = 0; this.tag = tag;
     this.combo = 0; this.i = 0; this.t0 = null; this.startedAt = now(); this.ended = null;
-    this.stats = { cards: 0, claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, ms: 0, stars: 0, castleOk: 0, castleMiss: 0 };
+    this.stats = { cards: 0, claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, ms: 0, stars: 0, castleOk: 0, castleMiss: 0, testOk: 0, testMiss: 0 };
     this.changed = [];                                   // [{id, from, to}] grade changes in this run
     const plan = planRun(state, words, today, cfg, scope); this.plan = plan;
     // A new word, then up to two due cards, so reviews space out the new words.
@@ -88,6 +88,8 @@ export class Run {
     // A word that was not learned on an earlier day comes back as a check card (role 'retry'), never as self-judgement.
     for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : { id, role: 'new', form: 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
     while (due.length) q.push(dueItem(due.shift()));
+    // bat test (scope.bat = { due, fresh }): overdue reviews as check cards first (normal scheduling), then words met since the last test
+    if (scope.bat) { this.queue = scope.bat.due.map((id) => ({ ...dueItem(id), form: 'check' })).concat(scope.bat.fresh.map((id) => ({ id, role: 'castle', form: 'check' }))); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     if (scope.castle) { this.queue = shuffle(scope.castle, rng).map((id) => ({ id, role: 'castle', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     this.queue = q;
   }
@@ -139,6 +141,8 @@ export class Run {
       g = r.step >= INTERVALS.length - 1 ? this._set(it.id, { st: 'done', due: null }) : this._set(it.id, { step: r.step + 1, due: addDays(t, INTERVALS[r.step + 1]) }); }
     else if ((it.role === 'relearn' && it.final) || it.role === 'retry') { this.stats.learned++; g = this._set(it.id, { st: 'review', step: 0, due: addDays(t, INTERVALS[0]) }); }
     if (it.role === 'castle') this.stats.castleOk++;
+    if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle')) this.stats.testOk++;
+    if (it.role === 'new') this.met.push(it.id);
     this.combo++;
     let dmg = verified ? 3 : 1; if (this.combo >= 5) dmg++; if (this.items.flame) dmg *= 2;
     const stars = it.role === 'relearn' || it.role === 'practice' ? 0 : it.form === 'check' || verified ? 3 : 1; this.stats.stars += stars;
@@ -146,6 +150,8 @@ export class Run {
   }
   _miss(it, { said, picked }) {
     const r = this._rec(it.id); const t = this.today; let g = null;
+    if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle')) this.stats.testMiss++;
+    if (it.role === 'new') this.met.push(it.id);
     if (said === 'wrong') { if (this.items.shield > 0) { this.items.shield--; this.shieldUsed++; } else this.combo = 0; }   // a wrong pick breaks the combo (a shield absorbs one); an honest "몰라요" does not
     if (it.role === 'new' || it.role === 'likely' || it.role === 'retry') {
       if (it.role === 'new') { this.stats.fresh++; this.stats.unknown++; } else if (it.role === 'likely') { this.stats.reviews++; this.stats.lapses++; }

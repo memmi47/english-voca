@@ -25,7 +25,13 @@ function mergeMap(a, b) {
   for (const [k, d] of Object.entries(a.cleared || {})) cleared[k] = minStr(cleared[k], d);
   return { stars: Math.max(a.stars || 0, b.stars || 0), keys: Math.max(a.keys || 0, b.keys || 0), best: Math.max(a.best || 0, b.best || 0),
     items: { shield: Math.max(a.items?.shield || 0, b.items?.shield || 0), flame: Math.max(a.items?.flame || 0, b.items?.flame || 0) },
-    bag: a.bag ?? b.bag ?? null, cleared, castle: minStr(a.castle, b.castle), monsterDay: maxStr(a.monsterDay, b.monsterDay), bonusDay: maxStr(a.bonusDay, b.bonusDay) };
+    bag: a.bag ?? b.bag ?? null, cleared, castle: minStr(a.castle, b.castle), monsterDay: maxStr(a.monsterDay, b.monsterDay), bonusDay: maxStr(a.bonusDay, b.bonusDay), bat: mergeBat(a.bat, b.bat) };
+}
+// Bat gauge: the side that took the latest test has already emptied it, so it wins; otherwise the fuller gauge and the union of met words.
+function mergeBat(a, b) {
+  if (!a) return b; if (!b) return a;
+  if ((a.last || '') !== (b.last || '')) return (a.last || '') > (b.last || '') ? a : b;
+  return { fill: Math.max(a.fill || 0, b.fill || 0), cap: a.cap ?? b.cap, last: a.last ?? null, met: uniq([...(a.met || []), ...(b.met || [])], (x) => x).slice(-200) };
 }
 
 // Pure and symmetric enough for two devices that both changed the same child's record.

@@ -107,18 +107,19 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await page.click('[data-act=home]');
   ok('home screen shows no numbers (no sibling comparison)', !/\d/.test(await page.textContent('.profiles')));
 
-  // 5. day 2: the reviews of two tiles pile up into a monster; the roads are blocked until it is beaten
+  // 5. day 2: the reviews of two tiles pile up into an optional monster; it does not block the roads
   const d2 = await open(ctx, 'today=2026-11-13&seed=6&sound=off&fast=1');
   await d2.click('[data-act=pick][data-id=son]'); await d2.waitForSelector('.world');
   const before = await state(d2, 'son'); const dueIds = Object.keys(before.words).filter((id) => before.words[id].st === 'review' && before.words[id].due === '2026-11-13');
   ok('day 2: yesterday\'s learned words are due and form a monster', dueIds.length >= 8 && !!(await d2.$('[data-id=monster]')), 'due=' + dueIds.length);
-  ok('day 2: the open tile A2 is blocked while the monster stands', /\bblocked\b/.test(await nodeStatus(d2, 'A2')));
+  ok('day 2: the monster does not block: tile A2 stays open', /\bopen\b/.test(await nodeStatus(d2, 'A2')));
+  ok('day 2: the bat gauge shows 20 of 40 (20 new words, no reviews yet)', /20\/40/.test(await d2.textContent('#batgauge')) && !(await d2.$('[data-id=bat]')));
   for (const id of dueIds) KNOWN.add(id);                                           // the child remembers them today
   await startNode(d2, 'monster'); await play(d2); await d2.waitForSelector('.tiles');
   const after = await state(d2, 'son');
   ok('passed 1-day reviews move to the 3-day gap', dueIds.every((id) => after.words[id].step === 1 && after.words[id].due === '2026-11-16'));
   await toMap(d2);
-  ok('monster beaten: roads open again', !(await d2.$('[data-id=monster]')) && /\bopen\b/.test(await nodeStatus(d2, 'A2')));
+  ok('monster beaten: it is gone and the gauge went down by the reviews answered', !(await d2.$('[data-id=monster]')) && /\bopen\b/.test(await nodeStatus(d2, 'A2')) && (await state(d2, 'son')).map.bat.fill < 20);
   await startNode(d2, 'A2');
   const order = await d2.evaluate(() => window.__cards.run.queue.map((q) => q.role[0]).join(''));
   ok('a tile run starts with its new words', /^n/.test(order) && !/r/.test(order.slice(0, 1)), order);
@@ -130,8 +131,21 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const w1 = await open(wctx, 'today=2026-12-01&seed=11&sound=off&fast=1'); await w1.click('[data-act=pick][data-id=daughter]'); await w1.waitForSelector('.world');
   for (const id of ['A1', 'A2', 'B1']) { await startNode(w1, id); await play(w1); await toMap(w1); }
   ok('castle stays locked with one road done', /\blocked\b/.test(await nodeStatus(w1, 'castle')) && /두 길/.test(await (async () => { await w1.click('[data-act=node][data-id=castle] img'); return w1.textContent('#msg'); })()));
-  await startNode(w1, 'B2'); await play(w1); await toMap(w1);
-  ok('castle opens after two roads', /\bopen\b/.test(await nodeStatus(w1, 'castle')));
+  ok('the gauge shows 31 of 40 after three tiles', /31\/40/.test(await w1.textContent('#batgauge')));
+  await startNode(w1, 'B2'); await play(w1);
+  ok('the fourth tile fills the gauge: the end screen announces the bats and offers the test', /박쥐 게이지가 가득/.test(await w1.textContent('.page')) && (await w1.$eval('.go', (b) => b.dataset.act)) === 'bat-go');
+  await toMap(w1);
+  ok('full gauge: the bat node appears and every other node says the bats come first', !!(await w1.$('[data-id=bat]')) && /\bblocked\b/.test(await nodeStatus(w1, 'castle')) && /\bblocked\b/.test(await nodeStatus(w1, 'C1')));
+  await w1.click('[data-act=node][data-id=C1] img'); ok('a tile cannot start while the gauge is full', /박쥐/.test(await w1.textContent('#msg')) && !(await w1.$('.run')));
+  await startNode(w1, 'bat'); const batQ = await w1.evaluate(() => window.__cards.run.queue.map((q) => q.form + ':' + q.role));
+  ok('the bat test is 25 check cards over the words just met', batQ.length === 25 && batQ.every((x) => x.startsWith('check:')), batQ.length + ' ' + batQ[0]);
+  await w1.click('[data-act=quit]'); await w1.waitForSelector('.tiles');
+  ok('leaving the test early keeps the gauge full', /박쥐가 남았어요/.test(await w1.textContent('h1')) && (await state(w1, 'daughter')).map.bat.fill === 40);
+  await w1.click('[data-act=bat-go]'); await w1.waitForSelector(READY); await play(w1); await w1.waitForSelector('.tiles');
+  const batDone = await state(w1, 'daughter');
+  ok('passing the test empties the gauge and raises the capacity to 50', /박쥐를 쫓아냈어요/.test(await w1.textContent('h1')) && batDone.map.bat.fill === 0 && batDone.map.bat.cap === 50 && batDone.runs.at(-1).tag === 'bat', JSON.stringify(batDone.map.bat));
+  await toMap(w1);
+  ok('castle opens after two roads', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && !(await w1.$('[data-id=bat]')));
   await w1.click('[data-act=node][data-id=castle] img'); await w1.waitForSelector(READY);
   const castleQ = await w1.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.form));
   ok('castle is a check-only run of 12 cards', castleQ.length === 12 && castleQ.every((x) => x === 'castle:check'));
@@ -162,7 +176,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('an item can be put in the bag', await w1.$eval('.item.sel', (b) => b.dataset.item) === item);
   await w1.close(); await wctx.close();
 
-  // 8. monster: 8+ due reviews block the roads until beaten
+  // 8. optional monster: 8+ due reviews put it on the map without blocking anything
   const mctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   const m1 = await open(mctx, 'today=2026-12-02&seed=3&sound=off&fast=1'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world');
   await m1.evaluate(() => { const st = JSON.parse(localStorage.getItem('cards.v0.p.daughter') || 'null') || { v: 0, id: 'daughter', words: {}, verify: [], runs: [], log: [] };
@@ -170,15 +184,15 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     localStorage.setItem('cards.v0.p.daughter', JSON.stringify(st)); });
   await m1.click('[data-act=home]'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world');
   ok('10 due reviews put a monster on the map', !!(await m1.$('[data-id=monster]')) && /몬스터 10/.test(await m1.textContent('[data-id=monster]')));
-  ok('the monster blocks every open road tile', /\bblocked\b/.test(await nodeStatus(m1, 'A1')) && /\bblocked\b/.test(await nodeStatus(m1, 'C1')));
-  await m1.click('[data-act=node][data-id=A1] img'); ok('a blocked tile does not start; it says why', /몬스터/.test(await m1.textContent('#msg')) && !(await m1.$('.run')));
+  ok('the monster blocks nothing: road tiles stay open', /\bopen\b/.test(await nodeStatus(m1, 'A1')) && /\bopen\b/.test(await nodeStatus(m1, 'C1')));
+  ok('the parent view lists the overdue reviews and the gauge', await (async () => { await m1.click('[data-act=home]'); await m1.click('[data-act=parent]'); const t = await m1.textContent('.parent'); await m1.click('[data-act=home]'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world'); return /밀린 복습 10장/.test(t) && /박쥐 0\/40/.test(t); })());
   await m1.click('[data-act=node][data-id=monster] img'); await m1.waitForSelector(READY);
   const mq = await m1.evaluate(() => window.__cards.run.queue.map((q) => q.role));
   ok('monster run is reviews only', mq.length === 10 && mq.every((r) => r === 'review'), mq.join());
   await play(m1); await m1.waitForSelector('.tiles');
   ok('beating the monster gives double stars and an item', /물리쳤어요/.test(await m1.textContent('h1')) && /\(×2\)/.test(await m1.textContent('.gain')) && /얻었어요/.test(await m1.textContent('.page')));
   await toMap(m1);
-  ok('monster is gone and the roads are open again', !(await m1.$('[data-id=monster]')) && /\bopen\b/.test(await nodeStatus(m1, 'A1')));
+  ok('monster is gone and the roads are still open', !(await m1.$('[data-id=monster]')) && /\bopen\b/.test(await nodeStatus(m1, 'A1')));
   await m1.close(); await mctx.close();
 
   // 9. sound: a file from the manifest is used when present
