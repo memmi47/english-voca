@@ -1,7 +1,7 @@
 // Keeps a copy of each document (meta, p.son, p.daughter) on the home server (tools/serve_cards.py).
 // localStorage stays the working copy; the server copy lets the Mac mini and the iPad share progress and
 // survives the browser clearing its storage. Without a server the cards work on this device only.
-// Adapted from game/js/sync.js (left unchanged); only the document shapes and the merge rules differ.
+// Adapted from the earlier game's sync.js (removed; commit 8acc013); only the document shapes and the merge rules differ.
 const SYNC_KEY = 'cards.v0.sync';
 const LOG_CAP = 5000;
 export const DOCS = ['meta', 'p.son', 'p.daughter'];

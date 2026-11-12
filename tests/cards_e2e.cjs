@@ -197,9 +197,9 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
 
   // 9. sound: a file from the manifest is used when present
   const fctx = await browser.newContext({ viewport: { width: 768, height: 950 }, hasTouch: true });
-  const mp3 = fs.readdirSync(path.join(__dirname, '..', 'game', 'audio', 'dev')).find((f) => f.endsWith('.mp3'));
-  await fctx.route('**/audio/manifest.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ files: Object.fromEntries(WORDS.map((w) => [w.id, 'x.mp3'])) }) }));
-  await fctx.route('**/audio/x.mp3', (r) => r.fulfill({ contentType: 'audio/mpeg', body: fs.readFileSync(path.join(__dirname, '..', 'game', 'audio', 'dev', mp3)) }));
+  const wav = (() => { const n = 800, b = Buffer.alloc(44 + n); b.write('RIFF', 0); b.writeUInt32LE(36 + n, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(8000, 24); b.writeUInt32LE(8000, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write('data', 36); b.writeUInt32LE(n, 40); b.fill(128, 44); return b; })();   // 0.1 s of silence
+  await fctx.route('**/audio/manifest.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ files: Object.fromEntries(WORDS.map((w) => [w.id, 'x.wav'])) }) }));
+  await fctx.route('**/audio/x.wav', (r) => r.fulfill({ contentType: 'audio/wav', body: wav }));
   const f1 = await open(fctx, 'today=2026-11-12&seed=7&fast=1');
   await f1.click('[data-act=pick][data-id=daughter]'); await f1.waitForSelector('.world');
   ok('map screen says audio files are in use', /음원 파일/.test(await f1.textContent('#src')));
