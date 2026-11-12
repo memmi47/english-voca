@@ -12,7 +12,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const PROFILES = ['son', 'daughter'];
 const BOSSES = ['👾', '🦖', '🐙', '🤖', '🐲', '👹', '🦈', '👻', '🦂', '🐊', '🦇', '🦑'];
 const GRADE = ['', '동', '은', '금'];
-const DAY_MS = 15 * 6e4;                                  // the daily cap
 const LT_SECONDS = FAST ? 3 : 60;
 const G = { world: null, node: null, lt: null, words: [], byId: {}, meta: null, pid: null, st: null, run: null, boss: null, view: 'home', busy: false, timer: null, sound: null };
 window.__cards = G;
@@ -82,7 +81,7 @@ const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '몬스터가 길을 
 function today(id, msg = '') {
   G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; hideBanner(); clearTimeout(G.timer);
   const st = G.st; const m = ensureMap(st); const v = mapView(G.world, st, todayISO()); const c = gradeCounts(st, G.words);
-  const used = usedMs(st); const over = used >= DAY_MS && !FAST;
+  const used = usedMs(st);                                  // shown to the parent; there is no daily time cap (user decision 2026-11-12)
   const node = (key, e, label, status, extra = '') => { const [x, y] = POS[key];
     return `<button class="node ${status} ${extra}" data-act="node" data-id="${key}" style="left:${x}%;top:${y}%" aria-label="${esc(label)}">${pimg(e, 56, status === 'locked' || status === 'blocked' ? 'dim' : '')}<span class="lbl">${esc(label)}</span>${status === 'cleared' ? '<i class="flag">🚩</i>' : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`; };
   const tiles = v.roads.flatMap((r) => r.tiles.map((t) => node(t.id, r.icon, `${r.name.split(' ')[0]} ${t.id.slice(1)}`, t.status, t.bonus ? 'bonus' : '')));
@@ -95,7 +94,7 @@ function today(id, msg = '') {
     ${v.monster.present ? node('monster', '👾', `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
     ${node('bonus', '🏡', '보너스 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}
     ${node('castle', '🏰', v.worldDone ? '클리어!' : '성', v.castle.status)}</div>
-  <p class="msg" id="msg">${esc(msg || (over ? '오늘은 여기까지! 내일 또 만나요.' : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터부터 물리쳐요!` : '가고 싶은 길을 골라요'))}</p>
+  <p class="msg" id="msg">${esc(msg || (v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터부터 물리쳐요!` : '가고 싶은 길을 골라요'))}</p>
   <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${pimg(it.emoji, 40)}<b>×${m.items[k]}</b></button>`).join('')}
     <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '다음 판에 쓸 아이템을 골라요'}</span></div>
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
@@ -105,7 +104,6 @@ function today(id, msg = '') {
 }
 function nodeClick(id) {
   const st = G.st; const v = mapView(G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
-  if (usedMs(st) >= DAY_MS && !FAST) return out('오늘은 여기까지! 내일 또 만나요.');
   if (id === 'bonus') { if (v.bonus.status === 'open') return startLightning(); return out(v.bonus.status === 'used' ? MSG.used : MSG.bonusLocked); }
   if (id === 'castle' && v.castle.status === 'locked') return out(MSG.castleLocked);
   if (id === 'castle' && v.castle.status === 'cleared') return out('이 성은 이미 깼어요. 🔑');
