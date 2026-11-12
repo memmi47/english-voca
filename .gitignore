@@ -1,3 +1,4 @@
 state/
+state-cards/
 tests/e2e-results.json
 __pycache__/

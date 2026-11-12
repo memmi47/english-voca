@@ -1,9 +1,10 @@
 // Browser test for the flashcard prototype (cards/). Run: node tests/cards_e2e.cjs
 const { chromium } = require('playwright');
 const { spawn } = require('child_process');
-const fs = require('fs'), path = require('path');
+const fs = require('fs'), os = require('os'), path = require('path');
 const PORT = 8091; const BASE = `http://localhost:${PORT}/`;
-const server = spawn('python3', [path.join(__dirname, '..', 'tools', 'serve_cards.py'), '--port', String(PORT)], { stdio: 'ignore' });
+const STATE = fs.mkdtempSync(path.join(os.tmpdir(), 'cards-state-'));          // a throwaway state folder for the sharing tests
+const server = spawn('python3', [path.join(__dirname, '..', 'tools', 'serve_cards.py'), '--port', String(PORT), '--state-dir', STATE], { stdio: 'ignore' });
 const results = []; const errs = [];
 const ok = (name, cond, extra = '') => { results.push([cond ? 'PASS' : 'FAIL', name, extra]); console.log(cond ? 'PASS' : 'FAIL', name, extra); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -13,7 +14,9 @@ const TILE = (id) => WORLD.roads.flatMap((r) => r.tiles).find((t) => t.id === id
 const KNOWN = new Set(WORDS.filter((w, i) => (i * 5) % 7 < 3).map((w) => w.id));   // a mix in every tile     // what this pretend child really knows
 const READY = '.act.yes:not([disabled]), .opt:not([disabled]), .tiles';
 
-async function open(ctx, q) {
+// Most tests run with nosync=1 (pure on-device behaviour); the sharing tests pass sync = true.
+async function open(ctx, q, sync = false) {
+  if (!sync) q += '&nosync=1';
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
@@ -202,6 +205,47 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await n1.click('[data-act=mute-go]');
   ok('parent override unlocks the card and is recorded as no sound', !(await n1.$eval('.act.yes', (b) => b.disabled)) && await n1.evaluate(() => window.__cards.run.current.sound) === 'none');
   await n1.close(); await nctx.close();
+
+  // 11. record sharing: progress made on one device ("Mac mini") shows on another ("iPad"), survives a wiped browser,
+  //     survives the server being unreachable, and two devices that played apart end up with both
+  const read = (id) => JSON.parse(fs.readFileSync(path.join(STATE, `p.${id}.json`), 'utf8')).data;
+  const idle = (p) => p.waitForFunction(() => window.__cards.sync && window.__cards.sync.pending.length === 0, null, { timeout: 8000 });
+  const mac = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const ipad = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const mc = await open(mac, 'today=2026-12-10&seed=3&sound=off&fast=1', true);
+  ok('home says the record is kept on this device and the Mac server', /이 기기 \+ Mac 서버/.test(await mc.textContent('#syncline')), await mc.textContent('#syncline'));
+  await mc.click('[data-act=pick][data-id=son]'); await mc.waitForSelector('.world'); await startNode(mc, 'A1'); await play(mc); await idle(mc);
+  ok('state file written on the server side', fs.existsSync(path.join(STATE, 'p.son.json')) && read('son').runs.length === 1 && Object.keys(read('son').words).length === 11);
+  const ip = await open(ipad, 'today=2026-12-11&seed=4&sound=off&fast=1', true);
+  const ipadSon = await state(ip, 'son');
+  ok('a second device starts with the first one\'s progress', ipadSon && Object.keys(ipadSon.words).length === 11 && ipadSon.map.cleared.A1 === '2026-12-10');
+  await ip.click('[data-act=pick][data-id=son]'); await ip.waitForSelector('.world');
+  ok('its map shows the cleared tile and the next one open', /\bcleared\b/.test(await nodeStatus(ip, 'A1')) && /\bopen\b/.test(await nodeStatus(ip, 'A2')));
+  ok('the other child\'s document was not created', !fs.existsSync(path.join(STATE, 'p.daughter.json')));
+  await mc.evaluate(() => localStorage.clear());                                  // the browser threw its storage away
+  await mc.goto(BASE + '?today=2026-12-12&seed=5&sound=off&fast=1'); await mc.waitForSelector('.profiles');
+  ok('a wiped browser gets everything back from the server', Object.keys((await state(mc, 'son')).words).length === 11);
+
+  // server unreachable: the run still saves on the device, says so, and uploads later
+  await mc.route('**/api/**', (r) => r.abort());
+  await mc.click('[data-act=pick][data-id=son]'); await mc.waitForSelector('.world'); await startNode(mc, 'B1'); await play(mc);
+  ok('a run completes and is kept on the device while the server is unreachable', (await state(mc, 'son')).runs.length === 2 && await mc.evaluate(() => window.__cards.sync.pending.includes('p.son')));
+  ok('the server has not seen it yet', read('son').runs.length === 1);
+  // meanwhile the other device plays another tile and uploads first
+  await ip.click('[data-act=today]').catch(() => {}); await startNode(ip, 'C1'); await play(ip); await idle(ip);
+  ok('the other device\'s run reached the server', read('son').runs.length === 2 && read('son').runs.some((r) => r.tag === 'C1'));
+  await mc.unroute('**/api/**'); await mc.evaluate(() => window.__cards.sync.flush()); await idle(mc);
+  const merged = read('son'); const macSt = await state(mc, 'son');
+  ok('after reconnecting, both devices\' tiles and runs are on the server', ['A1', 'B1', 'C1'].every((t) => merged.map.cleared[t]) && merged.runs.map((r) => r.tag).sort().join() === 'A1,B1,C1');
+  ok('the device that reconnected holds the merged record too', JSON.stringify(Object.keys(macSt.map.cleared).sort()) === JSON.stringify(['A1', 'B1', 'C1']) && macSt.runs.length === 3);
+  ok('merging touched no word schedule it should not: every word is on the server exactly once', Object.keys(merged.words).length === 11 + 9 + 10);
+  await mc.close(); await ip.close(); await mac.close(); await ipad.close();
+  // a plain static host (no state API): the home screen says device-only
+  const sctx = await browser.newContext({ viewport: { width: 1024, height: 700 } });
+  await sctx.route('**/api/**', (r) => r.fulfill({ status: 404, body: 'nope' }));
+  const s1 = await open(sctx, 'today=2026-12-14&sound=off', true);
+  ok('without a state API the home screen says device-only', /이 기기만/.test(await s1.textContent('#syncline')), await s1.textContent('#syncline'));
+  await s1.close(); await sctx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
