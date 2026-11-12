@@ -1,0 +1,1 @@
+Galmuri11 (Galmuri 2.40.3, https://galmuri.quiple.dev), SIL Open Font License 1.1. Fetched with `npm pack galmuri`; the package.json states license OFL-1.1 and dist/LICENSE.txt is copied here as OFL-Galmuri.txt. Unmodified files.
