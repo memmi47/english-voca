@@ -1,0 +1,1880 @@
+{
+  "note": "Two art/play demo worlds, 30 prototype cards each; no full production assignment.",
+  "worlds": [
+    {
+      "id": "p1-01",
+      "name": "문 앞 꽃밭",
+      "concept": "첫 편지가 꽃 사이에 걸렸다. 작은 문부터 연다.",
+      "sky": "#DFF3FF",
+      "ground": "#8FCB83",
+      "path": "#72644A",
+      "roads": [
+        {
+          "name": "새싹 길",
+          "icon": "🌱"
+        },
+        {
+          "name": "꽃잎 길",
+          "icon": "🌷"
+        },
+        {
+          "name": "햇살 길",
+          "icon": "🌻"
+        }
+      ],
+      "bosses": [
+        "🌱",
+        "🌷",
+        "🌻",
+        "🌼",
+        "🌹",
+        "🍀"
+      ],
+      "castle": "꽃마루 성 🌼",
+      "key": "장미 열쇠 🌹",
+      "intro": "첫 편지가 꽃 사이에 있어. 작은 길부터 걸어 보자!",
+      "outro": "꽃마루 문이 열렸어. 첫 친구가 손을 흔들어!",
+      "story": "둥근 과일 상자 너머로 편지가 팔랑거려.",
+      "side": [],
+      "total": 30,
+      "graph": {
+        "version": 3,
+        "family": 0,
+        "landscape": "들판 산책로",
+        "startNodeId": "p1-01-main-0",
+        "castleNodeId": "p1-01-main-6",
+        "nodes": [
+          {
+            "id": "p1-01-main-0",
+            "kind": "start",
+            "x": 91.1,
+            "y": 357.2,
+            "trail": "main"
+          },
+          {
+            "id": "p1-01-main-1",
+            "kind": "tile",
+            "x": 246.2,
+            "y": 353.3,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W0122:기본:animal:1",
+              "W0488:기본:butterfly:1"
+            ]
+          },
+          {
+            "id": "p1-01-main-2",
+            "kind": "tile",
+            "x": 424.8,
+            "y": 301.9,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W0184:기본:arrive:1",
+              "W0944:기본:dangerous:1"
+            ]
+          },
+          {
+            "id": "p1-01-main-3",
+            "kind": "tile",
+            "x": 584.6,
+            "y": 326.1,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W0349:기본:bird:1",
+              "W1500:기본:frog:1"
+            ]
+          },
+          {
+            "id": "p1-01-main-4",
+            "kind": "tile",
+            "x": 735.0,
+            "y": 289.4,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W1462:기본:forget:1",
+              "W1045:기본:difficult:1"
+            ]
+          },
+          {
+            "id": "p1-01-main-5",
+            "kind": "tile",
+            "x": 847.8,
+            "y": 187.9,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W1794:기본:horse:1",
+              "W3424:기본:snake:1"
+            ]
+          },
+          {
+            "id": "p1-01-main-6",
+            "kind": "castle",
+            "x": 904.2,
+            "y": 92.5,
+            "trail": "main"
+          },
+          {
+            "id": "p1-01-detour-1-1",
+            "kind": "tile",
+            "x": 108.3,
+            "y": 246.6,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W1850:기본:imagine:1",
+              "W1818:기본:hungry:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-1-2",
+            "kind": "tile",
+            "x": 176.8,
+            "y": 171.0,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W1677:기본:hand:1",
+              "W4202:기본:wing:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-1-3",
+            "kind": "tile",
+            "x": 278.8,
+            "y": 157.6,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W2820:기본:pretend:1",
+              "W3160:기본:safe:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-1-4",
+            "kind": "tile",
+            "x": 371.9,
+            "y": 205.0,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W1103:기본:door:1",
+              "W1394:기본:finger:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-2-1",
+            "kind": "tile",
+            "x": 269.1,
+            "y": 485.1,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W2865:기본:protect:1",
+              "W3626:기본:strong:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-2-2",
+            "kind": "tile",
+            "x": 404.3,
+            "y": 504.2,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W1171:기본:eat:1",
+              "W2008:기본:knee:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-2-3",
+            "kind": "tile",
+            "x": 530.6,
+            "y": 453.4,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W2878:기본:pull:1",
+              "W1338:기본:famous:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-3-1",
+            "kind": "tile",
+            "x": 637.8,
+            "y": 472.8,
+            "trail": "detour-3",
+            "cardCount": 2,
+            "words": [
+              "W3359:기본:sing:1",
+              "W3318:기본:shoulder:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-3-2",
+            "kind": "tile",
+            "x": 797.9,
+            "y": 477.0,
+            "trail": "detour-3",
+            "cardCount": 2,
+            "words": [
+              "W2895:기본:push:1",
+              "W1722:기본:heavy:1"
+            ]
+          },
+          {
+            "id": "p1-01-detour-3-3",
+            "kind": "tile",
+            "x": 876.3,
+            "y": 351.0,
+            "trail": "detour-3",
+            "cardCount": 2,
+            "words": [
+              "W3709:기본:swim:1",
+              "W4085:기본:voice:1"
+            ]
+          },
+          {
+            "id": "p1-01-game-1",
+            "kind": "minigame",
+            "x": 302.6,
+            "y": 239.1,
+            "anchorNodeId": "p1-01-detour-1-3",
+            "gameType": "memory",
+            "optional": true,
+            "trail": "detour-1",
+            "extraTiles": 3
+          },
+          {
+            "id": "p1-01-game-2",
+            "kind": "minigame",
+            "x": 800.8,
+            "y": 391.2,
+            "anchorNodeId": "p1-01-detour-3-2",
+            "gameType": "mail",
+            "optional": true,
+            "trail": "detour-3",
+            "extraTiles": 2
+          }
+        ],
+        "edges": [
+          [
+            "p1-01-main-0",
+            "p1-01-main-1"
+          ],
+          [
+            "p1-01-main-1",
+            "p1-01-main-2"
+          ],
+          [
+            "p1-01-main-2",
+            "p1-01-main-3"
+          ],
+          [
+            "p1-01-main-3",
+            "p1-01-main-4"
+          ],
+          [
+            "p1-01-main-4",
+            "p1-01-main-5"
+          ],
+          [
+            "p1-01-main-5",
+            "p1-01-main-6"
+          ],
+          [
+            "p1-01-main-0",
+            "p1-01-detour-1-1"
+          ],
+          [
+            "p1-01-detour-1-1",
+            "p1-01-detour-1-2"
+          ],
+          [
+            "p1-01-detour-1-2",
+            "p1-01-detour-1-3"
+          ],
+          [
+            "p1-01-detour-1-3",
+            "p1-01-detour-1-4"
+          ],
+          [
+            "p1-01-detour-1-4",
+            "p1-01-main-2"
+          ],
+          [
+            "p1-01-main-1",
+            "p1-01-detour-2-1"
+          ],
+          [
+            "p1-01-detour-2-1",
+            "p1-01-detour-2-2"
+          ],
+          [
+            "p1-01-detour-2-2",
+            "p1-01-detour-2-3"
+          ],
+          [
+            "p1-01-detour-2-3",
+            "p1-01-main-3"
+          ],
+          [
+            "p1-01-main-3",
+            "p1-01-detour-3-1"
+          ],
+          [
+            "p1-01-detour-3-1",
+            "p1-01-detour-3-2"
+          ],
+          [
+            "p1-01-detour-3-2",
+            "p1-01-detour-3-3"
+          ],
+          [
+            "p1-01-detour-3-3",
+            "p1-01-main-5"
+          ],
+          [
+            "p1-01-detour-1-3",
+            "p1-01-game-1"
+          ],
+          [
+            "p1-01-detour-3-2",
+            "p1-01-game-2"
+          ]
+        ],
+        "detours": [
+          {
+            "id": "detour-1",
+            "fromId": "p1-01-main-0",
+            "toId": "p1-01-main-2",
+            "tileIds": [
+              "p1-01-detour-1-1",
+              "p1-01-detour-1-2",
+              "p1-01-detour-1-3",
+              "p1-01-detour-1-4"
+            ],
+            "extraTiles": 3
+          },
+          {
+            "id": "detour-2",
+            "fromId": "p1-01-main-1",
+            "toId": "p1-01-main-3",
+            "tileIds": [
+              "p1-01-detour-2-1",
+              "p1-01-detour-2-2",
+              "p1-01-detour-2-3"
+            ],
+            "extraTiles": 2
+          },
+          {
+            "id": "detour-3",
+            "fromId": "p1-01-main-3",
+            "toId": "p1-01-main-5",
+            "tileIds": [
+              "p1-01-detour-3-1",
+              "p1-01-detour-3-2",
+              "p1-01-detour-3-3"
+            ],
+            "extraTiles": 2
+          }
+        ]
+      },
+      "words": [
+        {
+          "id": "W0122:기본:animal:1",
+          "form": "animal",
+          "ko": "동물",
+          "emoji": "🐾",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "easy"
+        },
+        {
+          "id": "W0488:기본:butterfly:1",
+          "form": "butterfly",
+          "ko": "나비",
+          "emoji": "🦋",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "thing"
+        },
+        {
+          "id": "W0184:기본:arrive:1",
+          "form": "arrive",
+          "ko": "도착하다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W0944:기본:dangerous:1",
+          "form": "dangerous",
+          "ko": "위험한",
+          "emoji": "⚠️",
+          "type": "추상·기능",
+          "theme": "감정·상태·성격",
+          "group": "other"
+        },
+        {
+          "id": "W0349:기본:bird:1",
+          "form": "bird",
+          "ko": "새",
+          "emoji": "🐦",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "easy"
+        },
+        {
+          "id": "W1500:기본:frog:1",
+          "form": "frog",
+          "ko": "개구리",
+          "emoji": "🐸",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "thing"
+        },
+        {
+          "id": "W1462:기본:forget:1",
+          "form": "forget",
+          "ko": "잊다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W1045:기본:difficult:1",
+          "form": "difficult",
+          "ko": "어려운",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "감정·상태·성격",
+          "group": "other"
+        },
+        {
+          "id": "W1794:기본:horse:1",
+          "form": "horse",
+          "ko": "말",
+          "emoji": "🐎",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "easy"
+        },
+        {
+          "id": "W3424:기본:snake:1",
+          "form": "snake",
+          "ko": "뱀",
+          "emoji": "🐍",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "thing"
+        },
+        {
+          "id": "W1850:기본:imagine:1",
+          "form": "imagine",
+          "ko": "상상하다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W1818:기본:hungry:1",
+          "form": "hungry",
+          "ko": "배고픈",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "감정·상태·성격",
+          "group": "other"
+        },
+        {
+          "id": "W1677:기본:hand:1",
+          "form": "hand",
+          "ko": "손",
+          "emoji": "✋",
+          "type": "구체명사",
+          "theme": "몸·건강",
+          "group": "easy"
+        },
+        {
+          "id": "W4202:기본:wing:1",
+          "form": "wing",
+          "ko": "날개",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "동물·곤충",
+          "group": "thing"
+        },
+        {
+          "id": "W2820:기본:pretend:1",
+          "form": "pretend",
+          "ko": "~인 척하다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W3160:기본:safe:1",
+          "form": "safe",
+          "ko": "안전한",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "감정·상태·성격",
+          "group": "other"
+        },
+        {
+          "id": "W1103:기본:door:1",
+          "form": "door",
+          "ko": "문",
+          "emoji": "🚪",
+          "type": "구체명사",
+          "theme": "집·가구·생활용품",
+          "group": "easy"
+        },
+        {
+          "id": "W1394:기본:finger:1",
+          "form": "finger",
+          "ko": "손가락",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "몸·건강",
+          "group": "thing"
+        },
+        {
+          "id": "W2865:기본:protect:1",
+          "form": "protect",
+          "ko": "보호하다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W3626:기본:strong:1",
+          "form": "strong",
+          "ko": "강한",
+          "emoji": "💪",
+          "type": "추상·기능",
+          "theme": "감정·상태·성격",
+          "group": "other"
+        },
+        {
+          "id": "W1171:기본:eat:1",
+          "form": "eat",
+          "ko": "먹다",
+          "emoji": "🍽️",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "easy"
+        },
+        {
+          "id": "W2008:기본:knee:1",
+          "form": "knee",
+          "ko": "무릎",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "몸·건강",
+          "group": "thing"
+        },
+        {
+          "id": "W2878:기본:pull:1",
+          "form": "pull",
+          "ko": "당기다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W1338:기본:famous:1",
+          "form": "famous",
+          "ko": "유명한",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "관계·평가·특성",
+          "group": "other"
+        },
+        {
+          "id": "W3359:기본:sing:1",
+          "form": "sing",
+          "ko": "노래하다",
+          "emoji": "🎤",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "easy"
+        },
+        {
+          "id": "W3318:기본:shoulder:1",
+          "form": "shoulder",
+          "ko": "어깨",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "몸·건강",
+          "group": "thing"
+        },
+        {
+          "id": "W2895:기본:push:1",
+          "form": "push",
+          "ko": "밀다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W1722:기본:heavy:1",
+          "form": "heavy",
+          "ko": "무거운",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "관계·평가·특성",
+          "group": "other"
+        },
+        {
+          "id": "W3709:기본:swim:1",
+          "form": "swim",
+          "ko": "수영하다",
+          "emoji": "🏊",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "easy"
+        },
+        {
+          "id": "W4085:기본:voice:1",
+          "form": "voice",
+          "ko": "목소리",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "몸·건강",
+          "group": "thing"
+        }
+      ],
+      "demo": true,
+      "sampleCards": 30,
+      "targetDesignCards": 158,
+      "designSideActivities": [
+        {
+          "name": "빨리 읽기 집",
+          "icon": "📖",
+          "count": 16
+        }
+      ]
+    },
+    {
+      "id": "p1-05",
+      "name": "둥실 연못",
+      "concept": "물 위의 편지를 친구들이 건져 준다. 물결을 따라 둑으로 간다.",
+      "sky": "#D8F1FA",
+      "ground": "#75B7B1",
+      "path": "#645943",
+      "roads": [
+        {
+          "name": "폴짝 길",
+          "icon": "🐸"
+        },
+        {
+          "name": "느긋 길",
+          "icon": "🐢"
+        },
+        {
+          "name": "물결 길",
+          "icon": "🐟"
+        }
+      ],
+      "bosses": [
+        "🐸",
+        "🐢",
+        "🐟",
+        "🐠",
+        "🐡",
+        "🐙"
+      ],
+      "castle": "줄무늬 성 🐠",
+      "key": "동그란 열쇠 🐡",
+      "intro": "물 위의 편지를 건져야 해. 연못 친구를 만나 보자!",
+      "outro": "편지가 젖기 전에 건졌어. 둑길이 열렸어!",
+      "story": "둑 끝의 작은 굴에서 불빛이 새어 나와.",
+      "side": [],
+      "total": 30,
+      "graph": {
+        "version": 3,
+        "family": 1,
+        "landscape": "섬과 다리",
+        "startNodeId": "p1-05-main-0",
+        "castleNodeId": "p1-05-main-5",
+        "nodes": [
+          {
+            "id": "p1-05-main-0",
+            "kind": "start",
+            "x": 908.9,
+            "y": 328.2,
+            "trail": "main"
+          },
+          {
+            "id": "p1-05-main-1",
+            "kind": "tile",
+            "x": 735.0,
+            "y": 375.2,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W3025:기본:remember:1",
+              "W2910:기본:quiet:1"
+            ]
+          },
+          {
+            "id": "p1-05-main-2",
+            "kind": "tile",
+            "x": 556.4,
+            "y": 412.8,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W1337:기본:family:1",
+              "W0699:기본:clothes:1"
+            ]
+          },
+          {
+            "id": "p1-05-main-3",
+            "kind": "tile",
+            "x": 359.0,
+            "y": 337.6,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W3319:기본:shout:1",
+              "W0097:기본:already:1"
+            ]
+          },
+          {
+            "id": "p1-05-main-4",
+            "kind": "tile",
+            "x": 218.0,
+            "y": 206.0,
+            "trail": "main",
+            "cardCount": 2,
+            "words": [
+              "W1687:기본:happy:1",
+              "W0425:기본:bread:1"
+            ]
+          },
+          {
+            "id": "p1-05-main-5",
+            "kind": "castle",
+            "x": 95.8,
+            "y": 112.0,
+            "trail": "main"
+          },
+          {
+            "id": "p1-05-detour-1-1",
+            "kind": "tile",
+            "x": 865.9,
+            "y": 199.3,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W0429:기본:breathe:1",
+              "W0542:기본:carefully:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-1-2",
+            "kind": "tile",
+            "x": 754.4,
+            "y": 138.8,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W3209:기본:school:1",
+              "W0427:기본:breakfast:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-1-3",
+            "kind": "tile",
+            "x": 639.5,
+            "y": 172.4,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W1563:기본:giggle:1",
+              "W4265:기본:yesterday:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-1-4",
+            "kind": "tile",
+            "x": 569.9,
+            "y": 277.6,
+            "trail": "detour-1",
+            "cardCount": 2,
+            "words": [
+              "W2330:기본:morning:1",
+              "W0621:기본:cheese:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-2-1",
+            "kind": "tile",
+            "x": 789.9,
+            "y": 494.2,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W2640:기본:peek:1",
+              "W0558:기본:castle:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-2-2",
+            "kind": "tile",
+            "x": 664.8,
+            "y": 513.9,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W2367:기본:music:1",
+              "W4070:기본:village:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-2-3",
+            "kind": "tile",
+            "x": 537.9,
+            "y": 509.3,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W1532:기본:garden:1",
+              "W2003:기본:kitchen:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-2-4",
+            "kind": "tile",
+            "x": 421.2,
+            "y": 453.0,
+            "trail": "detour-2",
+            "cardCount": 2,
+            "words": [
+              "W1567:기본:give:1",
+              "W2743:기본:pocket:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-3-1",
+            "kind": "tile",
+            "x": 251.1,
+            "y": 449.3,
+            "trail": "detour-3",
+            "cardCount": 2,
+            "words": [
+              "W3124:기본:rope:1",
+              "W4160:기본:wheel:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-3-2",
+            "kind": "tile",
+            "x": 131.3,
+            "y": 400.2,
+            "trail": "detour-3",
+            "cardCount": 2,
+            "words": [
+              "W0065:기본:again:1",
+              "W1461:기본:forest:1"
+            ]
+          },
+          {
+            "id": "p1-05-detour-3-3",
+            "kind": "tile",
+            "x": 90.1,
+            "y": 267.2,
+            "trail": "detour-3",
+            "cardCount": 2,
+            "words": [
+              "W1931:기본:island:1",
+              "W2435:기본:noise:1"
+            ]
+          },
+          {
+            "id": "p1-05-game-1",
+            "kind": "minigame",
+            "x": 725.6,
+            "y": 220.1,
+            "anchorNodeId": "p1-05-detour-1-3",
+            "gameType": "memory",
+            "optional": true,
+            "trail": "detour-1",
+            "extraTiles": 3
+          },
+          {
+            "id": "p1-05-game-2",
+            "kind": "minigame",
+            "x": 194.5,
+            "y": 389.3,
+            "anchorNodeId": "p1-05-detour-3-2",
+            "gameType": "mail",
+            "optional": true,
+            "trail": "detour-3",
+            "extraTiles": 2
+          }
+        ],
+        "edges": [
+          [
+            "p1-05-main-0",
+            "p1-05-main-1"
+          ],
+          [
+            "p1-05-main-1",
+            "p1-05-main-2"
+          ],
+          [
+            "p1-05-main-2",
+            "p1-05-main-3"
+          ],
+          [
+            "p1-05-main-3",
+            "p1-05-main-4"
+          ],
+          [
+            "p1-05-main-4",
+            "p1-05-main-5"
+          ],
+          [
+            "p1-05-main-0",
+            "p1-05-detour-1-1"
+          ],
+          [
+            "p1-05-detour-1-1",
+            "p1-05-detour-1-2"
+          ],
+          [
+            "p1-05-detour-1-2",
+            "p1-05-detour-1-3"
+          ],
+          [
+            "p1-05-detour-1-3",
+            "p1-05-detour-1-4"
+          ],
+          [
+            "p1-05-detour-1-4",
+            "p1-05-main-2"
+          ],
+          [
+            "p1-05-main-1",
+            "p1-05-detour-2-1"
+          ],
+          [
+            "p1-05-detour-2-1",
+            "p1-05-detour-2-2"
+          ],
+          [
+            "p1-05-detour-2-2",
+            "p1-05-detour-2-3"
+          ],
+          [
+            "p1-05-detour-2-3",
+            "p1-05-detour-2-4"
+          ],
+          [
+            "p1-05-detour-2-4",
+            "p1-05-main-3"
+          ],
+          [
+            "p1-05-main-3",
+            "p1-05-detour-3-1"
+          ],
+          [
+            "p1-05-detour-3-1",
+            "p1-05-detour-3-2"
+          ],
+          [
+            "p1-05-detour-3-2",
+            "p1-05-detour-3-3"
+          ],
+          [
+            "p1-05-detour-3-3",
+            "p1-05-main-5"
+          ],
+          [
+            "p1-05-detour-1-3",
+            "p1-05-game-1"
+          ],
+          [
+            "p1-05-detour-3-2",
+            "p1-05-game-2"
+          ]
+        ],
+        "detours": [
+          {
+            "id": "detour-1",
+            "fromId": "p1-05-main-0",
+            "toId": "p1-05-main-2",
+            "tileIds": [
+              "p1-05-detour-1-1",
+              "p1-05-detour-1-2",
+              "p1-05-detour-1-3",
+              "p1-05-detour-1-4"
+            ],
+            "extraTiles": 3
+          },
+          {
+            "id": "detour-2",
+            "fromId": "p1-05-main-1",
+            "toId": "p1-05-main-3",
+            "tileIds": [
+              "p1-05-detour-2-1",
+              "p1-05-detour-2-2",
+              "p1-05-detour-2-3",
+              "p1-05-detour-2-4"
+            ],
+            "extraTiles": 3
+          },
+          {
+            "id": "detour-3",
+            "fromId": "p1-05-main-3",
+            "toId": "p1-05-main-5",
+            "tileIds": [
+              "p1-05-detour-3-1",
+              "p1-05-detour-3-2",
+              "p1-05-detour-3-3"
+            ],
+            "extraTiles": 2
+          }
+        ]
+      },
+      "words": [
+        {
+          "id": "W3025:기본:remember:1",
+          "form": "remember",
+          "ko": "기억하다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W2910:기본:quiet:1",
+          "form": "quiet",
+          "ko": "조용한",
+          "emoji": "🤫",
+          "type": "추상·기능",
+          "theme": "색·감각·재질",
+          "group": "other"
+        },
+        {
+          "id": "W1337:기본:family:1",
+          "form": "family",
+          "ko": "가족",
+          "emoji": "👨‍👩‍👧",
+          "type": "추상·기능",
+          "theme": "가족·사람·관계",
+          "group": "easy"
+        },
+        {
+          "id": "W0699:기본:clothes:1",
+          "form": "clothes",
+          "ko": "옷",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "옷·차림",
+          "group": "thing"
+        },
+        {
+          "id": "W3319:기본:shout:1",
+          "form": "shout",
+          "ko": "소리치다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "action"
+        },
+        {
+          "id": "W0097:기본:already:1",
+          "form": "already",
+          "ko": "이미",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "빈도·시간·정도",
+          "group": "other"
+        },
+        {
+          "id": "W1687:기본:happy:1",
+          "form": "happy",
+          "ko": "행복한",
+          "emoji": "😀",
+          "type": "추상·기능",
+          "theme": "감정·상태·성격",
+          "group": "easy"
+        },
+        {
+          "id": "W0425:기본:bread:1",
+          "form": "bread",
+          "ko": "빵",
+          "emoji": "🍞",
+          "type": "구체명사",
+          "theme": "음식·식사",
+          "group": "thing"
+        },
+        {
+          "id": "W0429:기본:breathe:1",
+          "form": "breathe",
+          "ko": "숨 쉬다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "이야기 행동·움직임",
+          "group": "action"
+        },
+        {
+          "id": "W0542:기본:carefully:1",
+          "form": "carefully",
+          "ko": "조심스럽게",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "빈도·시간·정도",
+          "group": "other"
+        },
+        {
+          "id": "W3209:기본:school:1",
+          "form": "school",
+          "ko": "학교",
+          "emoji": "🏫",
+          "type": "추상·기능",
+          "theme": "학교·책·수업",
+          "group": "easy"
+        },
+        {
+          "id": "W0427:기본:breakfast:1",
+          "form": "breakfast",
+          "ko": "아침 식사",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "음식·식사",
+          "group": "thing"
+        },
+        {
+          "id": "W1563:기본:giggle:1",
+          "form": "giggle",
+          "ko": "킥킥 웃다",
+          "emoji": "🤭",
+          "type": "동작",
+          "theme": "이야기 행동·움직임",
+          "group": "action"
+        },
+        {
+          "id": "W4265:기본:yesterday:1",
+          "form": "yesterday",
+          "ko": "어제",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "빈도·시간·정도",
+          "group": "other"
+        },
+        {
+          "id": "W2330:기본:morning:1",
+          "form": "morning",
+          "ko": "아침",
+          "emoji": "🌅",
+          "type": "추상·기능",
+          "theme": "시간·수·측정",
+          "group": "easy"
+        },
+        {
+          "id": "W0621:기본:cheese:1",
+          "form": "cheese",
+          "ko": "치즈",
+          "emoji": "🧀",
+          "type": "구체명사",
+          "theme": "음식·식사",
+          "group": "thing"
+        },
+        {
+          "id": "W2640:기본:peek:1",
+          "form": "peek",
+          "ko": "살짝 엿보다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "이야기 행동·움직임",
+          "group": "action"
+        },
+        {
+          "id": "W0558:기본:castle:1",
+          "form": "castle",
+          "ko": "성",
+          "emoji": "🏰",
+          "type": "구체명사",
+          "theme": "장소·지역·건물",
+          "group": "thing"
+        },
+        {
+          "id": "W2367:기본:music:1",
+          "form": "music",
+          "ko": "음악",
+          "emoji": "🎵",
+          "type": "추상·기능",
+          "theme": "학교·책·수업",
+          "group": "easy"
+        },
+        {
+          "id": "W4070:기본:village:1",
+          "form": "village",
+          "ko": "마을",
+          "emoji": "🏘️",
+          "type": "구체명사",
+          "theme": "장소·지역·건물",
+          "group": "thing"
+        },
+        {
+          "id": "W1532:기본:garden:1",
+          "form": "garden",
+          "ko": "정원",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "집·가구·생활용품",
+          "group": "thing"
+        },
+        {
+          "id": "W2003:기본:kitchen:1",
+          "form": "kitchen",
+          "ko": "부엌",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "집·가구·생활용품",
+          "group": "thing"
+        },
+        {
+          "id": "W1567:기본:give:1",
+          "form": "give",
+          "ko": "주다",
+          "emoji": "",
+          "type": "동작",
+          "theme": "기본 행동",
+          "group": "easy"
+        },
+        {
+          "id": "W2743:기본:pocket:1",
+          "form": "pocket",
+          "ko": "주머니",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "집·가구·생활용품",
+          "group": "thing"
+        },
+        {
+          "id": "W3124:기본:rope:1",
+          "form": "rope",
+          "ko": "밧줄",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "집·가구·생활용품",
+          "group": "thing"
+        },
+        {
+          "id": "W4160:기본:wheel:1",
+          "form": "wheel",
+          "ko": "바퀴",
+          "emoji": "",
+          "type": "구체명사",
+          "theme": "집·가구·생활용품",
+          "group": "thing"
+        },
+        {
+          "id": "W0065:기본:again:1",
+          "form": "again",
+          "ko": "다시",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "빈도·시간·정도",
+          "group": "easy"
+        },
+        {
+          "id": "W1461:기본:forest:1",
+          "form": "forest",
+          "ko": "숲",
+          "emoji": "🌲",
+          "type": "추상·기능",
+          "theme": "식물·자연·날씨",
+          "group": "thing"
+        },
+        {
+          "id": "W1931:기본:island:1",
+          "form": "island",
+          "ko": "섬",
+          "emoji": "🏝️",
+          "type": "추상·기능",
+          "theme": "식물·자연·날씨",
+          "group": "thing"
+        },
+        {
+          "id": "W2435:기본:noise:1",
+          "form": "noise",
+          "ko": "소음",
+          "emoji": "",
+          "type": "추상·기능",
+          "theme": "식물·자연·날씨",
+          "group": "thing"
+        }
+      ],
+      "demo": true,
+      "sampleCards": 30,
+      "targetDesignCards": 156,
+      "designSideActivities": [
+        {
+          "name": "빨리 읽기 집",
+          "icon": "📖",
+          "count": 15
+        }
+      ]
+    }
+  ],
+  "catalog": [
+    {
+      "id": "W0122:기본:animal:1",
+      "form": "animal",
+      "ko": "동물",
+      "emoji": "🐾",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "easy"
+    },
+    {
+      "id": "W0488:기본:butterfly:1",
+      "form": "butterfly",
+      "ko": "나비",
+      "emoji": "🦋",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "thing"
+    },
+    {
+      "id": "W0184:기본:arrive:1",
+      "form": "arrive",
+      "ko": "도착하다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W0944:기본:dangerous:1",
+      "form": "dangerous",
+      "ko": "위험한",
+      "emoji": "⚠️",
+      "type": "추상·기능",
+      "theme": "감정·상태·성격",
+      "group": "other"
+    },
+    {
+      "id": "W0349:기본:bird:1",
+      "form": "bird",
+      "ko": "새",
+      "emoji": "🐦",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "easy"
+    },
+    {
+      "id": "W1500:기본:frog:1",
+      "form": "frog",
+      "ko": "개구리",
+      "emoji": "🐸",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "thing"
+    },
+    {
+      "id": "W1462:기본:forget:1",
+      "form": "forget",
+      "ko": "잊다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W1045:기본:difficult:1",
+      "form": "difficult",
+      "ko": "어려운",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "감정·상태·성격",
+      "group": "other"
+    },
+    {
+      "id": "W1794:기본:horse:1",
+      "form": "horse",
+      "ko": "말",
+      "emoji": "🐎",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "easy"
+    },
+    {
+      "id": "W3424:기본:snake:1",
+      "form": "snake",
+      "ko": "뱀",
+      "emoji": "🐍",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "thing"
+    },
+    {
+      "id": "W1850:기본:imagine:1",
+      "form": "imagine",
+      "ko": "상상하다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W1818:기본:hungry:1",
+      "form": "hungry",
+      "ko": "배고픈",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "감정·상태·성격",
+      "group": "other"
+    },
+    {
+      "id": "W1677:기본:hand:1",
+      "form": "hand",
+      "ko": "손",
+      "emoji": "✋",
+      "type": "구체명사",
+      "theme": "몸·건강",
+      "group": "easy"
+    },
+    {
+      "id": "W4202:기본:wing:1",
+      "form": "wing",
+      "ko": "날개",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "동물·곤충",
+      "group": "thing"
+    },
+    {
+      "id": "W2820:기본:pretend:1",
+      "form": "pretend",
+      "ko": "~인 척하다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W3160:기본:safe:1",
+      "form": "safe",
+      "ko": "안전한",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "감정·상태·성격",
+      "group": "other"
+    },
+    {
+      "id": "W1103:기본:door:1",
+      "form": "door",
+      "ko": "문",
+      "emoji": "🚪",
+      "type": "구체명사",
+      "theme": "집·가구·생활용품",
+      "group": "easy"
+    },
+    {
+      "id": "W1394:기본:finger:1",
+      "form": "finger",
+      "ko": "손가락",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "몸·건강",
+      "group": "thing"
+    },
+    {
+      "id": "W2865:기본:protect:1",
+      "form": "protect",
+      "ko": "보호하다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W3626:기본:strong:1",
+      "form": "strong",
+      "ko": "강한",
+      "emoji": "💪",
+      "type": "추상·기능",
+      "theme": "감정·상태·성격",
+      "group": "other"
+    },
+    {
+      "id": "W1171:기본:eat:1",
+      "form": "eat",
+      "ko": "먹다",
+      "emoji": "🍽️",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "easy"
+    },
+    {
+      "id": "W2008:기본:knee:1",
+      "form": "knee",
+      "ko": "무릎",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "몸·건강",
+      "group": "thing"
+    },
+    {
+      "id": "W2878:기본:pull:1",
+      "form": "pull",
+      "ko": "당기다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W1338:기본:famous:1",
+      "form": "famous",
+      "ko": "유명한",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "관계·평가·특성",
+      "group": "other"
+    },
+    {
+      "id": "W3359:기본:sing:1",
+      "form": "sing",
+      "ko": "노래하다",
+      "emoji": "🎤",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "easy"
+    },
+    {
+      "id": "W3318:기본:shoulder:1",
+      "form": "shoulder",
+      "ko": "어깨",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "몸·건강",
+      "group": "thing"
+    },
+    {
+      "id": "W2895:기본:push:1",
+      "form": "push",
+      "ko": "밀다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W1722:기본:heavy:1",
+      "form": "heavy",
+      "ko": "무거운",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "관계·평가·특성",
+      "group": "other"
+    },
+    {
+      "id": "W3709:기본:swim:1",
+      "form": "swim",
+      "ko": "수영하다",
+      "emoji": "🏊",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "easy"
+    },
+    {
+      "id": "W4085:기본:voice:1",
+      "form": "voice",
+      "ko": "목소리",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "몸·건강",
+      "group": "thing"
+    },
+    {
+      "id": "W3025:기본:remember:1",
+      "form": "remember",
+      "ko": "기억하다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W2910:기본:quiet:1",
+      "form": "quiet",
+      "ko": "조용한",
+      "emoji": "🤫",
+      "type": "추상·기능",
+      "theme": "색·감각·재질",
+      "group": "other"
+    },
+    {
+      "id": "W1337:기본:family:1",
+      "form": "family",
+      "ko": "가족",
+      "emoji": "👨‍👩‍👧",
+      "type": "추상·기능",
+      "theme": "가족·사람·관계",
+      "group": "easy"
+    },
+    {
+      "id": "W0699:기본:clothes:1",
+      "form": "clothes",
+      "ko": "옷",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "옷·차림",
+      "group": "thing"
+    },
+    {
+      "id": "W3319:기본:shout:1",
+      "form": "shout",
+      "ko": "소리치다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "action"
+    },
+    {
+      "id": "W0097:기본:already:1",
+      "form": "already",
+      "ko": "이미",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "빈도·시간·정도",
+      "group": "other"
+    },
+    {
+      "id": "W1687:기본:happy:1",
+      "form": "happy",
+      "ko": "행복한",
+      "emoji": "😀",
+      "type": "추상·기능",
+      "theme": "감정·상태·성격",
+      "group": "easy"
+    },
+    {
+      "id": "W0425:기본:bread:1",
+      "form": "bread",
+      "ko": "빵",
+      "emoji": "🍞",
+      "type": "구체명사",
+      "theme": "음식·식사",
+      "group": "thing"
+    },
+    {
+      "id": "W0429:기본:breathe:1",
+      "form": "breathe",
+      "ko": "숨 쉬다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "이야기 행동·움직임",
+      "group": "action"
+    },
+    {
+      "id": "W0542:기본:carefully:1",
+      "form": "carefully",
+      "ko": "조심스럽게",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "빈도·시간·정도",
+      "group": "other"
+    },
+    {
+      "id": "W3209:기본:school:1",
+      "form": "school",
+      "ko": "학교",
+      "emoji": "🏫",
+      "type": "추상·기능",
+      "theme": "학교·책·수업",
+      "group": "easy"
+    },
+    {
+      "id": "W0427:기본:breakfast:1",
+      "form": "breakfast",
+      "ko": "아침 식사",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "음식·식사",
+      "group": "thing"
+    },
+    {
+      "id": "W1563:기본:giggle:1",
+      "form": "giggle",
+      "ko": "킥킥 웃다",
+      "emoji": "🤭",
+      "type": "동작",
+      "theme": "이야기 행동·움직임",
+      "group": "action"
+    },
+    {
+      "id": "W4265:기본:yesterday:1",
+      "form": "yesterday",
+      "ko": "어제",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "빈도·시간·정도",
+      "group": "other"
+    },
+    {
+      "id": "W2330:기본:morning:1",
+      "form": "morning",
+      "ko": "아침",
+      "emoji": "🌅",
+      "type": "추상·기능",
+      "theme": "시간·수·측정",
+      "group": "easy"
+    },
+    {
+      "id": "W0621:기본:cheese:1",
+      "form": "cheese",
+      "ko": "치즈",
+      "emoji": "🧀",
+      "type": "구체명사",
+      "theme": "음식·식사",
+      "group": "thing"
+    },
+    {
+      "id": "W2640:기본:peek:1",
+      "form": "peek",
+      "ko": "살짝 엿보다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "이야기 행동·움직임",
+      "group": "action"
+    },
+    {
+      "id": "W0558:기본:castle:1",
+      "form": "castle",
+      "ko": "성",
+      "emoji": "🏰",
+      "type": "구체명사",
+      "theme": "장소·지역·건물",
+      "group": "thing"
+    },
+    {
+      "id": "W2367:기본:music:1",
+      "form": "music",
+      "ko": "음악",
+      "emoji": "🎵",
+      "type": "추상·기능",
+      "theme": "학교·책·수업",
+      "group": "easy"
+    },
+    {
+      "id": "W4070:기본:village:1",
+      "form": "village",
+      "ko": "마을",
+      "emoji": "🏘️",
+      "type": "구체명사",
+      "theme": "장소·지역·건물",
+      "group": "thing"
+    },
+    {
+      "id": "W1532:기본:garden:1",
+      "form": "garden",
+      "ko": "정원",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "집·가구·생활용품",
+      "group": "thing"
+    },
+    {
+      "id": "W2003:기본:kitchen:1",
+      "form": "kitchen",
+      "ko": "부엌",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "집·가구·생활용품",
+      "group": "thing"
+    },
+    {
+      "id": "W1567:기본:give:1",
+      "form": "give",
+      "ko": "주다",
+      "emoji": "",
+      "type": "동작",
+      "theme": "기본 행동",
+      "group": "easy"
+    },
+    {
+      "id": "W2743:기본:pocket:1",
+      "form": "pocket",
+      "ko": "주머니",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "집·가구·생활용품",
+      "group": "thing"
+    },
+    {
+      "id": "W3124:기본:rope:1",
+      "form": "rope",
+      "ko": "밧줄",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "집·가구·생활용품",
+      "group": "thing"
+    },
+    {
+      "id": "W4160:기본:wheel:1",
+      "form": "wheel",
+      "ko": "바퀴",
+      "emoji": "",
+      "type": "구체명사",
+      "theme": "집·가구·생활용품",
+      "group": "thing"
+    },
+    {
+      "id": "W0065:기본:again:1",
+      "form": "again",
+      "ko": "다시",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "빈도·시간·정도",
+      "group": "easy"
+    },
+    {
+      "id": "W1461:기본:forest:1",
+      "form": "forest",
+      "ko": "숲",
+      "emoji": "🌲",
+      "type": "추상·기능",
+      "theme": "식물·자연·날씨",
+      "group": "thing"
+    },
+    {
+      "id": "W1931:기본:island:1",
+      "form": "island",
+      "ko": "섬",
+      "emoji": "🏝️",
+      "type": "추상·기능",
+      "theme": "식물·자연·날씨",
+      "group": "thing"
+    },
+    {
+      "id": "W2435:기본:noise:1",
+      "form": "noise",
+      "ko": "소음",
+      "emoji": "",
+      "type": "추상·기능",
+      "theme": "식물·자연·날씨",
+      "group": "thing"
+    }
+  ]
+}

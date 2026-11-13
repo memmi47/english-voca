@@ -1,0 +1,211 @@
+{
+  "version": "postal-v1",
+  "license": "Original project artwork and synthesized music; font uses its separate OFL license.",
+  "viewBoxUnits": "integer pixel grid",
+  "symbols": {
+    "courier-teal-idle": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-teal-walk1": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-teal-walk2": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-teal-happy": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-teal-wave": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-gold-idle": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-gold-walk1": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-gold-walk2": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-gold-happy": {
+      "size": 48,
+      "role": "character"
+    },
+    "courier-gold-wave": {
+      "size": 48,
+      "role": "character"
+    },
+    "tree": {
+      "size": 64,
+      "role": "scenery"
+    },
+    "bush": {
+      "size": 48,
+      "role": "scenery"
+    },
+    "flowers": {
+      "size": 48,
+      "role": "scenery"
+    },
+    "rock": {
+      "size": 48,
+      "role": "scenery"
+    },
+    "reeds": {
+      "size": 48,
+      "role": "scenery"
+    },
+    "lily": {
+      "size": 48,
+      "role": "scenery"
+    },
+    "bridge": {
+      "size": 64,
+      "role": "terrain"
+    },
+    "grass-tile": {
+      "size": 64,
+      "role": "terrain"
+    },
+    "water-tile": {
+      "size": 64,
+      "role": "terrain"
+    },
+    "path-tile": {
+      "size": 64,
+      "role": "terrain"
+    },
+    "post-office": {
+      "size": 64,
+      "role": "landmark"
+    },
+    "playhouse": {
+      "size": 64,
+      "role": "landmark"
+    },
+    "gate": {
+      "size": 64,
+      "role": "landmark"
+    },
+    "mailbox": {
+      "size": 48,
+      "role": "landmark"
+    },
+    "sign": {
+      "size": 48,
+      "role": "landmark"
+    },
+    "leaf-boss": {
+      "size": 48,
+      "role": "boss"
+    },
+    "cloud-boss": {
+      "size": 48,
+      "role": "boss"
+    },
+    "snail-boss": {
+      "size": 48,
+      "role": "boss"
+    },
+    "bat-friend": {
+      "size": 48,
+      "role": "boss"
+    },
+    "envelope": {
+      "size": 32,
+      "role": "ui"
+    },
+    "star": {
+      "size": 32,
+      "role": "ui"
+    },
+    "key": {
+      "size": 32,
+      "role": "ui"
+    },
+    "stamp": {
+      "size": 32,
+      "role": "ui"
+    },
+    "sound": {
+      "size": 32,
+      "role": "ui"
+    },
+    "footstep": {
+      "size": 32,
+      "role": "ui"
+    },
+    "flag": {
+      "size": 32,
+      "role": "ui"
+    },
+    "flower-badge": {
+      "size": 32,
+      "role": "ui"
+    }
+  },
+  "animations": {
+    "teal": {
+      "idle": [
+        "courier-teal-idle"
+      ],
+      "walk": [
+        "courier-teal-walk1",
+        "courier-teal-walk2"
+      ],
+      "happy": [
+        "courier-teal-happy"
+      ],
+      "wave": [
+        "courier-teal-wave"
+      ]
+    },
+    "gold": {
+      "idle": [
+        "courier-gold-idle"
+      ],
+      "walk": [
+        "courier-gold-walk1",
+        "courier-gold-walk2"
+      ],
+      "happy": [
+        "courier-gold-happy"
+      ],
+      "wave": [
+        "courier-gold-wave"
+      ]
+    }
+  },
+  "music": {
+    "meadow": {
+      "src": "audio/meadow.m4a",
+      "midi": "audio/meadow.mid",
+      "bpm": 108,
+      "loop": true
+    },
+    "play": {
+      "src": "audio/play.m4a",
+      "midi": "audio/play.mid",
+      "bpm": 116,
+      "loop": true
+    }
+  },
+  "sfx": {
+    "tap": "audio/tap.wav",
+    "step": "audio/step.wav",
+    "flip": "audio/flip.wav",
+    "correct": "audio/correct.wav",
+    "retry": "audio/retry.wav",
+    "stamp": "audio/stamp.wav",
+    "gate": "audio/gate.wav",
+    "mail": "audio/mail.wav"
+  }
+}
