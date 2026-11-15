@@ -29,7 +29,7 @@ const wav = (samples, sr) => { const b = Buffer.alloc(44 + samples.length * 2); 
     const sfx = await (await fetch('assets/postal/sfx.json')).json(); out.sfx = {};
     for (const [name, evs] of Object.entries(sfx)) { const b = await chip.renderSfx(evs, { sampleRate: 22050 }); let d = b.getChannelData(0); let st = stats(d, 22050, 0, b.duration);
       if (cal) { const k = 10 ** ((-6 - st.peakDb) / 20); evs.forEach((e) => { e.g = Math.round(e.g * k * 1e4) / 1e4; }); const b2 = await chip.renderSfx(evs, { sampleRate: 22050 }); d = b2.getChannelData(0); st = stats(d, 22050, 0, b2.duration); }
-      out.sfx[name] = { ...st, secs: b.duration }; }
+      out.sfx[name] = { ...st, secs: b.duration, samples: Array.from(d) }; }
     out.sfxJson = cal ? sfx : null;
     function totalSecs(t) { return t.bars * t.beatsPerBar * 60 / t.bpm; }
     return out;
@@ -38,7 +38,8 @@ const wav = (samples, sr) => { const b = Buffer.alloc(44 + samples.length * 2); 
   const f = (x) => (Math.round(x * 10) / 10).toString().padStart(6);
   console.log('piece        secs   peak dB   rms dB  clipped  silent%  norm   loop seam (start/end dB)');
   for (const id of Object.keys(index)) { const r = res[id]; console.log(id.padEnd(10), f(r.secs), f(r.peakDb), f(r.rmsDb), String(r.clip).padStart(7), f(r.silentPct), String(r.norm).padStart(7), ' ', f(r.seam.startDb), f(r.seam.endDb)); fs.writeFileSync(path.join(OUT, id + '.wav'), wav(r.samples, 22050)); if (CAL) fs.writeFileSync(path.join(ROOT, 'cards/assets/postal/music', id + '.json'), JSON.stringify(r.track)); }
-  console.log('\nsfx          secs   peak dB   rms dB  clipped'); for (const [n, r] of Object.entries(res.sfx)) console.log(n.padEnd(14), f(r.secs), f(r.peakDb), f(r.rmsDb), String(r.clip).padStart(7));
+  console.log('\nsfx          secs   peak dB   rms dB  clipped'); const all = []; for (const [n, r] of Object.entries(res.sfx)) { console.log(n.padEnd(14), f(r.secs), f(r.peakDb), f(r.rmsDb), String(r.clip).padStart(7)); all.push(...r.samples, ...new Array(11025).fill(0)); }
+  fs.writeFileSync(path.join(OUT, 'sfx-all.wav'), wav(all, 22050));   // every effect in order, 0.5 s apart, for listening
   if (CAL) fs.writeFileSync(path.join(ROOT, 'cards/assets/postal/sfx.json'), JSON.stringify(res.sfxJson));
   const bad = Object.entries(res).filter(([k, r]) => k !== 'sfx' && k !== 'sfxJson' && r.clip > 0).length + Object.values(res.sfx).filter((r) => r.clip > 0).length;
   console.log(bad ? `\n${bad} piece(s) clip` : '\nno clipping'); process.exit(bad ? 1 : 0);

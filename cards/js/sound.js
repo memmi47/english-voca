@@ -16,7 +16,7 @@ export function pickVoice(voices) {
 export class Sound {
   constructor({ base = 'audio/', speech = globalThis.speechSynthesis || null, createAudio = () => new Audio(), off = false, timeoutMs = 4000, fetchImpl = (u) => fetch(u) } = {}) {
     this.base = base; this.speech = speech; this.createAudio = createAudio; this.off = off; this.timeoutMs = timeoutMs; this.fetchImpl = fetchImpl;
-    this.files = {}; this.voice = null; this.el = null; this.token = 0; this.ctx = null; this.sfx = true; this.fails = 0;
+    this.files = {}; this.voice = null; this.el = null; this.token = 0; this.ctx = null; this.sfx = true; this.fails = 0; this.musicOn = false; this.chip = null; this.master = null; this.music = null; this.sceneId = null;
   }
   async init() {
     try { const r = await this.fetchImpl(this.base + 'manifest.json'); if (r.ok) this.files = (await r.json()).files || {}; } catch {}
@@ -28,16 +28,17 @@ export class Sound {
   async unlock() {
     if (this.off) return true;
     try { if (globalThis.navigator?.audioSession) globalThis.navigator.audioSession.type = 'playback'; } catch {}
-    try { const C = globalThis.AudioContext || globalThis.webkitAudioContext; if (C && !this.ctx) this.ctx = new C(); this.ctx?.resume?.(); } catch {}
+    try { const C = globalThis.AudioContext || globalThis.webkitAudioContext; if (C && !this.ctx) this.ctx = new C(); this.ctx?.resume?.(); this.chipInit(); } catch {}
     try { if (this.speech) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; this.speech.speak(u); } } catch {}
     if (!this.el) { this.el = this.createAudio(); this.el.preload = 'auto'; }
     try { this.el.src = SILENT; await this.el.play(); this.el.pause(); return true; } catch { return false; }
   }
-  stop() { this.token++; try { this.el?.pause(); } catch {} try { this.speech?.cancel(); } catch {} }
+  stop() { this.token++; clearTimeout(this._dt); this.music?.duck(false); try { this.el?.pause(); } catch {} try { this.speech?.cancel(); } catch {} }
   // -> { ok, source: 'file' | 'speech' | 'off', reason, stale }
   async play(id, text) {
     if (this.off) return { ok: true, source: 'off' };
     const my = ++this.token; try { this.el?.pause(); } catch {} try { this.speech?.cancel(); } catch {}
+    this._duckFor(1800);
     const res = this.files[id] ? await this._file(this.files[id], my) : this.speech && text ? await this._speak(text, my) : { ok: false, reason: 'no_audio' };
     if (my !== this.token) return { ok: false, stale: true };
     if (!res.ok) this.fails++;
@@ -69,16 +70,48 @@ export class Sound {
       } catch { resolve({ ok: false, reason: 'speech_unavailable' }); }
     });
   }
-  // Short effect tones. Decoration only: silent if Web Audio is unavailable or muted by the ringer switch.
-  blip(kind) {
-    if (this.off || !this.sfx || !this.ctx) return;
+  // ---- chiptune layer (chip.js): sound effects, jingles and looping music, all synthesized ----
+  // Preferences: music is off until someone turns it on; effects are on. `log` records every effect name (used by tests).
+  async chipInit() {
+    if (this.chip) return this.chip;
     try {
-      const t = this.ctx.currentTime; const notes = { hit: [[330, 0, 0.07]], big: [[523, 0, 0.08], [784, 0.07, 0.12]], miss: [[196, 0, 0.12]], boss: [[523, 0, 0.09], [659, 0.09, 0.09], [784, 0.18, 0.09], [1047, 0.27, 0.2]] }[kind] || [];
-      for (const [f, at, len] of notes) {
-        const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = kind === 'miss' ? 'sine' : 'triangle'; o.frequency.value = f;
-        g.gain.setValueAtTime(0.0001, t + at); g.gain.exponentialRampToValueAtTime(0.12, t + at + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + at + len);
-        o.connect(g).connect(this.ctx.destination); o.start(t + at); o.stop(t + at + len + 0.02);
-      }
-    } catch {}
+      const mod = await import('./chip.js'); const sfx = await (await this.fetchImpl('assets/postal/sfx.json')).json();
+      this.chip = { mod, sfx, tracks: {} };
+    } catch { this.chip = { mod: null, sfx: {}, tracks: {} }; }
+    return this.chip;
   }
+  _graph() {                                             // master -> destination, created once the context exists
+    if (!this.ctx || this.master) return !!this.master;
+    this.master = this.ctx.createGain(); this.master.gain.value = 0.9; this.master.connect(this.ctx.destination);
+    this.musicBus = this.ctx.createGain(); this.musicBus.connect(this.master); this.sfxBus = this.ctx.createGain(); this.sfxBus.gain.value = 0.8; this.sfxBus.connect(this.master);
+    return true;
+  }
+  _note(n) { (this.seen ||= new Set()).add(n); }                  // names of everything triggered so far (tests read this)
+  sfxPlay(name) {
+    this._note(name);
+    if (this.off || !this.sfx || !this.ctx || !this.chip?.mod || !this._graph()) return;
+    try { const ev = this.chip.sfx[name]; if (ev) this.chip.mod.playSfx(this.ctx, this.sfxBus, ev, 1); } catch {}
+  }
+  async track(id) {
+    const c = await this.chipInit(); if (!c.mod) return null;
+    if (!c.tracks[id]) { try { c.tracks[id] = await (await this.fetchImpl(`assets/postal/music/${id}.json`)).json(); } catch { return null; } }
+    return c.tracks[id];
+  }
+  jingle(id) {
+    this._note('jingle:' + id);
+    if (this.off || !this.sfx || !this.ctx) return;
+    this.track(id).then((t) => { if (t && this._graph()) { this.music?.duck(true); const len = this.chip.mod.playJingle(this.ctx, this.sfxBus, t, 1); setTimeout(() => this.music?.duck(false), len * 1000 + 100); } });
+  }
+  // The scene decides which loop plays; it only sounds when music is on.
+  async scene(id) {
+    this.sceneId = id; this._note('scene:' + id);
+    if (this.off || !this.musicOn || !this.ctx) return;
+    const t = await this.track(id); if (!t || this.sceneId !== id || !this._graph()) return;
+    this.music ||= new this.chip.mod.Music(this.ctx, this.musicBus); this.music.setVolume(this.musicVol ?? 0.5); this.music.play(t);
+  }
+  setMusic(on) { this.musicOn = on; if (!on) this.music?.stop(); else if (this.sceneId) this.scene(this.sceneId); }
+  setSfx(on) { this.sfx = on; }
+  _duckFor(ms) { if (!this.music) return; this.music.duck(true); clearTimeout(this._dt); this._dt = setTimeout(() => this.music?.duck(false), ms); }
+  // Older names used by main.js, mapped to the new effects.
+  blip(kind) { this.sfxPlay({ hit: 'hit', big: 'big-hit', miss: 'miss', boss: 'boss-down' }[kind] || kind); }
 }

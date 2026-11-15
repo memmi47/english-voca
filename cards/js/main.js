@@ -12,6 +12,21 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const PROFILES = ['son', 'daughter'];
 const BOSSES = ['👾', '🦖', '🐙', '🤖', '🐲', '👹', '🦈', '👻', '🦂', '🐊', '🦇', '🦑'];
 const GRADE = ['', '동', '은', '금'];
+const MEDAL = ['', 'medal-bronze', 'medal-silver', 'medal-gold'];
+const ITEM_SPR = { shield: 'mushroom', flame: 'fire-flower' };
+// Per-world look: the sprite sheet reads these --w-* variables (see cards/assets/postal/manifest.json worldVars).
+const THEMES = {
+  meadow: { ground: 't-grass', vars: { '--w-ground': '#86B682', '--w-ground-d': '#5C976E', '--w-ground-l': '#AED099', '--w-path': '#DEC995', '--w-path-d': '#BEAA79', '--w-path-l': '#F3E0B0', '--w-sky': '#6FB5AA', '--w-sky-l': '#A9D8CF' }, music: 'meadow' },
+  sea:    { ground: 't-water-a', vars: { '--w-ground': '#4F9AA8', '--w-ground-d': '#3B7F8F', '--w-ground-l': '#7BC4D0', '--w-path': '#E8D7A4', '--w-path-d': '#C7B27C', '--w-path-l': '#F7EBC8', '--w-sky': '#CFE9EE', '--w-sky-l': '#EAF6F6' }, music: 'sea' },
+  sky:    { ground: 't-cloud', vars: { '--w-ground': '#B9C3E6', '--w-ground-d': '#8D98C9', '--w-ground-l': '#E2E7F8', '--w-path': '#F3E0B0', '--w-path-d': '#CDB77F', '--w-path-l': '#FFF3D0', '--w-sky': '#3F4A86', '--w-sky-l': '#6C78B8' }, music: 'sky' },
+};
+// A 16-grid sprite from the inlined sheet, shown at an integer scale (px = 16 x n).
+const spr = (id, px = 64, cls = '') => `<svg class="spr ${cls}" width="${px}" height="${px}" viewBox="0 0 16 16" aria-hidden="true"><use href="#${id}"/></svg>`;
+const anim = (a, b, px = 64, cls = '') => `<span class="anim2 ${cls}">${spr(a, px)}${spr(b, px)}</span>`;
+async function loadSprites() {
+  try { const t = await fetch('assets/postal/sprites.svg').then((r) => r.text()); const d = document.createElement('div'); d.id = 'sheet'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; d.innerHTML = t; document.body.prepend(d); }
+  catch { /* the game still works with plain boxes if the sheet is missing */ }
+}
 const LT_SECONDS = FAST ? 3 : 60;
 const G = { world: null, node: null, lt: null, words: [], byId: {}, meta: null, pid: null, st: null, run: null, boss: null, view: 'home', busy: false, timer: null, sound: null };
 window.__cards = G;
@@ -37,9 +52,15 @@ function paintSync() { const el = document.getElementById('syncline'); if (el) e
 async function openProfile(id) { if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} } return today(id); }
 const name = (id) => G.meta.names[id];
 
+const PREF = 'cards.v0.pref';                           // this device only: music on/off, effects on/off
+function loadPref() { try { return { music: false, sfx: true, ...JSON.parse(localStorage.getItem(PREF) || '{}') }; } catch { return { music: false, sfx: true }; } }
+function savePref() { try { localStorage.setItem(PREF, JSON.stringify({ music: G.sound.musicOn, sfx: G.sound.sfx })); } catch {} }
+const themeId = () => qs.get('theme') && THEMES[qs.get('theme')] ? qs.get('theme') : (G.world?.theme && THEMES[G.world.theme] ? G.world.theme : 'meadow');
+const band = (on) => document.body.classList.toggle('band', on);
+function applyTheme() { const T = THEMES[themeId()]; for (const [k, v] of Object.entries(T.vars)) document.documentElement.style.setProperty(k, v); }
 function banner(html) { const b = $('#banner'); b.innerHTML = html; b.hidden = false; }
 function hideBanner() { $('#banner').hidden = true; }
-const miniCard = (w, g, cls = '') => `<div class="mini g${g} ${cls}" data-act="peek" data-id="${esc(w.id)}"><b>${esc(w.form)}</b>${g ? `<i>${GRADE[g]}</i>` : ''}</div>`;
+const miniCard = (w, g, cls = '') => `<div class="mini g${g} ${cls}" data-act="peek" data-id="${esc(w.id)}"><b>${esc(w.form)}</b>${g ? spr(MEDAL[g], 22) : ''}</div>`;
 
 // Emoji drawn tiny, then enlarged without smoothing: pixel-art look without any new artwork.
 const PXC = {};
@@ -61,8 +82,10 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
+  await loadSprites();
   G.world = data.world; G.words = data.words; G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.meta = loadMeta();
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
+  const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
   document.addEventListener('visibilitychange', () => { if (document.hidden) { G.sync?.flush().catch(() => {}); return; } G.sync?.flush().catch(() => {}); if (G.view === 'card' && !G.busy) speak(true); });
   home();
@@ -70,37 +93,47 @@ async function boot() {
 
 // ---- home / today ----
 function home() {
-  G.view = 'home'; G.pid = null; G.st = null; G.run = null; hideBanner(); clearTimeout(G.timer);
+  G.view = 'home'; G.pid = null; G.st = null; G.run = null; hideBanner(); clearTimeout(G.timer); applyTheme(); band(false); G.sound?.scene(THEMES[themeId()].music);
   $('#app').innerHTML = `<div class="page center"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
-  <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}">${esc(name(id))}</button>`).join('')}</div>
+  <div class="hero">${anim('flag-a', 'flag-b', 64)}</div>
+  <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}"><svg class="spr" width="96" height="96" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${id === 'son' ? 'teal' : 'gold'}-${id === 'son' ? 'idle' : 'wave'}"/></svg>${esc(name(id))}</button>`).join('')}</div>
   <p><button class="link" data-act="parent">부모 기록</button></p><p class="mut small" id="syncline">${esc(syncLine())}</p></div>`;
 }
 const POS = { start: [7, 50], monster: [18, 50], A1: [32, 18], A2: [50, 18], B1: [32, 50], B2: [50, 50], C1: [32, 82], C2: [50, 82], bonus: [68, 20], bat: [68, 80], castle: [84, 50] };
 const LINES = [['start', 'A1'], ['A1', 'A2'], ['A2', 'castle'], ['start', 'B1'], ['B1', 'B2'], ['B2', 'castle'], ['start', 'C1'], ['C1', 'C2'], ['C2', 'castle']];
 const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '박쥐 떼가 몰려왔어요! 먼저 쫓아내요 🦇', castleLocked: '두 길을 모두 깨면 성이 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요' };
+const STONE = { open: 'stone-open', cleared: 'stone-done', locked: 'stone-locked', blocked: 'stone-blocked' };
+// Ground, then a path of t-path tiles snapped to the 16 px grid along every road. Logical size 160 x 104 = the map's aspect ratio.
+function terrain() {
+  const T = THEMES[themeId()]; const seen = new Set(); const path = [];
+  for (const [a, b] of LINES) { const [x1, y1] = [POS[a][0] * 1.6, POS[a][1] * 1.04], [x2, y2] = [POS[b][0] * 1.6, POS[b][1] * 1.04]; const n = Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 8);
+    for (let i = 0; i <= n; i++) { const x = Math.floor((x1 + (x2 - x1) * i / n) / 16) * 16, y = Math.floor((y1 + (y2 - y1) * i / n) / 16) * 16; const k = x + ',' + y; if (!seen.has(k)) { seen.add(k); path.push(`<use href="#t-path" x="${x}" y="${y}" width="16" height="16"/>`); } } }
+  return `<svg class="terrain" viewBox="0 0 160 104" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="pg" width="16" height="16" patternUnits="userSpaceOnUse"><use href="#${T.ground}" width="16" height="16"/></pattern></defs><rect width="160" height="104" fill="url(#pg)"/>${path.join('')}</svg>`;
+}
 function today(id, msg = '') {
-  G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; hideBanner(); clearTimeout(G.timer);
+  G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; hideBanner(); clearTimeout(G.timer); applyTheme(); band(false); G.sound.scene(THEMES[themeId()].music);
   const st = G.st; const m = ensureMap(st); const v = mapView(G.world, st, todayISO()); const c = gradeCounts(st, G.words);
   const used = usedMs(st);                                  // shown to the parent; there is no daily time cap (user decision 2026-11-12)
-  const node = (key, e, label, status, extra = '') => { const [x, y] = POS[key];
-    return `<button class="node ${status} ${extra}" data-act="node" data-id="${key}" style="left:${x}%;top:${y}%" aria-label="${esc(label)}">${pimg(e, 56, status === 'locked' || status === 'blocked' ? 'dim' : '')}<span class="lbl">${esc(label)}</span>${status === 'cleared' ? '<i class="flag">🚩</i>' : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`; };
-  const tiles = v.roads.flatMap((r) => r.tiles.map((t) => node(t.id, r.icon, `${r.name.split(' ')[0]} ${t.id.slice(1)}`, t.status, t.bonus ? 'bonus' : '')));
-  const lines = LINES.map(([a, b]) => `<line x1="${POS[a][0]}" y1="${POS[a][1]}" x2="${POS[b][0]}" y2="${POS[b][1]}"/>`).join('');
+  const place = (key, inner, label, status, extra = '') => { const [x, y] = POS[key];
+    return `<button class="node ${status} ${extra}" data-act="node" data-id="${key}" style="left:${x}%;top:${y}%" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span>${status === 'cleared' && !extra.includes('mon') ? `<i class="flag">${anim('flag-a', 'flag-b', 32)}</i>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`; };
+  const tiles = v.roads.flatMap((r) => r.tiles.map((t) => place(t.id, spr(STONE[t.status] || 'stone-open', 64, 'big'), `${r.name.split(' ')[0]} ${t.id.slice(1)}`, t.status, t.bonus ? 'bonus' : '')));
+  const bonusSt = v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked';
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
-  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip">⭐ ${v.stars}</span><span class="chip">🔑 ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span></div>
-  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 가득 차면 박쥐 시험!"><span>🦇</span><div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
-  <div class="world" id="world"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines}</svg>
-    <div class="node start" style="left:${POS.start[0]}%;top:${POS.start[1]}%">${pimg('🚩', 56)}<span class="lbl">출발</span></div>
+  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip">${spr('star', 24)} ${v.stars}</span><span class="chip">${spr('key', 24)} ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
+    <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}">♪ 음악 ${G.sound.musicOn ? '켜짐' : '꺼짐'}</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}">${spr('sound', 24)} 효과음 ${G.sound.sfx ? '켜짐' : '꺼짐'}</button></div>
+  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
+  <div class="world" id="world">${terrain()}
+    <div class="node start" style="left:${POS.start[0]}%;top:${POS.start[1]}%">${anim('flag-a', 'flag-b', 64)}<span class="lbl">출발</span></div>
     ${tiles.join('')}
-    ${v.monster.present ? node('monster', '👾', `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
-    ${v.bat.full ? node('bat', '🦇', '박쥐 시험', 'open', 'mon') : ''}
-    ${node('bonus', '🏡', '보너스 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}
-    ${node('castle', '🏰', v.worldDone ? '클리어!' : '성', v.castle.status)}</div>
-  <p class="msg" id="msg">${esc(msg || (v.bat.full ? '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요 🦇' : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'))}</p>
-  <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${pimg(it.emoji, 40)}<b>×${m.items[k]}</b></button>`).join('')}
+    ${v.monster.present ? place('monster', anim('monster-a', 'monster-b', 64), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
+    ${v.bat.full ? place('bat', anim('bat-a', 'bat-b', 64, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
+    ${place('bonus', `<svg class="spr big" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><use href="#playhouse" width="64" height="64"/></svg>`, '보너스 집', bonusSt)}
+    ${place('castle', `<svg class="spr big" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><use href="#gate" width="64" height="64"/></svg>`, v.worldDone ? '클리어!' : '성', v.castle.status)}</div>
+  <p class="msg" id="msg">${esc(msg || (v.bat.full ? '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'))}</p>
+  <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></button>`).join('')}
     <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '다음 판에 쓸 아이템을 골라요'}</span></div>
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
-    <div class="legend"><span class="g3">금 ${c[3]}</span><span class="g2">은 ${c[2]}</span><span class="g1">동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
+    <div class="legend"><span class="g3">${spr(MEDAL[3], 24)} 금 ${c[3]}</span><span class="g2">${spr(MEDAL[2], 24)} 은 ${c[2]}</span><span class="g1">${spr(MEDAL[1], 24)} 동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
     <button class="sec" data-act="album">카드첩 보기</button></div>
   <p class="mut small center" id="src">소리: ${esc(G.sound.source)}</p><p class="mut small center" id="syncline">${esc(syncLine())}</p></div>`;
 }
@@ -126,7 +159,7 @@ async function start(nodeId) {
   const items = takeBag(G.st); G.node = node; save();
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
-  G.view = 'card';
+  G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(node.kind === 'castle' || node.kind === 'bat' ? 'castle' : 'study');
   $('#app').innerHTML = `<div class="run">
   <header class="hud"><button class="x" data-act="quit" aria-label="그만하기">✕</button>
     <div class="boss"><span class="boss-emoji" id="boss"></span><div class="hpbar"><i id="hp"></i></div><span class="floater" id="floater"></span></div>
@@ -137,7 +170,7 @@ async function start(nodeId) {
 }
 function paintHud() {
   const b = G.run.boss; const be = BOSSES[b.idx % BOSSES.length]; if ($('#boss').dataset.e !== be) { $('#boss').dataset.e = be; $('#boss').innerHTML = pimg(be, 56); } $('#hp').style.width = `${Math.max(0, b.hp) / CFG.bossHp * 100}%`;
-  $('#combo').textContent = (G.run.items.shield ? '🍄 ' : '') + (G.run.items.flame ? '🌸 ' : '') + (G.run.combo >= 2 ? `연속 ${G.run.combo}` : ''); $('#combo').classList.toggle('hot', G.run.combo >= 5);
+  $('#combo').innerHTML = (G.run.items.shield ? spr(ITEM_SPR.shield, 24) : '') + (G.run.items.flame ? spr(ITEM_SPR.flame, 24) : '') + (G.run.combo >= 2 ? `연속 ${G.run.combo}` : ''); $('#combo').classList.toggle('hot', G.run.combo >= 5);
   $('#left').textContent = `남은 카드 ${G.run.left}`;
 }
 const TAG = { castle: '박쥐·성 시험', new: '새 카드', review: '다시 만난 카드', likely: '다시 만난 카드', relearn: '방금 배운 카드', practice: '한 번 더', retry: '다시 도전' };
@@ -145,7 +178,7 @@ function front(it, w, extra = '') {
   const g = gradeOf(G.st.words[w.id]);
   $('#card').className = `card g${g}`;
   $('#card').innerHTML = `<div class="tag ${it.form === 'check' || it.verifying ? 'chk' : ''}" id="tag">${it.form === 'check' || it.verifying ? '확인! 뜻을 골라요' : TAG[it.role]}${extra}</div>
-    <div class="word" id="word">${esc(w.form)}</div><button class="hear" data-act="hear" aria-label="다시 듣기">🔊</button>`;
+    <div class="word" id="word">${esc(w.form)}</div><button class="hear" data-act="hear" aria-label="다시 듣기"><svg class="spr" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg></button>`;
 }
 function judgeButtons() { $('#actions').innerHTML = `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
 function optionButtons(it) {
@@ -168,7 +201,7 @@ function showCard() {
   lock(true); paintHud(); $('#card').classList.add('in'); speak(false);
 }
 function onJudge(know) {
-  if (G.busy || G.view !== 'card') return; const it = G.run.current;
+  if (G.busy || G.view !== 'card') return; G.sound.sfxPlay('flip'); const it = G.run.current;
   const res = G.run.judge(know);
   if (res.next === 'verify') { front(it, G.byId[it.id]); optionButtons(it); G.sound.blip('hit'); return; }
   reveal(res);
@@ -178,17 +211,19 @@ function onPick(i) {
   reveal(G.run.pick(i));                                 // the card back shows the right meaning; the options are cleared
 }
 function reveal(res) {
-  G.busy = true; lock(true); save(); const w = res.word; const card = $('#card');
+  G.busy = true; lock(true); save(); const w = res.word; const card = $('#card'); const shielded = G.run.shieldUsed > (G.shieldSeen || 0); G.shieldSeen = G.run.shieldUsed;
   const up = res.grade && res.grade.to > res.grade.from ? res.grade.to : 0;
   const line = res.ok ? (up ? `${GRADE[up]} 카드!` : res.verified ? '확인 성공!' : '') : res.said === 'wrong' ? '이 뜻이에요' : '이제 배워요';
   card.classList.remove('in'); card.classList.add('flip');
   setTimeout(() => {
     card.className = `card back g${gradeOf(G.st.words[w.id])} ${res.ok ? 'ok' : 'learn'} ${up ? 'up' : ''}`;
-    card.innerHTML = `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>${line ? `<div class="line">${line}</div>` : ''}`;
+    card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
   }, FAST ? 0 : 90);
   if (res.dmg) { const f = $('#floater'); f.textContent = `-${res.dmg}`; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
-    $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.blip(res.defeated ? 'boss' : res.verified ? 'big' : 'hit'); }
-  else G.sound.blip('miss');
+    $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.blip(res.defeated ? 'boss' : res.verified || (G.run.items.flame && res.dmg >= 2) ? 'big' : 'hit');
+    if (G.run.items.flame) setTimeout(() => G.sound.sfxPlay('flame'), 120); if (res.combo === 5) setTimeout(() => G.sound.sfxPlay('combo'), 160); }
+  else G.sound.blip(res.said === 'wrong' && !shielded ? 'miss' : shielded ? 'shield' : 'retry');
+  if (up) setTimeout(() => G.sound.jingle('grade'), 250);
   if (res.defeated) { $('#boss').classList.add('down'); setTimeout(() => { $('#boss').classList.remove('down'); paintHud(); }, FAST ? 0 : 450); } else paintHud();
   if (res.ok) { $('#actions').innerHTML = ''; G.timer = setTimeout(next, FAST ? 30 : up ? 1300 : 900); }
   else {                                                 // a word to learn: hear it again, then move on (tap to go sooner)
@@ -202,26 +237,30 @@ function next() { clearTimeout(G.timer); if (G.view !== 'card' || !G.busy) retur
 function endRun(reason) {
   clearTimeout(G.timer); G.sound.stop(); const run = G.run; const node = G.node; const rec = run.finish(reason); G.boss = { ...run.boss, day: todayISO(), pid: G.pid };
   const rw = settleRun(G.world, G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); save(); G.sync?.flush().catch(() => {});
-  G.view = 'end'; hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from);
+  G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from);
   const title = { tile: rw.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.cleared ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: rw.key ? '성을 깼어요!' : '성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요' }[node.kind];
-  const lines = rw.stars > 0 ? [`<div class="gain">⭐ +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
-  if (rw.item) lines.push(`<div class="gain">${pimg(ITEMS[rw.item].emoji, 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
-  if (rw.key) lines.push('<div class="gain">🔑 열쇠를 얻었어요</div>');
+  const lines = rw.stars > 0 ? [`<div class="gain">${spr('star', 32)} +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
+  if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
+  if (rw.key) lines.push(`<div class="gain">${spr('key', 32)} 열쇠를 얻었어요</div>`);
   if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${Math.round(rw.bat.acc * 100)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
-  if (rw.batFull && node.kind !== 'bat') lines.push('<div class="gain bat">🦇 박쥐 게이지가 가득 찼어요!</div>');
+  if (rw.batFull && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
   if (rw.castle && !rw.key) lines.push(`<p class="mut">${rw.castle.ok}/${rw.castle.total}장 맞혔어요. ${Math.round(CASTLE_PASS * 100)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
   $('#app').innerHTML = `<div class="page center"><h1 class="title">${title}</h1>${lines.join('')}
   <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>${rec.bosses}</b><span>잡은 보스</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
-  <button class="go" data-act="${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? 'bat-go' : 'today'}">${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '🦇 박쥐 시험' : '▶ 지도로'}</button>${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
+  <button class="go" data-act="${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? 'bat-go' : 'today'}">${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '박쥐 시험' : '▶ 지도로'}</button>${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
   G.run = null; G.node = null;
+  const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
+  G.sound.scene(THEMES[themeId()].music);
+  const jg = batNow ? 'bat' : rw.key ? 'victory' : rw.cleared || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) setTimeout(() => G.sound.jingle(jg), 150);
+  if (rw.key) setTimeout(() => G.sound.jingle('key'), 1800); else if (rw.cleared) G.sound.sfxPlay('stamp');
 }
 
 // ---- lightning round (bonus house): true / false pairs, 60 seconds, touches no word ----
 async function startLightning() {
   await G.sound.unlock(); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 7);
   G.lt = new Lightning({ state: G.st, words: G.words, rng, seconds: LT_SECONDS }); if (!G.lt.ready) return today(G.pid, MSG.bonusLocked);
-  G.view = 'lightning'; G.ltEnd = Date.now() + LT_SECONDS * 1000;
+  G.view = 'lightning'; band(true); G.ltEnd = Date.now() + LT_SECONDS * 1000; G.sound.scene('play');
   $('#app').innerHTML = `<div class="run"><header class="hud"><button class="x" data-act="lt-quit" aria-label="그만하기">✕</button><div class="ltbar"><i id="ltbar"></i></div><div class="combo" id="ltscore">0</div></header>
   <section class="stage"><div class="card" id="card"></div></section>
   <footer class="actions"><button class="act no" data-act="lt-no">아니에요 ✕</button><button class="act yes" data-act="lt-yes">맞아요 ○</button></footer></div>`;
@@ -234,10 +273,10 @@ function ltAnswer(says) {
   $('#card').classList.add(ok ? 'okflash' : 'badflash'); setTimeout(() => { if (G.view === 'lightning') ltNext(); }, FAST ? 10 : 160);
 }
 function ltEnd() {
-  clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; G.sound.stop();
+  clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; band(false); G.sound.stop(); G.sound.sfxPlay('lightning-end'); G.sound.scene(THEMES[themeId()].music);
   const r = settleLightning(G.st, G.lt, todayISO()); save(); G.sync?.flush().catch(() => {}); const sc = G.lt.score;
   $('#app').innerHTML = `<div class="page center"><h1 class="title">번개 끝!</h1><div class="tiles"><div><b>${sc}</b><span>맞힌 수</span></div><div><b>${G.st.map.best}</b><span>내 최고 기록</span></div></div>
-  ${r.newBest ? '<div class="gain">새 기록!</div>' : ''}${r.item ? `<div class="gain">${pimg(ITEMS[r.item].emoji, 40)} ${ITEMS[r.item].name}을 얻었어요</div>` : r.first ? '<p class="mut">3개 이상 맞히면 아이템을 줘요</p>' : ''}
+  ${r.newBest ? '<div class="gain">새 기록!</div>' : ''}${r.item ? `<div class="gain">${spr(ITEM_SPR[r.item], 40)} ${ITEMS[r.item].name}을 얻었어요</div>` : r.first ? '<p class="mut">3개 이상 맞히면 아이템을 줘요</p>' : ''}
   <button class="go" data-act="today">▶ 지도로</button></div>`;
   G.lt = null;
 }
@@ -269,9 +308,12 @@ function download(nm, obj) { const a = document.createElement('a'); a.href = URL
 
 async function onClick(e) {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return; const a = b.dataset.act;
+  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node'].includes(a)) G.sound.sfxPlay('tap');
   switch (a) {
+    case 'music': await G.sound.unlock(); G.sound.setMusic(!G.sound.musicOn); savePref(); return today(G.pid);
+    case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
     case 'home': return home();
-    case 'pick': return openProfile(b.dataset.id);
+    case 'pick': await G.sound.unlock(); return openProfile(b.dataset.id);
     case 'today': return today(G.pid);
     case 'node': return nodeClick(b.dataset.id);
     case 'bat-go': return start('bat');
