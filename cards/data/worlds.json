@@ -5,13 +5,9 @@
   "contentScope": "learning-map",
   "playable": false,
   "pending": [
-    "runtime-v3-integration",
-    "sight-listen-spelling-support",
     "actual-word-audio-validation",
     "parent-sense-review",
-    "iPad-verification",
-    "continent-castle-config",
-    "expression-prerequisite-decision"
+    "iPad-verification"
   ],
   "source": {
     "path": "reference/weekly-tool/vocabulary.json",
@@ -30,14 +26,17 @@
       "cards": 12,
       "passRate": 0.8
     },
-    "continentCastle": null,
+    "continentCastle": {
+      "cards": 40,
+      "passRate": 0.75
+    },
     "continentGate": "all-world-crowns-and-continent-castle",
     "expressionPlacement": "dedicated-tiles-within-general-worlds",
-    "expressionPrerequisites": null,
-    "note": "대륙 성 수치는 WORKLOG의 Claude 시뮬레이션 결정 대기. 표현 구성어 선행 조건은 확정 전까지 null. null은 관문 제거/통과가 아님."
+    "expressionPrerequisites": "none",
+    "note": "대륙 성은 40장·75%, 표현 구성어 선행 관문은 없다."
   },
-  "configSha256": "461320bdeb85dc34ce441394833e4b56ca4851021c6c7b344d8c8b6a7e4b3b38",
-  "assignmentSha256": "38d4792b15a802fdad1b95305a84c70862f5908fec53dfedfa884ee2d424ea42",
+  "configSha256": "7fc1402ebb6ddcb41c45987c9d950ba8190888bcf481c1f901255700a8d50dc7",
+  "assignmentSha256": "ea675ce1747c6abc1242bec8aa091c4bd2ad0f5e7f7e6e84df9c21b6f2c954dd",
   "progressPolicy": {
     "legacyPrototype": "w1",
     "mode": "fresh-start",
@@ -45,10 +44,139 @@
     "namespace": "postal-v3-first-release",
     "changedAssignmentRequiresReview": true
   },
+  "excluded": [
+    {
+      "reason": "function-words",
+      "cardIds": [
+        "W0001:기본:a:1",
+        "W0007:기본:about:1",
+        "W0008:기본:above:1",
+        "W0031:기본:across:1",
+        "W0062:기본:after:1",
+        "W0083:기본:all:1",
+        "W0092:기본:along:1",
+        "W0117:기본:and:1",
+        "W0129:기본:another:1",
+        "W0141:기본:any:1",
+        "W0143:기본:anyone:1",
+        "W0144:기본:anything:1",
+        "W0180:기본:around:1",
+        "W0190:기본:as:1",
+        "W0207:기본:at:1",
+        "W0306:기본:because:1",
+        "W0317:기본:before:1",
+        "W0322:기본:behind:1",
+        "W0329:기본:below:1",
+        "W0337:기본:between:1",
+        "W0401:기본:both:1",
+        "W0485:기본:but:1",
+        "W0492:기본:by:1",
+        "W1112:기본:down:1",
+        "W1148:기본:during:1",
+        "W1154:기본:each:1",
+        "W1186:기본:eight:1",
+        "W1234:기본:enough:1",
+        "W1267:기본:every:1",
+        "W1268:기본:everybody:1",
+        "W1269:기본:everyone:1",
+        "W1270:기본:everything:1",
+        "W1376:기본:few:1",
+        "W1403:기본:first:1",
+        "W1407:기본:five:1",
+        "W1455:기본:for:1",
+        "W1476:기본:four:1",
+        "W1501:기본:from:1",
+        "W1595:기본:goodbye:1",
+        "W1706:기본:he:1",
+        "W1727:기본:hello:1",
+        "W1804:기본:how:1",
+        "W1817:기본:hundred:1",
+        "W1822:기본:hurrah:1",
+        "W1832:기본:I:1",
+        "W1841:기본:if:1",
+        "W1866:기본:in:1",
+        "W1895:기본:inside:1",
+        "W1918:기본:into:1",
+        "W1933:기본:it:1",
+        "W2038:기본:last:1",
+        "W2097:기본:like:1",
+        "W2198:기본:many:1",
+        "W2328:기본:more:1",
+        "W2335:기본:most:1",
+        "W2350:기본:much:1",
+        "W2393:기본:near:1",
+        "W2421:기본:next:1",
+        "W2427:기본:nine:1",
+        "W2431:기본:no:1",
+        "W2451:기본:not:1",
+        "W2454:기본:nothing:1",
+        "W2492:기본:of:1",
+        "W2493:기본:off:1",
+        "W2501:기본:oh:1",
+        "W2504:기본:okay:1",
+        "W2507:기본:on:1",
+        "W2509:기본:one:1",
+        "W2512:기본:onto:1",
+        "W2521:기본:or:1",
+        "W2537:기본:other:1",
+        "W2541:기본:out:1",
+        "W2546:기본:outside:1",
+        "W2549:기본:over:1",
+        "W2556:기본:own:1",
+        "W2730:기본:please:1",
+        "W3246:기본:second:1",
+        "W3280:기본:seven:1",
+        "W3283:기본:several:1",
+        "W3296:기본:she:1",
+        "W3357:기본:since:1",
+        "W3370:기본:six:1",
+        "W3442:기본:so:1",
+        "W3463:기본:some:1",
+        "W3466:기본:someone:1",
+        "W3467:기본:something:1",
+        "W3475:기본:sorry:1",
+        "W3649:기본:such:1",
+        "W3764:기본:ten:1",
+        "W3782:기본:than:1",
+        "W3785:기본:thanks:1",
+        "W3786:기본:that:1",
+        "W3788:기본:the:1",
+        "W3796:기본:they:1",
+        "W3807:기본:this:1",
+        "W3811:기본:though:1",
+        "W3813:기본:thousand:1",
+        "W3817:기본:three:1",
+        "W3819:기본:through:1",
+        "W3849:기본:to:1",
+        "W3886:기본:toward:1",
+        "W3963:기본:twenty:1",
+        "W3971:기본:two:1",
+        "W3982:기본:under:1",
+        "W4022:기본:until:1",
+        "W4026:기본:up:1",
+        "W4127:기본:we:1",
+        "W4149:기본:well:1",
+        "W4157:기본:what:1",
+        "W4163:기본:when:1",
+        "W4165:기본:where:1",
+        "W4168:기본:which:1",
+        "W4170:기본:while:1",
+        "W4179:기본:who:1",
+        "W4183:기본:whose:1",
+        "W4184:기본:why:1",
+        "W4212:기본:with:1",
+        "W4215:기본:without:1",
+        "W4240:기본:wow:1",
+        "W4264:기본:yes:1",
+        "W4271:기본:you:1"
+      ]
+    }
+  ],
   "counts": {
     "lemmas": 4610,
     "cards": 4610,
-    "assignedCards": 4610,
+    "assignedCards": 4489,
+    "excludedCards": 121,
     "continents": 3,
     "worlds": 30,
     "byBand": {
@@ -572,52 +700,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-01-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-01-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-01-sight-1",
-                  "words": [
-                    "W3788:기본:the:1",
-                    "W0117:기본:and:1",
-                    "W3849:기본:to:1",
-                    "W1706:기본:he:1",
-                    "W2492:기본:of:1",
-                    "W3796:기본:they:1",
-                    "W3786:기본:that:1",
-                    "W3296:기본:she:1"
-                  ]
-                },
-                {
-                  "id": "p1-01-sight-2",
-                  "words": [
-                    "W1832:기본:I:1",
-                    "W0001:기본:a:1",
-                    "W4271:기본:you:1",
-                    "W1933:기본:it:1",
-                    "W1866:기본:in:1",
-                    "W2451:기본:not:1",
-                    "W4127:기본:we:1",
-                    "W1455:기본:for:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-02",
           "counts": {
             "vocab": 107,
             "phrase": 31,
-            "sight": 16,
-            "cards": 154,
+            "sight": 0,
+            "cards": 138,
             "tiles": 15
           }
         },
@@ -1122,51 +1211,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-02-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-02-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-02-sight-1",
-                  "words": [
-                    "W2507:기본:on:1",
-                    "W4157:기본:what:1",
-                    "W0207:기본:at:1",
-                    "W2097:기본:like:1",
-                    "W0083:기본:all:1",
-                    "W2509:기본:one:1",
-                    "W4026:기본:up:1",
-                    "W3442:기본:so:1"
-                  ]
-                },
-                {
-                  "id": "p1-02-sight-2",
-                  "words": [
-                    "W3807:기본:this:1",
-                    "W4212:기본:with:1",
-                    "W0485:기본:but:1",
-                    "W0007:기본:about:1",
-                    "W0190:기본:as:1",
-                    "W2521:기본:or:1",
-                    "W1501:기본:from:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-03",
           "counts": {
             "vocab": 107,
             "phrase": 31,
-            "sight": 15,
-            "cards": 153,
+            "sight": 0,
+            "cards": 138,
             "tiles": 15
           }
         },
@@ -1670,51 +1721,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-03-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-03-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-03-sight-1",
-                  "words": [
-                    "W1804:기본:how:1",
-                    "W1841:기본:if:1",
-                    "W3971:기본:two:1",
-                    "W3463:기본:some:1",
-                    "W0492:기본:by:1",
-                    "W4165:기본:where:1",
-                    "W1918:기본:into:1",
-                    "W1112:기본:down:1"
-                  ]
-                },
-                {
-                  "id": "p1-03-sight-2",
-                  "words": [
-                    "W4163:기본:when:1",
-                    "W2541:기본:out:1",
-                    "W2431:기본:no:1",
-                    "W4179:기본:who:1",
-                    "W2537:기본:other:1",
-                    "W2328:기본:more:1",
-                    "W1154:기본:each:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-04",
           "counts": {
             "vocab": 106,
             "phrase": 31,
-            "sight": 15,
-            "cards": 152,
+            "sight": 0,
+            "cards": 137,
             "tiles": 15
           }
         },
@@ -2218,51 +2231,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-04-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-04-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-04-sight-1",
-                  "words": [
-                    "W2198:기본:many:1",
-                    "W0180:기본:around:1",
-                    "W3467:기본:something:1",
-                    "W0306:기본:because:1",
-                    "W1403:기본:first:1",
-                    "W3782:기본:than:1",
-                    "W4168:기본:which:1"
-                  ]
-                },
-                {
-                  "id": "p1-04-sight-2",
-                  "words": [
-                    "W3817:기본:three:1",
-                    "W4184:기본:why:1",
-                    "W0062:기본:after:1",
-                    "W2549:기본:over:1",
-                    "W2421:기본:next:1",
-                    "W2350:기본:much:1",
-                    "W4149:기본:well:1",
-                    "W0141:기본:any:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-05",
           "counts": {
             "vocab": 106,
             "phrase": 31,
-            "sight": 15,
-            "cards": 152,
+            "sight": 0,
+            "cards": 137,
             "tiles": 15
           }
         },
@@ -2751,51 +2726,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-05-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-05-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-05-sight-1",
-                  "words": [
-                    "W0317:기본:before:1",
-                    "W1476:기본:four:1",
-                    "W2730:기본:please:1",
-                    "W2335:기본:most:1",
-                    "W4264:기본:yes:1",
-                    "W2038:기본:last:1",
-                    "W4170:기본:while:1",
-                    "W3370:기본:six:1"
-                  ]
-                },
-                {
-                  "id": "p1-05-sight-2",
-                  "words": [
-                    "W3819:기본:through:1",
-                    "W0129:기본:another:1",
-                    "W1267:기본:every:1",
-                    "W2493:기본:off:1",
-                    "W1407:기본:five:1",
-                    "W3466:기본:someone:1",
-                    "W1376:기본:few:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-06",
           "counts": {
             "vocab": 106,
             "phrase": 30,
-            "sight": 15,
-            "cards": 151,
+            "sight": 0,
+            "cards": 136,
             "tiles": 14
           }
         },
@@ -3284,51 +3221,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-06-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-06-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-06-sight-1",
-                  "words": [
-                    "W3982:기본:under:1",
-                    "W1269:기본:everyone:1",
-                    "W0401:기본:both:1",
-                    "W2393:기본:near:1",
-                    "W3649:기본:such:1",
-                    "W3246:기본:second:1",
-                    "W3475:기본:sorry:1",
-                    "W4022:기본:until:1"
-                  ]
-                },
-                {
-                  "id": "p1-06-sight-2",
-                  "words": [
-                    "W0092:기본:along:1",
-                    "W2556:기본:own:1",
-                    "W2504:기본:okay:1",
-                    "W1234:기본:enough:1",
-                    "W0144:기본:anything:1",
-                    "W4215:기본:without:1",
-                    "W1895:기본:inside:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-07",
           "counts": {
             "vocab": 106,
             "phrase": 30,
-            "sight": 15,
-            "cards": 151,
+            "sight": 0,
+            "cards": 136,
             "tiles": 14
           }
         },
@@ -3817,51 +3716,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-07-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-07-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-07-sight-1",
-                  "words": [
-                    "W1270:기본:everything:1",
-                    "W2546:기본:outside:1",
-                    "W3886:기본:toward:1",
-                    "W2454:기본:nothing:1",
-                    "W1727:기본:hello:1",
-                    "W3764:기본:ten:1",
-                    "W1148:기본:during:1"
-                  ]
-                },
-                {
-                  "id": "p1-07-sight-2",
-                  "words": [
-                    "W3280:기본:seven:1",
-                    "W1186:기본:eight:1",
-                    "W1268:기본:everybody:1",
-                    "W0322:기본:behind:1",
-                    "W0031:기본:across:1",
-                    "W0337:기본:between:1",
-                    "W2427:기본:nine:1",
-                    "W0143:기본:anyone:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": "p1-08",
           "counts": {
             "vocab": 106,
             "phrase": 30,
-            "sight": 15,
-            "cards": 151,
+            "sight": 0,
+            "cards": 136,
             "tiles": 14
           }
         },
@@ -4350,51 +4211,13 @@
             "cards": 12,
             "passRate": 0.8
           },
-          "sideActivities": [
-            {
-              "id": "p1-08-sight",
-              "name": "빨리 읽기 집",
-              "icon": "📖",
-              "kind": "sight",
-              "requiredForCrown": true,
-              "anchorNodeId": "p1-08-main-0",
-              "status": "draft",
-              "answerMode": "listen-spelling",
-              "tiles": [
-                {
-                  "id": "p1-08-sight-1",
-                  "words": [
-                    "W0008:기본:above:1",
-                    "W3811:기본:though:1",
-                    "W3813:기본:thousand:1",
-                    "W1595:기본:goodbye:1",
-                    "W3963:기본:twenty:1",
-                    "W2501:기본:oh:1",
-                    "W3785:기본:thanks:1"
-                  ]
-                },
-                {
-                  "id": "p1-08-sight-2",
-                  "words": [
-                    "W3357:기본:since:1",
-                    "W1817:기본:hundred:1",
-                    "W3283:기본:several:1",
-                    "W2512:기본:onto:1",
-                    "W1822:기본:hurrah:1",
-                    "W0329:기본:below:1",
-                    "W4183:기본:whose:1",
-                    "W4240:기본:wow:1"
-                  ]
-                }
-              ]
-            }
-          ],
+          "sideActivities": [],
           "nextWorldId": null,
           "counts": {
             "vocab": 106,
             "phrase": 30,
-            "sight": 15,
-            "cards": 151,
+            "sight": 0,
+            "cards": 136,
             "tiles": 14
           }
         }
@@ -4405,9 +4228,9 @@
         "outro": "배가 바다로 나아가. 새 친구들에게 편지를 전하자!",
         "required": true,
         "unlock": "all-world-crowns",
-        "cards": null,
-        "passRate": null,
-        "status": "pending-config",
+        "cards": 40,
+        "passRate": 0.75,
+        "status": "draft",
         "nextContinentId": "c2"
       }
     },
@@ -12553,9 +12376,9 @@
         "outro": "배가 구름 위로 올라가. 마지막 편지를 찾으러 가자!",
         "required": true,
         "unlock": "all-world-crowns",
-        "cards": null,
-        "passRate": null,
-        "status": "pending-config",
+        "cards": 40,
+        "passRate": 0.75,
+        "status": "draft",
         "nextContinentId": "c3"
       }
     },
@@ -16394,9 +16217,9 @@
         "outro": "편지가 모두 집에 닿았어. 우리 길에서 다시 만나!",
         "required": true,
         "unlock": "all-world-crowns",
-        "cards": null,
-        "passRate": null,
-        "status": "pending-config",
+        "cards": 40,
+        "passRate": 0.75,
+        "status": "draft",
         "nextContinentId": null
       }
     }

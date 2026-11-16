@@ -20,11 +20,11 @@
 
 ## 2. 버전과 최상위
 
-UTF-8 JSON. `schemaVersion=3`, `contentVersion`, `status(draft|ready)`, `source{path,sha256,selection,overrideVersion}`, `counts{lemmas,cards,continents,worlds,byBand}`, `continents[]`를 둔다. 완성본은 4,610장·3대륙·30세계, 부분 fixture는 실제 개수를 쓴다. 대륙은 `id,band,name,story,worlds,finale`, 순서는 P1→P2→P3, 세계 수는 8/15/7이다.
+UTF-8 JSON. `schemaVersion=3`, `contentVersion`, `status(draft|ready)`, `source{path,sha256,selection,overrideVersion}`, `counts{lemmas,cards,continents,worlds,byBand}`, `continents[]`를 둔다. 완성본은 4,489장 배정·121장 제외·3대륙·30세계, 부분 fixture는 실제 개수를 쓴다. 대륙은 `id,band,name,story,worlds,finale`, 순서는 P1→P2→P3, 세계 수는 8/15/7이다.
 
-**현재 파일 구분:** `cards/data/world-art.json`은 `contentScope=presentation-only`, 배정 0장의 표시 원본이다. `cards/data/worlds.json`은 `contentScope=learning-map`, 대표 카드 4,610개와 실제 map/words/sideActivities를 가진 생성 결과다. 두 파일 모두 `status=draft`, `playable=false`이며, 전체 worlds는 `pending[]`에 실제 게임·음원·기능어 카드·남은 결정 등을 명시한다. `world-art.source`는 WORLD_BIBLE, `worlds.source`는 어휘 원본을 가리킨다. 전체 words 카탈로그는 `catalogue.json`으로 별도 제공한다.
+**현재 파일 구분:** `cards/data/world-art.json`은 `contentScope=presentation-only`, 배정 0장의 표시 원본이다. `cards/data/worlds.json`은 `contentScope=learning-map`, 대표 카드 4,489개를 실제 map/words에 배정하고 기능어 121개를 최상위 excluded에 기록한 생성 결과다. 두 파일 모두 `status=draft`, `playable=false`이며, 전체 worlds는 `pending[]`에 실제 음원·부모 뜻 검토·iPad 확인 등을 명시한다. `world-art.source`는 WORLD_BIBLE, `worlds.source`는 어휘 원본을 가리킨다. 전체 words 카탈로그는 `catalogue.json`으로 별도 제공한다.
 
-`worlds.rules`는 `maxCardsPerTile`, `worldCastle{cards,passRate}`, `continentCastle(null|{cards,passRate})`, `continentGate`, `expressionPlacement`, `expressionPrerequisites(null|none)` 설정이다. 대륙 성이 null이어도 필수 관문을 건너뛰지 않는다. `finale`는 `required=true`, `unlock=all-world-crowns`, `cards/passRate=null`, `status=pending-config`로 남긴다. 실제 기준은 WORKLOG의 Claude 결정 뒤 설정 파일에 반영한다. `configSha256`, `assignmentSha256`로 규칙/배정 변경을 구분한다. `progressPolicy`의 fresh-start는 사용자 승인한 60단어 시제품에서 처음 옮길 때만 적용하며, 이후 배정 변경에는 다시 검토/이관이 필요하다.
+`worlds.rules`는 `maxCardsPerTile`, `worldCastle{cards,passRate}`, `continentCastle(null|{cards,passRate})`, `continentGate`, `expressionPlacement`, `expressionPrerequisites(null|none)` 설정이다. 현재 대륙 성은 40장·75%이며 `finale`는 `required=true`, `unlock=all-world-crowns`, `status=draft`다. null 설정에서도 필수 관문은 유지한다. `configSha256`, `assignmentSha256`로 규칙/배정 변경을 구분한다. `progressPolicy`의 fresh-start는 사용자 승인한 60단어 시제품에서 처음 옮길 때만 적용하며, 이후 배정 변경에는 다시 검토/이관이 필요하다.
 
 v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` 노드와 선택 장식 보상을 추가한 계약이다. 모르는 버전·게임 유형은 명시적으로 준비 중 처리한다. 현재 기존 게임은 여전히 시제품 v1이며 v3를 자동으로 해석하지 못한다. 발행 ID는 이름·좌표가 바뀌어도 유지하며 이후 배정이 달라지면 명시적 진도 이관을 한다. 60단어 시제품 w1 기록은 WORKLOG 사용자 결정에 따라 처음부터 시작하고 가져오지 않는다.
 
@@ -41,7 +41,7 @@ v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` �
 | `routes[]` | `{id,name,icon}` 장소 분위기. 독립 레인·품사·완료 조건이 아님. |
 | `map` | `startNodeId,castleNodeId,landscape,nodes[],edges[]`. 이동과 해제의 유일한 원본. |
 | `castleRule` | `{type:"reach",nodeId:castleNodeId,cards:12,passRate:0.8}`. |
-| `sideActivities[]` | 기능어 집. 표현은 map의 phrase 칸이며 별도 표현 집은 없다. 놀이집과 구분하며 왕관의 필수 학습 대상. |
+| `sideActivities[]` | 현재 빈 배열. 기능어는 학습 경로에서 제외하며 표현은 map의 phrase 칸에 있다. |
 | `nextWorldId,status` | 같은 대륙 다음 세계 또는 null, draft/ready. |
 
 ### 노드와 선
@@ -55,7 +55,7 @@ edge는 `{from,to}` 무방향 연결이다. 중복·자기 연결·고립 노드
 - 큰길·긴 우회로·중간에 다시 만나는 지점으로 구성한다. **짧게 갈 자유를 허용한다.** 다른 길의 거리·새 카드 수·예상 시간을 같게 만드는 검사는 없다.
 - 세계마다 들판 산책로, 섬과 다리, 마을 고리길, 계곡길, 숨은 정원, 하늘길 중 맞는 기본 지형을 쓰고 방향·축척·노드 배치를 조정한다. 시안은 여섯 기본 틀을 재사용한다는 한계를 명시하며, 30개가 완전히 다른 손그림이라고 부르지 않는다.
 - 미완료 학습 칸은 지나갈 수 없다. 짧은 길은 학습 생략 버그가 아니라 정식 경로다. 성까지 주 지도 카드의 일부만 만나도 되며, 남은 어휘는 지도의 미방문 칸으로 유지한다.
-- 일반어·표현·기능어를 각각 빈도순으로 정렬하고 대륙의 세계 수에 나눠 세계 멤버를 정한다. 표현을 여러 일반 세계에 섞기 위한 종류별 정렬이며 세 종류를 합친 단일 빈도순은 아니다. 세계 내부는 품사·주제를 섞고 동일 뜻·철자·자동 IPA 후보·명시 혼동 목록을 분리한다. 특정 장소를 골라 뜻을 미리 추측하게 하지 않는다.
+- 일반어·표현을 각각 빈도순으로 정렬하고 대륙의 세계 수에 나눠 세계 멤버를 정한다. 표현을 여러 일반 세계에 섞기 위한 종류별 정렬이며 두 종류를 합친 단일 빈도순은 아니다. 세계 내부는 품사·주제를 섞고 동일 뜻·철자·자동 IPA 후보·명시 혼동 목록을 분리한다. 특정 장소를 골라 뜻을 미리 추측하게 하지 않는다.
 - 이전 시안은 카드 수 목표만 배분했다. 현재 생성기는 실제 card_id를 표현/일반어 칸으로 분리해 담고 전체 범위·중복·분리·접근성을 검사한다. 충돌 분리에 필요하면 칸 수를 늘리며 **경로 비용 균형을 다시 강제하지 않는다.**
 - 경로의 카드 수는 관측값이다. 오답·복습·박쥐 시험·기존 지식·놀이 시간이 달라져 실제 소요 시간을 예측하지 못한다.
 
@@ -100,9 +100,9 @@ minigame 노드 추가 필드:
 
 ## 6. 어휘 집과 전체 범위
 
-Activity는 `id,name,icon,kind(sight),requiredForCrown=true,anchorNodeId,tiles[{id,words}],status,answerMode`다. 기능어 121개는 P1 8세계에 16/15/.../15장으로 나누고 시작점에 빨리 읽기 집을 둔다. `answerMode=listen-spelling`이며 빈 한글 뜻으로 뜻 문제를 만들지 않는다. 미지원 상태에서는 draft로 남기고, 생략한 채 왕관으로 판정하지 않는다.
+기능어 121개는 카탈로그에 남기되 세계에 배정하지 않고 `excluded`의 `function-words` 항목에 기록한다. 빈 한글 뜻으로 뜻 문제를 만들지 않는다.
 
-표현 386개는 표현 전용 세계/집을 폐기하고 모든 P1/P2 세계와 P3 첫 두 세계의 `learningKind=phrase` 칸으로 배정한다. 구성어 선행 관문 해제 여부는 아직 미결이라 `rules.expressionPrerequisites=null`로 보존한다. 확정 없이 배정 순서만으로 선행 조건 충족을 주장하지 않는다. 필수 학습 칸/집은 optional minigame과 다른 타입이다.
+표현 386개는 표현 전용 세계/집을 폐기하고 모든 P1/P2 세계와 P3 첫 두 세계의 `learningKind=phrase` 칸으로 배정한다. 구성어 선행 관문은 없으며 `rules.expressionPrerequisites=none`이다. 필수 학습 칸/집은 optional minigame과 다른 타입이다.
 
 ## 7. 축소 예시
 

@@ -134,11 +134,8 @@ def generate(config,overrides,manual,art,db,source_sha):
             world['map']['edges']=[{'from':e['fromId'],'to':e['toId']} for e in world['map']['edges']]
             world['castleRule']=dict(type='reach',nodeId=g['castleNodeId'],**config['worldCastle'])
             world['sideActivities']=[]
-            if sight:
-                world['sideActivities']=[dict(id=wid+'-sight',name='빨리 읽기 집',icon='📖',kind='sight',requiredForCrown=True,
-                    anchorNodeId=g['startNodeId'],status='draft',answerMode='listen-spelling',tiles=[dict(id=f'{wid}-sight-{i+1}',words=[c['id'] for c in b]) for i,b in enumerate(pack(sight,cap))])]
             world['nextWorldId']=f'{band.lower()}-{wi+2:02}' if wi+1<amount else None
-            world['counts']=dict(vocab=len(regular),phrase=len(phrases),sight=len(sight),cards=len(regular)+len(phrases)+len(sight),tiles=len(pools))
+            world['counts']=dict(vocab=len(regular),phrase=len(phrases),sight=0,cards=len(regular)+len(phrases),tiles=len(pools))
             need(config['worldCastle']['cards']<=len(regular)+len(phrases),'world castle exceeds available meaning cards')
             measured=graph_audit(world,cap)
             # Even the shortest route must expose enough meaning cards for the configured castle.
@@ -152,14 +149,15 @@ def generate(config,overrides,manual,art,db,source_sha):
                 passRate=None if rule is None else rule['passRate'],status='pending-config' if rule is None else 'draft',nextContinentId=f'c{ci+2}' if ci<2 else None)))
     assignment=[(w['id'],[(n['id'],n.get('words',[])) for n in w['map']['nodes']],w['sideActivities']) for c in continents for w in c['worlds']]
     config_hash=digest(dump(config).encode());assignment_hash=digest(dump(assignment).encode())
-    pending=['runtime-v3-integration','sight-listen-spelling-support','actual-word-audio-validation','parent-sense-review','iPad-verification']
+    pending=['actual-word-audio-validation','parent-sense-review','iPad-verification']
     if config['continentCastle'] is None:pending.append('continent-castle-config')
     if config['expressionPrerequisites'] is None:pending.append('expression-prerequisite-decision')
     result=dict(schemaVersion=3,contentVersion='postal-allocation-1',status='draft',contentScope='learning-map',playable=False,
         pending=pending,source=dict(path='reference/weekly-tool/vocabulary.json',sha256=source_sha,selection='track vocab|sight, band P1|P2|P3; basic sense 1 unless approved override',overrideVersion=overrides['version']),
         artSource=art['source'],rules=copy.deepcopy(config),configSha256=config_hash,assignmentSha256=assignment_hash,
         progressPolicy=dict(legacyPrototype='w1',mode='fresh-start',importLegacyProgress=False,namespace='postal-v3-first-release',changedAssignmentRequiresReview=True),
-        counts=dict(lemmas=len(cards),cards=len(cards),assignedCards=len(cards),continents=3,worlds=30,byBand={k:v[1] for k,v in BANDS.items()},phrase=386,sight=121),
+        excluded=[dict(reason='function-words',cardIds=sorted(c['id'] for c in cards if c['learningKind']=='sight'))],
+        counts=dict(lemmas=len(cards),cards=len(cards),assignedCards=len(cards)-121,excludedCards=121,continents=3,worlds=30,byBand={k:v[1] for k,v in BANDS.items()},phrase=386,sight=121),
         assetPack=art['assetPack'],catalogue='catalogue.json',continents=continents)
     clean=[{k:v for k,v in c.items() if not k.startswith('_')} for c in cards]
     catalogue=dict(schemaVersion=1,contentVersion='postal-catalogue-1',status='draft',source=result['source'],words=clean,confusionGroups=groups,
@@ -192,24 +190,26 @@ def validate_output(worlds,catalogue,cap):
             need(len(set(local))==len(local),'duplicate card within world')
             need(any(cards[cid]['learningKind']=='vocab' for cid in local),'expression-only world')
             need(len(local)==w['counts']['cards'],'world count mismatch');used+=local;count+=len(local)
-            for a in w['sideActivities']:
-                need(a['requiredForCrown'] is True and a['kind']=='sight','sight activity must remain required')
-                need(all(cards[cid]['learningKind']=='sight' for t in a['tiles'] for cid in t['words']),'wrong sight activity card')
+            need(not w['sideActivities'],'side activities must be empty')
             need(w['castleRule']['cards']==worlds['rules']['worldCastle']['cards'],'castle config not propagated')
             need(w['castleRule']['passRate']==worlds['rules']['worldCastle']['passRate'],'castle rate not propagated')
-        need(count==BANDS[continent['band']][1],'continent total')
+        need(count==sum(c['band']==continent['band'] and c['learningKind']!='sight' for c in cards.values()),'continent total')
         need(continent['finale']['required'] is True,'continent gate was removed')
-    need(len(used)==4610 and set(used)==set(cards),'missing or duplicate coverage')
+    excluded=worlds['excluded'];need(len(excluded)==1 and excluded[0]['reason']=='function-words','exclusion policy')
+    excluded_ids=excluded[0]['cardIds'];sight_ids={cid for cid,c in cards.items() if c['learningKind']=='sight'}
+    need(len(excluded_ids)==121 and set(excluded_ids)==sight_ids,'excluded sight coverage')
+    need(len(used)==4489 and len(set(used))==4489 and set(used).isdisjoint(excluded_ids) and set(used)|set(excluded_ids)==set(cards),'missing or duplicate coverage')
+    need(worlds['counts']['assignedCards']==4489 and worlds['counts']['excludedCards']==121 and worlds['counts']['cards']==4610,'total counts')
     need(sum(c['learningKind']=='phrase' for c in cards.values())==386,'phrase count')
     need(sum(c['learningKind']=='sight' for c in cards.values())==121,'sight count')
     return True
 
 def report(worlds,catalogue,audit):
     lines=['# 전체 세계 생성 결과','',f'원본 SHA-256: `{worlds["source"]["sha256"]}`',f'배정 SHA-256: `{worlds["assignmentSha256"]}`','',
-        '[verified] 대표 카드 4,610개를 중복·누락 없이 30세계에 배정했다. P1 1,215 / P2 2,310 / P3 1,085. 표현 386개는 일반 세계 안의 표현 칸, 기능어 121개는 필수 빨리 읽기 집이다.',
+        '[verified] 대표 카드 4,610개 중 4,489개를 중복·누락 없이 30세계에 배정하고 기능어 121개를 제외했다. 표현 386개는 일반 세계 안의 표현 칸에 있다.',
         '',f'설정: 칸 최대 {worlds["rules"]["maxCardsPerTile"]}장; 세계 성 {worlds["rules"]["worldCastle"]["cards"]}장·{worlds["rules"]["worldCastle"]["passRate"]*100:g}%; 대륙 성 '+('미설정(필수 관문 유지)' if worlds['rules']['continentCastle'] is None else json.dumps(worlds['rules']['continentCastle'],ensure_ascii=False))+'.',
         '', '**draft / playable=false.** 남은 항목: '+', '.join(worlds['pending'])+'.',
-        '', '세계 멤버는 일반어·표현·기능어 각각 NDL→NGSL→Cambridge→근거 없는 주제 순환으로 정렬한 뒤 대륙 안에서 연속 구간으로 나눈다. 표현 전용 세계를 없애기 위해 종류별 세계 할당량을 먼저 나누며, 전체 종류를 합친 단일 빈도 순위와는 다르다. 세계 내부는 동일 뜻/철자/자동 IPA/명시 혼동 목록을 분리하고 품사·주제를 섞는다. 동의어·발음의 사람 전수 검수는 아니다.',
+        '', '세계 멤버는 일반어·표현 각각 NDL→NGSL→Cambridge→근거 없는 주제 순환으로 정렬한 뒤 대륙 안에서 연속 구간으로 나눈다. 표현 전용 세계를 없애기 위해 종류별 세계 할당량을 먼저 나누며, 전체 종류를 합친 단일 빈도 순위와는 다르다. 세계 내부는 동일 뜻/철자/자동 IPA/명시 혼동 목록을 분리하고 품사·주제를 섞는다. 동의어·발음의 사람 전수 검수는 아니다.',
         '',f'오답 보기 제외 그룹 {len(catalogue["confusionGroups"])}개를 catalogue.json에 함께 전달한다. 학습 엔진이 이를 실제 보기 선택에 적용해야 한다. 자동 IPA 오류로 과잉 분리될 수 있다. 빈 뜻의 기능어는 listen-spelling 전용이며 뜻 보기 정답으로 만들지 않는다.',
         '', '| 세계 | 일반어 | 표현 | 기능어 | 전체 | 지도 칸 | 표현 칸 | 성 경로 칸 | 성 경로 카드 |', '|---|---:|---:|---:|---:|---:|---:|---|---|']
     for a in audit:lines.append(f'| {a["worldId"]} | {a["vocab"]} | {a["phrase"]} | {a["sight"]} | {a["cards"]} | {a["tiles"]} | {a["phraseTiles"]} | {a["minTiles"]}–{a["maxTiles"]} | {a["minCards"]}–{a["maxCards"]} |')
@@ -225,5 +225,5 @@ def main():
         need(not path.resolve().is_relative_to((ROOT/'reference').resolve()),'reference is read-only')
         if args.check:need(path.exists() and path.read_text(encoding='utf-8')==content,f'stale generated file: {path}')
         else:path.parent.mkdir(parents=True,exist_ok=True);path.write_text(content,encoding='utf-8')
-    print(f'{"CHECK" if args.check else "BUILT"}: 4610 unique cards, 30 mixed worlds, 386 phrases, 121 sight; draft; {len(catalogue["confusionGroups"])} exclusion groups')
+    print(f'{"CHECK" if args.check else "BUILT"}: 4489 assigned + 121 excluded = 4610 unique cards, 30 mixed worlds, 386 phrases; draft; {len(catalogue["confusionGroups"])} exclusion groups')
 if __name__=='__main__':main()
