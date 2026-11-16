@@ -123,3 +123,18 @@ test('S10: bat gauge merge: the side that took the latest test wins (it emptied 
   const c = mk({ fill: 12, cap: 40, met: ['w1', 'w2'], last: '2026-11-12T12:00:00Z' }), d = mk({ fill: 20, cap: 40, met: ['w2', 'w3'], last: '2026-11-12T12:00:00Z' });
   for (const m of [mergeCards(c, d).map.bat, mergeCards(d, c).map.bat]) assert.deepEqual([m.fill, m.cap, [...m.met].sort()], [20, 40, ['w1', 'w2', 'w3']]);
 });
+
+test('S11: tile bunches: a finished check wins (both finished: the earlier day), else the earlier due date; a word keeps its bunch tag; both merge orders agree', () => {
+  const pass = (o = {}) => word({ st: 'likely', lstep: 0, due: null, bunch: 'A1', ...o });
+  const a = state({ v: 2, words: { w1: pass({ lastDay: '2026-11-14' }), w2: pass(), w3: word({ st: 'done', due: null, lastDay: '2026-12-20', bunch: 'B1' }) },
+    bunches: { A1: { due: '2026-12-12', done: null }, B1: { due: '2026-12-13', done: '2026-12-20', result: 'ok' }, C1: { due: '2026-12-14', done: '2026-12-21', result: 'split' }, D1: { due: '2026-12-15', done: null } } });
+  const b = state({ v: 2, words: { w1: word({ st: 'likely', lstep: 0, due: null, lastDay: '2026-11-12' }), w2: { ...pass(), bunch: undefined }, w4: pass({ bunch: 'E1' }) },
+    bunches: { A1: { due: '2026-12-14', done: null }, B1: { due: '2026-12-13', done: null }, C1: { due: '2026-12-14', done: '2026-12-15', result: 'ok' }, E1: { due: '2026-12-30', done: null } } });
+  delete b.words.w2.bunch;                                                          // an older copy of the same word, saved without the tag
+  const ab = mergeCards(a, b), ba = mergeCards(b, a);
+  for (const m of [ab, ba]) {
+    assert.deepEqual(m.bunches, { A1: { due: '2026-12-12', done: null }, B1: { due: '2026-12-13', done: '2026-12-20', result: 'ok' }, C1: { due: '2026-12-14', done: '2026-12-15', result: 'ok' }, D1: { due: '2026-12-15', done: null }, E1: { due: '2026-12-30', done: null } });
+    assert.deepEqual(['w1', 'w2', 'w3', 'w4'].map((id) => m.words[id].bunch), ['A1', 'A1', 'B1', 'E1']);
+  }
+  assert.deepEqual(ab.words, ba.words); assert.deepEqual(ab.bunches, ba.bunches);
+});

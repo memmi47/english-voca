@@ -1,7 +1,7 @@
 // Map-wide rules that do not depend on the shape of a world: review load (bat gauge, monster), stars, items, the
 // lightning round. Worlds, tiles and castles are in world.js. Pure: no DOM, no storage.
 // Nothing here writes to a word's schedule. Rewards (stars, items) live in state.map and never feed back into deck.js.
-import { addDays, shuffle, confusable } from './deck.js';
+import { addDays, shuffle, confusable, bunchLeft } from './deck.js';
 
 export const MONSTER_AT = 8;                 // this many due reviews put a monster on the map
 export const LIGHTNING_MIN = 6;              // seen words needed to open the bonus house
@@ -13,6 +13,26 @@ export const BAT = { cap: 40, min: 20, max: 80, test: 25, up: 0.9, down: 0.7, st
 //   batDebtFixed: measure that against the starting capacity (BAT.cap), not the capacity the last test left
 //   batGrace: a review counts as overdue only after this many days past its date (0 = from the next day)
 export const RULES = { tileDue: 8, tileDueMax: 20, tileDueShare: 0.5, monsterPerDay: 99, batOverdue: 1, batDebtFixed: false, batGrace: 0 };
+// Tile triage (docs/LEARNING_VALUE_SPEC.md 2.3, 2.4; card T-003). on: false = every new word is asked one card at a time, as before.
+//   spotFrom: this many passed words get two spot checks (fewer: one)   sample: cards per bunch check   auditDays: when a bunch is checked
+//   splitDays: a bunch with a miss: the other words get their first check this many days later   auditsPerRun: bunches checked in one run
+export const TRIAGE = { on: true, spotFrom: 4, sample: 3, auditDays: 30, splitDays: 7, auditsPerRun: 2 };
+// What the child's choice on the word list means: tapped = unknown, the rest passed, a random one or two of those checked now.
+export function triagePlan(unseen, tapped, rng) {
+  const t = new Set(tapped); const passed = unseen.filter((id) => !t.has(id)); const n = passed.length >= TRIAGE.spotFrom ? 2 : passed.length ? 1 : 0;
+  return { passed, tapped: unseen.filter((id) => t.has(id)), spot: shuffle(passed, rng).slice(0, n) };
+}
+// Puts a triage plan into a tile run's scope (deck.Run reads scope.triage). The bunch is named after the tile.
+export function triageScope(node, plan, today) { node.scope = { ...node.scope, triage: { bunch: node.unit, ...plan, due: addDays(today, TRIAGE.auditDays) } }; delete node.triage; return node; }
+// Bunch sample checks for a tile or monster run: the oldest open bunches that came due, a few cards each. null = none.
+export function auditPick(state, today, rng) {
+  if (!TRIAGE.on) return null;
+  const open = Object.entries(state.bunches || {}).filter(([, b]) => !b.done && b.due && b.due <= today).sort((x, y) => x[1].due.localeCompare(y[1].due) || x[0].localeCompare(y[0]));
+  const picks = []; let n = 0;
+  for (const [b] of open) { if (n >= TRIAGE.auditsPerRun) break; const left = bunchLeft(state, b); if (!left.length) continue; n++;   // a bunch with nothing left to sample does not take a place
+    for (const id of shuffle(left, rng).slice(0, TRIAGE.sample)) picks.push({ id, bunch: b }); }
+  return picks.length ? { split: TRIAGE.splitDays, picks } : null;
+}
 export const ITEMS = { shield: { name: '방패 버섯', emoji: '🍄', info: '확인 카드를 한 번 틀려도 연속 정답이 안 끊겨요' },
   flame: { name: '불꽃 꽃', emoji: '🌸', info: '이번 판 동안 보스에게 2배로 맞혀요' } };
 const SEEN_OK = (r) => r && (r.st === 'likely' || r.st === 'done' || (r.st === 'review' && r.step >= 1));   // words "ripe" enough for the lightning round

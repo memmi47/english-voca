@@ -54,13 +54,24 @@ export function mergeCards(a, b) {
   const ma = migrate(a), mb = migrate(b); if (ma.newer || mb.newer) return (ma.newer ? ma : mb).state; a = ma.state; b = mb.state;
   const out = { ...b, ...a, v: Math.max(a.v || 0, b.v || 0), id: a.id || b.id };
   out.words = { ...(b.words || {}) };
-  for (const [id, r] of Object.entries(a.words || {})) out.words[id] = out.words[id] ? newer(out.words[id], r) : r;
+  for (const [id, r] of Object.entries(a.words || {})) { const o = out.words[id]; if (!o) { out.words[id] = r; continue; } const w = newer(o, r); const other = w === o ? r : o;
+    out.words[id] = !('bunch' in w) && other.bunch != null ? { ...w, bunch: other.bunch } : w; }   // the bunch tag is kept whichever side wins
+  out.bunches = mergeBunches(a.bunches, b.bunches);
   // Old run records are folded into totals (store.compact). The side that folded further wins; runs it already counted are dropped.
   const past = !a.past ? b.past : !b.past ? a.past : String(a.past.until) >= String(b.past.until) ? a.past : b.past; if (past) out.past = past; else delete out.past;
   out.runs = uniq([...(a.runs || []), ...(b.runs || [])], (r) => [r.endedAt, r.day, r.n, r.tag].join('|')).filter((r) => !past || String(r.endedAt) > String(past.until)).sort((x, y) => String(x.endedAt).localeCompare(String(y.endedAt)));
   out.log = uniq([...(a.log || []), ...(b.log || [])], (e) => [e.t, e.id, e.role, e.form, e.ok].join('|')).sort((x, y) => String(x.t).localeCompare(String(y.t))).slice(-LOG_CAP);
   out.verify = (last(a.runs) >= last(b.runs) ? a.verify : b.verify) || [];       // adaptive check rate: follow the side that played last
   if (a.map || b.map) out.map = mergeMap(a.map, b.map);
+  return out;
+}
+// Tile bunches: a finished check wins (both finished: the earlier one); both open: the earlier due date.
+function mergeBunches(a = {}, b = {}) {
+  const out = {};
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const x = a[id], y = b[id];
+    if (!x || !y) { out[id] = { ...(x || y) }; continue; }
+    if (x.done || y.done) { out[id] = { ...(!y.done ? x : !x.done ? y : String(x.done) < String(y.done) || (x.done === y.done && String(x.result) <= String(y.result)) ? x : y) }; continue; }
+    out[id] = { due: minStr(x.due, y.due) ?? null, done: null }; }
   return out;
 }
 export function mergeMeta(local, remote, localDirty) {

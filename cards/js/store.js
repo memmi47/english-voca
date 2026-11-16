@@ -8,7 +8,7 @@
 import { SCHEMA, newState } from './deck.js';
 
 const RUNS_KEEP = 300, RUNS_MAX = 500;      // older run records are folded into totals so the record cannot outgrow the browser's storage
-const SUMS = ['cards', 'wall', 'claims', 'verifies', 'verifyOk', 'reviews', 'reviewOk', 'fresh', 'known', 'unknown', 'learned', 'lapses', 'bosses', 'stars'];
+const SUMS = ['cards', 'wall', 'claims', 'verifies', 'verifyOk', 'reviews', 'reviewOk', 'fresh', 'known', 'unknown', 'learned', 'lapses', 'bosses', 'stars', 'spots', 'spotOk', 'bunchOk', 'bunchDone'];
 
 // One step per format change: STEPS[n] upgrades a record of version n to n + 1.
 const STEPS = [
@@ -18,6 +18,7 @@ const STEPS = [
     if (s.map) { s.map.worlds ||= {}; s.map.conts ||= {}; }
     return s;
   },
+  (s) => { s.bunches ||= {}; return s; },              // 1 -> 2: tile triage keeps one record per tile bunch (passed words carry `bunch`); word records untouched
 ];
 // -> { state, from, newer }. `newer`: the record was saved by a later program than this one; it must not be changed.
 export function migrate(raw, id = null) {
