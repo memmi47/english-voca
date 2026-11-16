@@ -1,6 +1,6 @@
 # english-voca
 
-초등 저학년 남매의 영어 원서 어휘 캐치업 게임. 작업 이력과 계획은 `docs/WORKLOG.md`(모든 작업자가 먼저 읽는 문서), 기획의 근거는 `docs/PLAN_DB_PROGRAM.md`, 복습 규칙 값의 근거는 `docs/research/learning_load_sim.md`.
+초등 저학년 남매의 영어 원서 어휘 캐치업 게임. 작업 이력과 계획은 `docs/WORKLOG.md`(모든 작업자가 먼저 읽는 문서), 기획의 근거는 `docs/PLAN_DB_PROGRAM.md`, 기록 보호와 복원 방법은 `docs/DATA_SAFETY.md`, 복습 규칙 값의 근거는 `docs/research/learning_load_sim.md`.
 
 ## 실행
 
@@ -26,8 +26,8 @@ LIMIT=300 bash tools/cards_say_audio.sh      # (Mac에서) say 음성으로 첫 
 ## 테스트
 
 ```sh
-node --test tests/*.test.mjs                 # 카드 규칙·세계·복습 부하·기록 공유 단위 테스트 (50건)
-node tests/cards_e2e.cjs                     # Chromium 통합 테스트 (106건. 8091 포트, 임시 state 폴더, Playwright 필요)
+node --test tests/*.test.mjs                 # 카드 규칙·세계·복습 부하·기록 공유 단위 테스트 (58건)
+node tests/cards_e2e.cjs                     # Chromium 통합 테스트 (115건. 8091 포트, 임시 state 폴더, Playwright 필요)
 node tools/check_postal_music.cjs            # 음악·효과음 음량과 클리핑 측정
 node tools/sim_learning.mjs --set chosen     # 학습 부하 시뮬레이션 (가정은 docs/research/learning_load_sim.md)
 ```
