@@ -71,6 +71,8 @@ def build():
            'deco-moon':'wb-p3-02-01','deco-shell':'wb-p2-02-01','deco-pear':'wb-p1-02-02'}
     for sid,target in decor.items():
         src=sprites[target];sprites[sid]=dict(role='decoration',sourceSprite=target,label=src['label'],pixels=src['pixels'][:])
+    for frame,label in [('a','회오리 첫 프레임'),('b','회오리 둘째 프레임'),('letters','글자 조각 회오리'),('gone','사라지는 바람')]:
+        sprites['fx-storm-'+frame]=dict(role='effect',label=label,pixels=art.storm(frame))
     # Requested world palette variables also cover tile highlights/shadows. The contrast
     # guarantee is for base path/ground; the review board includes the textured pair.
     names=['새싹 들판','굽이굽이 바다','별빛 하늘']
@@ -104,6 +106,7 @@ def validate(catalogue,source,manifest):
         assert set(''.join(rows))<=set(art.PAL)|{'.'} and any(c!='.' for row in rows for c in row),sid
         if s['role']=='boss':boss_hashes.add(''.join(rows))
     assert len(boss_hashes)==180,'Duplicate boss drawing'
+    assert {sid for sid,s in source['sprites'].items() if s['role']=='effect'} == {'fx-storm-a','fx-storm-b','fx-storm-letters','fx-storm-gone'}
     required={'--w-ground','--w-ground-d','--w-ground-l','--w-path','--w-path-d','--w-path-l','--w-sky','--w-sky-l'}
     for w in worlds:
         assert set(w['paletteVars'])==required

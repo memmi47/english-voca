@@ -430,3 +430,24 @@ def draw(f,j):
             r(7,12,2,2,'b');l(8,1,8,3,'g')
     else: raise ValueError(f)
     return p.finish()
+
+
+def storm(frame):
+    """Playful wind, with a cream rim that remains visible on dark ground."""
+    p=Pixels()
+    if frame == 'gone':
+        p.line(3,6,10,6,'w'); p.line(10,6,12,5,'w')
+        p.line(5,9,11,9,'y'); p.dot(3,10,'c'); p.dot(13,8,'w')
+    else:
+        p.poly([(3,3),(12,3),(13,5),(11,7),(10,9),(8,12),(7,13),(6,11),(5,9),(3,7),(2,5)],'w')
+        p.line(4,5,11,5,'t'); p.line(3,6,9,6,'l')
+        p.line(5,8,10,8,'t'); p.line(6,10,9,10,'l')
+        if frame == 'a':
+            p.dot(4,4,'g'); p.dot(11,7,'r'); p.line(6,11,8,11,'g')
+        elif frame == 'b':
+            p.dot(11,4,'g'); p.dot(4,7,'r'); p.line(7,11,9,11,'g')
+        else:
+            p.line(4,4,5,4,'r'); p.dot(4,5,'r'); p.dot(5,6,'r')
+            p.line(9,6,10,6,'g'); p.line(9,6,9,8,'g'); p.dot(10,8,'g')
+            p.dot(7,9,'r'); p.dot(8,10,'r')
+    return p.finish()

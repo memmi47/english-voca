@@ -31,6 +31,7 @@
     }).join('');
     document.querySelectorAll('canvas[data-emoji]').forEach(c=>{const x=c.getContext('2d');x.font='13px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(c.dataset.emoji,8,9);});
     $('#decor .decor-grid').innerHTML=Object.keys(manifest.decorations).map(id=>`<figure>${sprite(id)}<figcaption>${esc(manifest.symbols[id].label)}<br><small>${id}</small></figcaption></figure>`).join('');
+    $('#storm .storm-grid').innerHTML=['fx-storm-a','fx-storm-b','fx-storm-letters','fx-storm-gone'].map(id=>`<figure><div class="storm-pair"><div class="storm-light">${sprite(id)}</div><div class="storm-dark">${sprite(id)}</div></div><figcaption>${esc(manifest.symbols[id].label)}<br><small>${id}</small></figcaption></figure>`).join('');
     function flagged(v){return ['missing','unclear'].includes(v.native)||['missing','unclear'].includes(v.pixel);}
     function refresh(){
       document.querySelectorAll('.world').forEach(el=>{

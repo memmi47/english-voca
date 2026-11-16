@@ -1,8 +1,10 @@
 /* Review board verification. Uses a read-only server and a fresh browser profile. */
 const { chromium }=require('playwright');
-const { spawn }=require('node:child_process');
+const { spawn, spawnSync }=require('node:child_process');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const ROOT=path.resolve(__dirname,'..'),OUT=path.resolve(process.argv[2]||'/tmp/world-pixels');fs.mkdirSync(OUT,{recursive:true});
+const packageResult=spawnSync('python3',['-I',path.join(ROOT,'tools/package_world_pixel_review.py'),'--output',path.join(OUT,'world-pixel-review.html')],{cwd:ROOT,stdio:'inherit'});
+if(packageResult.status!==0) throw new Error('Could not package standalone review');
 const port=8098,base=`http://127.0.0.1:${port}`,checks=[],errors=[],writes=[];
 const server=spawn('python3',[path.join(ROOT,'tools/serve_art_lab.py'),'--port',String(port)],{cwd:ROOT,stdio:'ignore'});
 function ok(name,value){assert.ok(value,name);checks.push(name);console.log('PASS',name);}
@@ -15,6 +17,7 @@ function ok(name,value){assert.ok(value,name);checks.push(name);console.log('PAS
   const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('request',r=>{if(r.method()!=='GET')writes.push(r.url());});
   await page.goto(base+'/cards/art-review/');await page.waitForSelector('body[data-ready=true]');
   ok('30 worlds, 180 bosses, 6 scenery symbols visible',await page.locator('.world').count()===30&&await page.locator('.boss').count()===180&&await page.locator('.decor-grid figure').count()===6);
+  ok('four storm symbols on both backgrounds',await page.locator('.storm-grid figure').count()===4 && await page.locator('.storm-grid use').count()===8);
   ok('all 360 manual review fields start unreviewed',await page.locator('select').evaluateAll(els=>els.length===360&&els.every(e=>e.value==='unreviewed')));
   ok('all SVG use references resolve',await page.locator('use').evaluateAll(els=>els.every(e=>document.getElementById(e.getAttribute('href').slice(1)))));
   const painted=await page.evaluate(async()=>{
