@@ -59,7 +59,8 @@ export function worldOpen(ix, w, state) {
 }
 export function continentView(ix, c, state) {
   const crowns = c.worlds.filter((w) => crowned(w, state)).length; const passed = cstate(state, c.id).castle;
-  return { id: c.id, name: c.name, story: c.story, crowns, total: c.worlds.length, finale: { ...finaleOf(c), status: passed ? 'cleared' : crowns === c.worlds.length ? 'open' : 'locked', day: passed } };
+  return { id: c.id, name: c.name, story: c.story, crowns, total: c.worlds.length,
+    finale: { ...finaleOf(c), name: c.finale?.name || `${c.name}의 큰 성`, intro: c.finale?.intro || '', outro: c.finale?.outro || '', status: passed ? 'cleared' : crowns === c.worlds.length ? 'open' : 'locked', day: passed } };
 }
 // The world list: what is open, what has a key (castle), what has a crown.
 export function atlasView(ix, state) {
@@ -145,7 +146,7 @@ export function settleWorld(ix, state, node, rec, today) {
     if (pass && !ws.castle) { ws.castle = today; m.keys++; out.key = true; out.cleared = true; out.crown = crowned(w, state); out.nextWorld = w.nextWorldId ? ix.byId[w.nextWorldId] : null; }
   } else if (node.kind === 'finale') {
     const c = ix.continents.find((x) => x.id === node.cid); const cs = cstate(state, c.id); const total = rec.castleOk + rec.castleMiss; const pass = rec.reason === 'done' && total > 0 && rec.castleOk / total >= node.pass;
-    out.finale = { ok: rec.castleOk, total, pass, need: node.pass, name: c.name };
+    out.finale = { ok: rec.castleOk, total, pass, need: node.pass, name: c.finale?.name || `${c.name}의 큰 성`, outro: c.finale?.outro || '' };
     if (pass && !cs.castle) { cs.castle = today; out.cleared = true; out.nextContinent = ix.continents[ix.continents.indexOf(c) + 1] || null; }
   }
   return out;

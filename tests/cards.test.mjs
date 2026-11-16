@@ -433,3 +433,15 @@ test('G7: a tile run carries more reviews when more are waiting: half of the bac
   ensureMap(s).bat.cap = 80; const node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)); assert.equal(node.scope.duePerRun, 20);
   const run = mkRun(s, node); assert.equal(run.queue.filter((q) => q.role === 'review').length, 20);
 });
+
+test('K17: cards a catalogue marks as confusable with each other are never offered as wrong answers for one another', async () => {
+  const { confusable } = await import('../cards/js/deck.js');
+  const deck = [{ id: 'a', form: 'big', ko: '큰', type: 't', groups: ['g1'] }, { id: 'b', form: 'large', ko: '커다란', type: 't', groups: ['g1', 'g2'] },
+    { id: 'c', form: 'huge', ko: '거대한', type: 't', groups: ['g2'] }, { id: 'd', form: 'red', ko: '빨간', type: 't' }, { id: 'e', form: 'blue', ko: '파란', type: 't', groups: [] }, { id: 'f', form: 'green', ko: '초록', type: 't' }];
+  assert.deepEqual([confusable(deck[0], deck[1]), confusable(deck[0], deck[2]), confusable(deck[1], deck[2]), confusable(deck[0], deck[3]), confusable(deck[3], deck[4])], [true, false, true, false, false]);
+  const run = new Run({ state: newState('x'), words: deck, today: D1, rng: mulberry32(4) });
+  for (let k = 0; k < 40; k++) { assert.ok(!run._options('a').some((o) => o.id === 'b')); assert.ok(!run._options('b').some((o) => o.id === 'a' || o.id === 'c')); }
+  const s = newState('y'); for (const w of deck) s.words[w.id] = { st: 'done', due: null, firstDay: D1, lastDay: D1, lapses: 0 };
+  const lt = new Lightning({ state: s, words: deck, rng: mulberry32(6) });
+  for (let k = 0; k < 200; k++) { const c = lt.next(); if (c.id === 'a') assert.notEqual(c.ko, '커다란'); if (c.id === 'b') assert.ok(c.ko !== '큰' && c.ko !== '거대한'); }
+});

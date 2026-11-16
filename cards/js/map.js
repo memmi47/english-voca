@@ -1,7 +1,7 @@
 // Map-wide rules that do not depend on the shape of a world: review load (bat gauge, monster), stars, items, the
 // lightning round. Worlds, tiles and castles are in world.js. Pure: no DOM, no storage.
 // Nothing here writes to a word's schedule. Rewards (stars, items) live in state.map and never feed back into deck.js.
-import { addDays, shuffle } from './deck.js';
+import { addDays, shuffle, confusable } from './deck.js';
 
 export const MONSTER_AT = 8;                 // this many due reviews put a monster on the map
 export const LIGHTNING_MIN = 6;              // seen words needed to open the bonus house
@@ -99,7 +99,7 @@ export class Lightning {
   next() {
     const w = this.pool[this.i++ % this.pool.length]; const truth = this.rng() < 0.5;
     let shown = w;
-    if (!truth) { for (let k = 0; k < 50; k++) { const x = this.all[Math.floor(this.rng() * this.all.length)]; if (x.id !== w.id && x.ko !== w.ko) { shown = x; break; } } if (shown === w) shown = this.all.find((x) => x.ko !== w.ko) || w; }
+    if (!truth) { for (let k = 0; k < 50; k++) { const x = this.all[Math.floor(this.rng() * this.all.length)]; if (x.id !== w.id && x.ko !== w.ko && !confusable(w, x)) { shown = x; break; } } if (shown === w) shown = this.all.find((x) => x.ko !== w.ko && !confusable(w, x)) || w; }
     this.cur = { id: w.id, form: w.form, ko: shown.ko, truth: shown === w }; return this.cur;
   }
   answer(says) { const ok = says === this.cur.truth; this.total++; if (ok) this.score++; return ok; }

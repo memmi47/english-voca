@@ -82,6 +82,9 @@ export function planRun(state, words, today, cfg = CFG, scope = {}) {
 export const isSight = (w) => w.track === 'sight' || !w.ko;
 const groupOf = (w) => (isSight(w) ? 'sight' : w.type);
 const label = (w) => (isSight(w) ? w.form : w.ko);          // what an answer choice shows
+// Cards a catalogue marks as confusable with each other (w.groups: ids of its confusion groups) are never offered as
+// wrong answers for one another.
+export const confusable = (a, b) => !!(a.groups && b.groups && a.groups.some((g) => b.groups.includes(g)));
 // Per deck (the words array): id lookup and words grouped by picture type. Built once; the full deck holds thousands of words.
 const INDEX = new WeakMap();
 function indexOf(words) {
@@ -144,7 +147,7 @@ export class Run {
   // A function word offers spellings instead of meanings, and never a word that sounds the same (for / four).
   _options(id) {
     const w = this.byId[id]; const sight = isSight(w); const out = [w]; const used = new Set([label(w)]);
-    const fits = (x) => (sight ? !(w.ipa && x.ipa === w.ipa) : !isSight(x));
+    const fits = (x) => (sight ? !(w.ipa && x.ipa === w.ipa) : !isSight(x)) && !confusable(w, x);
     const take = (x) => { if (out.length < 3 && x.id !== id && fits(x) && !used.has(label(x))) { used.add(label(x)); out.push(x); } };
     const draw = (pool) => { for (let k = 0; k < 30 && out.length < 3 && pool.length; k++) take(pool[Math.floor(this.rng() * pool.length)]); };
     const same = this.ix.byType.get(groupOf(w)) || [];

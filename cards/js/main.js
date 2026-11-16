@@ -20,8 +20,8 @@ const BAND_MUSIC = { P1: 'meadow', P2: 'sea', P3: 'sky' };
 // A sprite from the inlined sheet (16-grid sprites at an integer scale: px = 16 x n).
 const spr = (id, px = 64, cls = '') => `<svg class="spr ${cls}" width="${px}" height="${px}" viewBox="0 0 16 16" aria-hidden="true"><use href="#${id}"/></svg>`;
 const anim = (a, b, px = 64, cls = '') => `<span class="anim2 ${cls}">${spr(a, px)}${spr(b, px)}</span>`;
-async function loadSprites() {
-  try { const t = await fetch('assets/postal/sprites.svg').then((r) => r.text()); const d = document.createElement('div'); d.id = 'sheet'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; d.innerHTML = t; document.body.prepend(d); }
+async function loadSprites(url = 'assets/postal/sprites.svg') {
+  try { const r = await fetch(url); if (!r.ok) return; const t = await r.text(); const d = document.createElement('div'); d.className = 'sheet'; if (url === 'assets/postal/sprites.svg') d.id = 'sheet'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; d.innerHTML = t; document.body.prepend(d); }
   catch { /* the game still works with plain boxes if the sheet is missing */ }
 }
 const LT_SECONDS = FAST ? 3 : 60;
@@ -62,7 +62,7 @@ function applyTheme(w) {
   const p = { sky: '#6FB5AA', ground: '#86B682', path: '#DEC995', ...(w?.palette || {}) }; const s = document.documentElement.style; const light = lum(p.sky) > 0.62;
   const set = { '--w-sky': p.sky, '--w-sky-l': mix(p.sky, 255, 0.4), '--w-ground': p.ground, '--w-ground-d': mix(p.ground, 0, 0.2), '--w-ground-l': mix(p.ground, 255, 0.3),
     '--w-path': p.path, '--w-path-d': mix(p.path, 0, 0.25), '--w-path-l': mix(p.path, 255, 0.25), '--fg': light ? '#233f3a' : '#fff5db', '--fg-sh': light ? 'rgba(255,250,240,.85)' : '#233f3a' };
-  for (const [k, v] of Object.entries(set)) s.setProperty(k, v);
+  for (const [k, v] of Object.entries({ ...set, ...(w?.paletteVars || {}) })) s.setProperty(k, v);
 }
 const ro = (word) => { const c = String(word).charCodeAt(String(word).length - 1) - 0xac00; if (c < 0 || c > 11171) return `${word}(으)로`; const f = c % 28; return word + (f === 0 || f === 8 ? '로' : '으로'); };
 const musicOf = (w) => BAND_MUSIC[G.ix.contOf[w.id].band] || 'meadow';
@@ -87,18 +87,21 @@ async function boot() {
   G.volatile = !storage; G.syncStatus = { available: false, pending: [] };
   try {
     const json = (r) => { if (!r.ok) throw new Error(`${r.url.split('/').slice(-2).join('/')} 파일을 읽지 못했어요 (${r.status})`); return r.json(); };
-    const cat = await fetch(DATA + 'catalog.json').then(json);
     // The real world file (from the world generator) wins; until it exists the stand-in file is used.
     let doc = await fetch(DATA + 'worlds.json').then((r) => (r.ok ? r.json() : null), () => null); G.standIn = !doc;
     if (!doc) doc = await fetch(DATA + 'worlds.fixture.json').then(json);
-    G.ix = indexWorlds(doc); G.words = cat.words; G.byId = Object.fromEntries(G.words.map((w) => [w.id, w]));
+    const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // a world file may name its own card list
+    // Card fields this game reads: track ("sight" = hear-and-pick card) and groups (confusion groups, never offered as wrong answers).
+    G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
+    G.ix = indexWorlds(doc); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
+    G.dataNote = G.standIn ? '세계 파일: 시험용(단어 배정 임시)' : doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
   } catch (e) { $('#app').innerHTML = `<div class="page center"><h1 class="title">열 수 없어요</h1><p class="note" id="fatal">${esc(e.message)}</p></div>`; return; }
   if (storage && qs.get('nosync') !== '1') {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); G.meta = loadMeta();
+  await loadSprites(); if (G.pack) await loadSprites(G.pack); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -176,7 +179,7 @@ function today(id, msg = '', wid = null) {
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
     <div class="legend"><span class="g3">${spr(MEDAL[3], 24)} 금 ${c[3]}</span><span class="g2">${spr(MEDAL[2], 24)} 은 ${c[2]}</span><span class="g1">${spr(MEDAL[1], 24)} 동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
     <button class="sec" data-act="album">이 세계의 카드첩</button></div>
-  <p class="mut small center" id="src">소리: ${esc(G.sound.source)}${G.standIn ? ' · 세계 파일: 시험용(단어 배정 임시)' : ''}</p><p class="mut small center" id="syncline">${esc(syncLine())}</p></div>`;
+  <p class="mut small center" id="src">소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="mut small center" id="syncline">${esc(syncLine())}</p></div>`;
 }
 function nodeClick(id) {
   const st = G.st; const v = worldView(G.ix, G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
@@ -201,7 +204,7 @@ function atlas() {
   $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
   ${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
     <div class="wgrid">${c.worlds.map(wbtn).join('')}
-    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.name)}의 큰 성</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
+    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
   <p class="msg" id="msg"></p></div>`;
 }
 
@@ -226,10 +229,14 @@ async function start(nodeId) {
   paintHud(); showCard();
 }
 function paintHud() {
-  const b = G.run.boss; const list = G.world?.bossEmoji?.length ? G.world.bossEmoji : BOSSES; const be = list[b.idx % list.length];
-  if ($('#boss').dataset.e !== be) { $('#boss').dataset.e = be; $('#boss').innerHTML = pimg(be, 56); } $('#hp').style.width = `${Math.max(0, b.hp) / CFG.bossHp * 100}%`;
+  const b = G.run.boss; const be = bossPic(G.world, b.idx);
+  if ($('#boss').dataset.e !== be.key) { $('#boss').dataset.e = be.key; $('#boss').innerHTML = be.html(56); } $('#hp').style.width = `${Math.max(0, b.hp) / CFG.bossHp * 100}%`;
   $('#combo').innerHTML = (G.run.items.shield ? spr(ITEM_SPR.shield, 24) : '') + (G.run.items.flame ? spr(ITEM_SPR.flame, 24) : '') + (G.run.combo >= 2 ? `연속 ${G.run.combo}` : ''); $('#combo').classList.toggle('hot', G.run.combo >= 5);
   $('#left').textContent = `남은 카드 ${G.run.left}`;
+}
+function bossPic(w, i) {
+  const sp = w?.bossSprites; if (sp?.length && document.getElementById(sp[i % sp.length])) { const id = sp[i % sp.length]; return { key: id, html: (n) => spr(id, n) }; }
+  const list = w?.bossEmoji?.length ? w.bossEmoji : BOSSES; const e = list[i % list.length]; return { key: e, html: (n) => pimg(e, n) };
 }
 const TAG = { castle: '박쥐·성 시험', new: '새 카드', review: '다시 만난 카드', likely: '다시 만난 카드', relearn: '방금 배운 카드', practice: '한 번 더', retry: '다시 도전' };
 const HEAR = `<button class="hear" data-act="hear" aria-label="다시 듣기"><svg class="spr" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg></button>`;
@@ -307,6 +314,7 @@ function endRun(reason) {
   if (ww.crown) lines.push(`<div class="gain" id="crowngain">${spr('crown', 32)} 이 세계의 왕관을 얻었어요</div>`);
   if (ww.key && w.outro) lines.push(`<p class="story">${esc(w.outro)}</p>`);
   if (ww.key && ww.nextWorld && w.story) lines.push(`<p class="story">${esc(w.story)}</p>`);
+  if (ww.finale?.pass && ww.finale.outro) lines.push(`<p class="story">${esc(ww.finale.outro)}</p>`);
   if (ww.finale?.pass) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ro(ww.nextContinent.name))} 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
   if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${pc(rw.bat.acc)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
   if (batNow && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
@@ -352,7 +360,7 @@ function ltEnd() {
 // ---- playhouses: short games off the long paths. Pure play: they touch no word, star, gauge or key; one stamp each. ----
 async function startGame(n) {
   await G.sound.unlock(); G.view = 'game'; band(false); G.sound.scene('play'); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 11);
-  const em = (G.world.bossEmoji?.length >= 3 ? G.world.bossEmoji : BOSSES).slice(0, 3);
+  const em = [0, 1, 2];                                    // three of the world's boss pictures, as pairs
   G.game = n.gameType === 'memory' ? { node: n, type: 'memory', deck: shuffle([...em, ...em], rng), open: [], matched: new Set(), busy: false }
     : { node: n, type: 'mail', done: 0, t0: performance.now(), pos() { return 50 + 38 * Math.sin((performance.now() - this.t0) / (FAST ? 90 : 900)); }, inZone() { return Math.abs(this.pos() - 50) <= 13; } };
   paintGame();
@@ -362,7 +370,7 @@ function paintGame() {
   const g = G.game; const head = `<button class="back" data-act="today" aria-label="그만 놀고 지도로">‹</button>`;
   if (g.type === 'memory') {
     $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">그림 짝 맞추기</h1><p class="mut" id="gstatus">${g.matched.size / 2} / 3쌍</p>
-    <div class="memgrid">${g.deck.map((e, i) => { const up = g.matched.has(i) || g.open.includes(i); return `<button class="memcard ${g.matched.has(i) ? 'matched' : ''}" data-act="mem" data-i="${i}" aria-label="${i + 1}번째 카드" ${g.matched.has(i) ? 'disabled' : ''}>${up ? pimg(e, 72) : spr('envelope', 64)}</button>`; }).join('')}</div>
+    <div class="memgrid">${g.deck.map((e, i) => { const up = g.matched.has(i) || g.open.includes(i); return `<button class="memcard ${g.matched.has(i) ? 'matched' : ''}" data-act="mem" data-i="${i}" aria-label="${i + 1}번째 카드" ${g.matched.has(i) ? 'disabled' : ''}>${up ? bossPic(G.world, e).html(72) : spr('envelope', 64)}</button>`; }).join('')}</div>
     <p class="mut small">두 장씩 뒤집어 같은 그림을 찾아요. 서두르지 않아도 돼요.</p></div>`;
   } else {
     $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">우체통에 편지 넣기</h1><p class="mut" id="gstatus">${g.done} / 3통</p>
@@ -407,7 +415,7 @@ function parent() {
       <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>${R.length > 60 ? `<p class="small mut">최근 60판만 표시. 전체는 내보내기 파일에 있습니다.</p>` : ''}
     <p class="row"><button class="sec" data-act="export" data-id="${id}">기록 내보내기(JSON)</button><button class="link" data-act="reset" data-id="${id}">기록 지우기</button></p>`; };
   $('#app').innerHTML = `<div class="page parent"><button class="back" data-act="home" aria-label="처음으로">‹</button><h1 class="title">부모 기록</h1>
-  <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과입니다. 소리: ${esc(G.sound.source)}${G.standIn ? ' · 세계 파일: 시험용(단어 배정 임시)' : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
+  <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과입니다. 소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
   ${PROFILES.map(block).join('')}
   <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p></div>`;
 }
