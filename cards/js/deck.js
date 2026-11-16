@@ -11,6 +11,8 @@ export const CFG = {
   reviewPerRun: 14,    // due cards drawn into one run
   bossHp: 12,        // about one boss per short run
   lapse: 'reset',      // 'reset': a missed review goes back to step 0 (current rule) | 'stepback': one step down
+  retryPerRun: 4,      // words still to learn that belong to other tiles: this many come back per run
+  dueOrder: 'recent',  // which due cards a run takes first: 'recent' (latest due date; the bat test takes the oldest) | 'oldest' | 'mixed' (alternating)
   logCap: 5000,
 };
 
@@ -55,25 +57,43 @@ export function verifyRate(state) {
 }
 
 // What one run draws: due cards first by date, then words not seen yet in deck order.
-// scope (optional, from the map): { newIds: only these words may be new, newPerRun, duePerRun, noNew }
+// scope (optional, from the map): { newIds: only these words may be new, newPerRun, duePerRun, noNew, retryPerRun }
+// `retries`: words that were not learned (state "learn") and belong to no tile of this run. Without them a word that
+// failed its last check, or a castle or bat card, would never come back once its tile is cleared.
 export function planRun(state, words, today, cfg = CFG, scope = {}) {
-  const only = scope.newIds ? new Set(scope.newIds) : null; const due = [], retry = [], fresh = [];
+  const only = scope.newIds ? new Set(scope.newIds) : null; const due = [], retry = [], stray = [], fresh = [];
   for (const w of words) {
     const r = state.words[w.id];
     if (!r) { if (!only || only.has(w.id)) fresh.push(w.id); continue; }
     if (r.lastDay === today || !r.due || r.due > today) continue;      // scored at most once a day
-    if (r.st === 'learn') { if (!only || only.has(w.id)) retry.push(w.id); } else if (r.st === 'review' || r.st === 'likely') due.push(w.id);
+    if (r.st === 'learn') { (!only || only.has(w.id) ? retry : stray).push(w.id); } else if (r.st === 'review' || r.st === 'likely') due.push(w.id);
   }
-  due.sort((a, b) => state.words[a].due.localeCompare(state.words[b].due));
+  const byDue = (a, b) => state.words[a].due.localeCompare(state.words[b].due);
+  due.sort(byDue); stray.sort(byDue);
+  const order = cfg.dueOrder || 'oldest';
+  if (order === 'recent') due.reverse();
+  else if (order === 'mixed') { const m = []; for (let i = 0, j = due.length - 1; i <= j; i++, j--) { m.push(due[i]); if (j > i) m.push(due[j]); } due.splice(0, due.length, ...m); }
   const newCap = scope.noNew ? 0 : scope.newPerRun ?? cfg.newPerRun, dueCap = scope.duePerRun ?? cfg.reviewPerRun;
-  const news = retry.concat(fresh).slice(0, newCap);
-  return { due: due.slice(0, dueCap), news, dueLeft: Math.max(0, due.length - dueCap), newLeft: retry.length + fresh.length - news.length };
+  const news = retry.concat(fresh).slice(0, newCap); const retries = (scope.noNew ? retry.concat(stray).sort(byDue) : stray).slice(0, scope.retryPerRun ?? cfg.retryPerRun ?? 4);
+  return { due: due.slice(0, dueCap), news, retries, dueLeft: Math.max(0, due.length - dueCap), newLeft: retry.length + fresh.length - news.length };
+}
+
+// A function word (track "sight") has no Korean gloss: its card plays the sound and asks for the spelling.
+export const isSight = (w) => w.track === 'sight' || !w.ko;
+const groupOf = (w) => (isSight(w) ? 'sight' : w.type);
+const label = (w) => (isSight(w) ? w.form : w.ko);          // what an answer choice shows
+// Per deck (the words array): id lookup and words grouped by picture type. Built once; the full deck holds thousands of words.
+const INDEX = new WeakMap();
+function indexOf(words) {
+  let ix = INDEX.get(words);
+  if (!ix) { ix = { byId: Object.fromEntries(words.map((w) => [w.id, w])), byType: new Map() }; for (const w of words) { const k = groupOf(w); let a = ix.byType.get(k); if (!a) ix.byType.set(k, (a = [])); a.push(w); } INDEX.set(words, ix); }
+  return ix;
 }
 
 export class Run {
   // scope: see planRun; scope.castle = [ids] makes a check-only run over those words. items: { shield, flame } for this run only.
   constructor({ state, words, today, rng, now = () => Date.now(), cfg = CFG, boss = null, scope = {}, items = {}, tag = null }) {
-    this.s = state; this.words = words; this.byId = Object.fromEntries(words.map((w) => [w.id, w]));
+    this.s = state; this.words = words; this.ix = indexOf(words); this.byId = this.ix.byId;
     this.today = today; this.rng = rng; this.now = now; this.cfg = cfg;
     this.boss = boss || { idx: 0, hp: cfg.bossHp, defeated: 0 };
     this.met = []; this.scope = scope; this.items = { shield: items.shield || 0, flame: !!items.flame }; this.shieldUsed = 0; this.tag = tag;
@@ -84,12 +104,13 @@ export class Run {
     // A new word, then up to two due cards, so reviews space out the new words.
     const q = []; const due = plan.due.slice();
     const dueItem = (id) => { const r = state.words[id];
-      return { id, role: r.st === 'likely' ? 'likely' : 'review', form: r.st === 'likely' || r.step >= 2 ? 'check' : 'judge' }; };
+      return { id, role: r.st === 'likely' ? 'likely' : 'review', form: r.st === 'likely' || r.step >= 2 || isSight(this.byId[id]) ? 'check' : 'judge' }; };
     // A word that was not learned on an earlier day comes back as a check card (role 'retry'), never as self-judgement.
-    for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : { id, role: 'new', form: 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
+    for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : { id, role: 'new', form: isSight(this.byId[id]) ? 'check' : 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
     while (due.length) q.push(dueItem(due.shift()));
+    for (const id of plan.retries) q.push({ id, role: 'retry', form: 'check' });       // stranded learning words, as check cards
     // bat test (scope.bat = { due, fresh }): overdue reviews as check cards first (normal scheduling), then words met since the last test
-    if (scope.bat) { this.queue = scope.bat.due.map((id) => ({ ...dueItem(id), form: 'check' })).concat(scope.bat.fresh.map((id) => ({ id, role: 'castle', form: 'check' }))); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
+    if (scope.bat) { this.queue = scope.bat.due.map((id) => (state.words[id].st === 'learn' ? { id, role: 'retry', form: 'check' } : { ...dueItem(id), form: 'check' })).concat(scope.bat.fresh.map((id) => ({ id, role: 'castle', form: 'check' }))); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     if (scope.castle) { this.queue = shuffle(scope.castle, rng).map((id) => ({ id, role: 'castle', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     this.queue = q;
   }
@@ -118,11 +139,18 @@ export class Run {
   }
   advance() { this.i++; return this.current; }
 
+  // Three choices: the right one and two wrong ones, of the same picture type when possible. The three always read
+  // differently. Wrong ones are drawn at random (no full shuffle: the deck can be thousands of words).
+  // A function word offers spellings instead of meanings, and never a word that sounds the same (for / four).
   _options(id) {
-    const w = this.byId[id];
-    const others = shuffle(this.words.filter((x) => x.id !== id && x.ko !== w.ko), this.rng);
-    const same = others.filter((x) => x.type === w.type), rest = others.filter((x) => x.type !== w.type);
-    return shuffle([w, ...same.concat(rest).slice(0, 2)], this.rng).map((x) => ({ id: x.id, ko: x.ko }));
+    const w = this.byId[id]; const sight = isSight(w); const out = [w]; const used = new Set([label(w)]);
+    const fits = (x) => (sight ? !(w.ipa && x.ipa === w.ipa) : !isSight(x));
+    const take = (x) => { if (out.length < 3 && x.id !== id && fits(x) && !used.has(label(x))) { used.add(label(x)); out.push(x); } };
+    const draw = (pool) => { for (let k = 0; k < 30 && out.length < 3 && pool.length; k++) take(pool[Math.floor(this.rng() * pool.length)]); };
+    const same = this.ix.byType.get(groupOf(w)) || [];
+    draw(same); if (out.length < 3) for (const x of same) take(x);          // a small group: fall back to scanning it
+    draw(this.words); if (out.length < 3) for (const x of this.words) take(x);
+    return shuffle(out, this.rng).map((x) => ({ id: x.id, ko: sight ? x.form : x.ko }));
   }
   _rec(id) { return this.s.words[id]; }
   _set(id, next) {
@@ -141,7 +169,7 @@ export class Run {
       g = r.step >= INTERVALS.length - 1 ? this._set(it.id, { st: 'done', due: null }) : this._set(it.id, { step: r.step + 1, due: addDays(t, INTERVALS[r.step + 1]) }); }
     else if ((it.role === 'relearn' && it.final) || it.role === 'retry') { this.stats.learned++; g = this._set(it.id, { st: 'review', step: 0, due: addDays(t, INTERVALS[0]) }); }
     if (it.role === 'castle') this.stats.castleOk++;
-    if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle')) this.stats.testOk++;
+    if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle' || it.role === 'retry')) this.stats.testOk++;
     if (it.role === 'new') this.met.push(it.id);
     this.combo++;
     let dmg = verified ? 3 : 1; if (this.combo >= 5) dmg++; if (this.items.flame) dmg *= 2;
@@ -150,7 +178,7 @@ export class Run {
   }
   _miss(it, { said, picked }) {
     const r = this._rec(it.id); const t = this.today; let g = null;
-    if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle')) this.stats.testMiss++;
+    if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle' || it.role === 'retry')) this.stats.testMiss++;
     if (it.role === 'new') this.met.push(it.id);
     if (said === 'wrong') { if (this.items.shield > 0) { this.items.shield--; this.shieldUsed++; } else this.combo = 0; }   // a wrong pick breaks the combo (a shield absorbs one); an honest "몰라요" does not
     if (it.role === 'new' || it.role === 'likely' || it.role === 'retry') {

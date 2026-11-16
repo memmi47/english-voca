@@ -16,16 +16,26 @@ const last = (runs) => (runs || []).reduce((m, r) => (String(r.endedAt || '') > 
 const maxStr = (x, y) => (x == null ? y : y == null ? x : String(x) >= String(y) ? x : y);
 const minStr = (x, y) => (x == null ? y : y == null ? x : String(x) <= String(y) ? x : y);
 
-// Map progress: cleared tiles, castle and keys only ever grow, so they are merged by union / max.
-// Stars and items cannot be summed without knowing the common base, so the larger value is kept: if both
-// devices earned stars while apart, the smaller earning is lost. That never touches a word's schedule.
+// Map progress only ever grows (cleared tiles, castles, stamps, continent castles), so it is merged by union and the
+// earliest day. Keys are counted from the merged castles. Stars and items cannot be summed without knowing the common
+// base, so the larger value is kept: if both devices earned stars while apart, the smaller earning is lost. None of
+// this touches a word's schedule.
+const early = (x, y) => { const out = { ...(y || {}) }; for (const [k, d] of Object.entries(x || {})) out[k] = minStr(out[k], d); return out; };
+function mergeWorlds(a = {}, b = {}) {
+  const out = {};
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const x = a[id] || {}, y = b[id] || {};
+    out[id] = { castle: minStr(x.castle, y.castle) ?? null, seen: minStr(x.seen, y.seen) ?? null, cleared: early(x.cleared, y.cleared), stamps: early(x.stamps, y.stamps) }; }
+  return out;
+}
 function mergeMap(a, b) {
   if (!a) return b; if (!b) return a;
-  const cleared = { ...(b.cleared || {}) };
-  for (const [k, d] of Object.entries(a.cleared || {})) cleared[k] = minStr(cleared[k], d);
-  return { stars: Math.max(a.stars || 0, b.stars || 0), keys: Math.max(a.keys || 0, b.keys || 0), best: Math.max(a.best || 0, b.best || 0),
+  const worlds = mergeWorlds(a.worlds, b.worlds); const conts = {};
+  for (const id of new Set([...Object.keys(a.conts || {}), ...Object.keys(b.conts || {})])) conts[id] = { castle: minStr(a.conts?.[id]?.castle, b.conts?.[id]?.castle) ?? null };
+  const monsterDay = maxStr(a.monsterDay, b.monsterDay);
+  const monsterN = Math.max(a.monsterDay === monsterDay ? a.monsterN || 1 : 0, b.monsterDay === monsterDay ? b.monsterN || 1 : 0);
+  return { stars: Math.max(a.stars || 0, b.stars || 0), keys: Object.values(worlds).filter((w) => w.castle).length, best: Math.max(a.best || 0, b.best || 0),
     items: { shield: Math.max(a.items?.shield || 0, b.items?.shield || 0), flame: Math.max(a.items?.flame || 0, b.items?.flame || 0) },
-    bag: a.bag ?? b.bag ?? null, cleared, castle: minStr(a.castle, b.castle), monsterDay: maxStr(a.monsterDay, b.monsterDay), bonusDay: maxStr(a.bonusDay, b.bonusDay), bat: mergeBat(a.bat, b.bat) };
+    bag: a.bag ?? b.bag ?? null, worlds, conts, at: a.at ?? b.at ?? null, monsterDay, monsterN, bonusDay: maxStr(a.bonusDay, b.bonusDay), bat: mergeBat(a.bat, b.bat) };
 }
 // Bat gauge: the side that took the latest test has already emptied it, so it wins; otherwise the fuller gauge and the union of met words.
 function mergeBat(a, b) {

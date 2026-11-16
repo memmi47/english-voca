@@ -1,26 +1,23 @@
-// Flashcard prototype: screens. Rules live in deck.js, audio in sound.js.
-import { Run, newState, planRun, gradeOf, gradeCounts, mulberry32, CFG } from './deck.js';
+// Flashcard game: screens. Rules live in deck.js (cards), map.js (review load, items), world.js (worlds, castles); audio in sound.js.
+import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG } from './deck.js';
 import { Sound } from './sound.js';
-import { ensureMap, dueCount, mapView, nodeRun, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, MONSTER_AT, CASTLE_PASS } from './map.js';
+import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN } from './map.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen } from './world.js';
 import { Sync } from './sync.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const FAST = qs.get('fast') === '1';                     // test hook: short reveal pauses
+const DATA = qs.get('set') === 'demo' ? 'data/demo/' : 'data/';   // ?set=demo: the small 86-card set (tests, try-out)
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const PROFILES = ['son', 'daughter'];
-const BOSSES = ['👾', '🦖', '🐙', '🤖', '🐲', '👹', '🦈', '👻', '🦂', '🐊', '🦇', '🦑'];
+const BOSSES = ['👾', '🦖', '🐙', '🤖', '🐲', '👹'];        // used only when a world lists no boss
 const GRADE = ['', '동', '은', '금'];
 const MEDAL = ['', 'medal-bronze', 'medal-silver', 'medal-gold'];
 const ITEM_SPR = { shield: 'mushroom', flame: 'fire-flower' };
-// Per-world look: the sprite sheet reads these --w-* variables (see cards/assets/postal/manifest.json worldVars).
-const THEMES = {
-  meadow: { ground: 't-grass', vars: { '--w-ground': '#86B682', '--w-ground-d': '#5C976E', '--w-ground-l': '#AED099', '--w-path': '#DEC995', '--w-path-d': '#BEAA79', '--w-path-l': '#F3E0B0', '--w-sky': '#6FB5AA', '--w-sky-l': '#A9D8CF' }, music: 'meadow' },
-  sea:    { ground: 't-water-a', vars: { '--w-ground': '#4F9AA8', '--w-ground-d': '#3B7F8F', '--w-ground-l': '#7BC4D0', '--w-path': '#E8D7A4', '--w-path-d': '#C7B27C', '--w-path-l': '#F7EBC8', '--w-sky': '#CFE9EE', '--w-sky-l': '#EAF6F6' }, music: 'sea' },
-  sky:    { ground: 't-cloud', vars: { '--w-ground': '#B9C3E6', '--w-ground-d': '#8D98C9', '--w-ground-l': '#E2E7F8', '--w-path': '#F3E0B0', '--w-path-d': '#CDB77F', '--w-path-l': '#FFF3D0', '--w-sky': '#3F4A86', '--w-sky-l': '#6C78B8' }, music: 'sky' },
-};
-// A 16-grid sprite from the inlined sheet, shown at an integer scale (px = 16 x n).
+const BAND_MUSIC = { P1: 'meadow', P2: 'sea', P3: 'sky' };
+// A sprite from the inlined sheet (16-grid sprites at an integer scale: px = 16 x n).
 const spr = (id, px = 64, cls = '') => `<svg class="spr ${cls}" width="${px}" height="${px}" viewBox="0 0 16 16" aria-hidden="true"><use href="#${id}"/></svg>`;
 const anim = (a, b, px = 64, cls = '') => `<span class="anim2 ${cls}">${spr(a, px)}${spr(b, px)}</span>`;
 async function loadSprites() {
@@ -28,7 +25,7 @@ async function loadSprites() {
   catch { /* the game still works with plain boxes if the sheet is missing */ }
 }
 const LT_SECONDS = FAST ? 3 : 60;
-const G = { world: null, node: null, lt: null, words: [], byId: {}, meta: null, pid: null, st: null, run: null, boss: null, view: 'home', busy: false, timer: null, sound: null };
+const G = { ix: null, world: null, node: null, lt: null, game: null, words: [], byId: {}, meta: null, pid: null, st: null, run: null, boss: null, view: 'home', busy: false, timer: null, sound: null };
 window.__cards = G;
 
 // ---- storage: this device, plus a copy on the home server when tools/serve_cards.py is reachable ----
@@ -55,9 +52,19 @@ const name = (id) => G.meta.names[id];
 const PREF = 'cards.v0.pref';                           // this device only: music on/off, effects on/off
 function loadPref() { try { return { music: false, sfx: true, ...JSON.parse(localStorage.getItem(PREF) || '{}') }; } catch { return { music: false, sfx: true }; } }
 function savePref() { try { localStorage.setItem(PREF, JSON.stringify({ music: G.sound.musicOn, sfx: G.sound.sfx })); } catch {} }
-const themeId = () => qs.get('theme') && THEMES[qs.get('theme')] ? qs.get('theme') : (G.world?.theme && THEMES[G.world.theme] ? G.world.theme : 'meadow');
 const band = (on) => document.body.classList.toggle('band', on);
-function applyTheme() { const T = THEMES[themeId()]; for (const [k, v] of Object.entries(T.vars)) document.documentElement.style.setProperty(k, v); }
+// A world brings three colours (sky, ground, path). Lighter and darker shades for the sprites are derived here, and the
+// text on the sky switches between dark and light so it stays readable.
+const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mix = (h, to, f) => '#' + rgb(h).map((c) => Math.round(c + (to - c) * f).toString(16).padStart(2, '0')).join('');
+const lum = (h) => { const [r, g, b] = rgb(h); return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; };
+function applyTheme(w) {
+  const p = { sky: '#6FB5AA', ground: '#86B682', path: '#DEC995', ...(w?.palette || {}) }; const s = document.documentElement.style; const light = lum(p.sky) > 0.62;
+  const set = { '--w-sky': p.sky, '--w-sky-l': mix(p.sky, 255, 0.4), '--w-ground': p.ground, '--w-ground-d': mix(p.ground, 0, 0.2), '--w-ground-l': mix(p.ground, 255, 0.3),
+    '--w-path': p.path, '--w-path-d': mix(p.path, 0, 0.25), '--w-path-l': mix(p.path, 255, 0.25), '--fg': light ? '#233f3a' : '#fff5db', '--fg-sh': light ? 'rgba(255,250,240,.85)' : '#233f3a' };
+  for (const [k, v] of Object.entries(set)) s.setProperty(k, v);
+}
+const musicOf = (w) => BAND_MUSIC[G.ix.contOf[w.id].band] || 'meadow';
 function banner(html) { const b = $('#banner'); b.innerHTML = html; b.hidden = false; }
 function hideBanner() { $('#banner').hidden = true; }
 const miniCard = (w, g, cls = '') => `<div class="mini g${g} ${cls}" data-act="peek" data-id="${esc(w.id)}"><b>${esc(w.form)}</b>${g ? spr(MEDAL[g], 22) : ''}</div>`;
@@ -75,15 +82,22 @@ const pimg = (e, n = 56, cls = '') => `<img class="px ${cls}" src="${px(e, n)}" 
 const usedMs = (st) => st.runs.filter((r) => r.day === todayISO()).reduce((a, r) => a + r.wall, 0);
 
 async function boot() {
-  const data = await fetch('data/words.json').then((r) => r.json());
   let storage; try { storage = window.localStorage; storage.setItem('_t', '1'); storage.removeItem('_t'); } catch { storage = null; }
   G.volatile = !storage; G.syncStatus = { available: false, pending: [] };
+  try {
+    const json = (r) => { if (!r.ok) throw new Error(`${r.url.split('/').slice(-2).join('/')} 파일을 읽지 못했어요 (${r.status})`); return r.json(); };
+    const cat = await fetch(DATA + 'catalog.json').then(json);
+    // The real world file (from the world generator) wins; until it exists the stand-in file is used.
+    let doc = await fetch(DATA + 'worlds.json').then((r) => (r.ok ? r.json() : null), () => null); G.standIn = !doc;
+    if (!doc) doc = await fetch(DATA + 'worlds.fixture.json').then(json);
+    G.ix = indexWorlds(doc); G.words = cat.words; G.byId = Object.fromEntries(G.words.map((w) => [w.id, w]));
+    const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
+  } catch (e) { $('#app').innerHTML = `<div class="page center"><h1 class="title">열 수 없어요</h1><p class="note" id="fatal">${esc(e.message)}</p></div>`; return; }
   if (storage && qs.get('nosync') !== '1') {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites();
-  G.world = data.world; G.words = data.words; G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.meta = loadMeta();
+  await loadSprites(); G.meta = loadMeta();
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -91,75 +105,117 @@ async function boot() {
   home();
 }
 
-// ---- home / today ----
+// ---- home ----
 function home() {
-  G.view = 'home'; G.pid = null; G.st = null; G.run = null; hideBanner(); clearTimeout(G.timer); applyTheme(); band(false); G.sound?.scene(THEMES[themeId()].music);
+  G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]));
   $('#app').innerHTML = `<div class="page center"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
   <div class="hero">${anim('flag-a', 'flag-b', 64)}</div>
   <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}"><svg class="spr" width="96" height="96" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${id === 'son' ? 'teal' : 'gold'}-${id === 'son' ? 'idle' : 'wave'}"/></svg>${esc(name(id))}</button>`).join('')}</div>
   <p><button class="link" data-act="parent">부모 기록</button></p><p class="mut small" id="syncline">${esc(syncLine())}</p></div>`;
 }
-const POS = { start: [7, 50], monster: [18, 50], A1: [32, 18], A2: [50, 18], B1: [32, 50], B2: [50, 50], C1: [32, 82], C2: [50, 82], bonus: [68, 20], bat: [68, 80], castle: [84, 50] };
-const LINES = [['start', 'A1'], ['A1', 'A2'], ['A2', 'castle'], ['start', 'B1'], ['B1', 'B2'], ['B2', 'castle'], ['start', 'C1'], ['C1', 'C2'], ['C2', 'castle']];
-const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '박쥐 떼가 몰려왔어요! 먼저 쫓아내요 🦇', castleLocked: '두 길을 모두 깨면 성이 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요' };
+
+// ---- the map of one world ----
 const STONE = { open: 'stone-open', cleared: 'stone-done', locked: 'stone-locked', blocked: 'stone-blocked' };
-// Ground, then a path of t-path tiles snapped to the 16 px grid along every road. Logical size 160 x 104 = the map's aspect ratio.
-function terrain() {
-  const T = THEMES[themeId()]; const seen = new Set(); const path = [];
-  for (const [a, b] of LINES) { const [x1, y1] = [POS[a][0] * 1.6, POS[a][1] * 1.04], [x2, y2] = [POS[b][0] * 1.6, POS[b][1] * 1.04]; const n = Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 8);
-    for (let i = 0; i <= n; i++) { const x = Math.floor((x1 + (x2 - x1) * i / n) / 16) * 16, y = Math.floor((y1 + (y2 - y1) * i / n) / 16) * 16; const k = x + ',' + y; if (!seen.has(k)) { seen.add(k); path.push(`<use href="#t-path" x="${x}" y="${y}" width="16" height="16"/>`); } } }
-  return `<svg class="terrain" viewBox="0 0 160 104" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="pg" width="16" height="16" patternUnits="userSpaceOnUse"><use href="#${T.ground}" width="16" height="16"/></pattern></defs><rect width="160" height="104" fill="url(#pg)"/>${path.join('')}</svg>`;
+const big = (id) => `<svg class="spr big" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><use href="#${id}" width="64" height="64"/></svg>`;
+const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '박쥐 떼가 몰려왔어요! 먼저 쫓아내요', castleLocked: '길을 따라 성까지 가면 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요', gameLocked: '놀이집으로 가는 길을 먼저 지나가요', soon: '아직 준비 중이에요' };
+// Ground, a path of tiles along every line of the map (snapped to the 16 px grid), and a few plants away from the paths.
+// Map coordinates are 1000 x 600; the picture is drawn on a 250 x 150 grid so one tile is one stone wide.
+function terrain(w) {
+  const K = 0.25; const cell = (v) => Math.floor(v * K / 16) * 16; const seen = new Set(); const path = []; const N = w._nodes;
+  for (const e of w.map.edges) { const a = N[e.from], b = N[e.to]; const n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * K / 8);
+    for (let i = 0; i <= n; i++) { const x = cell(a.x + (b.x - a.x) * i / n), y = cell(a.y + (b.y - a.y) * i / n); const k = x + ',' + y; if (!seen.has(k)) { seen.add(k); path.push(`<use href="#t-path" x="${x}" y="${y}" width="16" height="16"/>`); } } }
+  for (const n of w.map.nodes) seen.add(cell(n.x) + ',' + cell(n.y));
+  const rng = mulberry32([...w.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0); const deco = []; const KIND = ['tree', 'bush', 'flowers', 'rock', 'bush', 'flowers'];
+  for (let i = 0; i < 60 && deco.length < 14; i++) { const x = Math.floor(rng() * 15) * 16, y = Math.floor(rng() * 9) * 16; const k = x + ',' + y; if (seen.has(k) || seen.has(x + ',' + (y + 16))) continue; seen.add(k); deco.push(`<use href="#${KIND[Math.floor(rng() * KIND.length)]}" x="${x}" y="${y}" width="16" height="16"/>`); }
+  return `<svg class="terrain" viewBox="0 0 250 150" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="pg" width="16" height="16" patternUnits="userSpaceOnUse"><use href="#t-grass" width="16" height="16"/></pattern></defs><rect width="250" height="150" fill="url(#pg)"/>${path.join('')}${deco.join('')}</svg>`;
 }
-function today(id, msg = '') {
-  G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; hideBanner(); clearTimeout(G.timer); applyTheme(); band(false); G.sound.scene(THEMES[themeId()].music);
-  const st = G.st; const m = ensureMap(st); const v = mapView(G.world, st, todayISO()); const c = gradeCounts(st, G.words);
-  const used = usedMs(st);                                  // shown to the parent; there is no daily time cap (user decision 2026-11-12)
-  const place = (key, inner, label, status, extra = '') => { const [x, y] = POS[key];
-    return `<button class="node ${status} ${extra}" data-act="node" data-id="${key}" style="left:${x}%;top:${y}%" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span>${status === 'cleared' && !extra.includes('mon') ? `<i class="flag">${anim('flag-a', 'flag-b', 32)}</i>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`; };
-  const tiles = v.roads.flatMap((r) => r.tiles.map((t) => place(t.id, spr(STONE[t.status] || 'stone-open', 64, 'big'), `${r.name.split(' ')[0]} ${t.id.slice(1)}`, t.status, t.bonus ? 'bonus' : '')));
-  const bonusSt = v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked';
+// A house hangs next to its anchor tile, on the side with the most room.
+function housePos(w, h, taken) {
+  const a = w._nodes[h.anchorNodeId] || w._nodes[w.map.startNodeId]; let best = null;
+  for (const [dx, dy] of [[0, -110], [0, 110], [-120, 0], [120, 0], [-100, -100], [100, 100], [100, -100], [-100, 100]]) {
+    const x = a.x + dx, y = a.y + dy; if (x < 60 || x > 940 || y < 70 || y > 520) continue;
+    const d = Math.min(...taken.map((t) => Math.hypot(t.x - x, t.y - y))); if (!best || d > best.d) best = { x, y, d };
+  }
+  best ||= { x: Math.min(940, a.x + 90), y: Math.min(520, a.y + 90) }; taken.push(best); return best;
+}
+function today(id, msg = '', wid = null) {
+  G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
+  const st = G.st; const m = ensureMap(st);
+  if (wid && G.ix.byId[wid] && worldOpen(G.ix, G.ix.byId[wid], st)) m.at = wid;
+  const w = (G.world = currentWorld(G.ix, st)); const first = enterWorld(st, w, todayISO()); if (first || wid) save();
+  applyTheme(w); G.sound.scene(musicOf(w));
+  const v = worldView(G.ix, w, st, todayISO()); const c = gradeCounts(st, G.words); const used = usedMs(st);   // shown to the parent; there is no daily time cap (user decision 2026-11-12)
+  const at = (n) => `left:${n.x / 10}%;top:${n.y / 6}%`;
+  const place = (n, inner, label, status, extra = '') => `<button class="node ${status} ${extra}" data-act="node" data-id="${esc(n.id)}" style="${at(n)}" aria-label="${esc(label)}">${inner}${label ? `<span class="lbl">${esc(label)}</span>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`;
+  const nodes = v.nodes.map((n) => {
+    if (n.kind === 'tile') return place(n, spr(STONE[n.status] || 'stone-open', 64, 'big'), '', n.status, n.bonus ? 'bonus' : '');
+    if (n.kind === 'castle') return place(n, `${v.crown ? `<i class="crown">${spr('crown', 32)}</i>` : ''}${big('gate')}`, v.crown ? '왕관!' : w.castle?.name || '성', n.status, 'castle');
+    if (n.kind === 'minigame') return place(n, `${big('playhouse')}${n.status === 'cleared' ? `<i class="crown">${spr('stamp', 32)}</i>` : ''}`, '놀이집', n.status === 'cleared' ? 'open done' : n.status, 'game');
+    if (n.kind === 'start') return `<div class="node start" style="${at(n)}">${anim('flag-a', 'flag-b', 64)}<span class="lbl">출발</span></div>`;
+    return `<div class="node free" style="${at(n)}">${big('sign')}</div>`;
+  });
+  const taken = w.map.nodes.map((n) => ({ x: n.x, y: n.y }));
+  const houses = v.houses.map((h) => { const p = housePos(w, h, taken); return place({ id: h.id, ...p }, big('post-office'), `${h.name} ${h.done}/${h.total}`, h.status, h.bonus ? 'house bonus' : 'house'); });
+  const story = first ? w.intro : '';
+  const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 모든 왕관을 모았어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
+  const dock = (id, inner, label, status, extra = '') => `<button class="dockbtn ${status} ${extra}" data-act="node" data-id="${id}" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span></button>`;
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
-  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip">${spr('star', 24)} ${v.stars}</span><span class="chip">${spr('key', 24)} ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
+  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><span class="chip" title="열쇠">${spr('key', 24)} ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
+    <button class="tgl" data-act="atlas">세계 지도</button>
     <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}">♪ 음악 ${G.sound.musicOn ? '켜짐' : '꺼짐'}</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}">${spr('sound', 24)} 효과음 ${G.sound.sfx ? '켜짐' : '꺼짐'}</button></div>
-  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
-  <div class="world" id="world">${terrain()}
-    <div class="node start" style="left:${POS.start[0]}%;top:${POS.start[1]}%">${anim('flag-a', 'flag-b', 64)}<span class="lbl">출발</span></div>
-    ${tiles.join('')}
-    ${v.monster.present ? place('monster', anim('monster-a', 'monster-b', 64), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
-    ${v.bat.full ? place('bat', anim('bat-a', 'bat-b', 64, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
-    ${place('bonus', `<svg class="spr big" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><use href="#playhouse" width="64" height="64"/></svg>`, '보너스 집', bonusSt)}
-    ${place('castle', `<svg class="spr big" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><use href="#gate" width="64" height="64"/></svg>`, v.worldDone ? '클리어!' : '성', v.castle.status)}</div>
-  <p class="msg" id="msg">${esc(msg || (v.bat.full ? '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'))}</p>
+  <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
+  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
+  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}</div>
+  <p class="msg" id="msg">${esc(hint)}</p>
+  <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
+    ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
+    ${dock('bonus', `<svg class="spr" width="48" height="48" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`, '번개 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}</div>
   <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></button>`).join('')}
     <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '다음 판에 쓸 아이템을 골라요'}</span></div>
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
     <div class="legend"><span class="g3">${spr(MEDAL[3], 24)} 금 ${c[3]}</span><span class="g2">${spr(MEDAL[2], 24)} 은 ${c[2]}</span><span class="g1">${spr(MEDAL[1], 24)} 동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
-    <button class="sec" data-act="album">카드첩 보기</button></div>
-  <p class="mut small center" id="src">소리: ${esc(G.sound.source)}</p><p class="mut small center" id="syncline">${esc(syncLine())}</p></div>`;
+    <button class="sec" data-act="album">이 세계의 카드첩</button></div>
+  <p class="mut small center" id="src">소리: ${esc(G.sound.source)}${G.standIn ? ' · 세계 파일: 시험용(단어 배정 임시)' : ''}</p><p class="mut small center" id="syncline">${esc(syncLine())}</p></div>`;
 }
 function nodeClick(id) {
-  const st = G.st; const v = mapView(G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
+  const st = G.st; const v = worldView(G.ix, G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
   if (id === 'bat') return v.bat.full ? start('bat') : out('박쥐 게이지가 아직 안 찼어요');
   if (v.bat.full) return out(MSG.blocked);                  // a full gauge: the test comes first
   if (id === 'bonus') { if (v.bonus.status === 'open') return startLightning(); return out(v.bonus.status === 'used' ? MSG.used : MSG.bonusLocked); }
-  if (id === 'castle' && v.castle.status === 'locked') return out(MSG.castleLocked);
-  if (id === 'castle' && v.castle.status === 'cleared') return out('이 성은 이미 깼어요. 🔑');
-  const t = v.roads.flatMap((r) => r.tiles).find((x) => x.id === id);
-  if (t && t.status === 'locked') return out(MSG.locked);
-  if ((t && t.status === 'blocked') || (id === 'castle' && v.castle.status === 'blocked')) return out(MSG.blocked);
-  if (t && t.status === 'cleared') return out('이 칸은 이미 깼어요. 🚩');
+  if (id === 'monster') return start(id);
+  const n = v.nodes.find((x) => x.id === id) || v.houses.find((x) => x.id === id); if (!n) return;
+  if (n.kind === 'minigame') { if (n.status === 'locked') return out(MSG.gameLocked); return n.playable ? startGame(n) : out(MSG.soon); }
+  if (n.kind === 'castle' && n.status === 'locked') return out(MSG.castleLocked);
+  if (n.kind === 'castle' && n.status === 'cleared') return out('이 성은 이미 깼어요.');
+  if (n.status === 'locked') return out(MSG.locked);
+  if (n.status === 'blocked') return out(MSG.blocked);
+  if (n.status === 'cleared') return out(n.tiles ? '이 집은 다 읽었어요.' : '이 칸은 이미 깼어요.');
   return start(id);
+}
+
+// ---- world list ----
+function atlas() {
+  G.view = 'atlas'; hideBanner(); band(false); const a = atlasView(G.ix, G.st);
+  const wbtn = (w) => `<button class="wcard ${w.open ? 'open' : 'locked'} ${G.world?.id === w.id ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" ${w.open ? '' : 'disabled'}>${w.crown ? spr('crown', 32) : w.castle ? spr('key', 32) : w.open ? spr('stone-open', 32) : spr('padlock', 32)}<b>${esc(w.name)}</b><i>${w.met}/${w.total}</i></button>`;
+  $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
+  ${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
+    <div class="wgrid">${c.worlds.map(wbtn).join('')}
+    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.name)}의 큰 성</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
+  <p class="msg" id="msg"></p></div>`;
 }
 
 // ---- run ----
 async function start(nodeId) {
   await G.sound.unlock();                                  // inside the tap
   const seed = Number(qs.get('seed')) || Math.floor(Math.random() * 1e9); const rng = mulberry32(seed + G.st.runs.length);
-  const v = mapView(G.world, G.st, todayISO()); const node = nodeRun(G.world, v, nodeId, G.st, G.words, rng); if (!node) return today(G.pid);
+  let node;
+  if (nodeId.startsWith('finale:')) node = finaleRun(G.ix, G.ix.continents.find((c) => c.id === nodeId.slice(7)), G.st, todayISO(), rng);
+  else node = nodeRun(G.ix, worldView(G.ix, G.world, G.st, todayISO()), nodeId, G.st, G.words, rng);
+  if (!node) return today(G.pid);
   const items = takeBag(G.st); G.node = node; save();
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
-  G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(node.kind === 'castle' || node.kind === 'bat' ? 'castle' : 'study');
+  G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study');
   $('#app').innerHTML = `<div class="run">
   <header class="hud"><button class="x" data-act="quit" aria-label="그만하기">✕</button>
     <div class="boss"><span class="boss-emoji" id="boss"></span><div class="hpbar"><i id="hp"></i></div><span class="floater" id="floater"></span></div>
@@ -169,20 +225,23 @@ async function start(nodeId) {
   paintHud(); showCard();
 }
 function paintHud() {
-  const b = G.run.boss; const be = BOSSES[b.idx % BOSSES.length]; if ($('#boss').dataset.e !== be) { $('#boss').dataset.e = be; $('#boss').innerHTML = pimg(be, 56); } $('#hp').style.width = `${Math.max(0, b.hp) / CFG.bossHp * 100}%`;
+  const b = G.run.boss; const list = G.world?.bossEmoji?.length ? G.world.bossEmoji : BOSSES; const be = list[b.idx % list.length];
+  if ($('#boss').dataset.e !== be) { $('#boss').dataset.e = be; $('#boss').innerHTML = pimg(be, 56); } $('#hp').style.width = `${Math.max(0, b.hp) / CFG.bossHp * 100}%`;
   $('#combo').innerHTML = (G.run.items.shield ? spr(ITEM_SPR.shield, 24) : '') + (G.run.items.flame ? spr(ITEM_SPR.flame, 24) : '') + (G.run.combo >= 2 ? `연속 ${G.run.combo}` : ''); $('#combo').classList.toggle('hot', G.run.combo >= 5);
   $('#left').textContent = `남은 카드 ${G.run.left}`;
 }
 const TAG = { castle: '박쥐·성 시험', new: '새 카드', review: '다시 만난 카드', likely: '다시 만난 카드', relearn: '방금 배운 카드', practice: '한 번 더', retry: '다시 도전' };
-function front(it, w, extra = '') {
-  const g = gradeOf(G.st.words[w.id]);
-  $('#card').className = `card g${g}`;
-  $('#card').innerHTML = `<div class="tag ${it.form === 'check' || it.verifying ? 'chk' : ''}" id="tag">${it.form === 'check' || it.verifying ? '확인! 뜻을 골라요' : TAG[it.role]}${extra}</div>
-    <div class="word" id="word">${esc(w.form)}</div><button class="hear" data-act="hear" aria-label="다시 듣기"><svg class="spr" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg></button>`;
+const HEAR = `<button class="hear" data-act="hear" aria-label="다시 듣기"><svg class="spr" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg></button>`;
+function front(it, w) {
+  const g = gradeOf(G.st.words[w.id]); const chk = it.form === 'check' || it.verifying; const listen = chk && isSight(w) && !it.shown;   // a function word: hear it, pick the spelling
+  $('#card').className = `card g${g} ${listen ? 'listen' : ''}`;
+  $('#card').innerHTML = `<div class="tag ${chk ? 'chk' : ''}" id="tag">${chk ? (isSight(w) ? '확인! 글자를 골라요' : '확인! 뜻을 골라요') : TAG[it.role]}</div>
+    ${listen ? `<div class="ear" id="word" data-hidden="1">${anim('sparkle-a', 'sparkle-b', 48)}<span>소리를 듣고 글자를 골라요</span></div>` : `<div class="word" id="word">${esc(w.form)}</div>`}${HEAR}`;
 }
 function judgeButtons() { $('#actions').innerHTML = `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
 function optionButtons(it) {
-  $('#actions').innerHTML = `<div class="opts">${it.options.map((o, i) => `<button class="act opt" data-act="opt" data-i="${i}">${esc(o.ko)}</button>`).join('')}</div>
+  const en = isSight(G.byId[it.id]) ? 'en' : '';
+  $('#actions').innerHTML = `<div class="opts">${it.options.map((o, i) => `<button class="act opt ${en}" data-act="opt" data-i="${i}">${esc(o.ko)}</button>`).join('')}</div>
     <button class="link" data-act="opt" data-i="-1">몰라요</button>`;
 }
 const lock = (on) => document.querySelectorAll('.act').forEach((b) => { b.disabled = on; });
@@ -208,16 +267,16 @@ function onJudge(know) {
 }
 function onPick(i) {
   if (G.busy || G.view !== 'card') return;
-  reveal(G.run.pick(i));                                 // the card back shows the right meaning; the options are cleared
+  reveal(G.run.pick(i));                                 // the card back shows the right answer; the options are cleared
 }
 function reveal(res) {
   G.busy = true; lock(true); save(); const w = res.word; const card = $('#card'); const shielded = G.run.shieldUsed > (G.shieldSeen || 0); G.shieldSeen = G.run.shieldUsed;
-  const up = res.grade && res.grade.to > res.grade.from ? res.grade.to : 0;
-  const line = res.ok ? (up ? `${GRADE[up]} 카드!` : res.verified ? '확인 성공!' : '') : res.said === 'wrong' ? '이 뜻이에요' : '이제 배워요';
+  const up = res.grade && res.grade.to > res.grade.from ? res.grade.to : 0; const sight = isSight(w);
+  const line = res.ok ? (up ? `${GRADE[up]} 카드!` : res.verified ? '확인 성공!' : '') : res.said === 'wrong' ? (sight ? '이 글자예요' : '이 뜻이에요') : '이제 배워요';
   card.classList.remove('in'); card.classList.add('flip');
   setTimeout(() => {
     card.className = `card back g${gradeOf(G.st.words[w.id])} ${res.ok ? 'ok' : 'learn'} ${up ? 'up' : ''}`;
-    card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
+    card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${sight ? `<div class="word">${esc(w.form)}</div>` : `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>`}${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
   }, FAST ? 0 : 90);
   if (res.dmg) { const f = $('#floater'); f.textContent = `-${res.dmg}`; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
     $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.blip(res.defeated ? 'boss' : res.verified || (G.run.items.flame && res.dmg >= 2) ? 'big' : 'hit');
@@ -236,24 +295,32 @@ function next() { clearTimeout(G.timer); if (G.view !== 'card' || !G.busy) retur
 
 function endRun(reason) {
   clearTimeout(G.timer); G.sound.stop(); const run = G.run; const node = G.node; const rec = run.finish(reason); G.boss = { ...run.boss, day: todayISO(), pid: G.pid };
-  const rw = settleRun(G.world, G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); save(); G.sync?.flush().catch(() => {});
-  G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from);
-  const title = { tile: rw.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.cleared ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: rw.key ? '성을 깼어요!' : '성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요' }[node.kind];
+  const rw = settleRun(G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); const ww = settleWorld(G.ix, G.st, node, rec, todayISO()); save(); G.sync?.flush().catch(() => {});
+  G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from); const w = G.world; const pc = (x) => Math.round(x * 100);
+  const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
+  const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : '성 시험 결과',
+    finale: ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요' }[node.kind];
   const lines = rw.stars > 0 ? [`<div class="gain">${spr('star', 32)} +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
   if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
-  if (rw.key) lines.push(`<div class="gain">${spr('key', 32)} 열쇠를 얻었어요</div>`);
-  if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${Math.round(rw.bat.acc * 100)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
-  if (rw.batFull && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
-  if (rw.castle && !rw.key) lines.push(`<p class="mut">${rw.castle.ok}/${rw.castle.total}장 맞혔어요. ${Math.round(CASTLE_PASS * 100)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
+  if (ww.key) lines.push(`<div class="gain" id="keygain">${spr('key', 32)} ${esc(w.key?.name || '열쇠')}를 얻었어요</div>`);
+  if (ww.crown) lines.push(`<div class="gain" id="crowngain">${spr('crown', 32)} 이 세계의 왕관을 얻었어요</div>`);
+  if (ww.key && w.outro) lines.push(`<p class="story">${esc(w.outro)}</p>`);
+  if (ww.key && ww.nextWorld && w.story) lines.push(`<p class="story">${esc(w.story)}</p>`);
+  if (ww.finale?.pass) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ww.nextContinent.name)}(으)로 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
+  if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${pc(rw.bat.acc)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
+  if (batNow && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
+  if (batNow && node.kind === 'bat') lines.push('<p class="mut">미뤄 둔 복습이 아직 많아요. 박쥐가 한 번 더 와요.</p>');
+  const exam = ww.castle || ww.finale; if (exam && !exam.pass) lines.push(`<p class="mut">${exam.ok}/${exam.total}장 맞혔어요. ${pc(exam.need)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
+  const go = batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ww.nextWorld.name}(으)로`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ww.nextContinent.name}(으)로`] : ['today', '▶ 지도로'];
+  const goId = ww.key && ww.nextWorld ? ww.nextWorld.id : ww.finale?.pass && ww.nextContinent ? ww.nextContinent.worlds[0].id : '';
   $('#app').innerHTML = `<div class="page center"><h1 class="title">${title}</h1>${lines.join('')}
   <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>${rec.bosses}</b><span>잡은 보스</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
-  <button class="go" data-act="${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? 'bat-go' : 'today'}">${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '박쥐 시험' : '▶ 지도로'}</button>${rw.batFull && !(node.kind === 'bat' && rw.bat.done) ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
+  <button class="go" data-act="${go[0]}" data-id="${esc(goId)}">${esc(go[1])}</button>${go[0] !== 'today' ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
   G.run = null; G.node = null;
-  const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
-  G.sound.scene(THEMES[themeId()].music);
-  const jg = batNow ? 'bat' : rw.key ? 'victory' : rw.cleared || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) setTimeout(() => G.sound.jingle(jg), 150);
-  if (rw.key) setTimeout(() => G.sound.jingle('key'), 1800); else if (rw.cleared) G.sound.sfxPlay('stamp');
+  G.sound.scene(musicOf(w));
+  const jg = batNow ? 'bat' : ww.key || ww.finale?.pass ? 'victory' : ww.cleared || rw.monster || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) setTimeout(() => G.sound.jingle(jg), 150);
+  if (ww.key) setTimeout(() => G.sound.jingle('key'), 1800); else if (ww.cleared) G.sound.sfxPlay('stamp');
 }
 
 // ---- lightning round (bonus house): true / false pairs, 60 seconds, touches no word ----
@@ -273,7 +340,7 @@ function ltAnswer(says) {
   $('#card').classList.add(ok ? 'okflash' : 'badflash'); setTimeout(() => { if (G.view === 'lightning') ltNext(); }, FAST ? 10 : 160);
 }
 function ltEnd() {
-  clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; band(false); G.sound.stop(); G.sound.sfxPlay('lightning-end'); G.sound.scene(THEMES[themeId()].music);
+  clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; band(false); G.sound.stop(); G.sound.sfxPlay('lightning-end'); G.sound.scene(musicOf(G.world));
   const r = settleLightning(G.st, G.lt, todayISO()); save(); G.sync?.flush().catch(() => {}); const sc = G.lt.score;
   $('#app').innerHTML = `<div class="page center"><h1 class="title">번개 끝!</h1><div class="tiles"><div><b>${sc}</b><span>맞힌 수</span></div><div><b>${G.st.map.best}</b><span>내 최고 기록</span></div></div>
   ${r.newBest ? '<div class="gain">새 기록!</div>' : ''}${r.item ? `<div class="gain">${spr(ITEM_SPR[r.item], 40)} ${ITEMS[r.item].name}을 얻었어요</div>` : r.first ? '<p class="mut">3개 이상 맞히면 아이템을 줘요</p>' : ''}
@@ -281,26 +348,65 @@ function ltEnd() {
   G.lt = null;
 }
 
-// ---- album ----
+// ---- playhouses: short games off the long paths. Pure play: they touch no word, star, gauge or key; one stamp each. ----
+async function startGame(n) {
+  await G.sound.unlock(); G.view = 'game'; band(false); G.sound.scene('play'); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 11);
+  const em = (G.world.bossEmoji?.length >= 3 ? G.world.bossEmoji : BOSSES).slice(0, 3);
+  G.game = n.gameType === 'memory' ? { node: n, type: 'memory', deck: shuffle([...em, ...em], rng), open: [], matched: new Set(), busy: false }
+    : { node: n, type: 'mail', done: 0, t0: performance.now(), pos() { return 50 + 38 * Math.sin((performance.now() - this.t0) / (FAST ? 90 : 900)); }, inZone() { return Math.abs(this.pos() - 50) <= 13; } };
+  paintGame();
+  if (G.game.type === 'mail') { const tick = () => { if (G.view !== 'game' || !G.game || G.game.type !== 'mail') return; const b = $('#mailbox'); if (b) b.style.left = G.game.pos() + '%'; requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+}
+function paintGame() {
+  const g = G.game; const head = `<button class="back" data-act="today" aria-label="그만 놀고 지도로">‹</button>`;
+  if (g.type === 'memory') {
+    $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">그림 짝 맞추기</h1><p class="mut" id="gstatus">${g.matched.size / 2} / 3쌍</p>
+    <div class="memgrid">${g.deck.map((e, i) => { const up = g.matched.has(i) || g.open.includes(i); return `<button class="memcard ${g.matched.has(i) ? 'matched' : ''}" data-act="mem" data-i="${i}" aria-label="${i + 1}번째 카드" ${g.matched.has(i) ? 'disabled' : ''}>${up ? pimg(e, 72) : spr('envelope', 64)}</button>`; }).join('')}</div>
+    <p class="mut small">두 장씩 뒤집어 같은 그림을 찾아요. 서두르지 않아도 돼요.</p></div>`;
+  } else {
+    $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">우체통에 편지 넣기</h1><p class="mut" id="gstatus">${g.done} / 3통</p>
+    <div class="mailtrack"><div class="mailzone"></div><div class="mailbox" id="mailbox" style="left:${g.pos()}%"><svg class="spr" width="96" height="96" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg></div></div>
+    <button class="go" data-act="mail">${spr('envelope', 40)} 넣기!</button><p class="mut small" id="ghint">우체통이 노란 칸에 왔을 때 눌러요. 틀려도 괜찮아요.</p></div>`;
+  }
+}
+function memPick(i) {
+  const g = G.game; if (!g || g.type !== 'memory' || g.busy || g.matched.has(i) || g.open.includes(i)) return; g.open.push(i); G.sound.sfxPlay('flip');
+  if (g.open.length < 2) return paintGame();
+  const [a, b] = g.open;
+  if (g.deck[a] === g.deck[b]) { g.matched.add(a); g.matched.add(b); g.open = []; G.sound.sfxPlay('correct'); paintGame(); if (g.matched.size === g.deck.length) setTimeout(endGame, FAST ? 30 : 500); }
+  else { g.busy = true; paintGame(); setTimeout(() => { if (G.game !== g) return; g.open = []; g.busy = false; paintGame(); }, FAST ? 30 : 800); }
+}
+function mailDrop() {
+  const g = G.game; if (!g || g.type !== 'mail') return;
+  if (g.inZone()) { g.done++; G.sound.sfxPlay('mail'); if (g.done >= 3) return endGame(); $('#gstatus').textContent = `${g.done} / 3통`; $('#ghint').textContent = '쏙! 잘 넣었어요.'; }
+  else { G.sound.sfxPlay('retry'); $('#ghint').textContent = '조금만 더 기다렸다가 눌러요.'; }
+}
+function endGame() {
+  const g = G.game; if (!g) return; const fresh = stampGame(G.st, G.world, g.node.id, todayISO()); if (fresh) save(); G.view = 'end'; G.game = null; G.sound.scene(musicOf(G.world)); G.sound.sfxPlay('stamp'); if (fresh) setTimeout(() => G.sound.jingle('item'), 200);
+  $('#app').innerHTML = `<div class="page center"><h1 class="title">잘 놀았어요!</h1><div class="gain" id="stampgain">${spr('stamp', 40)} ${fresh ? '엽서에 놀이 도장을 찍었어요' : '이 도장은 이미 모았어요'}</div>
+  <p class="mut">놀이 도장은 카드 공부와는 상관없는 기념이에요.</p><button class="go" data-act="today">▶ 지도로</button></div>`;
+}
+
+// ---- album: the cards of this world ----
 function album() {
-  G.view = 'album'; const st = G.st; const c = gradeCounts(st, G.words);
-  $('#app').innerHTML = `<div class="page"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">${esc(name(G.pid))}의 카드첩</h1>
+  G.view = 'album'; const st = G.st; const ids = worldWords(G.world); const ws = ids.map((id) => G.byId[id]); const c = gradeCounts(st, ws);
+  $('#app').innerHTML = `<div class="page"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">${esc(G.world.name)} 카드첩</h1>
   <p class="center mut">금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]}</p><div id="peek" class="peek center"></div>
-  <div class="minis grid">${G.words.map((w) => { const r = st.words[w.id]; return r ? miniCard(w, gradeOf(r)) : '<div class="mini unseen">?</div>'; }).join('')}</div></div>`;
+  <div class="minis grid">${ws.map((w) => { const r = st.words[w.id]; return r ? miniCard(w, gradeOf(r)) : '<div class="mini unseen">?</div>'; }).join('')}</div></div>`;
 }
 
 // ---- parent ----
 function parent() {
-  G.view = 'parent'; hideBanner(); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
-  const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs;
-    const tot = R.reduce((a, r) => ({ cards: a.cards + r.cards, wall: a.wall + r.wall, claims: a.claims + r.claims, v: a.v + r.verifies, vok: a.vok + r.verifyOk }), { cards: 0, wall: 0, claims: 0, v: 0, vok: 0 });
-    return `<h2>${esc(name(id))}</h2><p class="small">별 ${ensureMap(st).stars} · 열쇠 ${ensureMap(st).keys} · 깬 칸 ${Object.keys(ensureMap(st).cleared).length}/6 · 번개 최고 ${ensureMap(st).best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${ensureMap(st).bat.fill}/${ensureMap(st).bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${R.length}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v})</p>
+  G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
+  const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
+    const tot = R.reduce((t, r) => ({ cards: t.cards + r.cards, wall: t.wall + r.wall, claims: t.claims + r.claims, v: t.v + r.verifies, vok: t.vok + r.verifyOk, rv: t.rv + r.reviews, rok: t.rok + r.reviewOk }), { cards: 0, wall: 0, claims: 0, v: 0, vok: 0, rv: 0, rok: 0 });
+    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${G.words.length} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${R.length}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv})</p>
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
-    ${R.map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${r.tag || '-'}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
-      <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>
+    ${R.slice(-60).map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${esc(r.tag || '-')}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
+      <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>${R.length > 60 ? `<p class="small mut">최근 60판만 표시. 전체는 내보내기 파일에 있습니다.</p>` : ''}
     <p class="row"><button class="sec" data-act="export" data-id="${id}">기록 내보내기(JSON)</button><button class="link" data-act="reset" data-id="${id}">기록 지우기</button></p>`; };
   $('#app').innerHTML = `<div class="page parent"><button class="back" data-act="home" aria-label="처음으로">‹</button><h1 class="title">부모 기록</h1>
-  <p class="small mut">시제품 확인용 수치입니다. 분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과입니다. 소리: ${esc(G.sound.source)}</p><p class="small" id="syncline">${esc(syncLine())}</p>
+  <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과입니다. 소리: ${esc(G.sound.source)}${G.standIn ? ' · 세계 파일: 시험용(단어 배정 임시)' : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
   ${PROFILES.map(block).join('')}
   <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p></div>`;
 }
@@ -308,16 +414,22 @@ function download(nm, obj) { const a = document.createElement('a'); a.href = URL
 
 async function onClick(e) {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return; const a = b.dataset.act;
-  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node'].includes(a)) G.sound.sfxPlay('tap');
+  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node', 'mem', 'mail'].includes(a)) G.sound.sfxPlay('tap');
   switch (a) {
     case 'music': await G.sound.unlock(); G.sound.setMusic(!G.sound.musicOn); savePref(); return today(G.pid);
     case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
     case 'home': return home();
     case 'pick': await G.sound.unlock(); return openProfile(b.dataset.id);
     case 'today': return today(G.pid);
+    case 'atlas': return atlas();
+    case 'goworld': return today(G.pid, '', b.dataset.id);
+    case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
+      $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}). 왕관은 그 세계의 모든 칸과 집, 성을 깨면 받아요.`; return; }
     case 'node': return nodeClick(b.dataset.id);
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
+    case 'mem': return memPick(Number(b.dataset.i));
+    case 'mail': return mailDrop();
     case 'lt-yes': return ltAnswer(true);
     case 'lt-no': return ltAnswer(false);
     case 'lt-quit': clearInterval(G.timer); G.lt = null; return today(G.pid);
@@ -326,7 +438,7 @@ async function onClick(e) {
     case 'opt': return onPick(Number(b.dataset.i));
     case 'next': return next();
     case 'hear': await G.sound.unlock(); return speak(true);
-    case 'mute-go': { const it = G.run?.current; if (it) it.sound = 'none'; hideBanner(); lock(false); if (G.run) G.run.t0 = Date.now(); return; }
+    case 'mute-go': { const it = G.run?.current; if (it) { it.sound = 'none'; if (isSight(G.byId[it.id]) && $('#word')?.dataset.hidden) { it.shown = true; front(it, G.byId[it.id]); } } hideBanner(); lock(false); if (G.run) G.run.t0 = Date.now(); return; }   // without sound a hear-and-pick card shows its word
     case 'quit': if (G.run) return endRun('left'); return today(G.pid);
     case 'album': return album();
     case 'peek': { const w = G.byId[b.dataset.id]; if (!w) return; const p = $('#peek'); if (p) p.innerHTML = `<b>${esc(w.form)}</b> ${esc(w.ko)} ${w.emoji || ''}`; await G.sound.unlock(); return G.sound.play(w.id, w.form); }

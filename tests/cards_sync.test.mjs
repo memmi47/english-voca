@@ -48,14 +48,20 @@ test('S2: runs and log entries are united without duplicates, in time order', ()
   assert.deepEqual(m.log.map((e) => e.id), ['w1', 'w2', 'w3']);
 });
 
-test('S3: map: cleared tiles united (earliest day), keys and best only grow, castle date kept, item counts take the larger', () => {
-  const a = state({ map: { stars: 10, keys: 0, best: 12, items: { shield: 1, flame: 0 }, bag: null, cleared: { A1: '2026-11-12' }, castle: null, monsterDay: '2026-11-12', bonusDay: null } });
-  const b = state({ map: { stars: 25, keys: 1, best: 9, items: { shield: 0, flame: 2 }, bag: 'flame', cleared: { A1: '2026-11-13', B1: '2026-11-13' }, castle: '2026-11-13', monsterDay: null, bonusDay: '2026-11-13' } });
+test('S3: map: per world, cleared tiles / castle / stamps united (earliest day); keys counted from castles; best only grows; items take the larger', () => {
+  const W = (o) => ({ castle: null, seen: null, cleared: {}, stamps: {}, ...o });
+  const a = state({ map: { stars: 10, keys: 0, best: 12, items: { shield: 1, flame: 0 }, bag: null, at: 'w1', monsterDay: '2026-11-12', monsterN: 3, bonusDay: null,
+    worlds: { w1: W({ cleared: { A1: '2026-11-12' }, stamps: { G1: '2026-11-12' }, seen: '2026-11-12' }) }, conts: {} } });
+  const b = state({ map: { stars: 25, keys: 2, best: 9, items: { shield: 0, flame: 2 }, bag: 'flame', at: 'w2', monsterDay: '2026-11-12', monsterN: 1, bonusDay: '2026-11-13',
+    worlds: { w1: W({ cleared: { A1: '2026-11-13', B1: '2026-11-13' }, castle: '2026-11-13', seen: '2026-11-13' }), w2: W({ castle: '2026-11-14', stamps: { G9: '2026-11-14' } }) }, conts: { c1: { castle: '2026-11-15' } } } });
   for (const m of [mergeCards(a, b).map, mergeCards(b, a).map]) {
-    assert.deepEqual(m.cleared, { A1: '2026-11-12', B1: '2026-11-13' });
-    assert.deepEqual([m.stars, m.keys, m.best, m.castle, m.monsterDay, m.bonusDay], [25, 1, 12, '2026-11-13', '2026-11-12', '2026-11-13']);
+    assert.deepEqual(m.worlds.w1, { castle: '2026-11-13', seen: '2026-11-12', cleared: { A1: '2026-11-12', B1: '2026-11-13' }, stamps: { G1: '2026-11-12' } });
+    assert.deepEqual(m.worlds.w2, { castle: '2026-11-14', seen: null, cleared: {}, stamps: { G9: '2026-11-14' } });
+    assert.deepEqual(m.conts, { c1: { castle: '2026-11-15' } });
+    assert.deepEqual([m.stars, m.keys, m.best, m.monsterDay, m.monsterN, m.bonusDay], [25, 2, 12, '2026-11-12', 3, '2026-11-13']);
     assert.deepEqual(m.items, { shield: 1, flame: 2 });
   }
+  assert.equal(mergeCards(a, b).map.at, 'w1'); assert.equal(mergeCards(b, a).map.at, 'w2');                       // where each device stands is its own
 });
 
 test('S4: the adaptive check history follows the device that played last; meta keeps local names when local is newer', () => {
@@ -90,7 +96,7 @@ test('S7: server down: local saves keep working and are uploaded when it returns
 
 test('S8: two devices change the same child while apart: both sides survive the merge and both end equal', async () => {
   const srv = fakeServer(); const mac = device(srv); const ipad = device(srv); await mac.sync.init(); await ipad.sync.init();
-  put(mac, 'p.son', state({ words: { w1: word({ lastDay: '2026-11-12' }) }, runs: [run(1, '2026-11-12T10:00:00Z')], map: { stars: 5, keys: 0, best: 0, items: { shield: 0, flame: 0 }, bag: null, cleared: { A1: '2026-11-12' }, castle: null, monsterDay: null, bonusDay: null } })); await settle(mac);
+  put(mac, 'p.son', state({ words: { w1: word({ lastDay: '2026-11-12' }) }, runs: [run(1, '2026-11-12T10:00:00Z')], map: { stars: 5, keys: 0, best: 0, items: { shield: 0, flame: 0 }, bag: null, worlds: { w1: { castle: null, seen: null, cleared: { A1: '2026-11-12' }, stamps: {} } }, conts: {}, monsterDay: null, bonusDay: null } })); await settle(mac);
   await ipad.sync.reconcile('p.son');
   srv.setDown(true);                                                          // both play offline
   put(mac, 'p.son', { ...get(mac, 'p.son'), words: { ...get(mac, 'p.son').words, w2: word() }, runs: [...get(mac, 'p.son').runs, run(2, '2026-11-12T11:00:00Z', { tag: 'B1' })] });
@@ -111,7 +117,7 @@ test('S9: the second child\'s document is separate; names sync through meta', as
 });
 
 test('S10: bat gauge merge: the side that took the latest test wins (it emptied the gauge); otherwise the fuller gauge and united met words', () => {
-  const mk = (bat) => state({ map: { stars: 0, keys: 0, best: 0, items: { shield: 0, flame: 0 }, bag: null, cleared: {}, castle: null, monsterDay: null, bonusDay: null, bat } });
+  const mk = (bat) => state({ map: { stars: 0, keys: 0, best: 0, items: { shield: 0, flame: 0 }, bag: null, worlds: {}, conts: {}, monsterDay: null, bonusDay: null, bat } });
   const a = mk({ fill: 0, cap: 50, met: [], last: '2026-11-12T12:00:00Z' }), b = mk({ fill: 38, cap: 40, met: ['w1', 'w2'], last: null });
   for (const m of [mergeCards(a, b).map.bat, mergeCards(b, a).map.bat]) assert.deepEqual([m.fill, m.cap, m.met.length], [0, 50, 0]);
   const c = mk({ fill: 12, cap: 40, met: ['w1', 'w2'], last: '2026-11-12T12:00:00Z' }), d = mk({ fill: 20, cap: 40, met: ['w2', 'w3'], last: '2026-11-12T12:00:00Z' });
