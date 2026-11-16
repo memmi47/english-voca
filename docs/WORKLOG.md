@@ -163,6 +163,8 @@
 
 | 2026-11-16 | Codex | 요청 12번과 분담 반영: 설정형 세계 생성기·4610개 전체 카탈로그·표현 칸 분산·401개 오답 제외 그룹, P1 전수 검토 JSON/CSV. 최신 `f901bee` WORKLOG 병합, 기존 도안 표시 원본은 world-art.json으로 분리 | 이 줄을 추가한 커밋 (`codex/world-pixel-assets`) | 생성기 16/16, 재현/분리/경로 검증. 대륙 성 새 수치·표현 선행 조건 미결, 실제 게임/음원/iPad 연결 미검증 |
 
+| 2026-11-16 | Codex Astra | C-002 변신 형태 선별·검증 설계와 Sol 인계; 철자 동일 형태·was/were ID·half/deal 뜻 충돌로 구현 보류, Draft PR | 이 줄을 추가한 커밋 (`codex/word-forms`) | 입력 감사10/10; 완료명령0/2(생성기 미구현); 안전검사6/8(서버 EPERM), 브라우저 시작 불가(Chromium 번들 없음); 부모·기기 미테스트 |
+
 ## 9. 요청과 이번 설계의 검증
 
 - 최신 결과: 실제 `worlds.json`/`catalogue.json` 4,610개 배정, 픽셀 180개, 30세계 색, P1 검토 목록 완료. 표시 원본은 `world-art.json`으로 분리했다. 구현 경계와 명령은 [WORLD_GENERATOR_HANDOFF.md](WORLD_GENERATOR_HANDOFF.md), 도안/기기 검토는 [WORLD_PIXEL_HANDOFF.md](WORLD_PIXEL_HANDOFF.md)를 따른다.
