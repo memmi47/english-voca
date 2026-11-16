@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS, bunchLeft } from '../cards/js/deck.js';
 import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES, TRIAGE, triagePlan, triageScope, auditPick } from '../cards/js/map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds } from '../cards/js/world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds, startTile } from '../cards/js/world.js';
 
 // The demo set: 86 cards (80 with a Korean gloss, 6 function words), two continents, three worlds (tools/make_cards_demo.py).
 const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const DOC = JSON.parse(fs.readFileSync('cards/data/demo/worlds.json', 'utf8'));
@@ -488,7 +488,7 @@ const D30 = addDays(D1, 30);
 test('T1: passed words are recorded as silver with no date in the tile\'s bunch; the bunch is due in 30 days; the gauge does not rise; the tile clears', () => {
   const s = newState('son'); const t = triageRun(s, 'A1'); const words = W1._nodes.A1.words; const spot = t.node.scope.triage.spot;
   assert.equal(spot.length, 2); assert.deepEqual(t.run.queue.map((q) => q.role), ['spot', 'spot']);
-  for (const id of words.filter((x) => !spot.includes(x))) assert.deepEqual(s.words[id], { firstDay: D1, lapses: 0, st: 'likely', lstep: 0, due: null, bunch: 'A1', lastDay: D1 });
+  for (const id of words.filter((x) => !spot.includes(x))) { const { at, ...r } = s.words[id]; assert.deepEqual(r, { firstDay: D1, lapses: 0, st: 'likely', lstep: 0, due: null, bunch: 'A1', lastDay: D1 }); assert.ok(Number.isFinite(at)); }   // `at`: time of the change (F9)
   assert.deepEqual(s.bunches.A1, { due: addDays(D1, 30), done: null }); assert.equal(gradeOf(s.words[words.find((x) => !spot.includes(x))]), 2);
   playT(t.run); const r = finishT(s, t);
   assert.ok(words.every((id) => s.words[id] && s.words[id].st === 'likely' && s.words[id].due === null && s.words[id].bunch === 'A1'));
@@ -607,4 +607,58 @@ test('T11: a word passed into a bunch that was already checked gets its own 7-da
   for (const id of C1.slice(0, 4)) e.words[id] = { st: 'likely', lstep: 0, due: null, bunch: 'C1', firstDay: '2026-10-01', lastDay: '2026-10-01', lapses: 0 };
   const pick = auditPick(e, D1, mulberry32(2)); assert.deepEqual([e.bunches.B1.done, e.bunches.B1.result], [D1, 'empty']); assert.equal(e.bunches.C1.done, null);
   assert.deepEqual([...new Set(pick.picks.map((p) => p.bunch))], ['C1']); assert.equal(pick.picks.length, 3);
+});
+
+// ---- fixes from the cross review C-005 (card T-011) ----
+oldTest('F7: a tile run left with only the last re-check to go keeps the tile open and the next tile locked, also after a reload; finishing a run of it clears it', () => {
+  const s = newState('son'); const node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)); startTile(s, node, D1);          // the screen marks the tile when the run starts
+  const run = new Run({ state: s, words: WORDS, today: D1, rng: () => 0.9, scope: node.scope, tag: node.tag });                 // 0.9: no "know" is checked
+  const miss = run.queue[9].id; assert.equal(run.queue.filter((q) => q.role === 'new').length, 10);
+  while (run.current.role === 'new') { const it = run.show(); run.judge(it.id !== miss); run.advance(); }                          // nine known, the tenth not: its re-check is left
+  assert.deepEqual([run.current.role, run.current.final, run.left], ['relearn', true, 1]);
+  const rec = run.finish('left'); const r = settle(s, node, run, rec, D1);
+  assert.deepEqual([r.cleared, Object.keys(s.words).length, Object.values(s.words).filter((w) => w.st === 'learn').length, s.map.worlds['d1-01'].open.A1], [false, 10, 1, D1]);
+  const looks = (st) => { const v = view(st); assert.deepEqual([status(v, 'A1'), status(v, 'A2'), v.unitsDone, reach(W1, st).open.has('A1'), reach(W1, st).reached.has('A1')], ['open', 'locked', 0, true, false]); assert.equal(nodeRun(IX, v, 'A2', st, WORDS, mulberry32(1)), null); };
+  looks(s); looks(JSON.parse(JSON.stringify(s)));                                                                                   // the same after a reload
+  const again = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)); assert.ok(again); startTile(s, again, D1);
+  const r2 = mkRun(s, again); assert.equal(r2.queue.length, 0, 'nothing left to show today: the run ends at once'); const rec2 = r2.finish(); const out = settle(s, again, r2, rec2, D1);
+  assert.deepEqual([out.cleared, status(view(s), 'A1'), status(view(s), 'A2'), view(s).unitsDone, s.map.worlds['d1-01'].open.A1], [true, 'cleared', 'open', 1, undefined]);
+  const old = newState('son'); for (const id of W1._nodes.A1.words) old.words[id] = { st: 'likely', lstep: 0, due: '2026-11-19', firstDay: D1, lastDay: D1, lapses: 0 };   // saved before the marks: no `open`
+  assert.deepEqual([status(view(old), 'A1'), status(view(old), 'A2')], ['cleared', 'open']);
+  const c = newState('son'); meetAll(c, W1); ensureMap(c).worlds['d1-01'] = { castle: D1, cleared: {}, stamps: {}, seen: D1, open: { B2: D1 } };    // the crown and the count wait for the unfinished tile
+  assert.deepEqual([crowned(W1, c), view(c).crown, view(c).unitsDone, view(c).units, status(view(c), 'B2')], [false, false, 5, 6, 'open']);
+});
+
+test('F6: everything finished and 3 words still to learn: the map offers "review 3" and it starts with those cards; no button with a monster or with nothing waiting; a full gauge blocks it', () => {
+  const T = '2026-11-16'; const s = newState('son'); const m = ensureMap(s);
+  for (const w of IX.worlds) { meetAll(s, w); m.worlds[w.id] = { castle: '2026-11-10', cleared: {}, stamps: {}, seen: '2026-11-01' }; } for (const c of IX.continents) m.conts[c.id] = { castle: '2026-11-10' };
+  const learn = WORDS.filter((w) => w.ko).slice(0, 3).map((w) => w.id); for (const id of learn) s.words[id] = { st: 'learn', due: '2026-11-15', firstDay: '2026-11-01', lastDay: '2026-11-14', lapses: 0 };
+  for (const w of IX.worlds) { const v = view(s, T, w); assert.deepEqual([v.monster.present, v.bat.full, v.review], [false, false, { present: true, count: 3 }], w.id);
+    assert.ok([...v.nodes, ...v.houses].every((n) => !nodeRun(IX, v, n.id, s, WORDS, mulberry32(1))), w.id + ': no other run starts'); }
+  assert.ok(IX.continents.every((c) => !finaleRun(IX, c, s, T, mulberry32(1))));
+  const v = view(s, T, W3); const node = nodeRun(IX, v, 'review', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.scope.noNew, node.scope.duePerRun], ['review', true, 14]);
+  const run = mkRun(s, node, T); assert.deepEqual(run.queue.map((q) => q.role + ':' + q.id).sort(), learn.map((id) => 'retry:' + id).sort());
+  play(run, () => true); const rec = run.finish(); const out = settle(s, node, run, rec, T);
+  assert.ok(out.stars > 0); assert.deepEqual([out.mult, out.item, out.monster], [1, null, false]); assert.ok(learn.every((id) => s.words[id].st === 'review'));
+  assert.equal(view(s, T, W3).review.present, false); assert.equal(nodeRun(IX, view(s, T, W3), 'review', s, WORDS, mulberry32(1)), null);   // scored today: nothing waiting
+  const mon = newState('son'); WORDS.slice(0, 8).forEach((w) => { mon.words[w.id] = { st: 'review', step: 1, due: T, firstDay: '2026-11-01', lastDay: '2026-11-05', lapses: 0 }; });
+  const mv = view(mon, T); assert.deepEqual([mv.monster.present, mv.review.present], [true, false]); assert.equal(nodeRun(IX, mv, 'review', mon, WORDS, mulberry32(1)), null);
+  const few = newState('son'); WORDS.slice(0, 2).forEach((w) => { few.words[w.id] = { st: 'review', step: 1, due: T, firstDay: '2026-11-01', lastDay: '2026-11-05', lapses: 0 }; }); assert.deepEqual(view(few, T).review, { present: true, count: 2 });
+  ensureMap(few).bat.fill = 99; const fv = view(few, T); assert.equal(fv.bat.full, true); assert.equal(nodeRun(IX, fv, 'review', few, WORDS, mulberry32(1)), null);
+});
+
+test('F8: a continent castle marked pending-config (or with cards / passRate null) is "준비 중": it never starts and never opens the next continent; with values or without a finale it works', () => {
+  const ixWith = (f) => { const doc = JSON.parse(JSON.stringify(DOC)); if (f === undefined) delete doc.continents[0].finale; else doc.continents[0].finale = f; return indexWorlds(doc); };
+  const crowns = (ix) => { const s = newState('son'); const m = ensureMap(s); for (const w of ix.continents[0].worlds) { meetAll(s, w); m.worlds[w.id] = { castle: D1, cleared: {}, stamps: {}, seen: D1 }; } return s; };
+  const pass = (ix, s, node) => settleWorld(ix, s, node, { reason: 'done', castleOk: 40, castleMiss: 0 }, D1);
+  for (const f of [{ name: '큰 배 문', cards: null, passRate: null, status: 'pending-config' }, { cards: 40, passRate: 0.75, status: 'pending-config' }, { cards: null, passRate: 0.75 }, { cards: 40, passRate: null }]) {
+    const ix = ixWith(f); const s = crowns(ix); const c = ix.continents[0]; const k = JSON.stringify(f);
+    assert.deepEqual([atlasView(ix, s)[0].crowns, atlasView(ix, s)[0].finale.status], [2, 'pending'], k); assert.equal(finaleRun(ix, c, s, D1, mulberry32(1)), null, k);
+    const out = pass(ix, s, { kind: 'finale', cid: c.id, tag: 'finale:' + c.id, pass: 0.75 }); assert.deepEqual([out.finale.pass, out.nextContinent, worldOpen(ix, ix.byId['d2-01'], s)], [false, null, false], k);
+  }
+  for (const f of [{ cards: 10, passRate: 0.7, status: 'draft' }, undefined]) {
+    const ix = ixWith(f); const s = crowns(ix); const c = ix.continents[0]; assert.equal(atlasView(ix, s)[0].finale.status, 'open');
+    const node = finaleRun(ix, c, s, D1, mulberry32(1)); assert.ok(node); assert.equal(node.pass, f ? 0.7 : FINALE.pass);
+    const out = pass(ix, s, node); assert.deepEqual([out.finale.pass, out.nextContinent.id, worldOpen(ix, ix.byId['d2-01'], s)], [true, 'd2', true]);
+  }
 });

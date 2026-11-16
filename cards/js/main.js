@@ -2,9 +2,9 @@
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG } from './deck.js';
 import { Sound } from './sound.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope } from './map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, setLeftOutKinds } from './world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, setLeftOutKinds, startTile } from './world.js';
 import { Sync, mergeCards } from './sync.js';
-import { loadRecord, compact, totals, readBackup } from './store.js';
+import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -36,15 +36,28 @@ const KEY = (id) => `cards.v0.p.${id}`;
 function loadRec(id) { try { return loadRecord(localStorage, KEY(id), id); } catch { return { state: newState(id), damaged: false, newer: false, missing: true }; } }
 const load = (id) => loadRec(id).state;
 const NEWER = '이 화면의 프로그램이 오래됐어요. 화면을 새로 고치면 이어서 할 수 있어요. 그때까지 이 기기에서는 기록이 바뀌지 않아요.';
+// G.seen: the text this page last read from or wrote to the open child's key. Different text there now means another tab
+// of this browser saved since (sync writes of this page update G.seen in onMerged). A record of a newer program makes this
+// page read-only; any other record is merged into the one in memory, in place, because a running Run holds that object.
+const stored = () => localStorage.getItem(KEY(G.pid));
+const fold = (data) => { for (const k of Object.keys(G.st)) if (!(k in data)) delete G.st[k]; Object.assign(G.st, data); };
+function catchUp(text = stored(), aside = true) {
+  if (text == null || text === G.seen) return true;
+  let raw = null; try { raw = JSON.parse(text); } catch {}
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) { if (aside) { setAside(localStorage, KEY(G.pid), text); G.seen = null; } return true; }   // unreadable: kept aside, never overwritten
+  const m = migrate(raw, G.pid); G.seen = text;
+  if (m.newer) { G.readonly = true; banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); return false; }
+  fold(mergeCards(G.st, m.state)); return true;
+}
 function save() {
   if (G.readonly) { banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); return false; }
-  try { compact(G.st); localStorage.setItem(KEY(G.pid), JSON.stringify(G.st)); G.sync?.changed('p.' + G.pid); return true; } catch (e) { banner(`저장에 실패했어요: ${esc(e.message)}`); return false; }
+  try { if (!catchUp()) return false; compact(G.st, todayISO()); const text = JSON.stringify(G.st); localStorage.setItem(KEY(G.pid), text); G.seen = text; G.sync?.changed('p.' + G.pid); return true; } catch (e) { banner(`저장에 실패했어요: ${esc(e.message)}`); return false; }
 }
 function loadMeta() { try { return { names: { son: '아들', daughter: '딸' }, ...JSON.parse(localStorage.getItem('cards.v0.meta') || '{}') }; } catch { return { names: { son: '아들', daughter: '딸' } }; } }
 // Another device saved newer data: fold it into what this page holds in memory.
 function onMerged(nm, data) {
   if (nm === 'meta') { G.meta = loadMeta(); return; }
-  if (G.st && nm === 'p.' + G.pid && data) { for (const k of Object.keys(G.st)) if (!(k in data)) delete G.st[k]; Object.assign(G.st, data); }
+  if (G.st && nm === 'p.' + G.pid && data) { fold(data); try { G.seen = stored(); } catch {} }
 }
 function syncLine() {
   const st = G.syncStatus || { available: false, pending: [] };
@@ -120,6 +133,9 @@ async function boot() {
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
   document.addEventListener('change', (e) => { const f = e.target; if (!f.dataset?.restore || !f.files?.[0]) return; const id = f.dataset.restore; const rd = new FileReader(); rd.onload = () => restore(id, String(rd.result)); rd.onerror = () => { G.pmsg = '파일을 읽지 못했어요.'; parent(); }; rd.readAsText(f.files[0]); });
+  // Another tab saved this child's record: fold it in now (save() checks again before every write). Nothing is written here,
+  // so two open tabs never answer each other's saves.
+  window.addEventListener('storage', (e) => { if (!G.st || !G.pid || G.readonly || e.key !== KEY(G.pid) || e.newValue == null) return; try { catchUp(e.newValue, false); } catch {} });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { G.sync?.flush().catch(() => {}); return; } G.sync?.flush().catch(() => {}); if (G.view === 'card' && !G.busy) speak(true); });
   home();
 }
@@ -158,7 +174,7 @@ function housePos(w, h, taken) {
   best ||= { x: Math.min(940, a.x + 90), y: Math.min(520, a.y + 90) }; taken.push(best); return best;
 }
 function today(id, msg = '', wid = null) {
-  const rec = loadRec(id); G.view = 'today'; G.pid = id; G.st = rec.state; G.readonly = rec.newer || !!G.syncStatus?.stale; G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
+  const rec = loadRec(id); G.view = 'today'; G.pid = id; G.st = rec.state; try { G.seen = stored(); } catch { G.seen = null; } G.readonly = rec.newer || !!G.syncStatus?.stale; G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
   if (G.readonly) banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); else if (G.notice) { banner(`<span>${esc(G.notice)}</span><button data-act="hide">확인</button>`); G.notice = ''; }
   const st = G.st; const m = ensureMap(st);
   if (wid && G.ix.byId[wid] && worldOpen(G.ix, G.ix.byId[wid], st)) m.at = wid;
@@ -189,6 +205,7 @@ function today(id, msg = '', wid = null) {
   <p class="msg" id="msg">${esc(hint)}</p>
   <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
+    ${v.review.present ? dock('review', spr('envelope', 48), `복습 ${v.review.count}장`, v.bat.full ? 'blocked' : 'open') : ''}
     ${dock('bonus', `<svg class="spr" width="48" height="48" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`, '번개 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}</div>
   <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></button>`).join('')}
     <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '다음 판에 쓸 아이템을 골라요'}</span></div>
@@ -202,7 +219,7 @@ function nodeClick(id) {
   if (id === 'bat') return v.bat.full ? start('bat') : out('박쥐 게이지가 아직 안 찼어요');
   if (v.bat.full) return out(MSG.blocked);                  // a full gauge: the test comes first
   if (id === 'bonus') { if (v.bonus.status === 'open') return startLightning(); return out(v.bonus.status === 'used' ? MSG.used : MSG.bonusLocked); }
-  if (id === 'monster') return start(id);
+  if (id === 'monster' || id === 'review') return start(id);
   const n = v.nodes.find((x) => x.id === id) || v.houses.find((x) => x.id === id); if (!n) return;
   if (n.kind === 'minigame') { if (n.status === 'locked') return out(MSG.gameLocked); return n.playable ? startGame(n) : out(MSG.soon); }
   if (n.kind === 'castle' && n.status === 'locked') return out(MSG.castleLocked);
@@ -220,13 +237,13 @@ function atlas() {
   $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
   ${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
     <div class="wgrid">${c.worlds.map(wbtn).join('')}
-    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
+    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : c.finale.status === 'pending' ? '준비 중이에요' : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
   <p class="msg" id="msg"></p></div>`;
 }
 
 // ---- run ----
 async function start(nodeId) {
-  if (G.readonly) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);   // nothing can be saved: do not start
+  if (G.readonly || !catchUp()) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);   // nothing can be saved: do not start
   await G.sound.unlock();                                  // inside the tap
   const seed = Number(qs.get('seed')) || Math.floor(Math.random() * 1e9); const rng = mulberry32(seed + G.st.runs.length);
   let node;
@@ -254,7 +271,7 @@ async function triageGo() {
   return begin(triageScope(t.node, triagePlan(t.node.triage, [...t.marked], t.rng), todayISO()), t.rng);
 }
 function begin(node, rng) {
-  const items = takeBag(G.st); G.node = node; save();
+  const items = takeBag(G.st); G.node = node; startTile(G.st, node, todayISO()); if (!save() && G.readonly) return;   // the mark is saved before any word is
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
   G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study');
@@ -346,7 +363,7 @@ function endRun(reason) {
   G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from); const w = G.world; const pc = (x) => Math.round(x * 100);
   const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
   const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : '성 시험 결과',
-    finale: ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요' }[node.kind];
+    finale: ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요', review: `${n}판 끝!` }[node.kind];
   const lines = rw.stars > 0 ? [`<div class="gain">${spr('star', 32)} +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
   if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
   if (ww.key) lines.push(`<div class="gain" id="keygain">${spr('key', 32)} ${esc(w.key?.name || '열쇠')}를 얻었어요</div>`);
@@ -355,7 +372,7 @@ function endRun(reason) {
   if (ww.key && ww.nextWorld && w.story) lines.push(`<p class="story">${esc(w.story)}</p>`);
   if (ww.finale?.pass && ww.finale.outro) lines.push(`<p class="story">${esc(ww.finale.outro)}</p>`);
   if (ww.finale?.pass) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ro(ww.nextContinent.name))} 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
-  if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${pc(rw.bat.acc)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
+  if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${pc(rw.bat.acc)}%). ${rw.batFull ? '' : '박쥐 게이지가 0으로 돌아가요. '}${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
   if (batNow && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
   if (batNow && node.kind === 'bat') lines.push('<p class="mut">미뤄 둔 복습이 아직 많아요. 박쥐가 한 번 더 와요.</p>');
   const exam = ww.castle || ww.finale; if (exam && !exam.pass) lines.push(`<p class="mut">${exam.ok}/${exam.total}장 맞혔어요. ${pc(exam.need)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
@@ -373,7 +390,7 @@ function endRun(reason) {
 
 // ---- lightning round (bonus house): true / false pairs, 60 seconds, touches no word ----
 async function startLightning() {
-  if (G.readonly) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);
+  if (G.readonly || !catchUp()) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);
   await G.sound.unlock(); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 7);
   G.lt = new Lightning({ state: G.st, words: G.words, rng, seconds: LT_SECONDS }); if (!G.lt.ready) return today(G.pid, MSG.bonusLocked);
   G.view = 'lightning'; band(true); G.ltEnd = Date.now() + LT_SECONDS * 1000; G.sound.scene('play');
@@ -500,7 +517,7 @@ async function onClick(e) {
     case 'atlas': return atlas();
     case 'goworld': return today(G.pid, '', b.dataset.id);
     case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
-      $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}). 왕관은 그 세계의 모든 칸과 집, 성을 깨면 받아요.`; return; }
+      $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}). 왕관은 그 세계의 모든 칸과 집, 성을 깨면 받아요.`; return; }
     case 'node': return nodeClick(b.dataset.id);
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);

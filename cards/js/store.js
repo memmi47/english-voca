@@ -5,9 +5,10 @@
 //   1. Raise SCHEMA and add one step to STEPS that turns the previous format into the new one. Never drop word records.
 //   2. Add a file saved by the old program to tests/fixtures/saves/. The tests open every file there with the new code.
 //   3. The storage keys (cards.v0.p.<child>) never change: the "v0" in the key is part of the name, not a version.
-import { SCHEMA, newState } from './deck.js';
+import { SCHEMA, newState, addDays } from './deck.js';
 
 const RUNS_KEEP = 300, RUNS_MAX = 500;      // older run records are folded into totals so the record cannot outgrow the browser's storage
+const FOLD_DAYS = 30;                       // runs of the last 30 days are never folded: another device may still bring runs of those days to merge
 const SUMS = ['cards', 'wall', 'claims', 'verifies', 'verifyOk', 'reviews', 'reviewOk', 'fresh', 'known', 'unknown', 'learned', 'lapses', 'bosses', 'stars', 'spots', 'spotOk', 'bunchOk', 'bunchDone'];
 
 // One step per format change: STEPS[n] upgrades a record of version n to n + 1.
@@ -31,12 +32,16 @@ export function migrate(raw, id = null) {
 }
 
 // Totals of the run records that were folded away. `until` = endedAt of the newest folded run.
-export function compact(state) {
-  if ((state.runs || []).length <= RUNS_MAX) return false;
-  const runs = state.runs.slice().sort((a, b) => String(a.endedAt).localeCompare(String(b.endedAt))); const old = runs.slice(0, runs.length - RUNS_KEEP);
+// A merge drops the other side's runs up to `until` (sync.mergeCards), so only runs older than FOLD_DAYS before `today` are
+// folded, oldest first, even when that leaves more than RUNS_MAX. Without `today` nothing is folded.
+export function compact(state, today) {
+  if ((state.runs || []).length <= RUNS_MAX || !today) return false;
+  const runs = state.runs.slice().sort((a, b) => String(a.endedAt).localeCompare(String(b.endedAt))); const edge = addDays(today, -FOLD_DAYS);
+  let n = 0; while (n < runs.length - RUNS_KEEP && String(runs[n].day) < edge) n++;
+  if (!n) return false; const old = runs.slice(0, n);
   const past = (state.past ||= { n: 0, until: '', days: 0 }); const days = new Set(old.map((r) => r.day));
   for (const r of old) { past.n++; for (const k of SUMS) past[k] = (past[k] || 0) + (r[k] || 0); if (String(r.endedAt) > past.until) past.until = String(r.endedAt); }
-  past.days += days.size; state.runs = runs.slice(-RUNS_KEEP); return true;
+  past.days += days.size; state.runs = runs.slice(n); return true;
 }
 // Sum over every run ever played: the folded totals plus the records still kept.
 export function totals(state) {
@@ -45,21 +50,23 @@ export function totals(state) {
   return t;
 }
 
-// Reads a child's record. A record that cannot be read is never overwritten silently: its text is kept under a
-// "damaged" key (the three newest are kept) and the caller is told.
+// Keeps text that cannot be read as a record under a "damaged" key (the three newest are kept) and frees the main key.
+// Used by loadRecord and by the sync (sync.js), which reads the same keys before the page does. -> false when storage refused.
+export function setAside(storage, key, text) {
+  try {
+    storage.setItem(`${key}.damaged.${Date.now()}`, text);
+    const olds = []; for (let i = 0; i < storage.length; i++) { const k = storage.key(i); if (k && k.startsWith(key + '.damaged.')) olds.push(k); }
+    for (const k of olds.sort().slice(0, -3)) storage.removeItem(k);
+    storage.removeItem(key);                             // the copy is safe: the main key is free for the server's record or a new one
+    return true;
+  } catch { return false; }                              // storage full: the damaged text stays under the main key until something valid replaces it
+}
+// Reads a child's record. A record that cannot be read is never overwritten silently: it is set aside (setAside) and the caller is told.
 export function loadRecord(storage, key, id) {
   let text = null; try { text = storage.getItem(key); } catch { return { state: newState(id), damaged: false, newer: false, missing: true }; }
   if (text == null || text === '') return { state: newState(id), damaged: false, newer: false, missing: true };
   try { const m = migrate(JSON.parse(text), id); if (m.from === null) throw new Error('not a record'); return { state: m.state, damaged: false, newer: m.newer, missing: false, from: m.from }; }
-  catch {
-    try {
-      storage.setItem(`${key}.damaged.${Date.now()}`, text);
-      const olds = []; for (let i = 0; i < storage.length; i++) { const k = storage.key(i); if (k && k.startsWith(key + '.damaged.')) olds.push(k); }
-      for (const k of olds.sort().slice(0, -3)) storage.removeItem(k);
-      storage.removeItem(key);                           // the copy is safe: the main key is free for the server's record or a new one
-    } catch { /* storage full: the damaged text stays under the main key until something valid replaces it */ }
-    return { state: newState(id), damaged: true, newer: false, missing: false };
-  }
+  catch { setAside(storage, key, text); return { state: newState(id), damaged: true, newer: false, missing: false }; }
 }
 // Checks a file a parent chose for "restore": it must be one child's record (or a server snapshot of it).
 export function readBackup(text, id) {
