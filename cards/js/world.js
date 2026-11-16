@@ -9,6 +9,11 @@ export const CASTLE = { cards: 12, pass: 0.8 };                       // default
 export const FINALE = { cards: 40, pass: 0.75 };                       // continent castle defaults (the data file may set its own)
 export const GAMES = new Set(['memory', 'mail']);                     // minigames this build can play; others show "준비 중"
 
+// Kinds of side-activity houses left out of the learning path (units, crown, word counts, castle pools). Emptied = the old behaviour.
+let LEFT_OUT = new Set(['sight']);
+export const setLeftOutKinds = (kinds) => { LEFT_OUT = new Set(kinds); };
+export const leftOutKinds = () => [...LEFT_OUT];
+const onPath = (h) => !LEFT_OUT.has(h.kind);
 // Index a world file once. Throws on a version this build does not understand.
 export function indexWorlds(doc) {
   if (!doc || doc.schemaVersion !== 3) throw new Error(`세계 파일 버전(${doc && doc.schemaVersion})을 읽을 수 없어요. 이 프로그램은 버전 3을 읽습니다.`);
@@ -17,17 +22,19 @@ export function indexWorlds(doc) {
     worlds.push(w); byId[w.id] = w; contOf[w.id] = c;
     w._nodes = Object.fromEntries(w.map.nodes.map((n) => [n.id, n])); w._adj = Object.fromEntries(w.map.nodes.map((n) => [n.id, []]));
     for (const e of w.map.edges) { if (!w._nodes[e.from] || !w._nodes[e.to]) throw new Error(`${w.id}: 선이 없는 칸을 가리켜요 (${e.from} - ${e.to})`); w._adj[e.from].push(e.to); w._adj[e.to].push(e.from); }
-    w._units = unitsOf(w); for (const u of w._units) for (const id of u.words) wordWorld[id] = w.id;
+    for (const u of unitsIn(w)) for (const id of u.words) wordWorld[id] = w.id;
   }
   return { doc, continents: doc.continents, worlds, byId, contOf, wordWorld };
 }
 // Everything in a world that holds words: map tiles and the tiles of its houses (sight words, phrases).
+// Cached per world and per setting, so flipping the setting is seen without re-indexing.
+export function unitsIn(w) { const k = [...LEFT_OUT].sort().join(); if (w._unitsKey !== k) { w._units = unitsOf(w); w._unitsKey = k; } return w._units; }
 function unitsOf(w) {
   const out = w.map.nodes.filter((n) => n.kind === 'tile').map((n) => ({ id: n.id, words: n.words, node: n.id, house: null }));
-  for (const h of w.sideActivities || []) for (const t of h.tiles) out.push({ id: t.id, words: t.words, node: null, house: h.id, kind: h.kind });
+  for (const h of (w.sideActivities || []).filter(onPath)) for (const t of h.tiles) out.push({ id: t.id, words: t.words, node: null, house: h.id, kind: h.kind });
   return out;
 }
-export const worldWords = (w) => w._units.flatMap((u) => u.words);
+export const worldWords = (w) => unitsIn(w).flatMap((u) => u.words);
 export const unitDone = (state, u) => u.words.every((id) => state.words[id]);
 const wstate = (state, wid) => { const m = ensureMap(state); return (m.worlds[wid] ||= { castle: null, cleared: {}, stamps: {}, seen: null }); };
 const cstate = (state, cid) => { const m = ensureMap(state); return (m.conts[cid] ||= { castle: null }); };
@@ -49,7 +56,7 @@ export function reach(w, state) {
   return { reached, open, castle, games };
 }
 
-export function crowned(w, state) { return !!wstate(state, w.id).castle && w._units.every((u) => unitDone(state, u)); }
+export function crowned(w, state) { return !!wstate(state, w.id).castle && unitsIn(w).every((u) => unitDone(state, u)); }
 export function finaleOf(c) { return { cards: c.finale?.cards ?? FINALE.cards, pass: c.finale?.passRate ?? FINALE.pass }; }
 // A world opens when the one before it has its castle passed; the first world of a continent needs the continent castle before it.
 export function worldOpen(ix, w, state) {
@@ -87,13 +94,13 @@ export function worldView(ix, w, state, today) {
     if (n.kind === 'minigame') return { ...n, status: !r.games.has(n.id) ? 'locked' : ws.stamps[n.id] ? 'cleared' : 'open', playable: GAMES.has(n.gameType) };
     return { ...n, status: 'free' };
   });
-  const houses = (w.sideActivities || []).map((h) => {
+  const houses = (w.sideActivities || []).filter(onPath).map((h) => {
     const tiles = h.tiles.map((t) => ({ ...t, cleared: t.words.every((id) => state.words[id]) })); const done = tiles.filter((t) => t.cleared).length;
     const anchorOk = r.reached.has(h.anchorNodeId) || !w._nodes[h.anchorNodeId];
     return { id: h.id, name: h.name, icon: h.icon, kind: h.kind, anchorNodeId: h.anchorNodeId, tiles, done, total: tiles.length, bonus: castleDone && done < tiles.length,
       status: done === tiles.length ? 'cleared' : gate(anchorOk ? 'open' : 'locked') };
   });
-  const units = w._units.length, unitsDone = w._units.filter((u) => unitDone(state, u)).length;
+  const units = unitsIn(w).length, unitsDone = unitsIn(w).filter((u) => unitDone(state, u)).length;
   const monster = due >= MONSTER_AT && (m.monsterDay !== today || (m.monsterN || 1) < RULES.monsterPerDay);
   const ripe = ripeCount(state); const c = ix.contOf[w.id];
   return { today, world: w, nodes, houses, castle: nodes.find((n) => n.kind === 'castle'), crown: castleDone && unitsDone === units, units, unitsDone,
@@ -137,7 +144,7 @@ export function stampGame(state, w, nodeId, today) { const ws = wstate(state, w.
 export function settleWorld(ix, state, node, rec, today) {
   const m = ensureMap(state); const out = { cleared: false, key: false, crown: false, castle: null, finale: null, nextWorld: null, nextContinent: null };
   if (node.kind === 'tile') {
-    const w = ix.byId[node.wid]; const u = w._units.find((x) => x.id === node.unit); const ws = wstate(state, w.id);
+    const w = ix.byId[node.wid]; const u = unitsIn(w).find((x) => x.id === node.unit); const ws = wstate(state, w.id);
     if (u && unitDone(state, u) && !ws.cleared[u.id]) { ws.cleared[u.id] = today; out.cleared = true; }
     out.crown = out.cleared && crowned(w, state);
   } else if (node.kind === 'castle') {

@@ -60,8 +60,10 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const first = await Promise.all(['A1', 'B1', 'C1'].map((id) => nodeStatus(page, id))); const second = await Promise.all(['A2', 'B2', 'C2', 'castle', 'bonus'].map((id) => nodeStatus(page, id)));
   ok('map: first tile of every road is open, the rest are locked', first.every((c) => /\bopen\b/.test(c)) && second.every((c) => /\blocked\b/.test(c)), first.join('|') + ' / ' + second.join('|'));
   await page.click('[data-act=node][data-id=A2]'); ok('a locked tile explains itself and does not start', /앞 칸을 먼저/.test(await page.textContent('#msg')) && !(await page.$('.run')));
-  ok('map fits one screen width; landmarks are labelled', await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1) && (await page.$$('.node .lbl')).length >= 5);
+  ok('map fits one screen width; landmarks are labelled', await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1) && (await page.$$('.node .lbl')).length >= 4);   // was 5 with the house label; the house is off the path now
   ok('pixel font and a clear word font are both in use', await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px Galmuri11') && /Galmuri11/.test(getComputedStyle(document.body).fontFamily) && !/Galmuri11/.test(getComputedStyle(document.documentElement).getPropertyValue('--word')); }));
+
+  ok('the hear-and-pick house is not on the default map', !(await page.$('[data-id=H1]')));
 
   // 2. first tile
   await startNode(page, 'A1'); const c0 = await cur(page); const w0 = WORDS.find((w) => w.id === c0.id);
@@ -157,7 +159,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await play(w1); await w1.waitForSelector('.tiles');
   ok('passing the castle gives a key', /성을 깼어요/.test(await w1.textContent('h1')) && /열쇠/.test(await w1.textContent('.page')));
   await toMap(w1);
-  ok('castle shows cleared, key counted, what is left over is bonus x2', /\bcleared\b/.test(await nodeStatus(w1, 'castle')) && (await w1.textContent('.maphud .chip:nth-of-type(2)')).trim() === '1' && (await w1.$$('.node .x2')).length === 3);   // the two tiles left over and the house
+  ok('castle shows cleared, key counted, what is left over is bonus x2', /\bcleared\b/.test(await nodeStatus(w1, 'castle')) && (await w1.textContent('.maphud .chip:nth-of-type(2)')).trim() === '1' && (await w1.$$('.node .x2')).length === 2);   // the house is off the path now: only the two left-over tiles   // the two tiles left over and the house
   const starsBefore = await w1.evaluate(() => window.__cards.st.map.stars);
   await startNode(w1, 'C1'); await play(w1); const gain = Number((/\+(\d+)/.exec(await w1.textContent('.gain')) || [])[1]);
   ok('bonus road pays double stars', /\(×2\)/.test(await w1.textContent('.gain')) && gain > 0 && (await state(w1, 'daughter')).map.stars === starsBefore + gain, 'gain=' + gain);
@@ -246,7 +248,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
 
   // 10c. worlds: house with hear-and-pick cards, playhouses, key and crown, next world, world list, continent castle, next continent
   const xctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
-  const x = await open(xctx, 'today=2026-12-20&seed=21&sound=off&fast=1'); await x.click('[data-act=pick][data-id=son]'); await x.waitForSelector('.world');
+  const x = await open(xctx, 'today=2026-12-20&seed=21&sound=off&fast=1&houses=sight'); await x.click('[data-act=pick][data-id=son]'); await x.waitForSelector('.world');
   const worldId = () => x.$eval('#world', (e) => e.dataset.world); const msg = () => x.textContent('#msg');
   ok('the first visit shows the world\'s opening line and its name', (await worldId()) === 'd1-01' && /첫 편지/.test(await msg()) && /새싹 들판 · 단어 마을/.test(await x.textContent('#wtitle')));
   await x.click('[data-act=node][data-id=G1]'); const m1x = await msg(); await x.click('[data-act=node][data-id=H1]');
@@ -351,6 +353,19 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await u.click('[data-act=node][data-id=A1]'); await sleep(150);
   ok('a record from a newer program is shown read-only: a reload is asked for, no run starts, nothing is written', /오래됐어요/.test(await u.textContent('#banner')) && !(await u.$('.run')) && (await u.evaluate(() => localStorage.getItem('cards.v0.p.son'))) === future);
   await u.close(); await uctx.close();
+
+  // 10g. a record that already holds function-word entries keeps them although the house is off the path
+  const V1W = fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', 'v1-worlds.json'), 'utf8'); const v1w = JSON.parse(V1W);
+  const gctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const g = await open(gctx, 'today=2026-12-22&seed=4&sound=off&fast=1');
+  await g.evaluate((t) => localStorage.setItem('cards.v0.p.daughter', t), V1W); await g.reload(); await g.waitForSelector('.profiles');
+  await g.click('[data-act=pick][data-id=daughter]'); await g.waitForSelector('.world');
+  const sightIdsF = WORDS.filter((w) => w.track === 'sight').map((w) => w.id); const heldF = Object.keys(v1w.words).filter((id) => sightIdsF.includes(id));
+  ok('the fixture really holds function-word entries and the map shows no house', heldF.length === 6 && !(await g.$('[data-id=H1]')), String(heldF.length));
+  const openF = await g.$eval('.world .node.open', (b) => b.dataset.id); await startNode(g, openF); await play(g); await g.waitForSelector('.tiles');
+  const afterF = (await state(g, 'daughter')).words;
+  ok('after opening the map and playing one tile, every earlier word record is still there', Object.keys(v1w.words).every((id) => afterF[id]) && heldF.every((id) => afterF[id]));
+  await g.close(); await gctx.close();
 
   // 11. record sharing: progress made on one device ("Mac mini") shows on another ("iPad"), survives a wiped browser,
   //     survives the server being unreachable, and two devices that played apart end up with both
