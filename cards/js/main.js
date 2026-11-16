@@ -2,7 +2,7 @@
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG } from './deck.js';
 import { Sound } from './sound.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN } from './map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen } from './world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, setLeftOutKinds } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup } from './store.js';
 
@@ -105,6 +105,7 @@ async function boot() {
     const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // a world file may name its own card list
     // Card fields this game reads: track ("sight" = hear-and-pick card) and groups (confusion groups, never offered as wrong answers).
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
+    if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
     G.ix = indexWorlds(doc); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
     G.dataNote = G.standIn ? '세계 파일: 시험용(단어 배정 임시)' : doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
@@ -425,7 +426,7 @@ function parent() {
   G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
     const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk };
-    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${G.words.length} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv})</p>
+    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv})</p>
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
     ${R.slice(-60).map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${esc(r.tag || '-')}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
       <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>${R.length > 60 ? `<p class="small mut">최근 60판만 표시. 전체는 내보내기 파일에 있습니다.</p>` : ''}

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS } from '../cards/js/deck.js';
 import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES } from '../cards/js/map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE } from '../cards/js/world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds } from '../cards/js/world.js';
 
 // The demo set: 86 cards (80 with a Korean gloss, 6 function words), two continents, three worlds (tools/make_cards_demo.py).
 const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const DOC = JSON.parse(fs.readFileSync('cards/data/demo/worlds.json', 'utf8'));
@@ -189,6 +189,8 @@ test('K16: a function word is a hear-and-pick card: its choices are spellings, i
 
 // ---- worlds (schemaVersion 3) ----
 const view = (state, today = D1, w = W1) => worldView(IX, w, state, today);
+// Runs a test with the hear-and-pick houses back on the learning path (the setting emptied), then restores the default.
+const legacyTest = (name, fn) => test(name, () => { setLeftOutKinds([]); indexWorlds(DOC); try { fn(); } finally { setLeftOutKinds(['sight']); indexWorlds(DOC); } });
 const status = (v, id) => (v.nodes.find((n) => n.id === id) || v.houses.find((h) => h.id === id)).status;
 const mkRun = (state, node, today = D1, seed = 3) => new Run({ state, words: WORDS, today, rng: mulberry32(seed), scope: node.scope, items: node.items || {}, tag: node.tag });
 const settle = (state, node, run, rec, today) => ({ ...settleRun(state, node, run, rec, today, mulberry32(2)), ...settleWorld(IX, state, node, rec, today) });
@@ -205,14 +207,14 @@ function exam(state, node, today, knows = () => true, reason = 'done') {
 const batTest = (state, today, knows, reason) => { const node = nodeRun(IX, view(state, today), 'bat', state, WORDS, mulberry32(7)); assert.ok(node, 'bat test available'); return exam(state, node, today, knows, reason); };
 const meetAll = (state, w, day = '2026-11-01') => { for (const id of worldWords(w)) state.words[id] ||= { st: 'done', due: null, firstDay: day, lastDay: day, lapses: 0 }; };
 
-test('W1: the world file is version 3; every card of the deck sits in exactly one tile or house; other versions are refused', () => {
+legacyTest('W1: the world file is version 3; every card of the deck sits in exactly one tile or house; other versions are refused', () => {
   assert.equal(DOC.schemaVersion, 3); const all = IX.worlds.flatMap(worldWords);
   assert.equal(all.length, WORDS.length); assert.equal(new Set(all).size, WORDS.length); assert.ok(all.every((id) => WORDS.some((w) => w.id === id)));
   assert.ok(IX.worlds.every((w) => w.map.nodes.filter((n) => n.kind === 'tile').every((n) => n.words.length >= 1 && n.words.length <= 10)));
   assert.throws(() => indexWorlds({ schemaVersion: 2, continents: [] }), /버전/); assert.throws(() => indexWorlds({ schemaVersion: 4, continents: [] }), /버전/);
 });
 
-test('W2: at the start the tiles next to the start are open, the rest locked; castle, playhouses and the house are locked', () => {
+legacyTest('W2: at the start the tiles next to the start are open, the rest locked; castle, playhouses and the house are locked', () => {
   const s = newState('son'); const v = view(s);
   assert.deepEqual(['A1', 'B1', 'C1', 'A2', 'B2', 'C2'].map((id) => status(v, id)), ['open', 'open', 'open', 'locked', 'locked', 'locked']);
   assert.deepEqual([v.castle.status, status(v, 'G1'), status(v, 'G2'), status(v, 'H1')], ['locked', 'locked', 'locked', 'locked']);
@@ -242,7 +244,7 @@ test('W5: the castle opens as soon as a path reaches it (free nodes are walked t
   const r = reach(W1, s); assert.ok(r.reached.has('plaza') && r.castle);
 });
 
-test('W6: castle: 12 check cards from this world\'s met words; 80% gives the key and opens the next world; leftovers pay double; no crown yet', () => {
+legacyTest('W6: castle: 12 check cards from this world\'s met words; 80% gives the key and opens the next world; leftovers pay double; no crown yet', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'A2');
   assert.equal(worldOpen(IX, W2, s), false);
   const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
@@ -264,7 +266,7 @@ test('W7: a failed castle card is not known: back to learning, due tomorrow; bel
   assert.equal(view(s).castle.status, 'open'); assert.equal(worldOpen(IX, W2, s), false);
 });
 
-test('W8: the crown needs every tile, the house and the castle; playhouse stamps never count', () => {
+legacyTest('W8: the crown needs every tile, the house and the castle; playhouse stamps never count', () => {
   const s = newState('son'); meetAll(s, W1); ensureMap(s).bat.fill = 0;
   let v = view(s); assert.equal(v.crown, false); assert.equal(v.castle.status, 'open'); assert.equal(v.unitsDone, v.units);
   const r = exam(s, nodeRun(IX, v, 'castle', s, WORDS, mulberry32(1)), D1); assert.deepEqual([r.out.key, r.out.crown], [true, true]);
@@ -273,7 +275,7 @@ test('W8: the crown needs every tile, the house and the castle; playhouse stamps
   exam(t, nodeRun(IX, view(t), 'castle', t, WORDS, mulberry32(1)), D1); assert.equal(crowned(W1, t), false);
 });
 
-test('W9: the house (function words) opens when its anchor tile is done; its run uses hear-and-pick cards; it is needed for the crown', () => {
+legacyTest('W9: the house (function words) opens when its anchor tile is done; its run uses hear-and-pick cards; it is needed for the crown', () => {
   const s = newState('son'); assert.equal(nodeRun(IX, view(s), 'H1', s, WORDS, mulberry32(1)), null);
   clear(s, 'A1'); const node = nodeRun(IX, view(s), 'H1', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.unit, node.scope.newIds.length], ['tile', 'H1-1', 6]);
   const run = mkRun(s, node); assert.ok(run.queue.filter((q) => q.role === 'new').every((q) => q.form === 'check'));
@@ -346,7 +348,7 @@ test('M8: items: shield absorbs one wrong check and comes back if unused; flame 
   assert.equal(r2.boss.hp, CFG.bossHp - 2); assert.equal(chooseBag(s2, 'shield'), null);
 });
 
-test('M9: nothing on the map changes a word\'s schedule; the lightning round touches no word and never asks a function word', () => {
+legacyTest('M9: nothing on the map changes a word\'s schedule; the lightning round touches no word and never asks a function word', () => {
   const s = newState('son'); for (const id of ['A1', 'B1', 'H1']) clear(s, id);
   const before = JSON.stringify(s.words); const d = addDays(D1, 8);
   const lt = new Lightning({ state: s, words: WORDS, rng: mulberry32(4) }); assert.ok(lt.ready);
@@ -371,7 +373,7 @@ test('G1: the gauge gains 1 per new word and loses 1 per review answered, never 
   settleRun(s2, n2, r2, { ...r2.ended, reviews: 5, fresh: 0 }, D1, mulberry32(2)); assert.equal(s2.map.bat.fill, 0);
 });
 
-test('G2: a full gauge stops everything but the bat test; with nothing to ask it is not "full"', () => {
+legacyTest('G2: a full gauge stops everything but the bat test; with nothing to ask it is not "full"', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'A2'); clear(s, 'B1'); assert.equal(view(s).bat.full, false);
   clear(s, 'B2'); const v = view(s); assert.deepEqual([v.bat.fill, v.bat.cap, v.bat.full, v.bat.byDebt], [40, 40, true, false]);
   assert.deepEqual([status(v, 'C1'), v.castle.status, status(v, 'H1'), status(v, 'C2'), status(v, 'G1')], ['blocked', 'blocked', 'blocked', 'blocked', 'open']);   // play is not blocked
