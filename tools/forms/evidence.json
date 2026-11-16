@@ -1,0 +1,706 @@
+{
+  "checkedOn": "2026-11-16",
+  "method": "Public educational full pages read with web tool; exact pairs only. Eight mandatory noun plurals (including three unresolved variant choices) additionally verified by parent from full Collins dictionary pages. Cambridge HTTP403 snippets not verified.",
+  "irregularURL": "https://learnenglish.britishcouncil.org/free-resources/grammar/english-grammar-reference/irregular-verbs",
+  "irregularTriples": [
+    {
+      "baseForm": "be",
+      "past": "was,were",
+      "pp": "been"
+    },
+    {
+      "baseForm": "begin",
+      "past": "began",
+      "pp": "begun"
+    },
+    {
+      "baseForm": "break",
+      "past": "broke",
+      "pp": "broken"
+    },
+    {
+      "baseForm": "bring",
+      "past": "brought",
+      "pp": "brought"
+    },
+    {
+      "baseForm": "buy",
+      "past": "bought",
+      "pp": "bought"
+    },
+    {
+      "baseForm": "build",
+      "past": "built",
+      "pp": "built"
+    },
+    {
+      "baseForm": "choose",
+      "past": "chose",
+      "pp": "chosen"
+    },
+    {
+      "baseForm": "come",
+      "past": "came",
+      "pp": "come"
+    },
+    {
+      "baseForm": "cost",
+      "past": "cost",
+      "pp": "cost"
+    },
+    {
+      "baseForm": "cut",
+      "past": "cut",
+      "pp": "cut"
+    },
+    {
+      "baseForm": "do",
+      "past": "did",
+      "pp": "done"
+    },
+    {
+      "baseForm": "draw",
+      "past": "drew",
+      "pp": "drawn"
+    },
+    {
+      "baseForm": "drive",
+      "past": "drove",
+      "pp": "driven"
+    },
+    {
+      "baseForm": "eat",
+      "past": "ate",
+      "pp": "eaten"
+    },
+    {
+      "baseForm": "feel",
+      "past": "felt",
+      "pp": "felt"
+    },
+    {
+      "baseForm": "find",
+      "past": "found",
+      "pp": "found"
+    },
+    {
+      "baseForm": "get",
+      "past": "got",
+      "pp": "got"
+    },
+    {
+      "baseForm": "give",
+      "past": "gave",
+      "pp": "given"
+    },
+    {
+      "baseForm": "go",
+      "past": "went",
+      "pp": "gone"
+    },
+    {
+      "baseForm": "have",
+      "past": "had",
+      "pp": "had"
+    },
+    {
+      "baseForm": "hear",
+      "past": "heard",
+      "pp": "heard"
+    },
+    {
+      "baseForm": "hold",
+      "past": "held",
+      "pp": "held"
+    },
+    {
+      "baseForm": "keep",
+      "past": "kept",
+      "pp": "kept"
+    },
+    {
+      "baseForm": "know",
+      "past": "knew",
+      "pp": "known"
+    },
+    {
+      "baseForm": "leave",
+      "past": "left",
+      "pp": "left"
+    },
+    {
+      "baseForm": "lead",
+      "past": "led",
+      "pp": "led"
+    },
+    {
+      "baseForm": "let",
+      "past": "let",
+      "pp": "let"
+    },
+    {
+      "baseForm": "lie",
+      "past": "lay",
+      "pp": "lain"
+    },
+    {
+      "baseForm": "lose",
+      "past": "lost",
+      "pp": "lost"
+    },
+    {
+      "baseForm": "make",
+      "past": "made",
+      "pp": "made"
+    },
+    {
+      "baseForm": "mean",
+      "past": "meant",
+      "pp": "meant"
+    },
+    {
+      "baseForm": "meet",
+      "past": "met",
+      "pp": "met"
+    },
+    {
+      "baseForm": "pay",
+      "past": "paid",
+      "pp": "paid"
+    },
+    {
+      "baseForm": "put",
+      "past": "put",
+      "pp": "put"
+    },
+    {
+      "baseForm": "run",
+      "past": "ran",
+      "pp": "run"
+    },
+    {
+      "baseForm": "say",
+      "past": "said",
+      "pp": "said"
+    },
+    {
+      "baseForm": "see",
+      "past": "saw",
+      "pp": "seen"
+    },
+    {
+      "baseForm": "sell",
+      "past": "sold",
+      "pp": "sold"
+    },
+    {
+      "baseForm": "send",
+      "past": "sent",
+      "pp": "sent"
+    },
+    {
+      "baseForm": "set",
+      "past": "set",
+      "pp": "set"
+    },
+    {
+      "baseForm": "sit",
+      "past": "sat",
+      "pp": "sat"
+    },
+    {
+      "baseForm": "speak",
+      "past": "spoke",
+      "pp": "spoken"
+    },
+    {
+      "baseForm": "spend",
+      "past": "spent",
+      "pp": "spent"
+    },
+    {
+      "baseForm": "stand",
+      "past": "stood",
+      "pp": "stood"
+    },
+    {
+      "baseForm": "take",
+      "past": "took",
+      "pp": "taken"
+    },
+    {
+      "baseForm": "teach",
+      "past": "taught",
+      "pp": "taught"
+    },
+    {
+      "baseForm": "tell",
+      "past": "told",
+      "pp": "told"
+    },
+    {
+      "baseForm": "think",
+      "past": "thought",
+      "pp": "thought"
+    },
+    {
+      "baseForm": "understand",
+      "past": "understood",
+      "pp": "understood"
+    },
+    {
+      "baseForm": "wear",
+      "past": "wore",
+      "pp": "worn"
+    },
+    {
+      "baseForm": "win",
+      "past": "won",
+      "pp": "won"
+    },
+    {
+      "baseForm": "write",
+      "past": "wrote",
+      "pp": "written"
+    }
+  ],
+  "pluralURL": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+  "pluralPairs": {
+    "woman": "women",
+    "man": "men",
+    "child": "children",
+    "tooth": "teeth",
+    "foot": "feet",
+    "person": "people",
+    "leaf": "leaves",
+    "mouse": "mice",
+    "goose": "geese",
+    "half": "halves",
+    "knife": "knives",
+    "wife": "wives",
+    "life": "lives",
+    "elf": "elves",
+    "sheep": "sheep",
+    "fish": "fish",
+    "deer": "deer",
+    "cactus": "cacti"
+  },
+  "requiredPlurals": [
+    "child",
+    "man",
+    "woman",
+    "foot",
+    "tooth",
+    "mouse",
+    "goose",
+    "person",
+    "leaf",
+    "knife",
+    "wolf",
+    "life",
+    "wife",
+    "shelf",
+    "thief",
+    "half",
+    "sheep",
+    "fish",
+    "deer",
+    "ox",
+    "scarf",
+    "elf",
+    "calf",
+    "hoof",
+    "cactus"
+  ],
+  "regular": [
+    {
+      "baseForm": "make",
+      "form": "making",
+      "kind": "ing",
+      "rule": "e-drop",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "have",
+      "form": "having",
+      "kind": "ing",
+      "rule": "e-drop",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "take",
+      "form": "taking",
+      "kind": "ing",
+      "rule": "e-drop",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "live",
+      "form": "living",
+      "kind": "ing",
+      "rule": "e-drop",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "stop",
+      "form": "stopping",
+      "kind": "ing",
+      "rule": "double",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "sit",
+      "form": "sitting",
+      "kind": "ing",
+      "rule": "double",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "plan",
+      "form": "planning",
+      "kind": "ing",
+      "rule": "double",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "get",
+      "form": "getting",
+      "kind": "ing",
+      "rule": "double",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "swim",
+      "form": "swimming",
+      "kind": "ing",
+      "rule": "double",
+      "url": "https://www.grammar.cl/Notes/Spelling_ING.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "stop",
+      "form": "stopped",
+      "kind": "past",
+      "rule": "double",
+      "url": "https://learnenglishteens.britishcouncil.org/sites/teens/files/gs_past_simple_-_regular_verbs.pdf",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "plan",
+      "form": "planned",
+      "kind": "past",
+      "rule": "double",
+      "url": "https://learnenglishteens.britishcouncil.org/sites/teens/files/gs_past_simple_-_regular_verbs.pdf",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "try",
+      "form": "tried",
+      "kind": "past",
+      "rule": "y-ied",
+      "url": "https://learnenglishteens.britishcouncil.org/sites/teens/files/gs_past_simple_-_regular_verbs.pdf",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "carry",
+      "form": "carried",
+      "kind": "past",
+      "rule": "y-ied",
+      "url": "https://learnenglishteens.britishcouncil.org/sites/teens/files/gs_past_simple_-_regular_verbs.pdf",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "go",
+      "form": "goes",
+      "kind": "s3",
+      "rule": "es",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "catch",
+      "form": "catches",
+      "kind": "s3",
+      "rule": "es",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "wash",
+      "form": "washes",
+      "kind": "s3",
+      "rule": "es",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "kiss",
+      "form": "kisses",
+      "kind": "s3",
+      "rule": "es",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "fix",
+      "form": "fixes",
+      "kind": "s3",
+      "rule": "es",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "buzz",
+      "form": "buzzes",
+      "kind": "s3",
+      "rule": "es",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "marry",
+      "form": "marries",
+      "kind": "s3",
+      "rule": "y-ies",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "study",
+      "form": "studies",
+      "kind": "s3",
+      "rule": "y-ies",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "carry",
+      "form": "carries",
+      "kind": "s3",
+      "rule": "y-ies",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "worry",
+      "form": "worries",
+      "kind": "s3",
+      "rule": "y-ies",
+      "url": "https://www.grammar.cl/Present/Simple.htm",
+      "posMeaningChecked": true,
+      "countableChecked": false,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "bus",
+      "form": "buses",
+      "kind": "plural",
+      "rule": "es",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "wish",
+      "form": "wishes",
+      "kind": "plural",
+      "rule": "es",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "pitch",
+      "form": "pitches",
+      "kind": "plural",
+      "rule": "es",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "box",
+      "form": "boxes",
+      "kind": "plural",
+      "rule": "es",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "penny",
+      "form": "pennies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "spy",
+      "form": "spies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "baby",
+      "form": "babies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "city",
+      "form": "cities",
+      "kind": "plural",
+      "rule": "y-ies",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    },
+    {
+      "baseForm": "daisy",
+      "form": "daisies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "url": "https://www.ef.com/wwen/english-resources/english-grammar/singular-and-plural-nouns/",
+      "posMeaningChecked": true,
+      "countableChecked": true,
+      "note": "Explicit inflection example; catalogue POS/meaning checked separately by generator."
+    }
+  ],
+  "unresolvedPlurals": {
+    "wolf": "wolves",
+    "shelf": "shelves",
+    "thief": "thieves",
+    "ox": "oxen",
+    "scarf": "scarves",
+    "calf": "calves",
+    "hoof": "hooves"
+  },
+  "variantUnresolved": [
+    "scarf",
+    "hoof",
+    "cactus"
+  ],
+  "limitations": "scarf/hoof/cactus have alternate plurals in full Collins pages; excluded under variant policy. Cambridge pages unavailable (403) and snippets never counted as verified. Eight additional mandatory plurals (three excluded variants) verified from full Collins pages by parent reviewer.",
+  "pluralExtraEvidence": {
+    "wolf": {
+      "form": "wolves",
+      "url": "https://www.collinsdictionary.com/dictionary/english/wolf",
+      "note": "Parent Astra read full public dictionary page 2026-11-16: explicit noun plural and countability; catalogue meaning checked."
+    },
+    "shelf": {
+      "form": "shelves",
+      "url": "https://www.collinsdictionary.com/dictionary/english/shelf",
+      "note": "Parent Astra read full public dictionary page 2026-11-16: explicit noun plural and countability; catalogue meaning checked."
+    },
+    "thief": {
+      "form": "thieves",
+      "url": "https://www.collinsdictionary.com/dictionary/english/thief",
+      "note": "Parent Astra read full public dictionary page 2026-11-16: explicit noun plural and countability; catalogue meaning checked."
+    },
+    "ox": {
+      "form": "oxen",
+      "url": "https://www.collinsdictionary.com/dictionary/english/ox",
+      "note": "Parent Astra read full public dictionary page 2026-11-16: explicit noun plural and countability; catalogue meaning checked."
+    },
+    "calf": {
+      "form": "calves",
+      "url": "https://www.collinsdictionary.com/dictionary/english/calf",
+      "note": "Parent Astra read full public dictionary page 2026-11-16: explicit noun plural and countability; catalogue meaning checked."
+    },
+    "scarf": {
+      "form": "scarves",
+      "url": "https://www.collinsdictionary.com/dictionary/english/scarf",
+      "alternatives": [
+        "scarves",
+        "scarfs"
+      ],
+      "note": "Parent Astra read full public dictionary page 2026-11-16. Both variants attested; excluded pending selection policy, not unverified spelling."
+    },
+    "hoof": {
+      "form": "hooves",
+      "url": "https://www.collinsdictionary.com/dictionary/english/hoof",
+      "alternatives": [
+        "hooves",
+        "hoofs"
+      ],
+      "note": "Parent Astra read full public dictionary page 2026-11-16. Both variants attested; excluded pending selection policy, not unverified spelling."
+    },
+    "cactus": {
+      "form": "cacti",
+      "url": "https://www.collinsdictionary.com/dictionary/english/cactus",
+      "alternatives": [
+        "cacti",
+        "cactuses"
+      ],
+      "note": "Parent Astra read full public dictionary page 2026-11-16. Both variants attested; excluded pending selection policy, not unverified spelling."
+    }
+  }
+}
