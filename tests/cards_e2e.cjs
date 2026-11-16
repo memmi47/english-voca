@@ -8,9 +8,11 @@ const server = spawn('python3', [path.join(__dirname, '..', 'tools', 'serve_card
 const results = []; const errs = [];
 const ok = (name, cond, extra = '') => { results.push([cond ? 'PASS' : 'FAIL', name, extra]); console.log(cond ? 'PASS' : 'FAIL', name, extra); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const DATA = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cards', 'data', 'words.json'), 'utf8'));
-const WORDS = DATA.words; const WORLD = DATA.world;
-const TILE = (id) => WORLD.roads.flatMap((r) => r.tiles).find((t) => t.id === id).words;
+// The demo set (?set=demo): 86 cards, two continents, three worlds. Built by tools/make_cards_demo.py.
+const DEMO = path.join(__dirname, '..', 'cards', 'data', 'demo');
+const WORDS = JSON.parse(fs.readFileSync(path.join(DEMO, 'catalog.json'), 'utf8')).words; const DOC = JSON.parse(fs.readFileSync(path.join(DEMO, 'worlds.json'), 'utf8'));
+const WORLDS = DOC.continents.flatMap((c) => c.worlds); const NODES = WORLDS.flatMap((w) => w.map.nodes.concat(w.sideActivities.flatMap((h) => h.tiles)));
+const TILE = (id) => NODES.find((t) => t.id === id).words;
 const KNOWN = new Set(WORDS.filter((w, i) => (i * 5) % 7 < 3).map((w) => w.id));   // a mix in every tile     // what this pretend child really knows
 const READY = '.act.yes:not([disabled]), .opt:not([disabled]), .tiles';
 
@@ -20,13 +22,13 @@ async function open(ctx, q, sync = false) {
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
-  await page.goto(BASE + '?' + q); await page.waitForSelector('.profiles'); return page;
+  await page.goto(BASE + '?set=demo&' + q); await page.waitForSelector('.profiles'); return page;
 }
 const state = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('cards.v0.p.' + i)), id);
 const cur = (page) => page.evaluate(() => { const r = window.__cards.run; const it = r && r.current; return it ? { id: it.id, form: it.form, role: it.role, verifying: !!it.verifying, ans: it.options ? it.options.findIndex((o) => o.id === it.id) : -1 } : null; });
 const nodeStatus = (page, id) => page.$eval(`[data-act=node][data-id=${id}]`, (b) => b.className.replace('node', '').trim());
 // A node is pressed on its picture, like a finger would.
-async function startNode(page, id) { await page.click(`[data-act=node][data-id=${id}] .lbl`); await page.waitForSelector(READY, { timeout: 8000 }); }
+async function startNode(page, id) { await page.click(`[data-act=node][data-id=${id}]`); await page.waitForSelector(READY, { timeout: 8000 }); }
 async function answer(page, sel) {
   const i0 = await page.evaluate(() => window.__cards.run.i);
   await page.click(sel);
@@ -57,8 +59,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await page.click('[data-act=pick][data-id=son]'); await page.waitForSelector('.world');
   const first = await Promise.all(['A1', 'B1', 'C1'].map((id) => nodeStatus(page, id))); const second = await Promise.all(['A2', 'B2', 'C2', 'castle', 'bonus'].map((id) => nodeStatus(page, id)));
   ok('map: first tile of every road is open, the rest are locked', first.every((c) => /\bopen\b/.test(c)) && second.every((c) => /\blocked\b/.test(c)), first.join('|') + ' / ' + second.join('|'));
-  await page.click('[data-act=node][data-id=A2] .lbl'); ok('a locked tile explains itself and does not start', /앞 칸을 먼저/.test(await page.textContent('#msg')) && !(await page.$('.run')));
-  ok('map fits one screen width and tiles are labelled', await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1) && (await page.$$('.node .lbl')).length >= 9);
+  await page.click('[data-act=node][data-id=A2]'); ok('a locked tile explains itself and does not start', /앞 칸을 먼저/.test(await page.textContent('#msg')) && !(await page.$('.run')));
+  ok('map fits one screen width; landmarks are labelled', await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1) && (await page.$$('.node .lbl')).length >= 5);
   ok('pixel font and a clear word font are both in use', await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px Galmuri11') && /Galmuri11/.test(getComputedStyle(document.body).fontFamily) && !/Galmuri11/.test(getComputedStyle(document.documentElement).getPropertyValue('--word')); }));
 
   // 2. first tile
@@ -75,7 +77,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('known words become "likely" (silver), due in 7 days', a1.filter((w) => KNOWN.has(w.id)).every((w) => son.words[w.id].st === 'likely' && son.words[w.id].due === '2026-11-19'));
   ok('unknown words were learned: 1-day review', a1.filter((w) => !KNOWN.has(w.id)).every((w) => son.words[w.id].st === 'review' && son.words[w.id].step === 0 && son.words[w.id].due === '2026-11-13'));
   ok('unknown words came back in the same run, last time as a check', seen.some((x) => x.role === 'relearn' && x.form === 'check'), 'cards=' + seen.length);
-  ok('run record has timing, counts and the tile', son.runs.length === 1 && son.runs[0].tag === 'A1' && son.runs[0].fresh === 11 && son.runs[0].wall > 0 && son.runs[0].stars > 0);
+  ok('run record has timing, counts and the tile', son.runs.length === 1 && son.runs[0].tag === 'A1' && son.runs[0].fresh === 10 && son.runs[0].wall > 0 && son.runs[0].stars > 0);
   ok('end screen: tile cleared, stars, cards', /칸 클리어/.test(await page.textContent('h1')) && /\+\d+/.test(await page.textContent('.gain')) && /넘긴 카드/.test(await page.textContent('.tiles')));
   await toMap(page);
   ok('cleared tile gets a flag; the next tile on the road opens; stars are shown', /\bcleared\b/.test(await nodeStatus(page, 'A1')) && /\bopen\b/.test(await nodeStatus(page, 'A2')) && /[1-9]/.test(await page.textContent('.maphud .chip:nth-of-type(1)')));
@@ -130,14 +132,16 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const wctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   for (const w of WORDS) KNOWN.add(w.id);
   const w1 = await open(wctx, 'today=2026-12-01&seed=11&sound=off&fast=1'); await w1.click('[data-act=pick][data-id=daughter]'); await w1.waitForSelector('.world');
-  for (const id of ['A1', 'A2', 'B1']) { await startNode(w1, id); await play(w1); await toMap(w1); }
-  ok('castle stays locked with one road done', /\blocked\b/.test(await nodeStatus(w1, 'castle')) && /두 길/.test(await (async () => { await w1.click('[data-act=node][data-id=castle] .lbl'); return w1.textContent('#msg'); })()));
-  ok('the gauge shows 31 of 40 after three tiles', /31\/40/.test(await w1.textContent('#batgauge')));
+  await startNode(w1, 'A1'); await play(w1); await toMap(w1);
+  await w1.click('[data-act=node][data-id=castle]');
+  ok('castle stays locked until a path reaches it', /\blocked\b/.test(await nodeStatus(w1, 'castle')) && /성까지/.test(await w1.textContent('#msg')));
+  for (const id of ['A2', 'B1']) { await startNode(w1, id); await play(w1); await toMap(w1); }
+  ok('one finished path opens the castle (through the square); the gauge shows 30 of 40 after three tiles', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && /30\/40/.test(await w1.textContent('#batgauge')));
   await startNode(w1, 'B2'); await play(w1);
   ok('the fourth tile fills the gauge: the end screen announces the bats and offers the test', /박쥐 게이지가 가득/.test(await w1.textContent('.page')) && (await w1.$eval('.go', (b) => b.dataset.act)) === 'bat-go');
   await toMap(w1);
   ok('full gauge: the bat node appears and every other node says the bats come first', !!(await w1.$('[data-id=bat]')) && /\bblocked\b/.test(await nodeStatus(w1, 'castle')) && /\bblocked\b/.test(await nodeStatus(w1, 'C1')));
-  await w1.click('[data-act=node][data-id=C1] .lbl'); ok('a tile cannot start while the gauge is full', /박쥐/.test(await w1.textContent('#msg')) && !(await w1.$('.run')));
+  await w1.click('[data-act=node][data-id=C1]'); ok('a tile cannot start while the gauge is full', /박쥐/.test(await w1.textContent('#msg')) && !(await w1.$('.run')));
   await startNode(w1, 'bat'); const batQ = await w1.evaluate(() => window.__cards.run.queue.map((q) => q.form + ':' + q.role));
   ok('the bat test is 25 check cards over the words just met', batQ.length === 25 && batQ.every((x) => x.startsWith('check:')), batQ.length + ' ' + batQ[0]);
   await w1.click('[data-act=quit]'); await w1.waitForSelector('.tiles');
@@ -146,14 +150,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const batDone = await state(w1, 'daughter');
   ok('passing the test empties the gauge and raises the capacity to 50', /박쥐를 쫓아냈어요/.test(await w1.textContent('h1')) && batDone.map.bat.fill === 0 && batDone.map.bat.cap === 50 && batDone.runs.at(-1).tag === 'bat', JSON.stringify(batDone.map.bat));
   await toMap(w1);
-  ok('castle opens after two roads', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && !(await w1.$('[data-id=bat]')));
-  await w1.click('[data-act=node][data-id=castle] .lbl'); await w1.waitForSelector(READY);
+  ok('castle is open again once the bats are gone', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && !(await w1.$('[data-id=bat]')));
+  await w1.click('[data-act=node][data-id=castle]'); await w1.waitForSelector(READY);
   const castleQ = await w1.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.form));
   ok('castle is a check-only run of 12 cards', castleQ.length === 12 && castleQ.every((x) => x === 'castle:check'));
   await play(w1); await w1.waitForSelector('.tiles');
   ok('passing the castle gives a key', /성을 깼어요/.test(await w1.textContent('h1')) && /열쇠/.test(await w1.textContent('.page')));
   await toMap(w1);
-  ok('castle shows cleared, key counted, leftover road is bonus x2', /\bcleared\b/.test(await nodeStatus(w1, 'castle')) && (await w1.textContent('.maphud .chip:nth-of-type(2)')).trim() === '1' && (await w1.$$('.node .x2')).length === 2);   // both tiles of the leftover road
+  ok('castle shows cleared, key counted, what is left over is bonus x2', /\bcleared\b/.test(await nodeStatus(w1, 'castle')) && (await w1.textContent('.maphud .chip:nth-of-type(2)')).trim() === '1' && (await w1.$$('.node .x2')).length === 3);   // the two tiles left over and the house
   const starsBefore = await w1.evaluate(() => window.__cards.st.map.stars);
   await startNode(w1, 'C1'); await play(w1); const gain = Number((/\+(\d+)/.exec(await w1.textContent('.gain')) || [])[1]);
   ok('bonus road pays double stars', /\(×2\)/.test(await w1.textContent('.gain')) && gain > 0 && (await state(w1, 'daughter')).map.stars === starsBefore + gain, 'gain=' + gain);
@@ -164,7 +168,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 7. lightning round: opens once words are ripe, touches no word, drops an item, once a day
   ok('bonus house is open', /\bopen\b/.test(await nodeStatus(w1, 'bonus')));
   const wordsBefore = JSON.stringify((await state(w1, 'daughter')).words);
-  await w1.click('[data-act=node][data-id=bonus] .lbl'); await w1.waitForSelector('[data-act=lt-yes]');
+  await w1.click('[data-act=node][data-id=bonus]'); await w1.waitForSelector('[data-act=lt-yes]');
   for (let k = 0; k < 8; k++) { const truth = await w1.evaluate(() => window.__cards.lt.cur.truth); await w1.click(truth ? '[data-act=lt-yes]' : '[data-act=lt-no]'); await sleep(40); }
   await w1.waitForSelector('.tiles', { timeout: 8000 });
   const ltState = await state(w1, 'daughter');
@@ -187,7 +191,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('10 due reviews put a monster on the map', !!(await m1.$('[data-id=monster]')) && /몬스터 10/.test(await m1.textContent('[data-id=monster]')));
   ok('the monster blocks nothing: road tiles stay open', /\bopen\b/.test(await nodeStatus(m1, 'A1')) && /\bopen\b/.test(await nodeStatus(m1, 'C1')));
   ok('the parent view lists the overdue reviews and the gauge', await (async () => { await m1.click('[data-act=home]'); await m1.click('[data-act=parent]'); const t = await m1.textContent('.parent'); await m1.click('[data-act=home]'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world'); return /밀린 복습 10장/.test(t) && /박쥐 0\/40/.test(t); })());
-  await m1.click('[data-act=node][data-id=monster] .lbl'); await m1.waitForSelector(READY);
+  await m1.click('[data-act=node][data-id=monster]'); await m1.waitForSelector(READY);
   const mq = await m1.evaluate(() => window.__cards.run.queue.map((q) => q.role));
   ok('monster run is reviews only', mq.length === 10 && mq.every((r) => r === 'review'), mq.join());
   await play(m1); await m1.waitForSelector('.tiles');
@@ -205,7 +209,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await f1.click('[data-act=pick][data-id=daughter]'); await f1.waitForSelector('.world');
   ok('map screen says audio files are in use', /음원 파일/.test(await f1.textContent('#src')));
   ok('map fits the portrait screen without sideways scroll', await f1.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1));
-  await f1.click('[data-act=node][data-id=C1] .lbl'); await f1.waitForSelector('.act.yes:not([disabled])', { timeout: 8000 });
+  await f1.click('[data-act=node][data-id=C1]'); await f1.waitForSelector('.act.yes:not([disabled])', { timeout: 8000 });
   ok('buttons open after the word was played from a file', await f1.evaluate(() => window.__cards.run.current.sound) === 'file');
   ok('card and both buttons fit on one screen (portrait)', await f1.evaluate(() => document.scrollingElement.scrollHeight <= innerHeight + 1));
   await f1.close(); await fctx.close();
@@ -214,7 +218,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const nctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   await nctx.addInitScript(() => { Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true }); });
   const n1 = await open(nctx, 'today=2026-11-12&seed=8&fast=1');
-  await n1.click('[data-act=pick][data-id=daughter]'); await n1.waitForSelector('.world'); await n1.click('[data-act=node][data-id=A1] .lbl');
+  await n1.click('[data-act=pick][data-id=daughter]'); await n1.waitForSelector('.world'); await n1.click('[data-act=node][data-id=A1]');
   await n1.waitForSelector('#banner:not([hidden])', { timeout: 8000 });
   ok('no sound: banner with retry, answer buttons stay locked', /다시 듣기/.test(await n1.textContent('#banner')) && await n1.$eval('.act.yes', (b) => b.disabled));
   await n1.click('[data-act=mute-go]');
@@ -228,16 +232,97 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const look = await v1.evaluate(() => ({ sheet: document.querySelectorAll('#sheet symbol').length, a1: document.querySelector('[data-id=A1] use')?.getAttribute('href'), a2: document.querySelector('[data-id=A2] use')?.getAttribute('href'),
     ground: document.documentElement.style.getPropertyValue('--w-ground'), path: document.querySelectorAll('.terrain use[href="#t-path"]').length, big: document.querySelector('[data-id=A1] .big').getBoundingClientRect().width }));
   ok('sprite sheet inlined (66 symbols); open tile and locked tile use stone pads', look.sheet === 66 && look.a1 === '#stone-open' && look.a2 === '#stone-locked', JSON.stringify(look));
-  ok('world colours come from variables; the map has ground and path tiles; stone is drawn at 64 px', look.ground === '#86B682' && look.path > 8 && look.big >= 56, JSON.stringify(look));
+  ok('world colours come from the world file; the map has path tiles; a stone is drawn about 64 px wide', look.ground === '#8FCB83' && look.path > 8 && look.big >= 56, JSON.stringify(look));
+  ok('text on a light sky is dark', await v1.evaluate(() => document.documentElement.style.getPropertyValue('--fg') === '#233f3a'));
   ok('music starts off, effects on', await v1.evaluate(() => !window.__cards.sound.musicOn && window.__cards.sound.sfx));
   await v1.click('[data-act=music]'); await v1.waitForSelector('.tgl.on');
   await v1.waitForFunction(() => window.__cards.sound.music && window.__cards.sound.music.on, null, { timeout: 8000 });
   ok('music toggle plays the map loop and is remembered', await v1.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && JSON.parse(localStorage.getItem('cards.v0.pref')).music === true));
   await v1.evaluate(() => window.__cards.sound.sfxPlay('hit')); ok('effects can play through the real synth without errors', await v1.evaluate(() => window.__cards.sound.ctx.state !== 'closed'));
-  await v1.goto(BASE + '?today=2026-11-12&seed=9&fast=1&nosync=1&theme=sea'); await v1.waitForSelector('.profiles');
+  await v1.goto(BASE + '?set=demo&today=2026-11-12&seed=9&fast=1&nosync=1'); await v1.waitForSelector('.profiles');
   await v1.click('[data-act=pick][data-id=son]'); await v1.waitForSelector('.world');
-  ok('another world theme recolours the map; music choice persists after reload', await v1.evaluate(() => document.documentElement.style.getPropertyValue('--w-ground') === '#4F9AA8' && window.__cards.sound.musicOn));
+  ok('the music choice persists after a reload', await v1.evaluate(() => window.__cards.sound.musicOn));
   await v1.close(); await vctx.close();
+
+  // 10c. worlds: house with hear-and-pick cards, playhouses, key and crown, next world, world list, continent castle, next continent
+  const xctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const x = await open(xctx, 'today=2026-12-20&seed=21&sound=off&fast=1'); await x.click('[data-act=pick][data-id=son]'); await x.waitForSelector('.world');
+  const worldId = () => x.$eval('#world', (e) => e.dataset.world); const msg = () => x.textContent('#msg');
+  ok('the first visit shows the world\'s opening line and its name', (await worldId()) === 'd1-01' && /첫 편지/.test(await msg()) && /새싹 들판 · 단어 마을/.test(await x.textContent('#wtitle')));
+  await x.click('[data-act=node][data-id=G1]'); const m1x = await msg(); await x.click('[data-act=node][data-id=H1]');
+  ok('a playhouse and a house are closed until the path reaches them', /놀이집으로 가는 길/.test(m1x) && /앞 칸을 먼저/.test(await msg()) && !(await x.$('.run')));
+  await startNode(x, 'A1'); await play(x); await toMap(x);
+  ok('the house opens when its tile is done', /\bopen\b/.test(await nodeStatus(x, 'H1')) && /0\/1/.test(await x.textContent('[data-id=H1]')));
+  await startNode(x, 'H1'); const sc = await cur(x); const sw = WORDS.find((w) => w.id === sc.id); const sightForms = WORDS.filter((w) => w.track === 'sight').map((w) => w.form);
+  const optTexts = await x.$$eval('.opt', (bs) => bs.map((b) => b.textContent));
+  ok('a function word is a hear-and-pick card: the word is hidden and the choices are spellings', sw.track === 'sight' && !!(await x.$('#word[data-hidden]')) && !(await x.textContent('#card')).includes(sw.form) && /글자를 골라요/.test(await x.textContent('#tag')) && optTexts.length === 3 && optTexts.every((t) => sightForms.includes(t)) && optTexts.includes(sw.form), optTexts.join());
+  const backText = await x.evaluate((i) => { document.querySelector(`.opt[data-i="${i}"]`).click(); return new Promise((res) => setTimeout(() => res(document.querySelector('#card').textContent), 5)); }, sc.ans);
+  ok('after the answer the card shows the word', backText.includes(sw.form), backText);
+  await x.waitForFunction(() => window.__cards.run.i >= 1); await play(x); await x.waitForSelector('.tiles'); await toMap(x);
+  const stH = (await state(x, 'son')).words;
+  ok('the house is done and counted: every function word has a record', /\bcleared\b/.test(await nodeStatus(x, 'H1')) && /1\/1/.test(await x.textContent('[data-id=H1]')) && TILE('H1-1').every((id) => stH[id]));
+  await startNode(x, 'B1'); await play(x); await toMap(x);
+  const before10c = JSON.stringify((await state(x, 'son')).words);
+  await x.click('[data-act=node][data-id=G1]'); await x.waitForSelector('.memgrid');
+  ok('the playhouse opens a picture-pair game with six cards', (await x.$$('.memcard')).length === 6 && /0 \/ 3쌍/.test(await x.textContent('#gstatus')));
+  const deck = await x.evaluate(() => window.__cards.game.deck); const wrongPair = [0, deck.findIndex((e) => e !== deck[0])];
+  for (const i of wrongPair) await x.click(`.memcard[data-i="${i}"]`);
+  await x.waitForFunction(() => window.__cards.game.open.length === 0 && !window.__cards.game.busy);
+  ok('a wrong pair turns back and costs nothing', (await x.evaluate(() => window.__cards.game.matched.size)) === 0);
+  for (const e of [...new Set(deck)]) { const [i, j] = deck.map((d, k) => (d === e ? k : -1)).filter((k) => k >= 0); await x.click(`.memcard[data-i="${i}"]`); await x.click(`.memcard[data-i="${j}"]`); }
+  await x.waitForSelector('#stampgain');
+  const stamped = await state(x, 'son');
+  ok('finishing gives one stamp and changes no word, star or gauge', /도장을 찍었어요/.test(await x.textContent('#stampgain')) && stamped.map.worlds['d1-01'].stamps.G1 === '2026-12-20' && JSON.stringify(stamped.words) === before10c);
+  await toMap(x); ok('the playhouse shows its stamp and can be played again', /\bdone\b/.test(await nodeStatus(x, 'G1')));
+  for (const id of ['C1', 'C2']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
+  await x.click('[data-act=node][data-id=G2]'); await x.waitForSelector('.mailtrack');
+  await x.waitForFunction(() => { const g = window.__cards.game; if (g && !g.inZone()) { document.querySelector('[data-act=mail]').click(); return true; } return false; }, null, { polling: 'raf' });
+  ok('a letter dropped outside the yellow zone does not count', /0 \/ 3통/.test(await x.textContent('#gstatus')) && /조금만 더/.test(await x.textContent('#ghint')));
+  for (let k = 0; k < 3; k++) await x.waitForFunction((n) => { const g = window.__cards.game; if (!g) return true; if (g.done === n && g.inZone()) { document.querySelector('[data-act=mail]').click(); return true; } return false; }, k, { polling: 'raf' });
+  await x.waitForSelector('#stampgain');
+  ok('three letters in the zone finish the mailbox game with a second stamp', Object.keys((await state(x, 'son')).map.worlds['d1-01'].stamps).sort().join() === 'G1,G2');
+  await toMap(x);
+  for (const id of ['A2', 'B2']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
+  await startNode(x, 'castle'); await play(x); await x.waitForSelector('.tiles');
+  ok('castle with every tile and the house done: key, crown, the closing line and a way to the next world', !!(await x.$('#keygain')) && !!(await x.$('#crowngain')) && /장미 열쇠/.test(await x.textContent('#keygain')) && /꽃마루 문이 열렸어/.test(await x.textContent('.page')) && (await x.$eval('.go', (b) => b.dataset.act + ':' + b.dataset.id)) === 'goworld:d1-02');
+  await x.click('.go'); await x.waitForSelector('#world[data-world="d1-02"]');
+  ok('the next world opens with its own colours and opening line', /상자 사이에/.test(await msg()) && await x.evaluate(() => document.documentElement.style.getPropertyValue('--w-ground') === '#E3B45B'));
+  await x.click('[data-act=atlas]'); await x.waitForSelector('.atlas');
+  const atl = await x.evaluate(() => ({ crown: !!document.querySelector('.wcard[data-id="d1-01"] use[href="#crown"]'), here: document.querySelector('.wcard.here').dataset.id, locked: document.querySelector('.wcard[data-id="d2-01"]').disabled, finale: document.querySelector('.wcard.finale[data-id="d1"]').className }));
+  ok('world list: crown on the finished world, the current world marked, the next continent closed, the big castle locked', atl.crown && atl.here === 'd1-02' && atl.locked && /\blocked\b/.test(atl.finale), JSON.stringify(atl));
+  await x.click('.wcard.finale[data-id="d1"]'); ok('the locked big castle says what it needs', /왕관을 모두 모으면/.test(await msg()) && /1\/2/.test(await msg()));
+  await x.click('.wcard[data-id="d1-01"]'); await x.waitForSelector('#world[data-world="d1-01"]'); ok('an earlier world can be visited again', /왕관/.test(await x.textContent('#wtitle')));
+  await x.click('[data-act=atlas]'); await x.click('.wcard[data-id="d1-02"]'); await x.waitForSelector('#world[data-world="d1-02"]');
+  for (const id of ['T1', 'T2']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
+  await startNode(x, 'k'); await play(x); await x.waitForSelector('.tiles'); await toMap(x);
+  ok('with every crown of the continent the map points to the big castle', /큰 성에 도전/.test(await msg()));
+  await x.click('[data-act=atlas]'); await x.waitForSelector('.wcard.finale.open'); await x.click('.wcard.finale[data-id="d1"]'); await x.waitForSelector(READY);
+  const fq = await x.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.form));
+  ok('the big castle is a check-only run over the continent (10 cards in the demo)', fq.length === 10 && fq.every((q) => q === 'castle:check') && (await x.evaluate(() => window.__cards.node.pass)) === 0.7);
+  await play(x); await x.waitForSelector('.tiles');
+  ok('passing it opens the way to the next continent', /큰 성을 깼어요/.test(await x.textContent('h1')) && /굽이굽이 바다/.test(await x.textContent('.page')) && (await x.$eval('.go', (b) => b.dataset.act + ':' + b.dataset.id)) === 'goworld:d2-01');
+  await x.click('.go'); await x.waitForSelector('#world[data-world="d2-01"]');
+  ok('the second continent has its own music and colours', await x.evaluate(() => window.__cards.sound.seen.has('scene:sea') && document.documentElement.style.getPropertyValue('--w-ground') === '#75B7B1'));
+  await x.click('[data-act=home]'); await x.click('[data-act=parent]');
+  ok('the parent view counts keys, crowns and big castles', /열쇠 2\/3/.test(await x.textContent('.parent')) && /왕관 2/.test(await x.textContent('.parent')) && /큰 성 1\/2/.test(await x.textContent('.parent')) && /복습 정답률/.test(await x.textContent('.parent')));
+  await x.close(); await xctx.close();
+
+  // 10d. the full deck: 4,610 cards and 30 worlds load and a first tile can be played; a world file of another version is refused
+  const fullctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const fp = await fullctx.newPage(); fp.on('pageerror', (e) => errs.push(String(e)));
+  const t0 = Date.now(); await fp.goto(BASE + '?today=2026-12-21&seed=2&sound=off&fast=1&nosync=1'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
+  const full = await fp.evaluate(() => ({ words: window.__cards.words.length, worlds: window.__cards.ix.worlds.length, world: document.querySelector('#world').dataset.world, open: document.querySelectorAll('.node.open').length, nodes: document.querySelectorAll('.world .node').length, standIn: window.__cards.standIn, wide: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
+  ok('full deck: 4,610 cards, 30 worlds, the first world\'s map with open tiles, fits the screen width', full.words === 4610 && full.worlds === 30 && full.world === 'p1-01' && full.open >= 2 && full.nodes >= 15 && full.wide, JSON.stringify(full) + ' load ' + loadMs + ' ms');
+  ok('the stand-in world file is named as such', full.standIn ? /시험용/.test(await fp.textContent('#src')) : true);
+  const openId = await fp.$eval('.world .node.open', (b) => b.dataset.id); await fp.click(`[data-act=node][data-id="${openId}"]`); await fp.waitForSelector(READY);
+  const fullRun = await fp.evaluate(() => ({ n: window.__cards.run.queue.length, word: document.querySelector('#word').textContent }));
+  ok('a tile of the full deck starts a run of its 10 new words', fullRun.n === 10 && fullRun.word.length > 0, JSON.stringify(fullRun));
+  await fp.click('[data-act=yes]'); await fp.waitForFunction(() => window.__cards.run.i >= 1 || document.querySelector('.opt'), null, { timeout: 8000 });
+  await fp.close();
+  const bad = await fullctx.newPage(); await bad.route('**/data/worlds.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ schemaVersion: 9, continents: [] }) }));
+  await bad.goto(BASE + '?today=2026-12-21&sound=off&nosync=1'); await bad.waitForSelector('#fatal');
+  ok('a world file of an unknown version is refused with a plain message', /버전/.test(await bad.textContent('#fatal')));
+  await bad.close(); await fullctx.close();
 
   // 11. record sharing: progress made on one device ("Mac mini") shows on another ("iPad"), survives a wiped browser,
   //     survives the server being unreachable, and two devices that played apart end up with both
@@ -248,16 +333,16 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const mc = await open(mac, 'today=2026-12-10&seed=3&sound=off&fast=1', true);
   ok('home says the record is kept on this device and the Mac server', /이 기기 \+ Mac 서버/.test(await mc.textContent('#syncline')), await mc.textContent('#syncline'));
   await mc.click('[data-act=pick][data-id=son]'); await mc.waitForSelector('.world'); await startNode(mc, 'A1'); await play(mc); await idle(mc);
-  ok('state file written on the server side', fs.existsSync(path.join(STATE, 'p.son.json')) && read('son').runs.length === 1 && Object.keys(read('son').words).length === 11);
+  ok('state file written on the server side', fs.existsSync(path.join(STATE, 'p.son.json')) && read('son').runs.length === 1 && Object.keys(read('son').words).length === 10);
   const ip = await open(ipad, 'today=2026-12-11&seed=4&sound=off&fast=1', true);
   const ipadSon = await state(ip, 'son');
-  ok('a second device starts with the first one\'s progress', ipadSon && Object.keys(ipadSon.words).length === 11 && ipadSon.map.cleared.A1 === '2026-12-10');
+  ok('a second device starts with the first one\'s progress', ipadSon && Object.keys(ipadSon.words).length === 10 && ipadSon.map.worlds['d1-01'].cleared.A1 === '2026-12-10');
   await ip.click('[data-act=pick][data-id=son]'); await ip.waitForSelector('.world');
   ok('its map shows the cleared tile and the next one open', /\bcleared\b/.test(await nodeStatus(ip, 'A1')) && /\bopen\b/.test(await nodeStatus(ip, 'A2')));
   ok('the other child\'s document was not created', !fs.existsSync(path.join(STATE, 'p.daughter.json')));
   await mc.evaluate(() => localStorage.clear());                                  // the browser threw its storage away
-  await mc.goto(BASE + '?today=2026-12-12&seed=5&sound=off&fast=1'); await mc.waitForSelector('.profiles');
-  ok('a wiped browser gets everything back from the server', Object.keys((await state(mc, 'son')).words).length === 11);
+  await mc.goto(BASE + '?set=demo&today=2026-12-12&seed=5&sound=off&fast=1'); await mc.waitForSelector('.profiles');
+  ok('a wiped browser gets everything back from the server', Object.keys((await state(mc, 'son')).words).length === 10);
 
   // server unreachable: the run still saves on the device, says so, and uploads later
   await mc.route('**/api/**', (r) => r.abort());
@@ -269,9 +354,9 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('the other device\'s run reached the server', read('son').runs.length === 2 && read('son').runs.some((r) => r.tag === 'C1'));
   await mc.unroute('**/api/**'); await mc.evaluate(() => window.__cards.sync.flush()); await idle(mc);
   const merged = read('son'); const macSt = await state(mc, 'son');
-  ok('after reconnecting, both devices\' tiles and runs are on the server', ['A1', 'B1', 'C1'].every((t) => merged.map.cleared[t]) && merged.runs.map((r) => r.tag).sort().join() === 'A1,B1,C1');
-  ok('the device that reconnected holds the merged record too', JSON.stringify(Object.keys(macSt.map.cleared).sort()) === JSON.stringify(['A1', 'B1', 'C1']) && macSt.runs.length === 3);
-  ok('merging touched no word schedule it should not: every word is on the server exactly once', Object.keys(merged.words).length === 11 + 9 + 10);
+  ok('after reconnecting, both devices\' tiles and runs are on the server', ['A1', 'B1', 'C1'].every((t) => merged.map.worlds['d1-01'].cleared[t]) && merged.runs.map((r) => r.tag).sort().join() === 'A1,B1,C1');
+  ok('the device that reconnected holds the merged record too', JSON.stringify(Object.keys(macSt.map.worlds['d1-01'].cleared).sort()) === JSON.stringify(['A1', 'B1', 'C1']) && macSt.runs.length === 3);
+  ok('merging touched no word schedule it should not: every word is on the server exactly once', Object.keys(merged.words).length === 30);
   await mc.close(); await ip.close(); await mac.close(); await ipad.close();
   // a plain static host (no state API): the home screen says device-only
   const sctx = await browser.newContext({ viewport: { width: 1024, height: 700 } });
