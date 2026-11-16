@@ -1,0 +1,2251 @@
+{
+  "version": "postal-world-art-1",
+  "license": "Original project pixel artwork. No platform emoji images included.",
+  "sheet": "sprites.svg",
+  "symbols": {
+    "wb-p1-01-01": {
+      "role": "boss",
+      "worldId": "p1-01",
+      "emoji": "🌱",
+      "label": "새싹",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-01-01"
+      ]
+    },
+    "wb-p1-01-02": {
+      "role": "boss",
+      "worldId": "p1-01",
+      "emoji": "🌷",
+      "label": "튤립",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-01-02"
+      ]
+    },
+    "wb-p1-01-03": {
+      "role": "boss",
+      "worldId": "p1-01",
+      "emoji": "🌻",
+      "label": "해바라기",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-01-03"
+      ]
+    },
+    "wb-p1-01-04": {
+      "role": "boss",
+      "worldId": "p1-01",
+      "emoji": "🌼",
+      "label": "들꽃",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-01-04"
+      ]
+    },
+    "wb-p1-01-05": {
+      "role": "boss",
+      "worldId": "p1-01",
+      "emoji": "🌹",
+      "label": "장미",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-01-05"
+      ]
+    },
+    "wb-p1-01-06": {
+      "role": "boss",
+      "worldId": "p1-01",
+      "emoji": "🍀",
+      "label": "클로버",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-01-06"
+      ]
+    },
+    "wb-p1-02-01": {
+      "role": "boss",
+      "worldId": "p1-02",
+      "emoji": "🍎",
+      "label": "사과",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-02-01"
+      ]
+    },
+    "wb-p1-02-02": {
+      "role": "boss",
+      "worldId": "p1-02",
+      "emoji": "🍐",
+      "label": "배",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-02-02"
+      ]
+    },
+    "wb-p1-02-03": {
+      "role": "boss",
+      "worldId": "p1-02",
+      "emoji": "🍊",
+      "label": "귤",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-02-03"
+      ]
+    },
+    "wb-p1-02-04": {
+      "role": "boss",
+      "worldId": "p1-02",
+      "emoji": "🍋",
+      "label": "레몬",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-02-04"
+      ]
+    },
+    "wb-p1-02-05": {
+      "role": "boss",
+      "worldId": "p1-02",
+      "emoji": "🍒",
+      "label": "체리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-02-05"
+      ]
+    },
+    "wb-p1-02-06": {
+      "role": "boss",
+      "worldId": "p1-02",
+      "emoji": "🍓",
+      "label": "딸기",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-02-06"
+      ]
+    },
+    "wb-p1-03-01": {
+      "role": "boss",
+      "worldId": "p1-03",
+      "emoji": "🐌",
+      "label": "달팽이",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-03-01"
+      ]
+    },
+    "wb-p1-03-02": {
+      "role": "boss",
+      "worldId": "p1-03",
+      "emoji": "🐛",
+      "label": "애벌레",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-03-02"
+      ]
+    },
+    "wb-p1-03-03": {
+      "role": "boss",
+      "worldId": "p1-03",
+      "emoji": "🐜",
+      "label": "개미",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-03-03"
+      ]
+    },
+    "wb-p1-03-04": {
+      "role": "boss",
+      "worldId": "p1-03",
+      "emoji": "🐝",
+      "label": "꿀벌",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-03-04"
+      ]
+    },
+    "wb-p1-03-05": {
+      "role": "boss",
+      "worldId": "p1-03",
+      "emoji": "🐞",
+      "label": "무당벌레",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-03-05"
+      ]
+    },
+    "wb-p1-03-06": {
+      "role": "boss",
+      "worldId": "p1-03",
+      "emoji": "🦋",
+      "label": "나비",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-03-06"
+      ]
+    },
+    "wb-p1-04-01": {
+      "role": "boss",
+      "worldId": "p1-04",
+      "emoji": "🌳",
+      "label": "넓은나무",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-04-01"
+      ]
+    },
+    "wb-p1-04-02": {
+      "role": "boss",
+      "worldId": "p1-04",
+      "emoji": "🌲",
+      "label": "소나무",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-04-02"
+      ]
+    },
+    "wb-p1-04-03": {
+      "role": "boss",
+      "worldId": "p1-04",
+      "emoji": "🌴",
+      "label": "야자",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-04-03"
+      ]
+    },
+    "wb-p1-04-04": {
+      "role": "boss",
+      "worldId": "p1-04",
+      "emoji": "🌵",
+      "label": "선인장",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-04-04"
+      ]
+    },
+    "wb-p1-04-05": {
+      "role": "boss",
+      "worldId": "p1-04",
+      "emoji": "🎋",
+      "label": "대나무",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-04-05"
+      ]
+    },
+    "wb-p1-04-06": {
+      "role": "boss",
+      "worldId": "p1-04",
+      "emoji": "🎍",
+      "label": "소원대나무",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-04-06"
+      ]
+    },
+    "wb-p1-05-01": {
+      "role": "boss",
+      "worldId": "p1-05",
+      "emoji": "🐸",
+      "label": "개구리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-05-01"
+      ]
+    },
+    "wb-p1-05-02": {
+      "role": "boss",
+      "worldId": "p1-05",
+      "emoji": "🐢",
+      "label": "거북",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-05-02"
+      ]
+    },
+    "wb-p1-05-03": {
+      "role": "boss",
+      "worldId": "p1-05",
+      "emoji": "🐟",
+      "label": "물고기",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-05-03"
+      ]
+    },
+    "wb-p1-05-04": {
+      "role": "boss",
+      "worldId": "p1-05",
+      "emoji": "🐠",
+      "label": "열대어",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-05-04"
+      ]
+    },
+    "wb-p1-05-05": {
+      "role": "boss",
+      "worldId": "p1-05",
+      "emoji": "🐡",
+      "label": "복어",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-05-05"
+      ]
+    },
+    "wb-p1-05-06": {
+      "role": "boss",
+      "worldId": "p1-05",
+      "emoji": "🐙",
+      "label": "문어",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-05-06"
+      ]
+    },
+    "wb-p1-06-01": {
+      "role": "boss",
+      "worldId": "p1-06",
+      "emoji": "🐰",
+      "label": "토끼얼굴",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-06-01"
+      ]
+    },
+    "wb-p1-06-02": {
+      "role": "boss",
+      "worldId": "p1-06",
+      "emoji": "🐹",
+      "label": "햄스터",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-06-02"
+      ]
+    },
+    "wb-p1-06-03": {
+      "role": "boss",
+      "worldId": "p1-06",
+      "emoji": "🐭",
+      "label": "생쥐",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-06-03"
+      ]
+    },
+    "wb-p1-06-04": {
+      "role": "boss",
+      "worldId": "p1-06",
+      "emoji": "🐿️",
+      "label": "다람쥐",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-06-04"
+      ]
+    },
+    "wb-p1-06-05": {
+      "role": "boss",
+      "worldId": "p1-06",
+      "emoji": "🐾",
+      "label": "발자국",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-06-05"
+      ]
+    },
+    "wb-p1-06-06": {
+      "role": "boss",
+      "worldId": "p1-06",
+      "emoji": "🐇",
+      "label": "앉은토끼",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-06-06"
+      ]
+    },
+    "wb-p1-07-01": {
+      "role": "boss",
+      "worldId": "p1-07",
+      "emoji": "✉️",
+      "label": "편지",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-07-01"
+      ]
+    },
+    "wb-p1-07-02": {
+      "role": "boss",
+      "worldId": "p1-07",
+      "emoji": "📮",
+      "label": "빨간우체통",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-07-02"
+      ]
+    },
+    "wb-p1-07-03": {
+      "role": "boss",
+      "worldId": "p1-07",
+      "emoji": "📬",
+      "label": "편지든우편함",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-07-03"
+      ]
+    },
+    "wb-p1-07-04": {
+      "role": "boss",
+      "worldId": "p1-07",
+      "emoji": "📭",
+      "label": "열린빈우편함",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-07-04"
+      ]
+    },
+    "wb-p1-07-05": {
+      "role": "boss",
+      "worldId": "p1-07",
+      "emoji": "📪",
+      "label": "닫힌우편함",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-07-05"
+      ]
+    },
+    "wb-p1-07-06": {
+      "role": "boss",
+      "worldId": "p1-07",
+      "emoji": "📫",
+      "label": "깃발우편함",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-07-06"
+      ]
+    },
+    "wb-p1-08-01": {
+      "role": "boss",
+      "worldId": "p1-08",
+      "emoji": "🔔",
+      "label": "종",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-08-01"
+      ]
+    },
+    "wb-p1-08-02": {
+      "role": "boss",
+      "worldId": "p1-08",
+      "emoji": "🎺",
+      "label": "트럼펫",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-08-02"
+      ]
+    },
+    "wb-p1-08-03": {
+      "role": "boss",
+      "worldId": "p1-08",
+      "emoji": "🎷",
+      "label": "색소폰",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-08-03"
+      ]
+    },
+    "wb-p1-08-04": {
+      "role": "boss",
+      "worldId": "p1-08",
+      "emoji": "🎻",
+      "label": "바이올린",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-08-04"
+      ]
+    },
+    "wb-p1-08-05": {
+      "role": "boss",
+      "worldId": "p1-08",
+      "emoji": "🎸",
+      "label": "기타",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-08-05"
+      ]
+    },
+    "wb-p1-08-06": {
+      "role": "boss",
+      "worldId": "p1-08",
+      "emoji": "🎹",
+      "label": "건반",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p1-08-06"
+      ]
+    },
+    "wb-p2-01-01": {
+      "role": "boss",
+      "worldId": "p2-01",
+      "emoji": "⚓",
+      "label": "닻",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-01-01"
+      ]
+    },
+    "wb-p2-01-02": {
+      "role": "boss",
+      "worldId": "p2-01",
+      "emoji": "⛵",
+      "label": "돛단배",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-01-02"
+      ]
+    },
+    "wb-p2-01-03": {
+      "role": "boss",
+      "worldId": "p2-01",
+      "emoji": "🚢",
+      "label": "증기선",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-01-03"
+      ]
+    },
+    "wb-p2-01-04": {
+      "role": "boss",
+      "worldId": "p2-01",
+      "emoji": "🚤",
+      "label": "쾌속정",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-01-04"
+      ]
+    },
+    "wb-p2-01-05": {
+      "role": "boss",
+      "worldId": "p2-01",
+      "emoji": "🛳️",
+      "label": "여객선",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-01-05"
+      ]
+    },
+    "wb-p2-01-06": {
+      "role": "boss",
+      "worldId": "p2-01",
+      "emoji": "⛴️",
+      "label": "나룻배",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-01-06"
+      ]
+    },
+    "wb-p2-02-01": {
+      "role": "boss",
+      "worldId": "p2-02",
+      "emoji": "🐚",
+      "label": "소라",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-02-01"
+      ]
+    },
+    "wb-p2-02-02": {
+      "role": "boss",
+      "worldId": "p2-02",
+      "emoji": "🦀",
+      "label": "게",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-02-02"
+      ]
+    },
+    "wb-p2-02-03": {
+      "role": "boss",
+      "worldId": "p2-02",
+      "emoji": "🐬",
+      "label": "돌고래",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-02-03"
+      ]
+    },
+    "wb-p2-02-04": {
+      "role": "boss",
+      "worldId": "p2-02",
+      "emoji": "🐳",
+      "label": "물뿜는고래",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-02-04"
+      ]
+    },
+    "wb-p2-02-05": {
+      "role": "boss",
+      "worldId": "p2-02",
+      "emoji": "🐋",
+      "label": "큰고래",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-02-05"
+      ]
+    },
+    "wb-p2-02-06": {
+      "role": "boss",
+      "worldId": "p2-02",
+      "emoji": "🐊",
+      "label": "악어",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-02-06"
+      ]
+    },
+    "wb-p2-03-01": {
+      "role": "boss",
+      "worldId": "p2-03",
+      "emoji": "🍞",
+      "label": "식빵",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-03-01"
+      ]
+    },
+    "wb-p2-03-02": {
+      "role": "boss",
+      "worldId": "p2-03",
+      "emoji": "🍯",
+      "label": "꿀단지",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-03-02"
+      ]
+    },
+    "wb-p2-03-03": {
+      "role": "boss",
+      "worldId": "p2-03",
+      "emoji": "🍪",
+      "label": "쿠키",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-03-03"
+      ]
+    },
+    "wb-p2-03-04": {
+      "role": "boss",
+      "worldId": "p2-03",
+      "emoji": "🍰",
+      "label": "케이크",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-03-04"
+      ]
+    },
+    "wb-p2-03-05": {
+      "role": "boss",
+      "worldId": "p2-03",
+      "emoji": "🍩",
+      "label": "도넛",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-03-05"
+      ]
+    },
+    "wb-p2-03-06": {
+      "role": "boss",
+      "worldId": "p2-03",
+      "emoji": "🍮",
+      "label": "푸딩",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-03-06"
+      ]
+    },
+    "wb-p2-04-01": {
+      "role": "boss",
+      "worldId": "p2-04",
+      "emoji": "⏰",
+      "label": "자명종",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-04-01"
+      ]
+    },
+    "wb-p2-04-02": {
+      "role": "boss",
+      "worldId": "p2-04",
+      "emoji": "⌛",
+      "label": "모래시계",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-04-02"
+      ]
+    },
+    "wb-p2-04-03": {
+      "role": "boss",
+      "worldId": "p2-04",
+      "emoji": "⌚",
+      "label": "손목시계",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-04-03"
+      ]
+    },
+    "wb-p2-04-04": {
+      "role": "boss",
+      "worldId": "p2-04",
+      "emoji": "🕰️",
+      "label": "벽시계",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-04-04"
+      ]
+    },
+    "wb-p2-04-05": {
+      "role": "boss",
+      "worldId": "p2-04",
+      "emoji": "⏳",
+      "label": "흐르는모래시계",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-04-05"
+      ]
+    },
+    "wb-p2-04-06": {
+      "role": "boss",
+      "worldId": "p2-04",
+      "emoji": "⏱️",
+      "label": "초시계",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-04-06"
+      ]
+    },
+    "wb-p2-05-01": {
+      "role": "boss",
+      "worldId": "p2-05",
+      "emoji": "🎈",
+      "label": "풍선",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-05-01"
+      ]
+    },
+    "wb-p2-05-02": {
+      "role": "boss",
+      "worldId": "p2-05",
+      "emoji": "🎏",
+      "label": "물고기깃발",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-05-02"
+      ]
+    },
+    "wb-p2-05-03": {
+      "role": "boss",
+      "worldId": "p2-05",
+      "emoji": "🎐",
+      "label": "풍경",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-05-03"
+      ]
+    },
+    "wb-p2-05-04": {
+      "role": "boss",
+      "worldId": "p2-05",
+      "emoji": "🎀",
+      "label": "리본",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-05-04"
+      ]
+    },
+    "wb-p2-05-05": {
+      "role": "boss",
+      "worldId": "p2-05",
+      "emoji": "🎁",
+      "label": "선물",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-05-05"
+      ]
+    },
+    "wb-p2-05-06": {
+      "role": "boss",
+      "worldId": "p2-05",
+      "emoji": "🎉",
+      "label": "꽃종이",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-05-06"
+      ]
+    },
+    "wb-p2-06-01": {
+      "role": "boss",
+      "worldId": "p2-06",
+      "emoji": "☂️",
+      "label": "펼친우산",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-06-01"
+      ]
+    },
+    "wb-p2-06-02": {
+      "role": "boss",
+      "worldId": "p2-06",
+      "emoji": "☔",
+      "label": "비오는우산",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-06-02"
+      ]
+    },
+    "wb-p2-06-03": {
+      "role": "boss",
+      "worldId": "p2-06",
+      "emoji": "💧",
+      "label": "물방울",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-06-03"
+      ]
+    },
+    "wb-p2-06-04": {
+      "role": "boss",
+      "worldId": "p2-06",
+      "emoji": "🌂",
+      "label": "접은우산",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-06-04"
+      ]
+    },
+    "wb-p2-06-05": {
+      "role": "boss",
+      "worldId": "p2-06",
+      "emoji": "🌧️",
+      "label": "비구름",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-06-05"
+      ]
+    },
+    "wb-p2-06-06": {
+      "role": "boss",
+      "worldId": "p2-06",
+      "emoji": "🌦️",
+      "label": "갠비구름",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-06-06"
+      ]
+    },
+    "wb-p2-07-01": {
+      "role": "boss",
+      "worldId": "p2-07",
+      "emoji": "🎨",
+      "label": "팔레트",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-07-01"
+      ]
+    },
+    "wb-p2-07-02": {
+      "role": "boss",
+      "worldId": "p2-07",
+      "emoji": "🖌️",
+      "label": "붓",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-07-02"
+      ]
+    },
+    "wb-p2-07-03": {
+      "role": "boss",
+      "worldId": "p2-07",
+      "emoji": "🖍️",
+      "label": "크레용",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-07-03"
+      ]
+    },
+    "wb-p2-07-04": {
+      "role": "boss",
+      "worldId": "p2-07",
+      "emoji": "✏️",
+      "label": "연필",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-07-04"
+      ]
+    },
+    "wb-p2-07-05": {
+      "role": "boss",
+      "worldId": "p2-07",
+      "emoji": "🖊️",
+      "label": "볼펜",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-07-05"
+      ]
+    },
+    "wb-p2-07-06": {
+      "role": "boss",
+      "worldId": "p2-07",
+      "emoji": "🖋️",
+      "label": "만년필",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-07-06"
+      ]
+    },
+    "wb-p2-08-01": {
+      "role": "boss",
+      "worldId": "p2-08",
+      "emoji": "🚂",
+      "label": "기관차",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-08-01"
+      ]
+    },
+    "wb-p2-08-02": {
+      "role": "boss",
+      "worldId": "p2-08",
+      "emoji": "🚃",
+      "label": "객차",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-08-02"
+      ]
+    },
+    "wb-p2-08-03": {
+      "role": "boss",
+      "worldId": "p2-08",
+      "emoji": "🚋",
+      "label": "전차",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-08-03"
+      ]
+    },
+    "wb-p2-08-04": {
+      "role": "boss",
+      "worldId": "p2-08",
+      "emoji": "🚇",
+      "label": "지하철",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-08-04"
+      ]
+    },
+    "wb-p2-08-05": {
+      "role": "boss",
+      "worldId": "p2-08",
+      "emoji": "🚉",
+      "label": "기차역",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-08-05"
+      ]
+    },
+    "wb-p2-08-06": {
+      "role": "boss",
+      "worldId": "p2-08",
+      "emoji": "🚞",
+      "label": "산악열차",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-08-06"
+      ]
+    },
+    "wb-p2-09-01": {
+      "role": "boss",
+      "worldId": "p2-09",
+      "emoji": "🔧",
+      "label": "스패너",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-09-01"
+      ]
+    },
+    "wb-p2-09-02": {
+      "role": "boss",
+      "worldId": "p2-09",
+      "emoji": "🔩",
+      "label": "볼트",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-09-02"
+      ]
+    },
+    "wb-p2-09-03": {
+      "role": "boss",
+      "worldId": "p2-09",
+      "emoji": "⚙️",
+      "label": "톱니바퀴",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-09-03"
+      ]
+    },
+    "wb-p2-09-04": {
+      "role": "boss",
+      "worldId": "p2-09",
+      "emoji": "🔨",
+      "label": "망치",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-09-04"
+      ]
+    },
+    "wb-p2-09-05": {
+      "role": "boss",
+      "worldId": "p2-09",
+      "emoji": "🔦",
+      "label": "손전등",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-09-05"
+      ]
+    },
+    "wb-p2-09-06": {
+      "role": "boss",
+      "worldId": "p2-09",
+      "emoji": "🔋",
+      "label": "건전지",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-09-06"
+      ]
+    },
+    "wb-p2-10-01": {
+      "role": "boss",
+      "worldId": "p2-10",
+      "emoji": "🐧",
+      "label": "펭귄",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-10-01"
+      ]
+    },
+    "wb-p2-10-02": {
+      "role": "boss",
+      "worldId": "p2-10",
+      "emoji": "🐻",
+      "label": "곰",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-10-02"
+      ]
+    },
+    "wb-p2-10-03": {
+      "role": "boss",
+      "worldId": "p2-10",
+      "emoji": "🐼",
+      "label": "판다",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-10-03"
+      ]
+    },
+    "wb-p2-10-04": {
+      "role": "boss",
+      "worldId": "p2-10",
+      "emoji": "🐨",
+      "label": "코알라",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-10-04"
+      ]
+    },
+    "wb-p2-10-05": {
+      "role": "boss",
+      "worldId": "p2-10",
+      "emoji": "🦊",
+      "label": "여우",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-10-05"
+      ]
+    },
+    "wb-p2-10-06": {
+      "role": "boss",
+      "worldId": "p2-10",
+      "emoji": "🐺",
+      "label": "늑대",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-10-06"
+      ]
+    },
+    "wb-p2-11-01": {
+      "role": "boss",
+      "worldId": "p2-11",
+      "emoji": "👻",
+      "label": "유령",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-11-01"
+      ]
+    },
+    "wb-p2-11-02": {
+      "role": "boss",
+      "worldId": "p2-11",
+      "emoji": "🎩",
+      "label": "높은모자",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-11-02"
+      ]
+    },
+    "wb-p2-11-03": {
+      "role": "boss",
+      "worldId": "p2-11",
+      "emoji": "👓",
+      "label": "안경",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-11-03"
+      ]
+    },
+    "wb-p2-11-04": {
+      "role": "boss",
+      "worldId": "p2-11",
+      "emoji": "👒",
+      "label": "꽃모자",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-11-04"
+      ]
+    },
+    "wb-p2-11-05": {
+      "role": "boss",
+      "worldId": "p2-11",
+      "emoji": "👑",
+      "label": "왕관",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-11-05"
+      ]
+    },
+    "wb-p2-11-06": {
+      "role": "boss",
+      "worldId": "p2-11",
+      "emoji": "👛",
+      "label": "동전지갑",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-11-06"
+      ]
+    },
+    "wb-p2-12-01": {
+      "role": "boss",
+      "worldId": "p2-12",
+      "emoji": "🔍",
+      "label": "왼쪽돋보기",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-12-01"
+      ]
+    },
+    "wb-p2-12-02": {
+      "role": "boss",
+      "worldId": "p2-12",
+      "emoji": "🔎",
+      "label": "오른쪽돋보기",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-12-02"
+      ]
+    },
+    "wb-p2-12-03": {
+      "role": "boss",
+      "worldId": "p2-12",
+      "emoji": "📷",
+      "label": "카메라",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-12-03"
+      ]
+    },
+    "wb-p2-12-04": {
+      "role": "boss",
+      "worldId": "p2-12",
+      "emoji": "📓",
+      "label": "수첩",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-12-04"
+      ]
+    },
+    "wb-p2-12-05": {
+      "role": "boss",
+      "worldId": "p2-12",
+      "emoji": "📎",
+      "label": "클립",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-12-05"
+      ]
+    },
+    "wb-p2-12-06": {
+      "role": "boss",
+      "worldId": "p2-12",
+      "emoji": "📌",
+      "label": "압정",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-12-06"
+      ]
+    },
+    "wb-p2-13-01": {
+      "role": "boss",
+      "worldId": "p2-13",
+      "emoji": "🐪",
+      "label": "단봉낙타",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-13-01"
+      ]
+    },
+    "wb-p2-13-02": {
+      "role": "boss",
+      "worldId": "p2-13",
+      "emoji": "🐫",
+      "label": "쌍봉낙타",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-13-02"
+      ]
+    },
+    "wb-p2-13-03": {
+      "role": "boss",
+      "worldId": "p2-13",
+      "emoji": "🐘",
+      "label": "코끼리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-13-03"
+      ]
+    },
+    "wb-p2-13-04": {
+      "role": "boss",
+      "worldId": "p2-13",
+      "emoji": "🐎",
+      "label": "말",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-13-04"
+      ]
+    },
+    "wb-p2-13-05": {
+      "role": "boss",
+      "worldId": "p2-13",
+      "emoji": "🐄",
+      "label": "젖소",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-13-05"
+      ]
+    },
+    "wb-p2-13-06": {
+      "role": "boss",
+      "worldId": "p2-13",
+      "emoji": "🐐",
+      "label": "염소",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-13-06"
+      ]
+    },
+    "wb-p2-14-01": {
+      "role": "boss",
+      "worldId": "p2-14",
+      "emoji": "🏺",
+      "label": "항아리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-14-01"
+      ]
+    },
+    "wb-p2-14-02": {
+      "role": "boss",
+      "worldId": "p2-14",
+      "emoji": "💎",
+      "label": "보석",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-14-02"
+      ]
+    },
+    "wb-p2-14-03": {
+      "role": "boss",
+      "worldId": "p2-14",
+      "emoji": "🔮",
+      "label": "수정구슬",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-14-03"
+      ]
+    },
+    "wb-p2-14-04": {
+      "role": "boss",
+      "worldId": "p2-14",
+      "emoji": "💍",
+      "label": "반지",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-14-04"
+      ]
+    },
+    "wb-p2-14-05": {
+      "role": "boss",
+      "worldId": "p2-14",
+      "emoji": "📿",
+      "label": "구슬목걸이",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-14-05"
+      ]
+    },
+    "wb-p2-14-06": {
+      "role": "boss",
+      "worldId": "p2-14",
+      "emoji": "💠",
+      "label": "꽃보석",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-14-06"
+      ]
+    },
+    "wb-p2-15-01": {
+      "role": "boss",
+      "worldId": "p2-15",
+      "emoji": "📚",
+      "label": "책더미",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-15-01"
+      ]
+    },
+    "wb-p2-15-02": {
+      "role": "boss",
+      "worldId": "p2-15",
+      "emoji": "📖",
+      "label": "펼친책",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-15-02"
+      ]
+    },
+    "wb-p2-15-03": {
+      "role": "boss",
+      "worldId": "p2-15",
+      "emoji": "📜",
+      "label": "두루마리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-15-03"
+      ]
+    },
+    "wb-p2-15-04": {
+      "role": "boss",
+      "worldId": "p2-15",
+      "emoji": "📒",
+      "label": "묶은책",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-15-04"
+      ]
+    },
+    "wb-p2-15-05": {
+      "role": "boss",
+      "worldId": "p2-15",
+      "emoji": "📗",
+      "label": "초록책",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-15-05"
+      ]
+    },
+    "wb-p2-15-06": {
+      "role": "boss",
+      "worldId": "p2-15",
+      "emoji": "📘",
+      "label": "파란책",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p2-15-06"
+      ]
+    },
+    "wb-p3-01-01": {
+      "role": "boss",
+      "worldId": "p3-01",
+      "emoji": "☁️",
+      "label": "구름",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-01-01"
+      ]
+    },
+    "wb-p3-01-02": {
+      "role": "boss",
+      "worldId": "p3-01",
+      "emoji": "⛅",
+      "label": "구름뒤해",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-01-02"
+      ]
+    },
+    "wb-p3-01-03": {
+      "role": "boss",
+      "worldId": "p3-01",
+      "emoji": "🌤️",
+      "label": "작은구름해",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-01-03"
+      ]
+    },
+    "wb-p3-01-04": {
+      "role": "boss",
+      "worldId": "p3-01",
+      "emoji": "🌥️",
+      "label": "흐린해",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-01-04"
+      ]
+    },
+    "wb-p3-01-05": {
+      "role": "boss",
+      "worldId": "p3-01",
+      "emoji": "🌫️",
+      "label": "안개",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-01-05"
+      ]
+    },
+    "wb-p3-01-06": {
+      "role": "boss",
+      "worldId": "p3-01",
+      "emoji": "💨",
+      "label": "바람",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-01-06"
+      ]
+    },
+    "wb-p3-02-01": {
+      "role": "boss",
+      "worldId": "p3-02",
+      "emoji": "🌙",
+      "label": "초승달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-02-01"
+      ]
+    },
+    "wb-p3-02-02": {
+      "role": "boss",
+      "worldId": "p3-02",
+      "emoji": "🌛",
+      "label": "오른웃는달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-02-02"
+      ]
+    },
+    "wb-p3-02-03": {
+      "role": "boss",
+      "worldId": "p3-02",
+      "emoji": "🌜",
+      "label": "왼웃는달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-02-03"
+      ]
+    },
+    "wb-p3-02-04": {
+      "role": "boss",
+      "worldId": "p3-02",
+      "emoji": "🌒",
+      "label": "차오르는초승달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-02-04"
+      ]
+    },
+    "wb-p3-02-05": {
+      "role": "boss",
+      "worldId": "p3-02",
+      "emoji": "🌓",
+      "label": "반달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-02-05"
+      ]
+    },
+    "wb-p3-02-06": {
+      "role": "boss",
+      "worldId": "p3-02",
+      "emoji": "🌔",
+      "label": "볼록달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-02-06"
+      ]
+    },
+    "wb-p3-03-01": {
+      "role": "boss",
+      "worldId": "p3-03",
+      "emoji": "⭐",
+      "label": "별",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-03-01"
+      ]
+    },
+    "wb-p3-03-02": {
+      "role": "boss",
+      "worldId": "p3-03",
+      "emoji": "🌟",
+      "label": "빛나는별",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-03-02"
+      ]
+    },
+    "wb-p3-03-03": {
+      "role": "boss",
+      "worldId": "p3-03",
+      "emoji": "✨",
+      "label": "반짝임",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-03-03"
+      ]
+    },
+    "wb-p3-03-04": {
+      "role": "boss",
+      "worldId": "p3-03",
+      "emoji": "💫",
+      "label": "빙글별",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-03-04"
+      ]
+    },
+    "wb-p3-03-05": {
+      "role": "boss",
+      "worldId": "p3-03",
+      "emoji": "☄️",
+      "label": "꼬리별",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-03-05"
+      ]
+    },
+    "wb-p3-03-06": {
+      "role": "boss",
+      "worldId": "p3-03",
+      "emoji": "🌠",
+      "label": "별똥별",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-03-06"
+      ]
+    },
+    "wb-p3-04-01": {
+      "role": "boss",
+      "worldId": "p3-04",
+      "emoji": "🐦",
+      "label": "파랑새",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-04-01"
+      ]
+    },
+    "wb-p3-04-02": {
+      "role": "boss",
+      "worldId": "p3-04",
+      "emoji": "🐤",
+      "label": "병아리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-04-02"
+      ]
+    },
+    "wb-p3-04-03": {
+      "role": "boss",
+      "worldId": "p3-04",
+      "emoji": "🐥",
+      "label": "걷는병아리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-04-03"
+      ]
+    },
+    "wb-p3-04-04": {
+      "role": "boss",
+      "worldId": "p3-04",
+      "emoji": "🐣",
+      "label": "알속병아리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-04-04"
+      ]
+    },
+    "wb-p3-04-05": {
+      "role": "boss",
+      "worldId": "p3-04",
+      "emoji": "🐔",
+      "label": "암탉",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-04-05"
+      ]
+    },
+    "wb-p3-04-06": {
+      "role": "boss",
+      "worldId": "p3-04",
+      "emoji": "🐓",
+      "label": "수탉",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-04-06"
+      ]
+    },
+    "wb-p3-05-01": {
+      "role": "boss",
+      "worldId": "p3-05",
+      "emoji": "🎠",
+      "label": "회전목마",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-05-01"
+      ]
+    },
+    "wb-p3-05-02": {
+      "role": "boss",
+      "worldId": "p3-05",
+      "emoji": "🎡",
+      "label": "관람차",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-05-02"
+      ]
+    },
+    "wb-p3-05-03": {
+      "role": "boss",
+      "worldId": "p3-05",
+      "emoji": "🎢",
+      "label": "롤러코스터",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-05-03"
+      ]
+    },
+    "wb-p3-05-04": {
+      "role": "boss",
+      "worldId": "p3-05",
+      "emoji": "🎪",
+      "label": "천막",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-05-04"
+      ]
+    },
+    "wb-p3-05-05": {
+      "role": "boss",
+      "worldId": "p3-05",
+      "emoji": "🎭",
+      "label": "가면",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-05-05"
+      ]
+    },
+    "wb-p3-05-06": {
+      "role": "boss",
+      "worldId": "p3-05",
+      "emoji": "🎫",
+      "label": "표",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-05-06"
+      ]
+    },
+    "wb-p3-06-01": {
+      "role": "boss",
+      "worldId": "p3-06",
+      "emoji": "🚀",
+      "label": "로켓",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-06-01"
+      ]
+    },
+    "wb-p3-06-02": {
+      "role": "boss",
+      "worldId": "p3-06",
+      "emoji": "🛰️",
+      "label": "인공위성",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-06-02"
+      ]
+    },
+    "wb-p3-06-03": {
+      "role": "boss",
+      "worldId": "p3-06",
+      "emoji": "🌌",
+      "label": "은하수",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-06-03"
+      ]
+    },
+    "wb-p3-06-04": {
+      "role": "boss",
+      "worldId": "p3-06",
+      "emoji": "🔭",
+      "label": "망원경",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-06-04"
+      ]
+    },
+    "wb-p3-06-05": {
+      "role": "boss",
+      "worldId": "p3-06",
+      "emoji": "🌍",
+      "label": "지구동쪽",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-06-05"
+      ]
+    },
+    "wb-p3-06-06": {
+      "role": "boss",
+      "worldId": "p3-06",
+      "emoji": "🌎",
+      "label": "지구서쪽",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-06-06"
+      ]
+    },
+    "wb-p3-07-01": {
+      "role": "boss",
+      "worldId": "p3-07",
+      "emoji": "🏠",
+      "label": "집",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-07-01"
+      ]
+    },
+    "wb-p3-07-02": {
+      "role": "boss",
+      "worldId": "p3-07",
+      "emoji": "🏡",
+      "label": "정원집",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-07-02"
+      ]
+    },
+    "wb-p3-07-03": {
+      "role": "boss",
+      "worldId": "p3-07",
+      "emoji": "🏘️",
+      "label": "이웃집",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-07-03"
+      ]
+    },
+    "wb-p3-07-04": {
+      "role": "boss",
+      "worldId": "p3-07",
+      "emoji": "🌉",
+      "label": "밤다리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-07-04"
+      ]
+    },
+    "wb-p3-07-05": {
+      "role": "boss",
+      "worldId": "p3-07",
+      "emoji": "🏰",
+      "label": "돌성",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-07-05"
+      ]
+    },
+    "wb-p3-07-06": {
+      "role": "boss",
+      "worldId": "p3-07",
+      "emoji": "🏯",
+      "label": "기와성",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "wb-p3-07-06"
+      ]
+    },
+    "deco-boat": {
+      "role": "decoration",
+      "sourceSprite": "wb-p2-01-02",
+      "label": "돛단배",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "deco-boat"
+      ]
+    },
+    "deco-sunflower": {
+      "role": "decoration",
+      "sourceSprite": "wb-p1-01-03",
+      "label": "해바라기",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "deco-sunflower"
+      ]
+    },
+    "deco-palm": {
+      "role": "decoration",
+      "sourceSprite": "wb-p1-04-03",
+      "label": "야자",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "deco-palm"
+      ]
+    },
+    "deco-moon": {
+      "role": "decoration",
+      "sourceSprite": "wb-p3-02-01",
+      "label": "초승달",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "deco-moon"
+      ]
+    },
+    "deco-shell": {
+      "role": "decoration",
+      "sourceSprite": "wb-p2-02-01",
+      "label": "소라",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "deco-shell"
+      ]
+    },
+    "deco-pear": {
+      "role": "decoration",
+      "sourceSprite": "wb-p1-02-02",
+      "label": "배",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "deco-pear"
+      ]
+    }
+  },
+  "worldVars": [
+    "--w-sky",
+    "--w-sky-l",
+    "--w-ground",
+    "--w-ground-d",
+    "--w-ground-l",
+    "--w-path",
+    "--w-path-d",
+    "--w-path-l"
+  ],
+  "emojiToSprite": {
+    "🌱": "wb-p1-01-01",
+    "🌷": "wb-p1-01-02",
+    "🌻": "wb-p1-01-03",
+    "🌼": "wb-p1-01-04",
+    "🌹": "wb-p1-01-05",
+    "🍀": "wb-p1-01-06",
+    "🍎": "wb-p1-02-01",
+    "🍐": "wb-p1-02-02",
+    "🍊": "wb-p1-02-03",
+    "🍋": "wb-p1-02-04",
+    "🍒": "wb-p1-02-05",
+    "🍓": "wb-p1-02-06",
+    "🐌": "wb-p1-03-01",
+    "🐛": "wb-p1-03-02",
+    "🐜": "wb-p1-03-03",
+    "🐝": "wb-p1-03-04",
+    "🐞": "wb-p1-03-05",
+    "🦋": "wb-p1-03-06",
+    "🌳": "wb-p1-04-01",
+    "🌲": "wb-p1-04-02",
+    "🌴": "wb-p1-04-03",
+    "🌵": "wb-p1-04-04",
+    "🎋": "wb-p1-04-05",
+    "🎍": "wb-p1-04-06",
+    "🐸": "wb-p1-05-01",
+    "🐢": "wb-p1-05-02",
+    "🐟": "wb-p1-05-03",
+    "🐠": "wb-p1-05-04",
+    "🐡": "wb-p1-05-05",
+    "🐙": "wb-p1-05-06",
+    "🐰": "wb-p1-06-01",
+    "🐹": "wb-p1-06-02",
+    "🐭": "wb-p1-06-03",
+    "🐿️": "wb-p1-06-04",
+    "🐾": "wb-p1-06-05",
+    "🐇": "wb-p1-06-06",
+    "✉️": "wb-p1-07-01",
+    "📮": "wb-p1-07-02",
+    "📬": "wb-p1-07-03",
+    "📭": "wb-p1-07-04",
+    "📪": "wb-p1-07-05",
+    "📫": "wb-p1-07-06",
+    "🔔": "wb-p1-08-01",
+    "🎺": "wb-p1-08-02",
+    "🎷": "wb-p1-08-03",
+    "🎻": "wb-p1-08-04",
+    "🎸": "wb-p1-08-05",
+    "🎹": "wb-p1-08-06",
+    "⚓": "wb-p2-01-01",
+    "⛵": "wb-p2-01-02",
+    "🚢": "wb-p2-01-03",
+    "🚤": "wb-p2-01-04",
+    "🛳️": "wb-p2-01-05",
+    "⛴️": "wb-p2-01-06",
+    "🐚": "wb-p2-02-01",
+    "🦀": "wb-p2-02-02",
+    "🐬": "wb-p2-02-03",
+    "🐳": "wb-p2-02-04",
+    "🐋": "wb-p2-02-05",
+    "🐊": "wb-p2-02-06",
+    "🍞": "wb-p2-03-01",
+    "🍯": "wb-p2-03-02",
+    "🍪": "wb-p2-03-03",
+    "🍰": "wb-p2-03-04",
+    "🍩": "wb-p2-03-05",
+    "🍮": "wb-p2-03-06",
+    "⏰": "wb-p2-04-01",
+    "⌛": "wb-p2-04-02",
+    "⌚": "wb-p2-04-03",
+    "🕰️": "wb-p2-04-04",
+    "⏳": "wb-p2-04-05",
+    "⏱️": "wb-p2-04-06",
+    "🎈": "wb-p2-05-01",
+    "🎏": "wb-p2-05-02",
+    "🎐": "wb-p2-05-03",
+    "🎀": "wb-p2-05-04",
+    "🎁": "wb-p2-05-05",
+    "🎉": "wb-p2-05-06",
+    "☂️": "wb-p2-06-01",
+    "☔": "wb-p2-06-02",
+    "💧": "wb-p2-06-03",
+    "🌂": "wb-p2-06-04",
+    "🌧️": "wb-p2-06-05",
+    "🌦️": "wb-p2-06-06",
+    "🎨": "wb-p2-07-01",
+    "🖌️": "wb-p2-07-02",
+    "🖍️": "wb-p2-07-03",
+    "✏️": "wb-p2-07-04",
+    "🖊️": "wb-p2-07-05",
+    "🖋️": "wb-p2-07-06",
+    "🚂": "wb-p2-08-01",
+    "🚃": "wb-p2-08-02",
+    "🚋": "wb-p2-08-03",
+    "🚇": "wb-p2-08-04",
+    "🚉": "wb-p2-08-05",
+    "🚞": "wb-p2-08-06",
+    "🔧": "wb-p2-09-01",
+    "🔩": "wb-p2-09-02",
+    "⚙️": "wb-p2-09-03",
+    "🔨": "wb-p2-09-04",
+    "🔦": "wb-p2-09-05",
+    "🔋": "wb-p2-09-06",
+    "🐧": "wb-p2-10-01",
+    "🐻": "wb-p2-10-02",
+    "🐼": "wb-p2-10-03",
+    "🐨": "wb-p2-10-04",
+    "🦊": "wb-p2-10-05",
+    "🐺": "wb-p2-10-06",
+    "👻": "wb-p2-11-01",
+    "🎩": "wb-p2-11-02",
+    "👓": "wb-p2-11-03",
+    "👒": "wb-p2-11-04",
+    "👑": "wb-p2-11-05",
+    "👛": "wb-p2-11-06",
+    "🔍": "wb-p2-12-01",
+    "🔎": "wb-p2-12-02",
+    "📷": "wb-p2-12-03",
+    "📓": "wb-p2-12-04",
+    "📎": "wb-p2-12-05",
+    "📌": "wb-p2-12-06",
+    "🐪": "wb-p2-13-01",
+    "🐫": "wb-p2-13-02",
+    "🐘": "wb-p2-13-03",
+    "🐎": "wb-p2-13-04",
+    "🐄": "wb-p2-13-05",
+    "🐐": "wb-p2-13-06",
+    "🏺": "wb-p2-14-01",
+    "💎": "wb-p2-14-02",
+    "🔮": "wb-p2-14-03",
+    "💍": "wb-p2-14-04",
+    "📿": "wb-p2-14-05",
+    "💠": "wb-p2-14-06",
+    "📚": "wb-p2-15-01",
+    "📖": "wb-p2-15-02",
+    "📜": "wb-p2-15-03",
+    "📒": "wb-p2-15-04",
+    "📗": "wb-p2-15-05",
+    "📘": "wb-p2-15-06",
+    "☁️": "wb-p3-01-01",
+    "⛅": "wb-p3-01-02",
+    "🌤️": "wb-p3-01-03",
+    "🌥️": "wb-p3-01-04",
+    "🌫️": "wb-p3-01-05",
+    "💨": "wb-p3-01-06",
+    "🌙": "wb-p3-02-01",
+    "🌛": "wb-p3-02-02",
+    "🌜": "wb-p3-02-03",
+    "🌒": "wb-p3-02-04",
+    "🌓": "wb-p3-02-05",
+    "🌔": "wb-p3-02-06",
+    "⭐": "wb-p3-03-01",
+    "🌟": "wb-p3-03-02",
+    "✨": "wb-p3-03-03",
+    "💫": "wb-p3-03-04",
+    "☄️": "wb-p3-03-05",
+    "🌠": "wb-p3-03-06",
+    "🐦": "wb-p3-04-01",
+    "🐤": "wb-p3-04-02",
+    "🐥": "wb-p3-04-03",
+    "🐣": "wb-p3-04-04",
+    "🐔": "wb-p3-04-05",
+    "🐓": "wb-p3-04-06",
+    "🎠": "wb-p3-05-01",
+    "🎡": "wb-p3-05-02",
+    "🎢": "wb-p3-05-03",
+    "🎪": "wb-p3-05-04",
+    "🎭": "wb-p3-05-05",
+    "🎫": "wb-p3-05-06",
+    "🚀": "wb-p3-06-01",
+    "🛰️": "wb-p3-06-02",
+    "🌌": "wb-p3-06-03",
+    "🔭": "wb-p3-06-04",
+    "🌍": "wb-p3-06-05",
+    "🌎": "wb-p3-06-06",
+    "🏠": "wb-p3-07-01",
+    "🏡": "wb-p3-07-02",
+    "🏘️": "wb-p3-07-03",
+    "🌉": "wb-p3-07-04",
+    "🏰": "wb-p3-07-05",
+    "🏯": "wb-p3-07-06"
+  },
+  "decorations": {
+    "deco-boat": "wb-p2-01-02",
+    "deco-sunflower": "wb-p1-01-03",
+    "deco-palm": "wb-p1-04-03",
+    "deco-moon": "wb-p3-02-01",
+    "deco-shell": "wb-p2-02-01",
+    "deco-pear": "wb-p1-02-02"
+  },
+  "deviceVerification": {
+    "iPadOS": "unverified",
+    "nativeEmoji": "manual-review-required"
+  }
+}

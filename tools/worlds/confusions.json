@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "status": "conservative-separation-list",
+  "note": "기존 자료 감사에 명시된 동음 후보를 보수적으로 분리한다. 자동 IPA와 동일 한글 뜻·철자 그룹도 추가한다. 전체 유사어 검수를 뜻하지 않는다.",
+  "groups": [
+    {"forms": ["right", "write"], "reason": "data_audit.md 1절"},
+    {"forms": ["hear", "here"], "reason": "data_audit.md 1절"},
+    {"forms": ["see", "sea"], "reason": "data_audit.md 1절"},
+    {"forms": ["week", "weak"], "reason": "data_audit.md 1절"},
+    {"forms": ["sun", "son"], "reason": "data_audit.md 1절"},
+    {"forms": ["meet", "meat"], "reason": "data_audit.md 1절"},
+    {"forms": ["wait", "weight"], "reason": "data_audit.md 1절"},
+    {"forms": ["whole", "hole"], "reason": "data_audit.md 1절"}
+  ]
+}
