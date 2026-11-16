@@ -13,7 +13,21 @@ const VARIANTS = [
   ['셋 다 + 빚 2배', { ...U, ...A, ...D(2) }], ['셋 다 + 빚 1배', { ...U, ...A, ...D(1) }], ['셋 다 + 빚 0.5배', { ...U, ...A, ...D(0.5) }],
   ['정한 규칙(칸 복습 50%·20장, 무제한, 빚 1배)', CHOSEN],
 ];
+// docs/LEARNING_VALUE_SPEC.md 2.2-2.4 on the real worlds (4,489 cards). What a child knows beforehand falls from the
+// first world of a band to the last (the worlds are in frequency order); the band averages stay those of CHILD.
+const GRAD = { bear: { P1: [0.7, 0.1], P2: [0.25, 0.05], P3: [0.08, 0.02] }, base: { P1: [0.9, 0.3], P2: [0.5, 0.1], P3: [0.25, 0.05] }, bull: { P1: [0.98, 0.52], P2: [0.7, 0.2], P3: [0.4, 0.1] } };
+const REAL = (c, o = {}) => child(c, { ...GAME, real: true, gradient: GRAD[c], ...o });
+const P = (n, pass, undo = false) => ({ placement: { n, pass, undo } });
+const TRI = [
+  ['지금 규칙', {}], ['훑기', { triage: true }], ['훑기 + 표본 3장', { triage: true, sample: 3 }], ['훑기 + 표본 5장', { triage: true, sample: 5 }],
+  ['진단(6장 중 5) + 훑기 + 표본 5장', { triage: true, sample: 5, ...P(6, 5) }], ['진단(6장 중 5, 성 실패 시 되돌림) + 훑기 + 표본 5장', { triage: true, sample: 5, ...P(6, 5, true) }],
+  ['진단(10장 중 9, 되돌림) + 훑기 + 표본 5장', { triage: true, sample: 5, ...P(10, 9, true) }], ['진단(10장 중 9, 되돌림) + 훑기 + 표본 3장', { triage: true, sample: 3, ...P(10, 9, true) }],
+];
 export default {
+  // 8. placement test, tile triage and sample checks, alone and together
+  triage: ['base', 'bear', 'bull'].map((c) => ({ title: `학습 가치 제안 (${c}, 몬스터 50%, 실제 세계 4,489장)`, cols: 'triage', rows: TRI.map(([name, o]) => ({ name, opt: REAL(c, o) })) })),
+  // how honest the child is on the tile screen
+  honest: [{ title: '훑기에서 모르는 단어를 넘기는 비율 (base, 진단 10장 중 9 + 훑기 + 표본 5장)', cols: 'triage', rows: [0.05, 0.1, 0.2, 0.35].map((f) => ({ name: `넘기는 비율 ${f * 100}%`, opt: REAL('base', { triage: true, sample: 5, ...P(10, 9, true), childOver: { falseClaim: f } }) })) }],
   // 1. the old rules, by child profile and by how often the optional monster is taken
   old: [{ title: '예전 규칙: 아이 유형과 행동별', rows: kids(OLD) }],
   // 2. one lever at a time, base child: one who takes half of the offered monsters, one who almost never does
