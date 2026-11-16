@@ -1,0 +1,2182 @@
+{
+  "schemaVersion": 3,
+  "contentVersion": "postal-world-art-1",
+  "status": "draft",
+  "contentScope": "presentation-only",
+  "playable": false,
+  "missing": [
+    "map.nodes.words",
+    "vocabulary-allocation",
+    "sideActivities",
+    "finale-rules",
+    "progress-migration"
+  ],
+  "source": {
+    "path": "docs/WORLD_BIBLE.md",
+    "sha256": "09899ada6a0c707a628fc3db0fc3c75b1a064e69f745c3632a0e0c71b5b0d904"
+  },
+  "counts": {
+    "continents": 3,
+    "worlds": 30,
+    "bossSprites": 180,
+    "decorationAliases": 6,
+    "assignedCards": 0
+  },
+  "assetPack": {
+    "sheet": "assets/postal/world-pixels/sprites.svg",
+    "manifest": "assets/postal/world-pixels/manifest.json"
+  },
+  "continents": [
+    {
+      "id": "c1",
+      "band": "P1",
+      "name": "새싹 들판",
+      "worlds": [
+        {
+          "id": "p1-01",
+          "name": "문 앞 꽃밭",
+          "title": "문 앞 꽃밭",
+          "concept": "첫 편지가 꽃 사이에 걸렸다. 작은 문부터 연다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DFF3FF",
+            "ground": "#8FCB83",
+            "path": "#72644A"
+          },
+          "paletteVars": {
+            "--w-sky": "#DFF3FF",
+            "--w-sky-l": "#E5F4FA",
+            "--w-ground": "#8FCB83",
+            "--w-ground-d": "#77AC73",
+            "--w-ground-l": "#A7D59A",
+            "--w-path": "#72644A",
+            "--w-path-d": "#615C46",
+            "--w-path-l": "#90846D"
+          },
+          "bossEmoji": [
+            "🌱",
+            "🌷",
+            "🌻",
+            "🌼",
+            "🌹",
+            "🍀"
+          ],
+          "bossSprites": [
+            "wb-p1-01-01",
+            "wb-p1-01-02",
+            "wb-p1-01-03",
+            "wb-p1-01-04",
+            "wb-p1-01-05",
+            "wb-p1-01-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-01-route-1",
+              "name": "새싹 길",
+              "icon": "🌱",
+              "spriteId": "wb-p1-01-01"
+            },
+            {
+              "id": "p1-01-route-2",
+              "name": "꽃잎 길",
+              "icon": "🌷",
+              "spriteId": "wb-p1-01-02"
+            },
+            {
+              "id": "p1-01-route-3",
+              "name": "햇살 길",
+              "icon": "🌻",
+              "spriteId": "wb-p1-01-03"
+            }
+          ],
+          "castle": {
+            "name": "꽃마루 성",
+            "emoji": "🌼",
+            "spriteId": "wb-p1-01-04"
+          },
+          "key": {
+            "name": "장미 열쇠",
+            "emoji": "🌹",
+            "spriteId": "wb-p1-01-05"
+          },
+          "intro": "첫 편지가 꽃 사이에 있어. 작은 길부터 걸어 보자!",
+          "outro": "꽃마루 문이 열렸어. 첫 친구가 손을 흔들어!",
+          "story": "둥근 과일 상자 너머로 편지가 팔랑거려."
+        },
+        {
+          "id": "p1-02",
+          "name": "동글 과일 뜰",
+          "title": "동글 과일 뜰",
+          "concept": "둥근 과일 상자가 줄지어 있다. 상자 사이로 다음 편지가 보인다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FFE8D9",
+            "ground": "#A8C878",
+            "path": "#836044"
+          },
+          "paletteVars": {
+            "--w-sky": "#FFE8D9",
+            "--w-sky-l": "#FEEBDD",
+            "--w-ground": "#A8C878",
+            "--w-ground-d": "#8BAA6A",
+            "--w-ground-l": "#BAD291",
+            "--w-path": "#836044",
+            "--w-path-d": "#6E5942",
+            "--w-path-l": "#9D8169"
+          },
+          "bossEmoji": [
+            "🍎",
+            "🍐",
+            "🍊",
+            "🍋",
+            "🍒",
+            "🍓"
+          ],
+          "bossSprites": [
+            "wb-p1-02-01",
+            "wb-p1-02-02",
+            "wb-p1-02-03",
+            "wb-p1-02-04",
+            "wb-p1-02-05",
+            "wb-p1-02-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-02-route-1",
+              "name": "사과 길",
+              "icon": "🍎",
+              "spriteId": "wb-p1-02-01"
+            },
+            {
+              "id": "p1-02-route-2",
+              "name": "둥근 길",
+              "icon": "🍐",
+              "spriteId": "wb-p1-02-02"
+            },
+            {
+              "id": "p1-02-route-3",
+              "name": "주황 길",
+              "icon": "🍊",
+              "spriteId": "wb-p1-02-03"
+            }
+          ],
+          "castle": {
+            "name": "새콤 성",
+            "emoji": "🍋",
+            "spriteId": "wb-p1-02-04"
+          },
+          "key": {
+            "name": "두알 열쇠",
+            "emoji": "🍒",
+            "spriteId": "wb-p1-02-05"
+          },
+          "intro": "상자 사이에 길이 있어. 어느 쪽부터 가 볼까?",
+          "outro": "새콤한 문이 활짝 열렸어. 친구가 작은 발자국을 가리켜!",
+          "story": "발자국이 풀잎 밑으로 이어져."
+        },
+        {
+          "id": "p1-03",
+          "name": "풀잎 우체국",
+          "title": "풀잎 우체국",
+          "concept": "풀잎 밑의 작은 친구들이 편지를 나눠 든다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E6F5DC",
+            "ground": "#79AD79",
+            "path": "#595139"
+          },
+          "paletteVars": {
+            "--w-sky": "#E6F5DC",
+            "--w-sky-l": "#EBF5DF",
+            "--w-ground": "#79AD79",
+            "--w-ground-d": "#66956B",
+            "--w-ground-l": "#96BD92",
+            "--w-path": "#595139",
+            "--w-path-d": "#4D4D39",
+            "--w-path-l": "#7D7660"
+          },
+          "bossEmoji": [
+            "🐌",
+            "🐛",
+            "🐜",
+            "🐝",
+            "🐞",
+            "🦋"
+          ],
+          "bossSprites": [
+            "wb-p1-03-01",
+            "wb-p1-03-02",
+            "wb-p1-03-03",
+            "wb-p1-03-04",
+            "wb-p1-03-05",
+            "wb-p1-03-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-03-route-1",
+              "name": "느릿 길",
+              "icon": "🐌",
+              "spriteId": "wb-p1-03-01"
+            },
+            {
+              "id": "p1-03-route-2",
+              "name": "꼬물 길",
+              "icon": "🐛",
+              "spriteId": "wb-p1-03-02"
+            },
+            {
+              "id": "p1-03-route-3",
+              "name": "줄줄 길",
+              "icon": "🐜",
+              "spriteId": "wb-p1-03-03"
+            }
+          ],
+          "castle": {
+            "name": "붕붕 성",
+            "emoji": "🐝",
+            "spriteId": "wb-p1-03-04"
+          },
+          "key": {
+            "name": "점박이 열쇠",
+            "emoji": "🐞",
+            "spriteId": "wb-p1-03-05"
+          },
+          "intro": "풀잎 아래 작은 우체국이 있어. 친구들이 우리를 기다려!",
+          "outro": "작은 친구들이 길을 내줬어. 숲으로 갈 수 있어!",
+          "story": "바람에 흔들리는 나무들이 손짓해."
+        },
+        {
+          "id": "p1-04",
+          "name": "흔들 나무숲",
+          "title": "흔들 나무숲",
+          "concept": "나무들이 바람 방향을 알려 준다. 숲 너머에서 물소리가 난다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DCEDE7",
+            "ground": "#537D62",
+            "path": "#E2CDAC"
+          },
+          "paletteVars": {
+            "--w-sky": "#DCEDE7",
+            "--w-sky-l": "#E3EFE8",
+            "--w-ground": "#537D62",
+            "--w-ground-d": "#486F59",
+            "--w-ground-l": "#789880",
+            "--w-path": "#E2CDAC",
+            "--w-path-d": "#B8AE93",
+            "--w-path-l": "#E8D6BA"
+          },
+          "bossEmoji": [
+            "🌳",
+            "🌲",
+            "🌴",
+            "🌵",
+            "🎋",
+            "🎍"
+          ],
+          "bossSprites": [
+            "wb-p1-04-01",
+            "wb-p1-04-02",
+            "wb-p1-04-03",
+            "wb-p1-04-04",
+            "wb-p1-04-05",
+            "wb-p1-04-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-04-route-1",
+              "name": "큰나무 길",
+              "icon": "🌳",
+              "spriteId": "wb-p1-04-01"
+            },
+            {
+              "id": "p1-04-route-2",
+              "name": "솔잎 길",
+              "icon": "🌲",
+              "spriteId": "wb-p1-04-02"
+            },
+            {
+              "id": "p1-04-route-3",
+              "name": "긴잎 길",
+              "icon": "🌴",
+              "spriteId": "wb-p1-04-03"
+            }
+          ],
+          "castle": {
+            "name": "가시담 성",
+            "emoji": "🌵",
+            "spriteId": "wb-p1-04-04"
+          },
+          "key": {
+            "name": "대숲 열쇠",
+            "emoji": "🎋",
+            "spriteId": "wb-p1-04-05"
+          },
+          "intro": "숲이 살랑살랑 흔들려. 나무 사이 길을 찾아보자!",
+          "outro": "숲 너머가 환해졌어. 물소리도 들려!",
+          "story": "편지 한 장이 연못 위에 둥둥 떠 있어."
+        },
+        {
+          "id": "p1-05",
+          "name": "둥실 연못",
+          "title": "둥실 연못",
+          "concept": "물 위의 편지를 친구들이 건져 준다. 물결을 따라 둑으로 간다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#D8F1FA",
+            "ground": "#75B7B1",
+            "path": "#645943"
+          },
+          "paletteVars": {
+            "--w-sky": "#D8F1FA",
+            "--w-sky-l": "#E0F2F6",
+            "--w-ground": "#75B7B1",
+            "--w-ground-d": "#639D97",
+            "--w-ground-l": "#92C5BE",
+            "--w-path": "#645943",
+            "--w-path-d": "#565341",
+            "--w-path-l": "#857C68"
+          },
+          "bossEmoji": [
+            "🐸",
+            "🐢",
+            "🐟",
+            "🐠",
+            "🐡",
+            "🐙"
+          ],
+          "bossSprites": [
+            "wb-p1-05-01",
+            "wb-p1-05-02",
+            "wb-p1-05-03",
+            "wb-p1-05-04",
+            "wb-p1-05-05",
+            "wb-p1-05-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-05-route-1",
+              "name": "폴짝 길",
+              "icon": "🐸",
+              "spriteId": "wb-p1-05-01"
+            },
+            {
+              "id": "p1-05-route-2",
+              "name": "느긋 길",
+              "icon": "🐢",
+              "spriteId": "wb-p1-05-02"
+            },
+            {
+              "id": "p1-05-route-3",
+              "name": "물결 길",
+              "icon": "🐟",
+              "spriteId": "wb-p1-05-03"
+            }
+          ],
+          "castle": {
+            "name": "줄무늬 성",
+            "emoji": "🐠",
+            "spriteId": "wb-p1-05-04"
+          },
+          "key": {
+            "name": "동그란 열쇠",
+            "emoji": "🐡",
+            "spriteId": "wb-p1-05-05"
+          },
+          "intro": "물 위의 편지를 건져야 해. 연못 친구를 만나 보자!",
+          "outro": "편지가 젖기 전에 건졌어. 둑길이 열렸어!",
+          "story": "둑 끝의 작은 굴에서 불빛이 새어 나와."
+        },
+        {
+          "id": "p1-06",
+          "name": "폭신 굴마을",
+          "title": "폭신 굴마을",
+          "concept": "작은 굴마다 길을 아는 이웃이 산다. 함께 언덕을 넘는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FBE8DE",
+            "ground": "#B7A08A",
+            "path": "#5C5345"
+          },
+          "paletteVars": {
+            "--w-sky": "#FBE8DE",
+            "--w-sky-l": "#FBEBE1",
+            "--w-ground": "#B7A08A",
+            "--w-ground-d": "#968B78",
+            "--w-ground-l": "#C6B39F",
+            "--w-path": "#5C5345",
+            "--w-path-d": "#4F4F43",
+            "--w-path-l": "#7F7769"
+          },
+          "bossEmoji": [
+            "🐰",
+            "🐹",
+            "🐭",
+            "🐿️",
+            "🐾",
+            "🐇"
+          ],
+          "bossSprites": [
+            "wb-p1-06-01",
+            "wb-p1-06-02",
+            "wb-p1-06-03",
+            "wb-p1-06-04",
+            "wb-p1-06-05",
+            "wb-p1-06-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-06-route-1",
+              "name": "긴귀 길",
+              "icon": "🐰",
+              "spriteId": "wb-p1-06-01"
+            },
+            {
+              "id": "p1-06-route-2",
+              "name": "볼빵 길",
+              "icon": "🐹",
+              "spriteId": "wb-p1-06-02"
+            },
+            {
+              "id": "p1-06-route-3",
+              "name": "작은귀 길",
+              "icon": "🐭",
+              "spriteId": "wb-p1-06-03"
+            }
+          ],
+          "castle": {
+            "name": "도토리 성",
+            "emoji": "🐿️",
+            "spriteId": "wb-p1-06-04"
+          },
+          "key": {
+            "name": "발자국 열쇠",
+            "emoji": "🐾",
+            "spriteId": "wb-p1-06-05"
+          },
+          "intro": "굴마다 이웃이 살고 있어. 함께 언덕을 넘어가자!",
+          "outro": "친구들이 언덕길을 알려 줬어. 높은 편지집이 보여!",
+          "story": "먼 곳에 보낼 편지가 언덕에 모여 있어."
+        },
+        {
+          "id": "p1-07",
+          "name": "언덕 편지집",
+          "title": "언덕 편지집",
+          "concept": "멀리 갈 편지를 한데 모은다. 언덕의 작은 편지집을 돌아본다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#F5E7F2",
+            "ground": "#B69AAE",
+            "path": "#5E5042"
+          },
+          "paletteVars": {
+            "--w-sky": "#F5E7F2",
+            "--w-sky-l": "#F6EBF0",
+            "--w-ground": "#B69AAE",
+            "--w-ground-d": "#968694",
+            "--w-ground-l": "#C5AEBB",
+            "--w-path": "#5E5042",
+            "--w-path-d": "#514C40",
+            "--w-path-l": "#817567"
+          },
+          "bossEmoji": [
+            "✉️",
+            "📮",
+            "📬",
+            "📭",
+            "📪",
+            "📫"
+          ],
+          "bossSprites": [
+            "wb-p1-07-01",
+            "wb-p1-07-02",
+            "wb-p1-07-03",
+            "wb-p1-07-04",
+            "wb-p1-07-05",
+            "wb-p1-07-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-07-route-1",
+              "name": "편지 길",
+              "icon": "✉️",
+              "spriteId": "wb-p1-07-01"
+            },
+            {
+              "id": "p1-07-route-2",
+              "name": "빨간 길",
+              "icon": "📮",
+              "spriteId": "wb-p1-07-02"
+            },
+            {
+              "id": "p1-07-route-3",
+              "name": "기다림 길",
+              "icon": "📬",
+              "spriteId": "wb-p1-07-03"
+            }
+          ],
+          "castle": {
+            "name": "열린 편지 성",
+            "emoji": "📭",
+            "spriteId": "wb-p1-07-04"
+          },
+          "key": {
+            "name": "우편함 열쇠",
+            "emoji": "📪",
+            "spriteId": "wb-p1-07-05"
+          },
+          "intro": "멀리 갈 편지가 가득해. 한데 모아 함께 떠나자!",
+          "outro": "편지를 잘 묶었어. 이제 배를 만나러 가자!",
+          "story": "배웅하는 노랫소리가 언덕 아래에서 들려."
+        },
+        {
+          "id": "p1-08",
+          "name": "딩동 배웅터",
+          "title": "딩동 배웅터",
+          "concept": "친구들이 음악으로 배를 배웅한다. 노랫소리를 따라 첫 대륙을 닫는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FFF0CE",
+            "ground": "#C8B879",
+            "path": "#785F38"
+          },
+          "paletteVars": {
+            "--w-sky": "#FFF0CE",
+            "--w-sky-l": "#FEF2D4",
+            "--w-ground": "#C8B879",
+            "--w-ground-d": "#A49D6B",
+            "--w-ground-l": "#D3C692",
+            "--w-path": "#785F38",
+            "--w-path-d": "#655838",
+            "--w-path-l": "#95805F"
+          },
+          "bossEmoji": [
+            "🔔",
+            "🎺",
+            "🎷",
+            "🎻",
+            "🎸",
+            "🎹"
+          ],
+          "bossSprites": [
+            "wb-p1-08-01",
+            "wb-p1-08-02",
+            "wb-p1-08-03",
+            "wb-p1-08-04",
+            "wb-p1-08-05",
+            "wb-p1-08-06"
+          ],
+          "routes": [
+            {
+              "id": "p1-08-route-1",
+              "name": "딩동 길",
+              "icon": "🔔",
+              "spriteId": "wb-p1-08-01"
+            },
+            {
+              "id": "p1-08-route-2",
+              "name": "빰빰 길",
+              "icon": "🎺",
+              "spriteId": "wb-p1-08-02"
+            },
+            {
+              "id": "p1-08-route-3",
+              "name": "둠둠 길",
+              "icon": "🎷",
+              "spriteId": "wb-p1-08-03"
+            }
+          ],
+          "castle": {
+            "name": "노래 성",
+            "emoji": "🎻",
+            "spriteId": "wb-p1-08-04"
+          },
+          "key": {
+            "name": "여섯줄 열쇠",
+            "emoji": "🎸",
+            "spriteId": "wb-p1-08-05"
+          },
+          "intro": "친구들이 노래하며 기다려. 바다로 갈 준비를 하자!",
+          "outro": "배에 닿는 문이 열렸어. 남긴 길에도 인사하러 가자!",
+          "story": "들판의 길을 모두 돌아보면 큰 배 문이 열려."
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "band": "P2",
+      "name": "굽이굽이 바다",
+      "worlds": [
+        {
+          "id": "p2-01",
+          "name": "작은 배 항구",
+          "title": "작은 배 항구",
+          "concept": "새 배가 기다린다. 바닷길 여행을 시작한다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DCEFFF",
+            "ground": "#7EADBC",
+            "path": "#615442"
+          },
+          "paletteVars": {
+            "--w-sky": "#DCEFFF",
+            "--w-sky-l": "#E3F1FA",
+            "--w-ground": "#7EADBC",
+            "--w-ground-d": "#6A959F",
+            "--w-ground-l": "#9ABDC6",
+            "--w-path": "#615442",
+            "--w-path-d": "#534F40",
+            "--w-path-l": "#837867"
+          },
+          "bossEmoji": [
+            "⚓",
+            "⛵",
+            "🚢",
+            "🚤",
+            "🛳️",
+            "⛴️"
+          ],
+          "bossSprites": [
+            "wb-p2-01-01",
+            "wb-p2-01-02",
+            "wb-p2-01-03",
+            "wb-p2-01-04",
+            "wb-p2-01-05",
+            "wb-p2-01-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-01-route-1",
+              "name": "닻 길",
+              "icon": "⚓",
+              "spriteId": "wb-p2-01-01"
+            },
+            {
+              "id": "p2-01-route-2",
+              "name": "돛 길",
+              "icon": "⛵",
+              "spriteId": "wb-p2-01-02"
+            },
+            {
+              "id": "p2-01-route-3",
+              "name": "큰배 길",
+              "icon": "🚢",
+              "spriteId": "wb-p2-01-03"
+            }
+          ],
+          "castle": {
+            "name": "물살 성",
+            "emoji": "🚤",
+            "spriteId": "wb-p2-01-04"
+          },
+          "key": {
+            "name": "배 열쇠",
+            "emoji": "🛳️",
+            "spriteId": "wb-p2-01-05"
+          },
+          "intro": "우리 배가 기다리고 있어. 새 물길로 떠나자!",
+          "outro": "배가 항구를 벗어났어. 반짝이는 물길이 보여!",
+          "story": "조개를 든 친구가 다음 길을 안내해."
+        },
+        {
+          "id": "p2-02",
+          "name": "조개 물길",
+          "title": "조개 물길",
+          "concept": "바다 친구들이 반짝이는 물길을 잇는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#CCF1EF",
+            "ground": "#6FB9B6",
+            "path": "#65594E"
+          },
+          "paletteVars": {
+            "--w-sky": "#CCF1EF",
+            "--w-sky-l": "#D6F2EE",
+            "--w-ground": "#6FB9B6",
+            "--w-ground-d": "#5E9E9B",
+            "--w-ground-l": "#8EC7C1",
+            "--w-path": "#65594E",
+            "--w-path-d": "#56534A",
+            "--w-path-l": "#867C70"
+          },
+          "bossEmoji": [
+            "🐚",
+            "🦀",
+            "🐬",
+            "🐳",
+            "🐋",
+            "🐊"
+          ],
+          "bossSprites": [
+            "wb-p2-02-01",
+            "wb-p2-02-02",
+            "wb-p2-02-03",
+            "wb-p2-02-04",
+            "wb-p2-02-05",
+            "wb-p2-02-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-02-route-1",
+              "name": "조개 길",
+              "icon": "🐚",
+              "spriteId": "wb-p2-02-01"
+            },
+            {
+              "id": "p2-02-route-2",
+              "name": "옆걸음 길",
+              "icon": "🦀",
+              "spriteId": "wb-p2-02-02"
+            },
+            {
+              "id": "p2-02-route-3",
+              "name": "물놀이 길",
+              "icon": "🐬",
+              "spriteId": "wb-p2-02-03"
+            }
+          ],
+          "castle": {
+            "name": "물뿜 성",
+            "emoji": "🐳",
+            "spriteId": "wb-p2-02-04"
+          },
+          "key": {
+            "name": "고래 열쇠",
+            "emoji": "🐋",
+            "spriteId": "wb-p2-02-05"
+          },
+          "intro": "물결 사이로 길이 이어져. 바다 친구들을 따라가자!",
+          "outro": "물길을 잘 건넜어. 어디선가 고소한 냄새가 나!",
+          "story": "작은 섬에서 빵을 굽고 있어."
+        },
+        {
+          "id": "p2-03",
+          "name": "달콤 빵섬",
+          "title": "달콤 빵섬",
+          "concept": "빵 굽는 냄새가 나는 작은 섬. 쉬던 편지를 찾아 나선다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FFF0DC",
+            "ground": "#CDA47A",
+            "path": "#675842"
+          },
+          "paletteVars": {
+            "--w-sky": "#FFF0DC",
+            "--w-sky-l": "#FEF2DF",
+            "--w-ground": "#CDA47A",
+            "--w-ground-d": "#A88E6C",
+            "--w-ground-l": "#D7B693",
+            "--w-path": "#675842",
+            "--w-path-d": "#585240",
+            "--w-path-l": "#887B67"
+          },
+          "bossEmoji": [
+            "🍞",
+            "🍯",
+            "🍪",
+            "🍰",
+            "🍩",
+            "🍮"
+          ],
+          "bossSprites": [
+            "wb-p2-03-01",
+            "wb-p2-03-02",
+            "wb-p2-03-03",
+            "wb-p2-03-04",
+            "wb-p2-03-05",
+            "wb-p2-03-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-03-route-1",
+              "name": "폭신 길",
+              "icon": "🍞",
+              "spriteId": "wb-p2-03-01"
+            },
+            {
+              "id": "p2-03-route-2",
+              "name": "달콤 길",
+              "icon": "🍯",
+              "spriteId": "wb-p2-03-02"
+            },
+            {
+              "id": "p2-03-route-3",
+              "name": "바삭 길",
+              "icon": "🍪",
+              "spriteId": "wb-p2-03-03"
+            }
+          ],
+          "castle": {
+            "name": "딸기층 성",
+            "emoji": "🍰",
+            "spriteId": "wb-p2-03-04"
+          },
+          "key": {
+            "name": "고리빵 열쇠",
+            "emoji": "🍩",
+            "spriteId": "wb-p2-03-05"
+          },
+          "intro": "빵 냄새가 솔솔 나. 쉬고 있던 편지를 찾아보자!",
+          "outro": "편지를 다시 찾았어. 멀리서 종이 울려!",
+          "story": "느긋한 시계들이 우리를 부르고 있어."
+        },
+        {
+          "id": "p2-04",
+          "name": "느긋 시계탑",
+          "title": "느긋 시계탑",
+          "concept": "시계들이 제각각 울린다. 서두르지 않고 길을 찾는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E5E7F7",
+            "ground": "#9399BD",
+            "path": "#534D43"
+          },
+          "paletteVars": {
+            "--w-sky": "#E5E7F7",
+            "--w-sky-l": "#EAEBF4",
+            "--w-ground": "#9399BD",
+            "--w-ground-d": "#7A85A0",
+            "--w-ground-l": "#AAAEC7",
+            "--w-path": "#534D43",
+            "--w-path-d": "#484A41",
+            "--w-path-l": "#787268"
+          },
+          "bossEmoji": [
+            "⏰",
+            "⌛",
+            "⌚",
+            "🕰️",
+            "⏳",
+            "⏱️"
+          ],
+          "bossSprites": [
+            "wb-p2-04-01",
+            "wb-p2-04-02",
+            "wb-p2-04-03",
+            "wb-p2-04-04",
+            "wb-p2-04-05",
+            "wb-p2-04-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-04-route-1",
+              "name": "아침 길",
+              "icon": "⏰",
+              "spriteId": "wb-p2-04-01"
+            },
+            {
+              "id": "p2-04-route-2",
+              "name": "모래 길",
+              "icon": "⌛",
+              "spriteId": "wb-p2-04-02"
+            },
+            {
+              "id": "p2-04-route-3",
+              "name": "째깍 길",
+              "icon": "⌚",
+              "spriteId": "wb-p2-04-03"
+            }
+          ],
+          "castle": {
+            "name": "느긋 성",
+            "emoji": "🕰️",
+            "spriteId": "wb-p2-04-04"
+          },
+          "key": {
+            "name": "모래알 열쇠",
+            "emoji": "⏳",
+            "spriteId": "wb-p2-04-05"
+          },
+          "intro": "시계마다 소리가 달라. 서두르지 않고 길을 찾자!",
+          "outro": "시계탑 문이 열렸어. 바람이 살랑 불어!",
+          "story": "바람 끝에 풍선이 매달려 있어."
+        },
+        {
+          "id": "p2-05",
+          "name": "팔랑 풍선섬",
+          "title": "팔랑 풍선섬",
+          "concept": "풍선들이 바람을 보여 준다. 다음 섬으로 떠날 자리를 찾는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FFE4ED",
+            "ground": "#D4A5BE",
+            "path": "#6F5B49"
+          },
+          "paletteVars": {
+            "--w-sky": "#FFE4ED",
+            "--w-sky-l": "#FEE8EC",
+            "--w-ground": "#D4A5BE",
+            "--w-ground-d": "#AD8FA1",
+            "--w-ground-l": "#DDB7C8",
+            "--w-path": "#6F5B49",
+            "--w-path-d": "#5E5546",
+            "--w-path-l": "#8E7D6C"
+          },
+          "bossEmoji": [
+            "🎈",
+            "🎏",
+            "🎐",
+            "🎀",
+            "🎁",
+            "🎉"
+          ],
+          "bossSprites": [
+            "wb-p2-05-01",
+            "wb-p2-05-02",
+            "wb-p2-05-03",
+            "wb-p2-05-04",
+            "wb-p2-05-05",
+            "wb-p2-05-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-05-route-1",
+              "name": "둥실 길",
+              "icon": "🎈",
+              "spriteId": "wb-p2-05-01"
+            },
+            {
+              "id": "p2-05-route-2",
+              "name": "팔랑 길",
+              "icon": "🎏",
+              "spriteId": "wb-p2-05-02"
+            },
+            {
+              "id": "p2-05-route-3",
+              "name": "딸랑 길",
+              "icon": "🎐",
+              "spriteId": "wb-p2-05-03"
+            }
+          ],
+          "castle": {
+            "name": "리본 성",
+            "emoji": "🎀",
+            "spriteId": "wb-p2-05-04"
+          },
+          "key": {
+            "name": "선물 열쇠",
+            "emoji": "🎁",
+            "spriteId": "wb-p2-05-05"
+          },
+          "intro": "풍선들이 팔랑팔랑 춤춰. 바람이 가는 쪽을 보자!",
+          "outro": "풍선이 새 길을 알려 줬어. 작은 빗방울이 내려!",
+          "story": "우산을 든 친구들이 길가에 모여 있어."
+        },
+        {
+          "id": "p2-06",
+          "name": "우산 빗길",
+          "title": "우산 빗길",
+          "concept": "우산 아래서 친구들이 빗소리를 듣는다. 비가 그치면 색이 나타난다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DDE9F5",
+            "ground": "#849FB3",
+            "path": "#514D43"
+          },
+          "paletteVars": {
+            "--w-sky": "#DDE9F5",
+            "--w-sky-l": "#E4ECF3",
+            "--w-ground": "#849FB3",
+            "--w-ground-d": "#6F8A98",
+            "--w-ground-l": "#9EB2BF",
+            "--w-path": "#514D43",
+            "--w-path-d": "#474A41",
+            "--w-path-l": "#767268"
+          },
+          "bossEmoji": [
+            "☂️",
+            "☔",
+            "💧",
+            "🌂",
+            "🌧️",
+            "🌦️"
+          ],
+          "bossSprites": [
+            "wb-p2-06-01",
+            "wb-p2-06-02",
+            "wb-p2-06-03",
+            "wb-p2-06-04",
+            "wb-p2-06-05",
+            "wb-p2-06-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-06-route-1",
+              "name": "그늘 길",
+              "icon": "☂️",
+              "spriteId": "wb-p2-06-01"
+            },
+            {
+              "id": "p2-06-route-2",
+              "name": "빗방울 길",
+              "icon": "☔",
+              "spriteId": "wb-p2-06-02"
+            },
+            {
+              "id": "p2-06-route-3",
+              "name": "또르르 길",
+              "icon": "💧",
+              "spriteId": "wb-p2-06-03"
+            }
+          ],
+          "castle": {
+            "name": "접은 우산 성",
+            "emoji": "🌂",
+            "spriteId": "wb-p2-06-04"
+          },
+          "key": {
+            "name": "빗구름 열쇠",
+            "emoji": "🌧️",
+            "spriteId": "wb-p2-06-05"
+          },
+          "intro": "빗소리가 또독또독 나. 우산 아래 길을 걸어가자!",
+          "outro": "비가 그치고 하늘이 밝아졌어. 알록달록한 집이 보여!",
+          "story": "물감 자국이 집 안으로 이어져."
+        },
+        {
+          "id": "p2-07",
+          "name": "알록 물감집",
+          "title": "알록 물감집",
+          "concept": "물감이 길마다 다른 색을 남겼다. 색을 따라 역에 닿는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#F6E8FF",
+            "ground": "#A99BC3",
+            "path": "#5F503E"
+          },
+          "paletteVars": {
+            "--w-sky": "#F6E8FF",
+            "--w-sky-l": "#F7EBFA",
+            "--w-ground": "#A99BC3",
+            "--w-ground-d": "#8C87A5",
+            "--w-ground-l": "#BBAFCC",
+            "--w-path": "#5F503E",
+            "--w-path-d": "#524C3D",
+            "--w-path-l": "#817564"
+          },
+          "bossEmoji": [
+            "🎨",
+            "🖌️",
+            "🖍️",
+            "✏️",
+            "🖊️",
+            "🖋️"
+          ],
+          "bossSprites": [
+            "wb-p2-07-01",
+            "wb-p2-07-02",
+            "wb-p2-07-03",
+            "wb-p2-07-04",
+            "wb-p2-07-05",
+            "wb-p2-07-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-07-route-1",
+              "name": "물감 길",
+              "icon": "🎨",
+              "spriteId": "wb-p2-07-01"
+            },
+            {
+              "id": "p2-07-route-2",
+              "name": "슥슥 길",
+              "icon": "🖌️",
+              "spriteId": "wb-p2-07-02"
+            },
+            {
+              "id": "p2-07-route-3",
+              "name": "쓱쓱 길",
+              "icon": "🖍️",
+              "spriteId": "wb-p2-07-03"
+            }
+          ],
+          "castle": {
+            "name": "연필 성",
+            "emoji": "✏️",
+            "spriteId": "wb-p2-07-04"
+          },
+          "key": {
+            "name": "펜 열쇠",
+            "emoji": "🖊️",
+            "spriteId": "wb-p2-07-05"
+          },
+          "intro": "길마다 색이 달라. 마음에 드는 길부터 가자!",
+          "outro": "알록달록한 문이 열렸어. 기차 소리가 들려!",
+          "story": "색칠한 기차가 역에서 기다리고 있어."
+        },
+        {
+          "id": "p2-08",
+          "name": "덜컹 기차섬",
+          "title": "덜컹 기차섬",
+          "concept": "작은 기차가 섬을 천천히 돈다. 내려야 할 곳을 찾아간다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E4EEF0",
+            "ground": "#8EA9A5",
+            "path": "#61513D"
+          },
+          "paletteVars": {
+            "--w-sky": "#E4EEF0",
+            "--w-sky-l": "#E9F0EF",
+            "--w-ground": "#8EA9A5",
+            "--w-ground-d": "#76928D",
+            "--w-ground-l": "#A6BAB4",
+            "--w-path": "#61513D",
+            "--w-path-d": "#534D3C",
+            "--w-path-l": "#837663"
+          },
+          "bossEmoji": [
+            "🚂",
+            "🚃",
+            "🚋",
+            "🚇",
+            "🚉",
+            "🚞"
+          ],
+          "bossSprites": [
+            "wb-p2-08-01",
+            "wb-p2-08-02",
+            "wb-p2-08-03",
+            "wb-p2-08-04",
+            "wb-p2-08-05",
+            "wb-p2-08-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-08-route-1",
+              "name": "칙칙 길",
+              "icon": "🚂",
+              "spriteId": "wb-p2-08-01"
+            },
+            {
+              "id": "p2-08-route-2",
+              "name": "덜컹 길",
+              "icon": "🚃",
+              "spriteId": "wb-p2-08-02"
+            },
+            {
+              "id": "p2-08-route-3",
+              "name": "빙글 길",
+              "icon": "🚋",
+              "spriteId": "wb-p2-08-03"
+            }
+          ],
+          "castle": {
+            "name": "땅밑 성",
+            "emoji": "🚇",
+            "spriteId": "wb-p2-08-04"
+          },
+          "key": {
+            "name": "기찻길 열쇠",
+            "emoji": "🚉",
+            "spriteId": "wb-p2-08-05"
+          },
+          "intro": "기차가 천천히 섬을 돌아. 창밖의 길을 살펴보자!",
+          "outro": "내릴 곳에 잘 도착했어. 뚝딱 소리가 가까워!",
+          "story": "수리마을 친구들이 등불을 고치고 있어."
+        },
+        {
+          "id": "p2-09",
+          "name": "똑딱 수리마을",
+          "title": "똑딱 수리마을",
+          "concept": "도구들이 배와 기차를 돌본다. 북쪽 길의 불도 켜 준다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E6EDF3",
+            "ground": "#8E9CA8",
+            "path": "#5A4A34"
+          },
+          "paletteVars": {
+            "--w-sky": "#E6EDF3",
+            "--w-sky-l": "#EBEFF1",
+            "--w-ground": "#8E9CA8",
+            "--w-ground-d": "#768890",
+            "--w-ground-l": "#A6B0B7",
+            "--w-path": "#5A4A34",
+            "--w-path-d": "#4E4835",
+            "--w-path-l": "#7D705C"
+          },
+          "bossEmoji": [
+            "🔧",
+            "🔩",
+            "⚙️",
+            "🔨",
+            "🔦",
+            "🔋"
+          ],
+          "bossSprites": [
+            "wb-p2-09-01",
+            "wb-p2-09-02",
+            "wb-p2-09-03",
+            "wb-p2-09-04",
+            "wb-p2-09-05",
+            "wb-p2-09-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-09-route-1",
+              "name": "뚝딱 길",
+              "icon": "🔧",
+              "spriteId": "wb-p2-09-01"
+            },
+            {
+              "id": "p2-09-route-2",
+              "name": "돌돌 길",
+              "icon": "🔩",
+              "spriteId": "wb-p2-09-02"
+            },
+            {
+              "id": "p2-09-route-3",
+              "name": "맞물린 길",
+              "icon": "⚙️",
+              "spriteId": "wb-p2-09-03"
+            }
+          ],
+          "castle": {
+            "name": "톡톡 성",
+            "emoji": "🔨",
+            "spriteId": "wb-p2-09-04"
+          },
+          "key": {
+            "name": "손전등 열쇠",
+            "emoji": "🔦",
+            "spriteId": "wb-p2-09-05"
+          },
+          "intro": "도구 친구들이 분주해. 북쪽 길의 불을 켜 보자!",
+          "outro": "길의 불이 환해졌어. 눈 내리는 섬이 보여!",
+          "story": "포근한 발자국이 눈 위에 나 있어."
+        },
+        {
+          "id": "p2-10",
+          "name": "포근 눈섬",
+          "title": "포근 눈섬",
+          "concept": "눈길을 먼저 온 친구들이 안내한다. 얼음 뒤에 불 켜진 집이 있다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E8F6FF",
+            "ground": "#A6C7D8",
+            "path": "#6C6974"
+          },
+          "paletteVars": {
+            "--w-sky": "#E8F6FF",
+            "--w-sky-l": "#ECF6FA",
+            "--w-ground": "#A6C7D8",
+            "--w-ground-d": "#89A9B5",
+            "--w-ground-l": "#B9D2DC",
+            "--w-path": "#6C6974",
+            "--w-path-d": "#5C6067",
+            "--w-path-l": "#8B888E"
+          },
+          "bossEmoji": [
+            "🐧",
+            "🐻",
+            "🐼",
+            "🐨",
+            "🦊",
+            "🐺"
+          ],
+          "bossSprites": [
+            "wb-p2-10-01",
+            "wb-p2-10-02",
+            "wb-p2-10-03",
+            "wb-p2-10-04",
+            "wb-p2-10-05",
+            "wb-p2-10-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-10-route-1",
+              "name": "뒤뚱 길",
+              "icon": "🐧",
+              "spriteId": "wb-p2-10-01"
+            },
+            {
+              "id": "p2-10-route-2",
+              "name": "큰발 길",
+              "icon": "🐻",
+              "spriteId": "wb-p2-10-02"
+            },
+            {
+              "id": "p2-10-route-3",
+              "name": "대나무 길",
+              "icon": "🐼",
+              "spriteId": "wb-p2-10-03"
+            }
+          ],
+          "castle": {
+            "name": "낮잠 성",
+            "emoji": "🐨",
+            "spriteId": "wb-p2-10-04"
+          },
+          "key": {
+            "name": "여우 열쇠",
+            "emoji": "🦊",
+            "spriteId": "wb-p2-10-05"
+          },
+          "intro": "먼저 온 친구들이 길을 냈어. 발자국을 따라가 보자!",
+          "outro": "눈길 너머 문이 열렸어. 모자가 둥둥 떠다녀!",
+          "story": "수줍은 친구가 모자 뒤에 숨어 있어."
+        },
+        {
+          "id": "p2-11",
+          "name": "까꿍 모자집",
+          "title": "까꿍 모자집",
+          "concept": "수줍은 유령이 모자를 바꿔 쓴다. 웃으며 다음 편지를 건넨다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#EAE2F4",
+            "ground": "#9B8CAB",
+            "path": "#FCFAFC"
+          },
+          "paletteVars": {
+            "--w-sky": "#EAE2F4",
+            "--w-sky-l": "#EEE7F2",
+            "--w-ground": "#9B8CAB",
+            "--w-ground-d": "#817B92",
+            "--w-ground-l": "#B0A4B9",
+            "--w-path": "#FCFAFC",
+            "--w-path-d": "#CCD1D1",
+            "--w-path-l": "#FCF9F8"
+          },
+          "bossEmoji": [
+            "👻",
+            "🎩",
+            "👓",
+            "👒",
+            "👑",
+            "👛"
+          ],
+          "bossSprites": [
+            "wb-p2-11-01",
+            "wb-p2-11-02",
+            "wb-p2-11-03",
+            "wb-p2-11-04",
+            "wb-p2-11-05",
+            "wb-p2-11-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-11-route-1",
+              "name": "까꿍 길",
+              "icon": "👻",
+              "spriteId": "wb-p2-11-01"
+            },
+            {
+              "id": "p2-11-route-2",
+              "name": "높은모자 길",
+              "icon": "🎩",
+              "spriteId": "wb-p2-11-02"
+            },
+            {
+              "id": "p2-11-route-3",
+              "name": "안경 길",
+              "icon": "👓",
+              "spriteId": "wb-p2-11-03"
+            }
+          ],
+          "castle": {
+            "name": "꽃모자 성",
+            "emoji": "👒",
+            "spriteId": "wb-p2-11-04"
+          },
+          "key": {
+            "name": "왕관 열쇠",
+            "emoji": "👑",
+            "spriteId": "wb-p2-11-05"
+          },
+          "intro": "까꿍, 모자 쓴 친구야! 함께 웃으며 길을 찾아보자!",
+          "outro": "친구가 웃으며 편지를 줬어. 친구들이 여행 사진을 보내 왔어!",
+          "story": "사진을 든 친구가 골목으로 손짓해."
+        },
+        {
+          "id": "p2-12",
+          "name": "사진 골목",
+          "title": "사진 골목",
+          "concept": "여행 사진을 나누는 골목. 사진 속 풍경이 먼 길을 알려 준다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#F3EBD8",
+            "ground": "#B3A88D",
+            "path": "#63563E"
+          },
+          "paletteVars": {
+            "--w-sky": "#F3EBD8",
+            "--w-sky-l": "#F5EEDC",
+            "--w-ground": "#B3A88D",
+            "--w-ground-d": "#93917B",
+            "--w-ground-l": "#C3B9A1",
+            "--w-path": "#63563E",
+            "--w-path-d": "#55513D",
+            "--w-path-l": "#847964"
+          },
+          "bossEmoji": [
+            "🔍",
+            "🔎",
+            "📷",
+            "📓",
+            "📎",
+            "📌"
+          ],
+          "bossSprites": [
+            "wb-p2-12-01",
+            "wb-p2-12-02",
+            "wb-p2-12-03",
+            "wb-p2-12-04",
+            "wb-p2-12-05",
+            "wb-p2-12-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-12-route-1",
+              "name": "살핀 길",
+              "icon": "🔍",
+              "spriteId": "wb-p2-12-01"
+            },
+            {
+              "id": "p2-12-route-2",
+              "name": "찾은 길",
+              "icon": "🔎",
+              "spriteId": "wb-p2-12-02"
+            },
+            {
+              "id": "p2-12-route-3",
+              "name": "찰칵 길",
+              "icon": "📷",
+              "spriteId": "wb-p2-12-03"
+            }
+          ],
+          "castle": {
+            "name": "기록 성",
+            "emoji": "📓",
+            "spriteId": "wb-p2-12-04"
+          },
+          "key": {
+            "name": "고리 열쇠",
+            "emoji": "📎",
+            "spriteId": "wb-p2-12-05"
+          },
+          "intro": "친구들의 사진이 골목에 걸렸어. 여행 이야기를 함께 들어 보자!",
+          "outro": "사진을 함께 살펴봤어. 모래언덕에 가 보고 싶어!",
+          "story": "사진 속 길을 따라 모래언덕으로 가자."
+        },
+        {
+          "id": "p2-13",
+          "name": "낮잠 모래언덕",
+          "title": "낮잠 모래언덕",
+          "concept": "큰 동물들이 그늘에서 쉬고 있다. 해가 기울면 반짝이는 집을 가리킨다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FFE5BD",
+            "ground": "#D1AC76",
+            "path": "#6B5C45"
+          },
+          "paletteVars": {
+            "--w-sky": "#FFE5BD",
+            "--w-sky-l": "#FEE9C7",
+            "--w-ground": "#D1AC76",
+            "--w-ground-d": "#AB9469",
+            "--w-ground-l": "#DABC90",
+            "--w-path": "#6B5C45",
+            "--w-path-d": "#5B5643",
+            "--w-path-l": "#8B7E69"
+          },
+          "bossEmoji": [
+            "🐪",
+            "🐫",
+            "🐘",
+            "🐎",
+            "🐄",
+            "🐐"
+          ],
+          "bossSprites": [
+            "wb-p2-13-01",
+            "wb-p2-13-02",
+            "wb-p2-13-03",
+            "wb-p2-13-04",
+            "wb-p2-13-05",
+            "wb-p2-13-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-13-route-1",
+              "name": "한봉 길",
+              "icon": "🐪",
+              "spriteId": "wb-p2-13-01"
+            },
+            {
+              "id": "p2-13-route-2",
+              "name": "두봉 길",
+              "icon": "🐫",
+              "spriteId": "wb-p2-13-02"
+            },
+            {
+              "id": "p2-13-route-3",
+              "name": "큰귀 길",
+              "icon": "🐘",
+              "spriteId": "wb-p2-13-03"
+            }
+          ],
+          "castle": {
+            "name": "말발굽 성",
+            "emoji": "🐎",
+            "spriteId": "wb-p2-13-04"
+          },
+          "key": {
+            "name": "얼룩 열쇠",
+            "emoji": "🐄",
+            "spriteId": "wb-p2-13-05"
+          },
+          "intro": "그늘 아래 친구들이 쉬고 있어. 천천히 언덕을 넘어가자!",
+          "outro": "모래 너머가 반짝여. 친구들이 그쪽을 가리켜!",
+          "story": "작은 유리뜰에 하늘빛이 고여 있어."
+        },
+        {
+          "id": "p2-14",
+          "name": "반짝 유리뜰",
+          "title": "반짝 유리뜰",
+          "concept": "빛이 고인 물건 사이로 하늘빛이 비친다. 높은 곳에 남은 편지가 보인다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E5F7F3",
+            "ground": "#94B9B7",
+            "path": "#655B6E"
+          },
+          "paletteVars": {
+            "--w-sky": "#E5F7F3",
+            "--w-sky-l": "#EAF7F1",
+            "--w-ground": "#94B9B7",
+            "--w-ground-d": "#7B9E9C",
+            "--w-ground-l": "#ABC7C2",
+            "--w-path": "#655B6E",
+            "--w-path-d": "#565563",
+            "--w-path-l": "#867D89"
+          },
+          "bossEmoji": [
+            "🏺",
+            "💎",
+            "🔮",
+            "💍",
+            "📿",
+            "💠"
+          ],
+          "bossSprites": [
+            "wb-p2-14-01",
+            "wb-p2-14-02",
+            "wb-p2-14-03",
+            "wb-p2-14-04",
+            "wb-p2-14-05",
+            "wb-p2-14-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-14-route-1",
+              "name": "둥근병 길",
+              "icon": "🏺",
+              "spriteId": "wb-p2-14-01"
+            },
+            {
+              "id": "p2-14-route-2",
+              "name": "반짝 길",
+              "icon": "💎",
+              "spriteId": "wb-p2-14-02"
+            },
+            {
+              "id": "p2-14-route-3",
+              "name": "맑은 길",
+              "icon": "🔮",
+              "spriteId": "wb-p2-14-03"
+            }
+          ],
+          "castle": {
+            "name": "작은고리 성",
+            "emoji": "💍",
+            "spriteId": "wb-p2-14-04"
+          },
+          "key": {
+            "name": "구슬 열쇠",
+            "emoji": "📿",
+            "spriteId": "wb-p2-14-05"
+          },
+          "intro": "반짝이는 뜰에 도착했어. 빛이 가는 곳을 보자!",
+          "outro": "하늘에 남은 편지가 보여. 높은 곳으로 갈 길이 필요해!",
+          "story": "선착장의 큰 책이 새 길을 펼쳐 보여 줘."
+        },
+        {
+          "id": "p2-15",
+          "name": "펼친 책 선착장",
+          "title": "펼친 책 선착장",
+          "concept": "친구들이 여행 이야기를 한데 잇는다. 펼친 책의 길을 따라 하늘로 떠난다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#EFE5D7",
+            "ground": "#B5A08B",
+            "path": "#5E5240"
+          },
+          "paletteVars": {
+            "--w-sky": "#EFE5D7",
+            "--w-sky-l": "#F2E9DB",
+            "--w-ground": "#B5A08B",
+            "--w-ground-d": "#958B79",
+            "--w-ground-l": "#C4B3A0",
+            "--w-path": "#5E5240",
+            "--w-path-d": "#514E3F",
+            "--w-path-l": "#817665"
+          },
+          "bossEmoji": [
+            "📚",
+            "📖",
+            "📜",
+            "📒",
+            "📗",
+            "📘"
+          ],
+          "bossSprites": [
+            "wb-p2-15-01",
+            "wb-p2-15-02",
+            "wb-p2-15-03",
+            "wb-p2-15-04",
+            "wb-p2-15-05",
+            "wb-p2-15-06"
+          ],
+          "routes": [
+            {
+              "id": "p2-15-route-1",
+              "name": "책더미 길",
+              "icon": "📚",
+              "spriteId": "wb-p2-15-01"
+            },
+            {
+              "id": "p2-15-route-2",
+              "name": "펼친 길",
+              "icon": "📖",
+              "spriteId": "wb-p2-15-02"
+            },
+            {
+              "id": "p2-15-route-3",
+              "name": "두루마리 길",
+              "icon": "📜",
+              "spriteId": "wb-p2-15-03"
+            }
+          ],
+          "castle": {
+            "name": "묶은 책 성",
+            "emoji": "📒",
+            "spriteId": "wb-p2-15-04"
+          },
+          "key": {
+            "name": "초록책 열쇠",
+            "emoji": "📗",
+            "spriteId": "wb-p2-15-05"
+          },
+          "intro": "여행 이야기를 한데 모으자. 하늘로 갈 준비를 하자!",
+          "outro": "높은 문이 열렸어. 남긴 섬에도 인사하러 가자!",
+          "story": "모든 섬의 길을 돌아보면 하늘 배가 떠나."
+        }
+      ]
+    },
+    {
+      "id": "c3",
+      "band": "P3",
+      "name": "별빛 하늘",
+      "worlds": [
+        {
+          "id": "p3-01",
+          "name": "구름 쉼터",
+          "title": "구름 쉼터",
+          "concept": "올라온 배가 구름에 머문다. 하늘 친구들의 길을 묻는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#EAF6FF",
+            "ground": "#BBCEDB",
+            "path": "#777066"
+          },
+          "paletteVars": {
+            "--w-sky": "#EAF6FF",
+            "--w-sky-l": "#EEF6FA",
+            "--w-ground": "#BBCEDB",
+            "--w-ground-d": "#9AAFB8",
+            "--w-ground-l": "#C9D7DE",
+            "--w-path": "#777066",
+            "--w-path-d": "#65655C",
+            "--w-path-l": "#948E83"
+          },
+          "bossEmoji": [
+            "☁️",
+            "⛅",
+            "🌤️",
+            "🌥️",
+            "🌫️",
+            "💨"
+          ],
+          "bossSprites": [
+            "wb-p3-01-01",
+            "wb-p3-01-02",
+            "wb-p3-01-03",
+            "wb-p3-01-04",
+            "wb-p3-01-05",
+            "wb-p3-01-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-01-route-1",
+              "name": "흰구름 길",
+              "icon": "☁️",
+              "spriteId": "wb-p3-01-01"
+            },
+            {
+              "id": "p3-01-route-2",
+              "name": "구름틈 길",
+              "icon": "⛅",
+              "spriteId": "wb-p3-01-02"
+            },
+            {
+              "id": "p3-01-route-3",
+              "name": "밝은 길",
+              "icon": "🌤️",
+              "spriteId": "wb-p3-01-03"
+            }
+          ],
+          "castle": {
+            "name": "포근 성",
+            "emoji": "🌥️",
+            "spriteId": "wb-p3-01-04"
+          },
+          "key": {
+            "name": "안개 열쇠",
+            "emoji": "🌫️",
+            "spriteId": "wb-p3-01-05"
+          },
+          "intro": "구름 위에 배가 닿았어. 하늘 친구에게 길을 물어보자!",
+          "outro": "구름 너머가 환해졌어. 물 위에 달이 떠 있어!",
+          "story": "달빛이 잔잔한 호수로 이어져."
+        },
+        {
+          "id": "p3-02",
+          "name": "달 조각 호수",
+          "title": "달 조각 호수",
+          "concept": "물에 비친 달 조각들이 길을 비춘다. 멀리 작은 빛이 깜빡인다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DDDFF4",
+            "ground": "#838EBA",
+            "path": "#F8F7FB"
+          },
+          "paletteVars": {
+            "--w-sky": "#DDDFF4",
+            "--w-sky-l": "#E4E4F2",
+            "--w-ground": "#838EBA",
+            "--w-ground-d": "#6E7D9E",
+            "--w-ground-l": "#9DA5C5",
+            "--w-path": "#F8F7FB",
+            "--w-path-d": "#C9CFD1",
+            "--w-path-l": "#F9F7F7"
+          },
+          "bossEmoji": [
+            "🌙",
+            "🌛",
+            "🌜",
+            "🌒",
+            "🌓",
+            "🌔"
+          ],
+          "bossSprites": [
+            "wb-p3-02-01",
+            "wb-p3-02-02",
+            "wb-p3-02-03",
+            "wb-p3-02-04",
+            "wb-p3-02-05",
+            "wb-p3-02-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-02-route-1",
+              "name": "초승 길",
+              "icon": "🌙",
+              "spriteId": "wb-p3-02-01"
+            },
+            {
+              "id": "p3-02-route-2",
+              "name": "웃는달 길",
+              "icon": "🌛",
+              "spriteId": "wb-p3-02-02"
+            },
+            {
+              "id": "p3-02-route-3",
+              "name": "작은달 길",
+              "icon": "🌜",
+              "spriteId": "wb-p3-02-03"
+            }
+          ],
+          "castle": {
+            "name": "달배 성",
+            "emoji": "🌒",
+            "spriteId": "wb-p3-02-04"
+          },
+          "key": {
+            "name": "반달 열쇠",
+            "emoji": "🌓",
+            "spriteId": "wb-p3-02-05"
+          },
+          "intro": "호수에 달 조각이 비쳐. 밝은 길을 따라가 보자!",
+          "outro": "달빛 길이 이어졌어. 언덕 위에서 별이 깜빡여!",
+          "story": "반짝이는 조각들이 언덕에 흩어져 있어."
+        },
+        {
+          "id": "p3-03",
+          "name": "별가루 언덕",
+          "title": "별가루 언덕",
+          "concept": "반짝이는 빛들이 흩어졌다. 하나씩 이어 새 길을 찾는다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#E4DEF8",
+            "ground": "#9384B8",
+            "path": "#F8F2E5"
+          },
+          "paletteVars": {
+            "--w-sky": "#E4DEF8",
+            "--w-sky-l": "#E9E4F5",
+            "--w-ground": "#9384B8",
+            "--w-ground-d": "#7A759C",
+            "--w-ground-l": "#AA9DC3",
+            "--w-path": "#F8F2E5",
+            "--w-path-d": "#C9CBBF",
+            "--w-path-l": "#F9F3E6"
+          },
+          "bossEmoji": [
+            "⭐",
+            "🌟",
+            "✨",
+            "💫",
+            "☄️",
+            "🌠"
+          ],
+          "bossSprites": [
+            "wb-p3-03-01",
+            "wb-p3-03-02",
+            "wb-p3-03-03",
+            "wb-p3-03-04",
+            "wb-p3-03-05",
+            "wb-p3-03-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-03-route-1",
+              "name": "작은별 길",
+              "icon": "⭐",
+              "spriteId": "wb-p3-03-01"
+            },
+            {
+              "id": "p3-03-route-2",
+              "name": "큰별 길",
+              "icon": "🌟",
+              "spriteId": "wb-p3-03-02"
+            },
+            {
+              "id": "p3-03-route-3",
+              "name": "반짝이 길",
+              "icon": "✨",
+              "spriteId": "wb-p3-03-03"
+            }
+          ],
+          "castle": {
+            "name": "빙글빛 성",
+            "emoji": "💫",
+            "spriteId": "wb-p3-03-04"
+          },
+          "key": {
+            "name": "꼬리별 열쇠",
+            "emoji": "☄️",
+            "spriteId": "wb-p3-03-05"
+          },
+          "intro": "작은 빛들이 길을 잃었어. 빛을 따라 한 걸음씩 가자!",
+          "outro": "빛들이 길게 이어졌어. 새들이 그 길로 날아와!",
+          "story": "새들이 쉬는 바람역에 편지가 있어."
+        },
+        {
+          "id": "p3-04",
+          "name": "새들의 바람역",
+          "title": "새들의 바람역",
+          "concept": "작은 새들이 편지를 전해 준다. 바람이 돌아가는 길을 알려 준다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DFF3EE",
+            "ground": "#94B5A5",
+            "path": "#655A47"
+          },
+          "paletteVars": {
+            "--w-sky": "#DFF3EE",
+            "--w-sky-l": "#E5F4ED",
+            "--w-ground": "#94B5A5",
+            "--w-ground-d": "#7B9B8D",
+            "--w-ground-l": "#ABC4B4",
+            "--w-path": "#655A47",
+            "--w-path-d": "#565444",
+            "--w-path-l": "#867D6B"
+          },
+          "bossEmoji": [
+            "🐦",
+            "🐤",
+            "🐥",
+            "🐣",
+            "🐔",
+            "🐓"
+          ],
+          "bossSprites": [
+            "wb-p3-04-01",
+            "wb-p3-04-02",
+            "wb-p3-04-03",
+            "wb-p3-04-04",
+            "wb-p3-04-05",
+            "wb-p3-04-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-04-route-1",
+              "name": "날개 길",
+              "icon": "🐦",
+              "spriteId": "wb-p3-04-01"
+            },
+            {
+              "id": "p3-04-route-2",
+              "name": "노란 길",
+              "icon": "🐤",
+              "spriteId": "wb-p3-04-02"
+            },
+            {
+              "id": "p3-04-route-3",
+              "name": "종종 길",
+              "icon": "🐥",
+              "spriteId": "wb-p3-04-03"
+            }
+          ],
+          "castle": {
+            "name": "알껍질 성",
+            "emoji": "🐣",
+            "spriteId": "wb-p3-04-04"
+          },
+          "key": {
+            "name": "깃털 열쇠",
+            "emoji": "🐔",
+            "spriteId": "wb-p3-04-05"
+          },
+          "intro": "새들이 편지를 안고 왔어. 돌아가는 바람길을 물어보자!",
+          "outro": "집으로 가는 바람을 찾았어. 놀이뜰에서 잠깐 만나자!",
+          "story": "여행 친구들이 하늘 놀이뜰에 모여 있어."
+        },
+        {
+          "id": "p3-05",
+          "name": "하늘 놀이뜰",
+          "title": "하늘 놀이뜰",
+          "concept": "여행을 마친 친구들이 잠깐 쉬는 곳. 집으로 갈 채비를 한다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FCE6EE",
+            "ground": "#C4A0BC",
+            "path": "#68563F"
+          },
+          "paletteVars": {
+            "--w-sky": "#FCE6EE",
+            "--w-sky-l": "#FCEAED",
+            "--w-ground": "#C4A0BC",
+            "--w-ground-d": "#A18B9F",
+            "--w-ground-l": "#D0B3C6",
+            "--w-path": "#68563F",
+            "--w-path-d": "#59513E",
+            "--w-path-l": "#887965"
+          },
+          "bossEmoji": [
+            "🎠",
+            "🎡",
+            "🎢",
+            "🎪",
+            "🎭",
+            "🎫"
+          ],
+          "bossSprites": [
+            "wb-p3-05-01",
+            "wb-p3-05-02",
+            "wb-p3-05-03",
+            "wb-p3-05-04",
+            "wb-p3-05-05",
+            "wb-p3-05-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-05-route-1",
+              "name": "빙글말 길",
+              "icon": "🎠",
+              "spriteId": "wb-p3-05-01"
+            },
+            {
+              "id": "p3-05-route-2",
+              "name": "둥근바퀴 길",
+              "icon": "🎡",
+              "spriteId": "wb-p3-05-02"
+            },
+            {
+              "id": "p3-05-route-3",
+              "name": "오르락 길",
+              "icon": "🎢",
+              "spriteId": "wb-p3-05-03"
+            }
+          ],
+          "castle": {
+            "name": "천막 성",
+            "emoji": "🎪",
+            "spriteId": "wb-p3-05-04"
+          },
+          "key": {
+            "name": "웃는가면 열쇠",
+            "emoji": "🎭",
+            "spriteId": "wb-p3-05-05"
+          },
+          "intro": "친구들과 잠깐 쉬어 가자. 집으로 갈 채비도 하자!",
+          "outro": "모두 떠날 준비가 됐어. 멀리 작은 불이 보여!",
+          "story": "전망대에 오르면 우리 집이 보일 거야."
+        },
+        {
+          "id": "p3-06",
+          "name": "먼빛 전망대",
+          "title": "먼빛 전망대",
+          "concept": "멀리 고향의 작은 불이 보인다. 마지막 편지를 펼친다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#DDE4F5",
+            "ground": "#7F90B0",
+            "path": "#F7F7FB"
+          },
+          "paletteVars": {
+            "--w-sky": "#DDE4F5",
+            "--w-sky-l": "#E4E8F3",
+            "--w-ground": "#7F90B0",
+            "--w-ground-d": "#6B7E96",
+            "--w-ground-l": "#9AA7BD",
+            "--w-path": "#F7F7FB",
+            "--w-path-d": "#C8CFD1",
+            "--w-path-l": "#F8F7F7"
+          },
+          "bossEmoji": [
+            "🚀",
+            "🛰️",
+            "🌌",
+            "🔭",
+            "🌍",
+            "🌎"
+          ],
+          "bossSprites": [
+            "wb-p3-06-01",
+            "wb-p3-06-02",
+            "wb-p3-06-03",
+            "wb-p3-06-04",
+            "wb-p3-06-05",
+            "wb-p3-06-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-06-route-1",
+              "name": "먼 길",
+              "icon": "🚀",
+              "spriteId": "wb-p3-06-01"
+            },
+            {
+              "id": "p3-06-route-2",
+              "name": "작은별집 길",
+              "icon": "🛰️",
+              "spriteId": "wb-p3-06-02"
+            },
+            {
+              "id": "p3-06-route-3",
+              "name": "밤하늘 길",
+              "icon": "🌌",
+              "spriteId": "wb-p3-06-03"
+            }
+          ],
+          "castle": {
+            "name": "멀리보기 성",
+            "emoji": "🔭",
+            "spriteId": "wb-p3-06-04"
+          },
+          "key": {
+            "name": "푸른별 열쇠",
+            "emoji": "🌍",
+            "spriteId": "wb-p3-06-05"
+          },
+          "intro": "먼 곳의 불빛을 찾아보자. 마지막 편지도 펼쳐 보자!",
+          "outro": "우리 집의 불을 찾았어. 이제 돌아갈 수 있어!",
+          "story": "이어 놓은 길이 처음의 우체국에 닿아."
+        },
+        {
+          "id": "p3-07",
+          "name": "불 켜진 우리 집",
+          "title": "불 켜진 우리 집",
+          "concept": "모든 길이 처음의 우체국에 닿는다. 친구들을 맞을 문을 연다.",
+          "status": "draft",
+          "palette": {
+            "sky": "#FFEBD5",
+            "ground": "#B4BC8F",
+            "path": "#745F43"
+          },
+          "paletteVars": {
+            "--w-sky": "#FFEBD5",
+            "--w-sky-l": "#FEEEDA",
+            "--w-ground": "#B4BC8F",
+            "--w-ground-d": "#94A07C",
+            "--w-ground-l": "#C4C9A3",
+            "--w-path": "#745F43",
+            "--w-path-d": "#625841",
+            "--w-path-l": "#928068"
+          },
+          "bossEmoji": [
+            "🏠",
+            "🏡",
+            "🏘️",
+            "🌉",
+            "🏰",
+            "🏯"
+          ],
+          "bossSprites": [
+            "wb-p3-07-01",
+            "wb-p3-07-02",
+            "wb-p3-07-03",
+            "wb-p3-07-04",
+            "wb-p3-07-05",
+            "wb-p3-07-06"
+          ],
+          "routes": [
+            {
+              "id": "p3-07-route-1",
+              "name": "문앞 길",
+              "icon": "🏠",
+              "spriteId": "wb-p3-07-01"
+            },
+            {
+              "id": "p3-07-route-2",
+              "name": "마당 길",
+              "icon": "🏡",
+              "spriteId": "wb-p3-07-02"
+            },
+            {
+              "id": "p3-07-route-3",
+              "name": "이웃 길",
+              "icon": "🏘️",
+              "spriteId": "wb-p3-07-03"
+            }
+          ],
+          "castle": {
+            "name": "돌아온 다리 성",
+            "emoji": "🌉",
+            "spriteId": "wb-p3-07-04"
+          },
+          "key": {
+            "name": "우리집 열쇠",
+            "emoji": "🏰",
+            "spriteId": "wb-p3-07-05"
+          },
+          "intro": "우리 집에 다시 왔어. 친구들을 맞을 문을 열자!",
+          "outro": "집 앞의 문이 열렸어. 남긴 길에도 불을 켜러 가자!",
+          "story": "모든 길을 돌아보면 친구들이 집들이에 찾아와."
+        }
+      ]
+    }
+  ]
+}

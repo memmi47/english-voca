@@ -1,6 +1,6 @@
 # 세계 데이터 계약 v3 — 돌아가는 길과 선택 놀이집
 
-상태: **2026-11-13 사용자 피드백 반영, 지도·놀이 체험 시안**. 사용자는 같은 거리·카드 수로 유도하는 제약을 버리고, 세계마다 다른 돌아가는 길과 긴 길의 미니게임을 요청했다. v2의 구간 반복·같은 칸 수·카드 차이≤1 조건은 폐기한다. 전체 어휘 ID 배정과 기존 게임 연결은 후속 작업이다.
+상태: **2026-11-16 실제 어휘 배정 생성기 완료, 게임 연결 전 draft**. WORKLOG의 표현 일반 세계 배치·설정형 생성기·시제품 새 시작 결정을 반영했다. v3의 큰길·우회로·재합류와 선택 놀이집은 유지한다. 전체 배정은 [world_generation.md](research/world_generation.md), 실행 접점은 [WORLD_GENERATOR_HANDOFF.md](WORLD_GENERATOR_HANDOFF.md)에 정리했다.
 
 이야기: [WORLD_BIBLE.md](WORLD_BIBLE.md). 검사 결과: [world_map_routes.md](research/world_map_routes.md). 재현: `python3 -I tools/preview_world_maps.py --check --output /tmp/world-atlas-v3`, 다음 `node tools/check_world_map_preview.cjs /tmp/world-atlas-v3`.
 
@@ -22,7 +22,11 @@
 
 UTF-8 JSON. `schemaVersion=3`, `contentVersion`, `status(draft|ready)`, `source{path,sha256,selection,overrideVersion}`, `counts{lemmas,cards,continents,worlds,byBand}`, `continents[]`를 둔다. 완성본은 4,610장·3대륙·30세계, 부분 fixture는 실제 개수를 쓴다. 대륙은 `id,band,name,story,worlds,finale`, 순서는 P1→P2→P3, 세계 수는 8/15/7이다.
 
-v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` 노드와 선택 장식 보상을 추가한 계약이다. 모르는 버전·게임 유형은 명시적으로 준비 중 처리한다. 현재 기존 게임은 여전히 시제품 v1이며 v3를 자동으로 해석하지 못한다. 발행 ID는 이름·좌표가 바뀌어도 유지하며 배정이 달라지면 명시적 진도 이관을 한다.
+**현재 파일 구분:** `cards/data/world-art.json`은 `contentScope=presentation-only`, 배정 0장의 표시 원본이다. `cards/data/worlds.json`은 `contentScope=learning-map`, 대표 카드 4,610개와 실제 map/words/sideActivities를 가진 생성 결과다. 두 파일 모두 `status=draft`, `playable=false`이며, 전체 worlds는 `pending[]`에 실제 게임·음원·기능어 카드·남은 결정 등을 명시한다. `world-art.source`는 WORLD_BIBLE, `worlds.source`는 어휘 원본을 가리킨다. 전체 words 카탈로그는 `catalogue.json`으로 별도 제공한다.
+
+`worlds.rules`는 `maxCardsPerTile`, `worldCastle{cards,passRate}`, `continentCastle(null|{cards,passRate})`, `continentGate`, `expressionPlacement`, `expressionPrerequisites(null|none)` 설정이다. 대륙 성이 null이어도 필수 관문을 건너뛰지 않는다. `finale`는 `required=true`, `unlock=all-world-crowns`, `cards/passRate=null`, `status=pending-config`로 남긴다. 실제 기준은 WORKLOG의 Claude 결정 뒤 설정 파일에 반영한다. `configSha256`, `assignmentSha256`로 규칙/배정 변경을 구분한다. `progressPolicy`의 fresh-start는 사용자 승인한 60단어 시제품에서 처음 옮길 때만 적용하며, 이후 배정 변경에는 다시 검토/이관이 필요하다.
+
+v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` 노드와 선택 장식 보상을 추가한 계약이다. 모르는 버전·게임 유형은 명시적으로 준비 중 처리한다. 현재 기존 게임은 여전히 시제품 v1이며 v3를 자동으로 해석하지 못한다. 발행 ID는 이름·좌표가 바뀌어도 유지하며 이후 배정이 달라지면 명시적 진도 이관을 한다. 60단어 시제품 w1 기록은 WORKLOG 사용자 결정에 따라 처음부터 시작하고 가져오지 않는다.
 
 ## 3. World와 불규칙 연결망
 
@@ -30,17 +34,19 @@ v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` �
 |---|---|
 | `id,name,title,concept` | name=title, 장소 설명은 어휘 배정 기준이 아님. |
 | `palette{sky,ground,path}` | 길/땅 대비 3:1 이상. 바다·하늘 위에는 밝은 테두리로 길을 구분하고 실제 글자·노드·기기 검증 별도. |
+| `paletteVars` | `--w-ground/-d/-l`, `--w-path/-d/-l`, `--w-sky/-l`의 8개 CSS 변수. 기본색은 palette와 같고, 파생색은 어두운 청록/밝은 크림 22% 혼합. 전체 8개를 세계 컨테이너에 적용. |
 | `bossEmoji[],castle{name,emoji},key{name,emoji}` | 보스 6개 이상, 세계 간 중복 없음. 보상은 복습 일정·카드 등급에 영향 없음. |
+| `bossSprites[],routes[].spriteId,castle.spriteId,key.spriteId` | bossEmoji와 같은 순서의 고정 픽셀 도안 ID 6개. 길·성·열쇠는 그 세계의 ID를 참조한다. 로드 실패 시 이름 표시. |
 | `intro,outro,story` | 각 두 문장 이내. 입장·성 통과·다음 이야기. |
 | `routes[]` | `{id,name,icon}` 장소 분위기. 독립 레인·품사·완료 조건이 아님. |
 | `map` | `startNodeId,castleNodeId,landscape,nodes[],edges[]`. 이동과 해제의 유일한 원본. |
 | `castleRule` | `{type:"reach",nodeId:castleNodeId,cards:12,passRate:0.8}`. |
-| `sideActivities[]` | 기능어·P3 잔여 표현 집. 놀이집과 구분하며 왕관의 필수 학습 대상. |
+| `sideActivities[]` | 기능어 집. 표현은 map의 phrase 칸이며 별도 표현 집은 없다. 놀이집과 구분하며 왕관의 필수 학습 대상. |
 | `nextWorldId,status` | 같은 대륙 다음 세계 또는 null, draft/ready. |
 
 ### 노드와 선
 
-공통 노드: `id,kind,x,y`. 좌표는 1000×600 viewBox 표시용이고 이동 판정에 쓰지 않는다. kind는 `start,tile,junction,plaza,castle,minigame`이다. tile은 `words:[card_id...]` 1~10개를 가진다. 독립 stage/lane이나 모든 세계에 같은 구간 수를 요구하지 않는다. 모든 학습 칸과 필수 집을 합쳐 대표 card_id가 정확히 한 번씩 있어야 한다.
+공통 노드: `id,kind,x,y`. 좌표는 1000×600 viewBox 표시용이고 이동 판정에 쓰지 않는다. kind는 `start,tile,junction,plaza,castle,minigame`이다. tile은 `words:[card_id...]` 1~`rules.maxCardsPerTile`개와 `learningKind(vocab|phrase)`를 가진다. 최대값의 현재 기본은 10이며 설정 허용 범위는 1~10이다. 독립 stage/lane이나 모든 세계에 같은 구간 수를 요구하지 않는다. 모든 학습 칸과 필수 집을 합쳐 대표 card_id가 정확히 한 번씩 있어야 한다.
 
 edge는 `{from,to}` 무방향 연결이다. 중복·자기 연결·고립 노드는 오류다. 학습 길 선끼리 실제로 교차하면 그 자리에 명시적 연결 노드를 만들거나 표시 경로를 바꿔서 아이가 갈아탈 수 있는지 헷갈리지 않게 한다. 굽은 길의 모양과 그래프 연결을 혼동하지 않는다. 시안의 놀이집 점선은 그 길 옆의 방문 지점이며 새로운 성 지름길이 아니다.
 
@@ -49,8 +55,8 @@ edge는 `{from,to}` 무방향 연결이다. 중복·자기 연결·고립 노드
 - 큰길·긴 우회로·중간에 다시 만나는 지점으로 구성한다. **짧게 갈 자유를 허용한다.** 다른 길의 거리·새 카드 수·예상 시간을 같게 만드는 검사는 없다.
 - 세계마다 들판 산책로, 섬과 다리, 마을 고리길, 계곡길, 숨은 정원, 하늘길 중 맞는 기본 지형을 쓰고 방향·축척·노드 배치를 조정한다. 시안은 여섯 기본 틀을 재사용한다는 한계를 명시하며, 30개가 완전히 다른 손그림이라고 부르지 않는다.
 - 미완료 학습 칸은 지나갈 수 없다. 짧은 길은 학습 생략 버그가 아니라 정식 경로다. 성까지 주 지도 카드의 일부만 만나도 되며, 남은 어휘는 지도의 미방문 칸으로 유지한다.
-- 빈도순은 세계 멤버를 정하고, 세계 내부는 품사·주제를 섞고 같은 뜻·확인된 동음·혼동 묶음을 분리한다. 특정 장소를 골라 뜻을 미리 추측하게 하지 않는다.
-- 시안은 `ceil(N/10)`개 학습 칸에 카드 수 목표만 배분한다. 이는 실제 어휘를 넣은 생성 결과가 아니다. ID 배정 뒤 전체 범위·중복·분리·접근성을 검사하되, **경로 비용 균형을 다시 강제하지 않는다.**
+- 일반어·표현·기능어를 각각 빈도순으로 정렬하고 대륙의 세계 수에 나눠 세계 멤버를 정한다. 표현을 여러 일반 세계에 섞기 위한 종류별 정렬이며 세 종류를 합친 단일 빈도순은 아니다. 세계 내부는 품사·주제를 섞고 동일 뜻·철자·자동 IPA 후보·명시 혼동 목록을 분리한다. 특정 장소를 골라 뜻을 미리 추측하게 하지 않는다.
+- 이전 시안은 카드 수 목표만 배분했다. 현재 생성기는 실제 card_id를 표현/일반어 칸으로 분리해 담고 전체 범위·중복·분리·접근성을 검사한다. 충돌 분리에 필요하면 칸 수를 늘리며 **경로 비용 균형을 다시 강제하지 않는다.**
 - 경로의 카드 수는 관측값이다. 오답·복습·박쥐 시험·기존 지식·놀이 시간이 달라져 실제 소요 시간을 예측하지 못한다.
 
 ## 4. 이동과 성·왕관
@@ -94,9 +100,9 @@ minigame 노드 추가 필드:
 
 ## 6. 어휘 집과 전체 범위
 
-Activity는 `id,name,icon,kind(sight|phrase),requiredForCrown=true,anchorNodeId,tiles[{id,words}],status`다. P1 기능어 121개는 8세계에 16/15/.../15장, P3 마지막 두 세계 표현은 한 장씩을 둔다. 이 필수 집과 minigame은 서로 다른 타입·표시를 사용한다.
+Activity는 `id,name,icon,kind(sight),requiredForCrown=true,anchorNodeId,tiles[{id,words}],status,answerMode`다. 기능어 121개는 P1 8세계에 16/15/.../15장으로 나누고 시작점에 빨리 읽기 집을 둔다. `answerMode=listen-spelling`이며 빈 한글 뜻으로 뜻 문제를 만들지 않는다. 미지원 상태에서는 draft로 남기고, 생략한 채 왕관으로 판정하지 않는다.
 
-표현 전체 학습·구성어 선행 관문 제거는 기존 제안으로 아직 검토 중이다. 구성어 후보는 부모용 참고이며 자동 해제 조건으로 확정하지 않는다. 빈 뜻을 정답으로 만들지 않고 음원·표현·기능어 지원 전에는 draft로 둔다. 미지원 필수 집을 생략하고 전체 완료로 표시하지 않는다.
+표현 386개는 표현 전용 세계/집을 폐기하고 모든 P1/P2 세계와 P3 첫 두 세계의 `learningKind=phrase` 칸으로 배정한다. 구성어 선행 관문 해제 여부는 아직 미결이라 `rules.expressionPrerequisites=null`로 보존한다. 확정 없이 배정 순서만으로 선행 조건 충족을 주장하지 않는다. 필수 학습 칸/집은 optional minigame과 다른 타입이다.
 
 ## 7. 축소 예시
 
@@ -233,15 +239,15 @@ Activity는 `id,name,icon,kind(sight|phrase),requiredForCrown=true,anchorNodeId,
 
 생성기는 전체 원본 대표 카드 집합과 map tile/필수 집 words의 합집합이 정확히 같은지 검사한다. 동일 뜻은 NFC와 공백 정규화로 비교하고 검토한 동음·유사어 묶음은 같은 칸·오답 보기에서 분리한다. 빈도 정렬은 NDL→NGSL→Cambridge→무근거 주제 순환의 기존 기준을 유지한다.
 
-그래프 검사는 시작·성 연결, 모든 학습 칸의 재방문 가능성, 무료 노드만으로 성 우회 불가, 1~10장 칸, 고립·중복 선·표시상 모호한 교차 없음, 놀이집이 필수 게이트가 아님을 확인한다. 경로 수·최단/최장 칸·카드 수는 보고하되 균등 여부를 통과 기준으로 쓰지 않는다. 현재 지도 30개는 여섯 지형 틀에서 나오며 단어 ID 배정·기기 검증은 별도다.
+그래프 검사는 시작·성 연결, 모든 학습 칸의 재방문 가능성, 무료 노드만으로 성 우회 불가, 1~10장 칸, 고립·중복 선·표시상 모호한 교차 없음, 놀이집이 필수 게이트가 아님을 확인한다. 경로 수·최단/최장 칸·카드 수는 보고하되 균등 여부를 통과 기준으로 쓰지 않는다. 현재 지도 30개는 여섯 지형 틀에서 나온다. 실제 ID 배정 검증은 완료했고 기기·언어적 의미 전수 검증은 별도다.
 
 Claude 연결 요청:
 
 - 기존 POS/LINES·roadDone·castleNeeds를 v3 그래프 frontier와 성 reach로 교체한다. v2의 stages·lane·균등 경로 조건은 사용하지 않는다.
-- 무료 이동·미완료 칸·박쥐 우선·성 출제·남은 카드 수를 연결한다. 성 풀은 해당 세계에서 만난 카드, 일반 복습은 전체에서 유지한다.
+- 무료 이동·미완료 칸·박쥐 우선·성 출제·남은 카드 수를 연결한다. 성 풀은 해당 세계에서 만난 카드, 일반 복습은 전체에서 유지한다. 실제 경로에서 설정 장수만큼 의미 카드가 확보되는지 생성기가 검사한다.
 - 놀이집은 학습 엔진과 분리한 화면이며 중단해도 학습 칸 완료를 만들지 않는다. profile별 장식 도장을 저장하고 오디오나 정답 기록을 조작하지 않는다.
-- 전체 카드 카탈로그·음원·세계별 진도·동기화·기존 w1 이관은 별도다. 기존 card_id 기록은 보존하고 새 성·도장을 자동 완료로 복사하지 않는다. 런타임 담당 `cards/js/*`, `cards/css/*`, `tests/*`는 이번 시안 작업에서 직접 수정하지 않는다.
+- 전체 카드 카탈로그는 catalogue.json으로 제공했다. 음원·세계별 진도·동기화는 Claude가 연결한다. 사용자 결정에 따라 시제품 w1은 새 시작이고 기존 카드/성/도장 기록을 새 진도로 자동 복사하지 않는다. 런타임 담당 `cards/js/*`, `cards/css/*`, `tests/*`는 이번 시안 작업에서 직접 수정하지 않는다.
 
-대륙 성 40장·80%는 이전 제안으로 아직 검토 중이다. 모든 왕관 뒤 이미 만난 카드로 출제하고 중단 계획을 저장하며 실패해도 길·왕관을 빼앗지 않는 원칙은 유지한다. 두 아이 기록과 장식 도장은 분리하고 학습 일정·등급은 기존 엔진만 변경한다.
+대륙 성은 필수 관문을 유지하되 40장·80%에서 낮출 기준이 미정이다. 설정이 null이면 준비 중으로 표시하고 다음 대륙을 열지 않는다. 모든 왕관 뒤 이미 만난 카드로 출제하고 중단 계획을 저장하며 실패해도 길·왕관을 빼앗지 않는 원칙은 유지한다. 두 아이 기록과 장식 도장은 분리하고 학습 일정·등급은 기존 엔진만 변경한다.
 
 시안 내부 graph.version=3, edges의 `[from,to]`, 목표 cardCount는 검토 도구 형식이다. 배포 schemaVersion=3은 위 Node.words·객체 edge 계약을 따르고 시안 JSON을 그대로 배포하지 않는다.
