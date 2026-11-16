@@ -16,7 +16,10 @@ class Generation(unittest.TestCase):
         self.assertEqual(expected,{c['id'] for c in self.catalogue['words']});self.assertEqual(len(expected),4610)
     def test_deterministic_output(self):self.assertEqual(self.result,self.make()[0])
     def test_phrases_embedded_and_sight_separate(self):
-        self.assertEqual(sum(a['phrase'] for a in self.audit),386);self.assertEqual(sum(a['sight'] for a in self.audit),121)
+        self.assertEqual(sum(a['phrase'] for a in self.audit),386);self.assertEqual(sum(a['sight'] for a in self.audit),0)
+        self.assertEqual(self.result['counts']['assignedCards'],4489);self.assertEqual(self.result['counts']['excludedCards'],121)
+        self.assertEqual(len(self.result['excluded'][0]['cardIds']),121)
+        self.assertTrue(all(not w['sideActivities'] for co in self.result['continents'] for w in co['worlds']))
         self.assertTrue(all(a['vocab']>0 for a in self.audit));self.assertTrue(all(a['phrase']>0 for a in self.audit[:23]))
         self.assertTrue(all(c['answerMode']=='listen-spelling' for c in self.catalogue['words'] if c['learningKind']=='sight'))
     def test_no_forced_route_balance(self):self.assertTrue(all(a['minTiles']<a['maxTiles'] and a['minCards']<a['maxCards'] for a in self.audit))

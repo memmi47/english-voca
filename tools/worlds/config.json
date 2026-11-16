@@ -1,10 +1,16 @@
 {
   "version": 1,
   "maxCardsPerTile": 10,
-  "worldCastle": {"cards": 12, "passRate": 0.8},
-  "continentCastle": null,
+  "worldCastle": {
+    "cards": 12,
+    "passRate": 0.8
+  },
+  "continentCastle": {
+    "cards": 40,
+    "passRate": 0.75
+  },
   "continentGate": "all-world-crowns-and-continent-castle",
   "expressionPlacement": "dedicated-tiles-within-general-worlds",
-  "expressionPrerequisites": null,
-  "note": "대륙 성 수치는 WORKLOG의 Claude 시뮬레이션 결정 대기. 표현 구성어 선행 조건은 확정 전까지 null. null은 관문 제거/통과가 아님."
+  "expressionPrerequisites": "none",
+  "note": "대륙 성은 40장·75%, 표현 구성어 선행 관문은 없다."
 }
