@@ -4475,6 +4475,94 @@
         ".....kkkkkk.....",
         "................"
       ]
+    },
+    "fx-storm-a": {
+      "role": "effect",
+      "label": "회오리 첫 프레임",
+      "pixels": [
+        "................",
+        "................",
+        "...kkkkkkkkkk...",
+        "..kwwwwwwwwwwk..",
+        ".kwwgwwwwwwwwk..",
+        ".kwwttttttttwwk.",
+        ".kwlllllllwwwk..",
+        "..kwwwwwwwwrk...",
+        "...kwttttttk....",
+        "....kwwwwwwk....",
+        ".....kllllk.....",
+        ".....kgggwk.....",
+        ".....kwwwk......",
+        "......kwk.......",
+        ".......k........",
+        "................"
+      ]
+    },
+    "fx-storm-b": {
+      "role": "effect",
+      "label": "회오리 둘째 프레임",
+      "pixels": [
+        "................",
+        "................",
+        "...kkkkkkkkkk...",
+        "..kwwwwwwwwwwk..",
+        ".kwwwwwwwwwgwk..",
+        ".kwwttttttttwwk.",
+        ".kwlllllllwwwk..",
+        "..kwrwwwwwwwk...",
+        "...kwttttttk....",
+        "....kwwwwwwk....",
+        ".....kllllk.....",
+        ".....kwgggk.....",
+        ".....kwwwk......",
+        "......kwk.......",
+        ".......k........",
+        "................"
+      ]
+    },
+    "fx-storm-letters": {
+      "role": "effect",
+      "label": "글자 조각 회오리",
+      "pixels": [
+        "................",
+        "................",
+        "...kkkkkkkkkk...",
+        "..kwwwwwwwwwwk..",
+        ".kwwrrwwwwwwwk..",
+        ".kwwrtttttttwwk.",
+        ".kwllrlllggwwk..",
+        "..kwwwwwwgwwk...",
+        "...kwttttggk....",
+        "....kwwrwwwk....",
+        ".....kllrlk.....",
+        ".....kwwwwk.....",
+        ".....kwwwk......",
+        "......kwk.......",
+        ".......k........",
+        "................"
+      ]
+    },
+    "fx-storm-gone": {
+      "role": "effect",
+      "label": "사라지는 바람",
+      "pixels": [
+        "................",
+        "................",
+        "................",
+        "................",
+        "............k...",
+        "...kkkkkkkkkwk..",
+        "..kwwwwwwwwwk...",
+        "...kkkkkkkkk.k..",
+        ".....kkkkkkkkwk.",
+        "...kkyyyyyyykk..",
+        "..kckkkkkkkk....",
+        "...k............",
+        "................",
+        "................",
+        "................",
+        "................"
+      ]
     }
   }
 }

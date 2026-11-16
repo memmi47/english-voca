@@ -2042,6 +2042,42 @@
       "frames": [
         "deco-pear"
       ]
+    },
+    "fx-storm-a": {
+      "role": "effect",
+      "label": "회오리 첫 프레임",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "fx-storm-a"
+      ]
+    },
+    "fx-storm-b": {
+      "role": "effect",
+      "label": "회오리 둘째 프레임",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "fx-storm-b"
+      ]
+    },
+    "fx-storm-letters": {
+      "role": "effect",
+      "label": "글자 조각 회오리",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "fx-storm-letters"
+      ]
+    },
+    "fx-storm-gone": {
+      "role": "effect",
+      "label": "사라지는 바람",
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "fx-storm-gone"
+      ]
     }
   },
   "worldVars": [

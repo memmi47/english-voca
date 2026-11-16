@@ -168,6 +168,8 @@
 | 2026-11-16 | Codex | 요청 12번과 분담 반영: 설정형 세계 생성기·4610개 전체 카탈로그·표현 칸 분산·401개 오답 제외 그룹, P1 전수 검토 JSON/CSV. 최신 `f901bee` WORKLOG 병합, 기존 도안 표시 원본은 world-art.json으로 분리 | 이 줄을 추가한 커밋 (`codex/world-pixel-assets`) | 생성기 16/16, 재현/분리/경로 검증. 대륙 성 새 수치·표현 선행 조건 미결, 실제 게임/음원/iPad 연결 미검증 |
 | 2026-11-16 | Codex | C-003 주제·품사 감사와 검토 후보 보고 | 이 줄을 추가한 커밋 | 보고서 재현 2/2; 게임 필터·정답률·유사어 전수 미검증 |
 
+| 2026-11-16 | Codex | C-004 회오리 도안 4종과 밝고 어두운 땅 검토판 | 이 줄을 추가한 커밋 (`codex/storm-sprites`) | 생성 재현, 기존 186개 도안 불변, 검토판 16/16. 게임 브라우저 115/115 (상위 작업자 실행); iPad 미확인 |
+
 ## 9. 요청과 이번 설계의 검증
 
 - 최신 결과: 실제 `worlds.json`/`catalogue.json` 4,610개 배정, 픽셀 180개, 30세계 색, P1 검토 목록 완료. 표시 원본은 `world-art.json`으로 분리했다. 구현 경계와 명령은 [WORLD_GENERATOR_HANDOFF.md](WORLD_GENERATOR_HANDOFF.md), 도안/기기 검토는 [WORLD_PIXEL_HANDOFF.md](WORLD_PIXEL_HANDOFF.md)를 따른다.
