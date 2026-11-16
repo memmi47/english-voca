@@ -15,7 +15,7 @@
 - 세계 파일: 게임은 `cards/data/worlds.json`(세계 생성기의 결과, Astra 담당)이 있으면 그것을 쓰고, 없으면 **시험용** `cards/data/worlds.fixture.json`을 쓴다. 시험용은 지도는 승인된 시안 그대로, 단어 배정은 임시(대역 → 단순 빈도 순, 같은 뜻·동음 분리 없음, 표현은 일반 칸에 섞임)다. 화면 아래에 "세계 파일: 시험용"이라고 표시된다. 진도는 카드 id와 세계 id로 저장하므로 실제 파일로 바꿔도 단어 기록은 유지된다.
 - 없는 것: 실제 단어 배정(생성기), 세계별 보스 도안, 꾸미기 상점, 가족 상자, 망치(지름길), 책 섬, 부모 설정 화면.
 - 실행: `python3 tools/serve_cards.py` → http://127.0.0.1:8090 (iPad는 `--host 0.0.0.0`). 작은 체험판: 주소 뒤에 `?set=demo`. 음원: Mac에서 `LIMIT=300 bash tools/cards_say_audio.sh`(첫 두 세계 분량)부터.
-- 테스트: `node --test tests/*.test.mjs` (단위 58건), `node tests/cards_e2e.cjs` (브라우저 115건, Playwright 필요). 변경 전후로 둘 다 돌린다. 음악·효과음 측정: `node tools/check_postal_music.cjs`. 학습 부하 시뮬레이션: `node tools/sim_learning.mjs --set chosen`.
+- 테스트: `node --test tests/*.test.mjs` (단위 59건), `node tests/cards_e2e.cjs` (브라우저 118건, Playwright 필요). 변경 전후로 둘 다 돌린다. 음악·효과음 측정: `node tools/check_postal_music.cjs`. 학습 부하 시뮬레이션: `node tools/sim_learning.mjs --set chosen`.
 - 미테스트: iPad 실기기 전부, 맥미니의 `say` 음원 생성(스크립트를 고쳤으나 macOS에서 실행해 보지 못함)과 실제 소리, 음악이 듣기 좋은지, 두 아이의 실제 사용. 시뮬레이션의 수치는 가정한 기억 모델의 결과다(`docs/research/learning_load_sim.md`).
 - 남은 낡은 파일: `cards/data/words.json`(60단어 시제품 자료)은 더 쓰지 않는다. 삭제는 사용자 확인 후.
 - 이전 작업: `game/`(장면 탐험 퀴즈와 탐정형)은 사용자 판단으로 폐기하고 삭제했다. 복구: `git show 8acc013:game/...`. v0 원형은 PR #1 브랜치에 남아 있다.
