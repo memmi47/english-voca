@@ -447,3 +447,16 @@ test('K17: cards a catalogue marks as confusable with each other are never offer
   const lt = new Lightning({ state: s, words: deck, rng: mulberry32(6) });
   for (let k = 0; k < 200; k++) { const c = lt.next(); if (c.id === 'a') assert.notEqual(c.ko, '커다란'); if (c.id === 'b') assert.ok(c.ko !== '큰' && c.ko !== '거대한'); }
 });
+
+test('W13: by default the function-word house is off the learning path: not on the map, not needed for the crown, not in the castle', () => {
+  const sight = new Set(WORDS.filter((w) => w.track === 'sight').map((w) => w.id)); assert.equal(sight.size, 6);
+  const s = newState('son'); let v = view(s); assert.deepEqual(v.houses, []); assert.equal(nodeRun(IX, v, 'H1', s, WORDS, mulberry32(1)), null);
+  assert.ok(worldWords(W1).every((id) => !sight.has(id))); assert.equal(worldWords(W1).length, 60);
+  for (const id of worldWords(W1)) s.words[id] = { st: 'done', due: null, firstDay: '2026-11-01', lastDay: '2026-11-01', lapses: 0 };   // every tile met, no function word
+  v = view(s); assert.equal(v.unitsDone, v.units); const node = nodeRun(IX, v, 'castle', s, WORDS, mulberry32(1));
+  assert.ok(node.scope.castle.every((id) => !sight.has(id)));
+  const r = exam(s, node, D1); assert.deepEqual([r.out.key, r.out.crown], [true, true]); assert.ok(Object.keys(s.words).every((id) => !sight.has(id)));
+  assert.equal(atlasView(IX, s)[0].worlds[0].total, 60);
+  setLeftOutKinds([]); try { const v2 = view(s); assert.equal(v2.houses.length, 1); assert.equal(v2.crown, false); assert.equal(worldWords(W1).length, 66); } finally { setLeftOutKinds(['sight']); }
+  assert.equal(view(s).crown, true);
+});
