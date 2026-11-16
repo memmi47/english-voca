@@ -2,7 +2,7 @@
 // What is done is read from the word records: a tile is done when every word in it has been met. Nothing here writes
 // to a word's schedule or grade.
 import { shuffle } from './deck.js';
-import { ensureMap, dueCount, batState, batPool, tileDue, MONSTER_AT, RULES, LIGHTNING_MIN, ripeCount } from './map.js';
+import { ensureMap, dueCount, batState, batPool, tileDue, MONSTER_AT, RULES, LIGHTNING_MIN, ripeCount, TRIAGE, auditPick } from './map.js';
 
 export const FREE = new Set(['start', 'junction', 'plaza']);          // nodes anyone can walk through
 export const CASTLE = { cards: 12, pass: 0.8 };                       // defaults when a world carries no castleRule
@@ -114,8 +114,12 @@ export function nodeRun(ix, view, id, state, words, rng) {
   const w = view.world;
   if (id === 'bat') return view.bat.full ? { kind: 'bat', wid: w.id, tag: 'bat', scope: { bat: batPool(state, view.today, rng) } } : null;
   if (view.bat.full) return null;                                       // a full gauge: the test comes first, nothing else starts
-  if (id === 'monster') return view.monster.present ? { kind: 'monster', wid: w.id, tag: 'monster', scope: { noNew: true, duePerRun: 14 } } : null;
-  const unitRun = (u, bonus) => ({ kind: 'tile', wid: w.id, tag: u.id, unit: u.id, bonus, scope: { newIds: u.words, newPerRun: u.words.length, duePerRun: tileDue(view.monster.count) } });
+  // With triage on, tile and monster runs carry due bunch checks (scope.audit), and a tile with words not met yet lists them
+  // (node.triage) so the screen asks which are unknown before the run is made (map.triageScope).
+  const audit = (scope) => { const a = auditPick(state, view.today, rng); if (a) scope.audit = a; return scope; };
+  if (id === 'monster') return view.monster.present ? { kind: 'monster', wid: w.id, tag: 'monster', scope: audit({ noNew: true, duePerRun: 14 }) } : null;
+  const unitRun = (u, bonus) => { const node = { kind: 'tile', wid: w.id, tag: u.id, unit: u.id, bonus, scope: audit({ newIds: u.words, newPerRun: u.words.length, duePerRun: tileDue(view.monster.count) }) };
+    const unseen = u.words.filter((x) => !state.words[x]); if (TRIAGE.on && unseen.length) node.triage = unseen; return node; };
   const n = view.nodes.find((x) => x.id === id);
   if (n && n.kind === 'tile') return n.status === 'open' ? unitRun(n, n.bonus) : null;
   if (n && n.kind === 'castle') {

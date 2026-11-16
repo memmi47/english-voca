@@ -1,7 +1,7 @@
 // Flashcard game: screens. Rules live in deck.js (cards), map.js (review load, items), world.js (worlds, castles); audio in sound.js.
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG } from './deck.js';
 import { Sound } from './sound.js';
-import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN } from './map.js';
+import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope } from './map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, setLeftOutKinds } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup } from './store.js';
@@ -106,6 +106,7 @@ async function boot() {
     // Card fields this game reads: track ("sight" = hear-and-pick card) and groups (confusion groups, never offered as wrong answers).
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
+    if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
     G.ix = indexWorlds(doc); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
     G.dataNote = G.standIn ? '세계 파일: 시험용(단어 배정 임시)' : doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
@@ -232,6 +233,27 @@ async function start(nodeId) {
   if (nodeId.startsWith('finale:')) node = finaleRun(G.ix, G.ix.continents.find((c) => c.id === nodeId.slice(7)), G.st, todayISO(), rng);
   else node = nodeRun(G.ix, worldView(G.ix, G.world, G.st, todayISO()), nodeId, G.st, G.words, rng);
   if (!node) return today(G.pid);
+  if (node.triage) return triage(node, rng);               // new words on this tile: the child first marks the unknown ones
+  return begin(node, rng);
+}
+// The tile's new words as spellings only (no meaning, no picture: nothing is answered before it is asked). Tapped = unknown.
+function triage(node, rng) {
+  G.view = 'triage'; G.tri = { node, rng, marked: new Set() }; band(false); hideBanner();
+  $('#app').innerHTML = `<div class="page center tri"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title">모르는 단어를 눌러요</h1>
+  <div class="twords">${node.triage.map((id) => `<button class="tw" data-act="tmark" data-id="${esc(id)}" aria-pressed="false">${esc(G.byId[id].form)}</button>`).join('')}</div>
+  <button class="go" data-act="tgo" id="tgo">다 알아요</button></div>`;
+}
+function triageMark(b) {
+  const t = G.tri; if (!t || G.view !== 'triage') return; const id = b.dataset.id; const on = !t.marked.has(id);
+  if (on) t.marked.add(id); else t.marked.delete(id); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  $('#tgo').textContent = t.marked.size ? `${t.marked.size}개 배우러 가기` : '다 알아요';
+  const w = G.byId[id]; G.sound.unlock().then(() => G.sound.play(w.id, w.form)).catch(() => {});   // the sound is a help only: a failure shows no banner here
+}
+async function triageGo() {
+  const t = G.tri; if (!t || G.view !== 'triage') return; G.tri = null; await G.sound.unlock();
+  return begin(triageScope(t.node, triagePlan(t.node.triage, [...t.marked], t.rng), todayISO()), t.rng);
+}
+function begin(node, rng) {
   const items = takeBag(G.st); G.node = node; save();
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
@@ -262,7 +284,8 @@ function front(it, w) {
   $('#card').innerHTML = `<div class="tag ${chk ? 'chk' : ''}" id="tag">${chk ? (isSight(w) ? '확인! 글자를 골라요' : '확인! 뜻을 골라요') : TAG[it.role]}</div>
     ${listen ? `<div class="ear" id="word" data-hidden="1"><svg class="spr" width="96" height="96" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg><span>소리를 듣고 글자를 골라요</span></div>` : `<div class="word" id="word">${esc(w.form)}</div>`}${HEAR}`;
 }
-function judgeButtons() { $('#actions').innerHTML = `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
+// A word the child marked as unknown is not asked again: one button shows the meaning (judge(false)).
+function judgeButtons(it) { $('#actions').innerHTML = it?.taught ? `<button class="act yes see" data-act="no">뜻 보기</button>` : `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
 function optionButtons(it) {
   const en = isSight(G.byId[it.id]) ? 'en' : '';
   $('#actions').innerHTML = `<div class="opts">${it.options.map((o, i) => `<button class="act opt ${en}" data-act="opt" data-i="${i}">${esc(o.ko)}</button>`).join('')}</div>
@@ -280,7 +303,7 @@ async function speak(force) {
 function showCard() {
   const it = G.run.show(); if (!it) return endRun('done');
   G.busy = false; G.run.t0 = null; const w = G.byId[it.id];
-  front(it, w); if (it.form === 'check') optionButtons(it); else judgeButtons();
+  front(it, w); if (it.form === 'check') optionButtons(it); else judgeButtons(it);
   lock(true); paintHud(); $('#card').classList.add('in'); speak(false);
 }
 function onJudge(know) {
@@ -425,8 +448,8 @@ function album() {
 function parent() {
   G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
-    const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk };
-    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv})</p>
+    const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk, sp: T.spots, spok: T.spotOk, bd: T.bunchDone, bok: T.bunchOk };
+    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv}), 넘긴 단어 확인 정답률 ${pct(tot.spok, tot.sp)} (${tot.spok}/${tot.sp}), 묶음 확인 ${tot.bok}/${tot.bd}</p>
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
     ${R.slice(-60).map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${esc(r.tag || '-')}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
       <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>${R.length > 60 ? `<p class="small mut">최근 60판만 표시. 전체는 내보내기 파일에 있습니다.</p>` : ''}
@@ -434,7 +457,7 @@ function parent() {
       <select id="snap-${id}" aria-label="날짜별 사본"><option value="">날짜별 사본…</option></select><button class="sec" data-act="snap" data-id="${id}">그 날짜 사본에서 복원</button><button class="link" data-act="reset" data-id="${id}">이 기기의 기록 지우기</button></p>
     <p class="small mut">복원은 지금 기록에 합치는 방식이라 어느 쪽 기록도 지워지지 않습니다.</p>`; };
   $('#app').innerHTML = `<div class="page parent"><button class="back" data-act="home" aria-label="처음으로">‹</button><h1 class="title">부모 기록</h1>
-  <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과입니다. 소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
+  <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과, 넘긴 단어 확인은 단어 목록에서 넘긴 단어를 바로 뜻 고르기로 확인한 결과, 묶음 확인은 30일 뒤 표본 확인을 통과한 칸 묶음 수/끝난 묶음 수입니다. 소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
   <div class="safety" id="safety"><b>기록 보관 상태</b><span>① 이 기기: ${G.volatile ? '저장 불가' : '저장 중'}</span><span id="sf-server">② Mac 서버: 확인 중…</span><span id="sf-daily">③ 날짜별 사본: 확인 중…</span><span id="sf-off">④ 외부 백업(GitHub): 확인 중…</span></div>
   <p class="msg small" id="pmsg">${esc(G.pmsg || '')}</p>
   ${PROFILES.map(block).join('')}
@@ -463,7 +486,7 @@ function download(nm, obj) { const a = document.createElement('a'); a.href = URL
 
 async function onClick(e) {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return; const a = b.dataset.act;
-  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node', 'mem', 'mail'].includes(a)) G.sound.sfxPlay('tap');
+  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node', 'mem', 'mail', 'tmark'].includes(a)) G.sound.sfxPlay('tap');
   switch (a) {
     case 'music': await G.sound.unlock(); G.sound.setMusic(!G.sound.musicOn); savePref(); return today(G.pid);
     case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
@@ -490,6 +513,8 @@ async function onClick(e) {
     case 'no': return onJudge(false);
     case 'opt': return onPick(Number(b.dataset.i));
     case 'next': return next();
+    case 'tmark': return triageMark(b);
+    case 'tgo': return triageGo();
     case 'hear': await G.sound.unlock(); return speak(true);
     case 'mute-go': { const it = G.run?.current; if (it) { it.sound = 'none'; if (isSight(G.byId[it.id]) && $('#word')?.dataset.hidden) { it.shown = true; front(it, G.byId[it.id]); } } hideBanner(); lock(false); if (G.run) G.run.t0 = Date.now(); return; }   // without sound a hear-and-pick card shows its word
     case 'quit': if (G.run) return endRun('left'); return today(G.pid);

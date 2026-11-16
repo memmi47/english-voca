@@ -1,0 +1,848 @@
+{
+ "v": 2,
+ "id": "son",
+ "words": {
+  "W0488:기본:butterfly:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W1500:기본:frog:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W3424:기본:snake:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W4202:기본:wing:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W1394:기본:finger:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W2008:기본:knee:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W3318:기본:shoulder:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W0699:기본:clothes:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W4085:기본:voice:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W0425:기본:bread:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "done",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-12-17"
+  },
+  "W0184:기본:arrive:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W1850:기본:imagine:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W2820:기본:pretend:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W2865:기본:protect:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W2878:기본:pull:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W0122:기본:animal:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W1794:기본:horse:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W1931:기본:island:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W1462:기본:forget:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "learn",
+   "lstep": 0,
+   "due": "2026-12-18",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W0349:기본:bird:1": {
+   "firstDay": "2026-11-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": "2026-12-24",
+   "bunch": "B1",
+   "lastDay": "2026-12-17"
+  },
+  "W1818:기본:hungry:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W3626:기본:strong:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W3359:기본:sing:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W3709:기본:swim:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W1337:기본:family:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W1687:기본:happy:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W3160:기본:safe:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W1338:기본:famous:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "C1",
+   "lastDay": "2026-11-18"
+  },
+  "W0944:기본:dangerous:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "review",
+   "due": "2026-12-20",
+   "lastDay": "2026-12-17",
+   "step": 1
+  },
+  "W1045:기본:difficult:1": {
+   "firstDay": "2026-11-18",
+   "lapses": 0,
+   "st": "review",
+   "due": "2026-12-20",
+   "lastDay": "2026-12-17",
+   "step": 1
+  },
+  "W0621:기본:cheese:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W0558:기본:castle:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W4070:기본:village:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W1532:기본:garden:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W2743:기본:pocket:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W3124:기본:rope:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W1461:기본:forest:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W4160:기본:wheel:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W2003:기본:kitchen:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A2",
+   "lastDay": "2026-12-17"
+  },
+  "W0427:기본:breakfast:1": {
+   "firstDay": "2026-12-17",
+   "lapses": 0,
+   "st": "review",
+   "due": "2026-12-18",
+   "lastDay": "2026-12-17",
+   "step": 0
+  }
+ },
+ "verify": [
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true
+ ],
+ "runs": [
+  {
+   "day": "2026-11-16",
+   "n": 1,
+   "reason": "done",
+   "tag": "A1",
+   "shieldBack": 0,
+   "cards": 2,
+   "claims": 0,
+   "verifies": 0,
+   "verifyOk": 0,
+   "fresh": 0,
+   "known": 0,
+   "unknown": 0,
+   "learned": 0,
+   "reviews": 0,
+   "reviewOk": 0,
+   "lapses": 0,
+   "bosses": 0,
+   "ms": 5000,
+   "stars": 6,
+   "castleOk": 0,
+   "castleMiss": 0,
+   "testOk": 0,
+   "testMiss": 0,
+   "spots": 2,
+   "spotOk": 2,
+   "bunchOk": 0,
+   "bunchDone": 0,
+   "wall": 5000,
+   "changed": 10,
+   "endedAt": "2026-11-16T09:00:05.000Z"
+  },
+  {
+   "day": "2026-11-17",
+   "n": 1,
+   "reason": "done",
+   "tag": "B1",
+   "shieldBack": 0,
+   "cards": 2,
+   "claims": 0,
+   "verifies": 0,
+   "verifyOk": 0,
+   "fresh": 0,
+   "known": 0,
+   "unknown": 0,
+   "learned": 0,
+   "reviews": 0,
+   "reviewOk": 0,
+   "lapses": 0,
+   "bosses": 0,
+   "ms": 5000,
+   "stars": 6,
+   "castleOk": 0,
+   "castleMiss": 0,
+   "testOk": 0,
+   "testMiss": 0,
+   "spots": 2,
+   "spotOk": 2,
+   "bunchOk": 0,
+   "bunchDone": 0,
+   "wall": 5000,
+   "changed": 10,
+   "endedAt": "2026-11-16T09:00:10.000Z"
+  },
+  {
+   "day": "2026-11-18",
+   "n": 1,
+   "reason": "done",
+   "tag": "C1",
+   "shieldBack": 0,
+   "cards": 6,
+   "claims": 0,
+   "verifies": 0,
+   "verifyOk": 0,
+   "fresh": 2,
+   "known": 0,
+   "unknown": 2,
+   "learned": 2,
+   "reviews": 0,
+   "reviewOk": 0,
+   "lapses": 0,
+   "bosses": 1,
+   "ms": 15000,
+   "stars": 6,
+   "castleOk": 0,
+   "castleMiss": 0,
+   "testOk": 0,
+   "testMiss": 0,
+   "spots": 2,
+   "spotOk": 2,
+   "bunchOk": 0,
+   "bunchDone": 0,
+   "wall": 15000,
+   "changed": 10,
+   "endedAt": "2026-11-16T09:00:25.000Z"
+  },
+  {
+   "day": "2026-12-17",
+   "n": 1,
+   "reason": "done",
+   "tag": "A2",
+   "shieldBack": 0,
+   "cards": 13,
+   "claims": 2,
+   "verifies": 0,
+   "verifyOk": 0,
+   "fresh": 1,
+   "known": 0,
+   "unknown": 1,
+   "learned": 1,
+   "reviews": 2,
+   "reviewOk": 2,
+   "lapses": 0,
+   "bosses": 2,
+   "ms": 32500,
+   "stars": 23,
+   "castleOk": 0,
+   "castleMiss": 0,
+   "testOk": 0,
+   "testMiss": 0,
+   "spots": 2,
+   "spotOk": 2,
+   "bunchOk": 1,
+   "bunchDone": 2,
+   "wall": 32500,
+   "changed": 21,
+   "endedAt": "2026-11-16T09:00:57.500Z"
+  }
+ ],
+ "log": [
+  {
+   "t": "2026-11-16T09:00:02.500Z",
+   "day": "2026-11-16",
+   "id": "W4085:기본:voice:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:05.000Z",
+   "day": "2026-11-16",
+   "id": "W0425:기본:bread:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:07.500Z",
+   "day": "2026-11-17",
+   "id": "W1462:기본:forget:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:10.000Z",
+   "day": "2026-11-17",
+   "id": "W0349:기본:bird:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:12.500Z",
+   "day": "2026-11-18",
+   "id": "W3160:기본:safe:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:15.000Z",
+   "day": "2026-11-18",
+   "id": "W1338:기본:famous:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:17.500Z",
+   "day": "2026-11-18",
+   "id": "W0944:기본:dangerous:1",
+   "role": "new",
+   "form": "judge",
+   "ok": false,
+   "verified": false,
+   "said": "dontknow",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:20.000Z",
+   "day": "2026-11-18",
+   "id": "W1045:기본:difficult:1",
+   "role": "new",
+   "form": "judge",
+   "ok": false,
+   "verified": false,
+   "said": "dontknow",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:22.500Z",
+   "day": "2026-11-18",
+   "id": "W0944:기본:dangerous:1",
+   "role": "relearn",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:25.000Z",
+   "day": "2026-11-18",
+   "id": "W1045:기본:difficult:1",
+   "role": "relearn",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:27.500Z",
+   "day": "2026-12-17",
+   "id": "W4160:기본:wheel:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:30.000Z",
+   "day": "2026-12-17",
+   "id": "W2003:기본:kitchen:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:32.500Z",
+   "day": "2026-12-17",
+   "id": "W1931:기본:island:1",
+   "role": "audit",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:35.000Z",
+   "day": "2026-12-17",
+   "id": "W0425:기본:bread:1",
+   "role": "audit",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:37.500Z",
+   "day": "2026-12-17",
+   "id": "W0699:기본:clothes:1",
+   "role": "audit",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:40.000Z",
+   "day": "2026-12-17",
+   "id": "W0427:기본:breakfast:1",
+   "role": "new",
+   "form": "judge",
+   "ok": false,
+   "verified": false,
+   "said": "dontknow",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:42.500Z",
+   "day": "2026-12-17",
+   "id": "W3424:기본:snake:1",
+   "role": "audit",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:45.000Z",
+   "day": "2026-12-17",
+   "id": "W1794:기본:horse:1",
+   "role": "audit",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:47.500Z",
+   "day": "2026-12-17",
+   "id": "W1045:기본:difficult:1",
+   "role": "review",
+   "form": "judge",
+   "ok": true,
+   "verified": false,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:50.000Z",
+   "day": "2026-12-17",
+   "id": "W0427:기본:breakfast:1",
+   "role": "relearn",
+   "form": "judge",
+   "ok": true,
+   "verified": false,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:52.500Z",
+   "day": "2026-12-17",
+   "id": "W0944:기본:dangerous:1",
+   "role": "review",
+   "form": "judge",
+   "ok": true,
+   "verified": false,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:55.000Z",
+   "day": "2026-12-17",
+   "id": "W1462:기본:forget:1",
+   "role": "audit",
+   "form": "check",
+   "ok": false,
+   "verified": false,
+   "said": "wrong",
+   "ms": 2500,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:57.500Z",
+   "day": "2026-12-17",
+   "id": "W0427:기본:breakfast:1",
+   "role": "relearn",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 2500,
+   "sound": null
+  }
+ ],
+ "bunches": {
+  "A1": {
+   "due": "2026-12-16",
+   "done": "2026-12-17",
+   "result": "ok"
+  },
+  "B1": {
+   "due": "2026-12-17",
+   "done": "2026-12-17",
+   "result": "split"
+  },
+  "C1": {
+   "due": "2026-12-18",
+   "done": null
+  },
+  "A2": {
+   "due": "2027-01-16",
+   "done": null
+  }
+ },
+ "map": {
+  "stars": 41,
+  "items": {
+   "shield": 0,
+   "flame": 0
+  },
+  "bag": null,
+  "monsterDay": null,
+  "bonusDay": null,
+  "best": 0,
+  "keys": 0,
+  "worlds": {
+   "d1-01": {
+    "castle": null,
+    "cleared": {
+     "A1": "2026-11-16",
+     "B1": "2026-11-17",
+     "C1": "2026-11-18",
+     "A2": "2026-12-17"
+    },
+    "stamps": {},
+    "seen": "2026-11-16"
+   },
+   "d1-02": {
+    "castle": null,
+    "cleared": {},
+    "stamps": {},
+    "seen": null
+   }
+  },
+  "conts": {
+   "d1": {
+    "castle": null
+   }
+  },
+  "at": "d1-01",
+  "bat": {
+   "fill": 1,
+   "cap": 40,
+   "met": [
+    "W0944:기본:dangerous:1",
+    "W1045:기본:difficult:1",
+    "W0427:기본:breakfast:1"
+   ],
+   "last": null
+  }
+ }
+}

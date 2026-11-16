@@ -2,8 +2,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS } from '../cards/js/deck.js';
-import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES } from '../cards/js/map.js';
+import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS, bunchLeft } from '../cards/js/deck.js';
+import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES, TRIAGE, triagePlan, triageScope, auditPick } from '../cards/js/map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds } from '../cards/js/world.js';
 
 // The demo set: 86 cards (80 with a Korean gloss, 6 function words), two continents, three worlds (tools/make_cards_demo.py).
@@ -191,6 +191,9 @@ test('K16: a function word is a hear-and-pick card: its choices are spellings, i
 const view = (state, today = D1, w = W1) => worldView(IX, w, state, today);
 // Runs a test with the hear-and-pick houses back on the learning path (the setting emptied), then restores the default.
 const legacyTest = (name, fn) => test(name, () => { setLeftOutKinds([]); indexWorlds(DOC); try { fn(); } finally { setLeftOutKinds(['sight']); indexWorlds(DOC); } });
+// Tile runs as they were before the word list (TRIAGE.on = false): these tests play every new word one card at a time.
+const triageOff = (fn) => () => { TRIAGE.on = false; try { return fn(); } finally { TRIAGE.on = true; } };
+const oldTest = (name, fn) => test(name, triageOff(fn)); const oldLegacy = (name, fn) => legacyTest(name, triageOff(fn));
 const status = (v, id) => (v.nodes.find((n) => n.id === id) || v.houses.find((h) => h.id === id)).status;
 const mkRun = (state, node, today = D1, seed = 3) => new Run({ state, words: WORDS, today, rng: mulberry32(seed), scope: node.scope, items: node.items || {}, tag: node.tag });
 const settle = (state, node, run, rec, today) => ({ ...settleRun(state, node, run, rec, today, mulberry32(2)), ...settleWorld(IX, state, node, rec, today) });
@@ -214,7 +217,7 @@ legacyTest('W1: the world file is version 3; every card of the deck sits in exac
   assert.throws(() => indexWorlds({ schemaVersion: 2, continents: [] }), /버전/); assert.throws(() => indexWorlds({ schemaVersion: 4, continents: [] }), /버전/);
 });
 
-legacyTest('W2: at the start the tiles next to the start are open, the rest locked; castle, playhouses and the house are locked', () => {
+oldLegacy('W2: at the start the tiles next to the start are open, the rest locked; castle, playhouses and the house are locked', () => {
   const s = newState('son'); const v = view(s);
   assert.deepEqual(['A1', 'B1', 'C1', 'A2', 'B2', 'C2'].map((id) => status(v, id)), ['open', 'open', 'open', 'locked', 'locked', 'locked']);
   assert.deepEqual([v.castle.status, status(v, 'G1'), status(v, 'G2'), status(v, 'H1')], ['locked', 'locked', 'locked', 'locked']);
@@ -223,28 +226,28 @@ legacyTest('W2: at the start the tiles next to the start are open, the rest lock
   clear(s, 'A1'); const v2 = view(s); assert.deepEqual([status(v2, 'A1'), status(v2, 'A2'), status(v2, 'H1'), v2.castle.status], ['cleared', 'open', 'open', 'locked']);
 });
 
-test('W3: a tile run introduces exactly that tile\'s words; clearing needs every word seen; stars are counted', () => {
+oldTest('W3: a tile run introduces exactly that tile\'s words; clearing needs every word seen; stars are counted', () => {
   const s = newState('son'); const node = nodeRun(IX, view(s), 'B1', s, WORDS, mulberry32(1));
   assert.deepEqual([node.kind, node.scope.newIds.length, node.wid], ['tile', 10, 'd1-01']);
   const r = clear(s, 'B1'); assert.deepEqual(new Set(Object.keys(s.words)), new Set(W1._nodes.B1.words)); assert.equal(r.cleared, true); assert.ok(r.stars > 0);
   assert.equal(ensureMap(s).stars, r.stars); assert.equal(ensureMap(s).worlds['d1-01'].cleared.B1, D1);
 });
 
-test('W4: an early exit leaves the tile uncleared; the unseen words are drawn again next time', () => {
+oldTest('W4: an early exit leaves the tile uncleared; the unseen words are drawn again next time', () => {
   const s = newState('son'); const node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1));
   const run = mkRun(s, node); run.show(); run.judge(true); run.advance(); const rec = run.finish('left'); const r = settle(s, node, run, rec, D1);
   assert.equal(r.cleared, false); assert.equal(status(view(s), 'A1'), 'open');
   assert.equal(nodeRun(IX, view(s, addDays(D1, 1)), 'A1', s, WORDS, mulberry32(1)).scope.newIds.length, 10);
 });
 
-test('W5: the castle opens as soon as a path reaches it (free nodes are walked through); a short path is enough', () => {
+oldTest('W5: the castle opens as soon as a path reaches it (free nodes are walked through); a short path is enough', () => {
   const s = newState('son'); clear(s, 'C1'); assert.equal(view(s).castle.status, 'locked');           // C2 still stands between the start and the square
   clear(s, 'C2'); const v = view(s); assert.equal(v.castle.status, 'open'); assert.equal(status(v, 'G2'), 'open');   // the playhouse hangs on C2
   assert.deepEqual(['A1', 'B1', 'A2', 'B2'].map((id) => status(v, id)), ['open', 'open', 'open', 'open']);          // from the square the child can also walk back into the other paths
   const r = reach(W1, s); assert.ok(r.reached.has('plaza') && r.castle);
 });
 
-legacyTest('W6: castle: 12 check cards from this world\'s met words; 80% gives the key and opens the next world; leftovers pay double; no crown yet', () => {
+oldLegacy('W6: castle: 12 check cards from this world\'s met words; 80% gives the key and opens the next world; leftovers pay double; no crown yet', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'A2');
   assert.equal(worldOpen(IX, W2, s), false);
   const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
@@ -256,7 +259,7 @@ legacyTest('W6: castle: 12 check cards from this world\'s met words; 80% gives t
   assert.equal(clear(s, 'B1').mult, 2);
 });
 
-test('W7: a failed castle card is not known: back to learning, due tomorrow; below the pass rate there is no key and the castle stays open', () => {
+oldTest('W7: a failed castle card is not known: back to learning, due tomorrow; below the pass rate there is no key and the castle stays open', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'A2'); const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
   const missed = []; let n = 0;
   while (run.current) { const it = run.show(); const ans = it.options.findIndex((o) => o.id === it.id); const miss = n++ < 4; if (miss) missed.push(it.id); run.pick(miss ? (ans + 1) % 3 : ans); run.advance(); }
@@ -275,7 +278,7 @@ legacyTest('W8: the crown needs every tile, the house and the castle; playhouse 
   exam(t, nodeRun(IX, view(t), 'castle', t, WORDS, mulberry32(1)), D1); assert.equal(crowned(W1, t), false);
 });
 
-legacyTest('W9: the house (function words) opens when its anchor tile is done; its run uses hear-and-pick cards; it is needed for the crown', () => {
+oldLegacy('W9: the house (function words) opens when its anchor tile is done; its run uses hear-and-pick cards; it is needed for the crown', () => {
   const s = newState('son'); assert.equal(nodeRun(IX, view(s), 'H1', s, WORDS, mulberry32(1)), null);
   clear(s, 'A1'); const node = nodeRun(IX, view(s), 'H1', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.unit, node.scope.newIds.length], ['tile', 'H1-1', 6]);
   const run = mkRun(s, node); assert.ok(run.queue.filter((q) => q.role === 'new').every((q) => q.form === 'check'));
@@ -283,7 +286,7 @@ legacyTest('W9: the house (function words) opens when its anchor tile is done; i
   assert.equal(nodeRun(IX, v, 'H1', s, WORDS, mulberry32(1)), null);
 });
 
-test('W10: playhouses: open when their anchor tile is done; a stamp is given once and changes nothing else', () => {
+oldTest('W10: playhouses: open when their anchor tile is done; a stamp is given once and changes nothing else', () => {
   const s = newState('son'); assert.equal(status(view(s), 'G1'), 'locked'); clear(s, 'B1');
   let v = view(s); const g = v.nodes.find((n) => n.id === 'G1'); assert.deepEqual([g.status, g.playable, g.gameType], ['open', true, 'memory']);
   const before = JSON.stringify([s.words, ensureMap(s).stars, ensureMap(s).bat, ensureMap(s).keys]);
@@ -316,7 +319,7 @@ test('W12: the continent castle opens only with every crown; it draws met cards 
 });
 
 // ---- review load, items, lightning ----
-test('M5: 8 or more due reviews put an optional monster on the map: it does not block; beating it drops an item; more than one a day', () => {
+oldTest('M5: 8 or more due reviews put an optional monster on the map: it does not block; beating it drops an item; more than one a day', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'B1'); clear(s, 'C1');
   const d = addDays(D1, 7); assert.ok(dueCount(s, d) >= 2 * MONSTER_AT, 'due=' + dueCount(s, d));
   let v = view(s, d); assert.equal(v.monster.present, true); assert.equal(status(v, 'A2'), 'open');
@@ -328,7 +331,7 @@ test('M5: 8 or more due reviews put an optional monster on the map: it does not 
   assert.equal(view(s, d).monster.present, true); assert.equal(ensureMap(s).monsterN, 1);                          // reviews are left, so another monster stands
 });
 
-test('M8: items: shield absorbs one wrong check and comes back if unused; flame doubles boss damage; both come from the bag only', () => {
+oldTest('M8: items: shield absorbs one wrong check and comes back if unused; flame doubles boss damage; both come from the bag only', () => {
   const s = newState('son'); const m = ensureMap(s); m.items.shield = 1; m.items.flame = 1;
   assert.equal(chooseBag(s, 'shield'), 'shield'); assert.equal(chooseBag(s, 'shield'), null); chooseBag(s, 'shield');
   const used = takeBag(s); assert.deepEqual([used.shield, m.items.shield, m.bag], [1, 0, null]);
@@ -348,7 +351,7 @@ test('M8: items: shield absorbs one wrong check and comes back if unused; flame 
   assert.equal(r2.boss.hp, CFG.bossHp - 2); assert.equal(chooseBag(s2, 'shield'), null);
 });
 
-legacyTest('M9: nothing on the map changes a word\'s schedule; the lightning round touches no word and never asks a function word', () => {
+oldLegacy('M9: nothing on the map changes a word\'s schedule; the lightning round touches no word and never asks a function word', () => {
   const s = newState('son'); for (const id of ['A1', 'B1', 'H1']) clear(s, id);
   const before = JSON.stringify(s.words); const d = addDays(D1, 8);
   const lt = new Lightning({ state: s, words: WORDS, rng: mulberry32(4) }); assert.ok(lt.ready);
@@ -360,12 +363,12 @@ legacyTest('M9: nothing on the map changes a word\'s schedule; the lightning rou
   assert.equal(JSON.stringify(s.words), before); assert.equal(view(s, d).bonus.status, 'used');
 });
 
-test('M10: the bonus house stays locked until 6 words are ripe', () => {
+oldTest('M10: the bonus house stays locked until 6 words are ripe', () => {
   const s = newState('son'); assert.equal(view(s).bonus.status, 'locked'); clear(s, 'A1'); assert.equal(view(s).bonus.status, 'open');
 });
 
 // ---- bat gauge ----
-test('G1: the gauge gains 1 per new word and loses 1 per review answered, never below 0', () => {
+oldTest('G1: the gauge gains 1 per new word and loses 1 per review answered, never below 0', () => {
   const s = newState('son'); assert.deepEqual([ensureMap(s).bat.fill, ensureMap(s).bat.cap], [0, BAT.cap]);
   clear(s, 'A1'); assert.equal(s.map.bat.fill, 10); assert.equal(s.map.bat.met.length, 10);
   const s2 = newState('son'); ensureMap(s2).bat.fill = 3; const n2 = { kind: 'monster', tag: 'monster', scope: { noNew: true } };
@@ -373,7 +376,7 @@ test('G1: the gauge gains 1 per new word and loses 1 per review answered, never 
   settleRun(s2, n2, r2, { ...r2.ended, reviews: 5, fresh: 0 }, D1, mulberry32(2)); assert.equal(s2.map.bat.fill, 0);
 });
 
-legacyTest('G2: a full gauge stops everything but the bat test; with nothing to ask it is not "full"', () => {
+oldLegacy('G2: a full gauge stops everything but the bat test; with nothing to ask it is not "full"', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'A2'); clear(s, 'B1'); assert.equal(view(s).bat.full, false);
   clear(s, 'B2'); const v = view(s); assert.deepEqual([v.bat.fill, v.bat.cap, v.bat.full, v.bat.byDebt], [40, 40, true, false]);
   assert.deepEqual([status(v, 'C1'), v.castle.status, status(v, 'H1'), status(v, 'C2'), status(v, 'G1')], ['blocked', 'blocked', 'blocked', 'blocked', 'open']);   // play is not blocked
@@ -382,7 +385,7 @@ legacyTest('G2: a full gauge stops everything but the bat test; with nothing to 
   const empty = newState('son'); ensureMap(empty).bat.fill = 99; assert.equal(view(empty).bat.full, false);   // gauge full but no word to ask about
 });
 
-test('G3: the bat test asks overdue reviews first (oldest first), then words met since the last test; all check cards, 25 at most', () => {
+oldTest('G3: the bat test asks overdue reviews first (oldest first), then words met since the last test; all check cards, 25 at most', () => {
   const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id);
   const d = addDays(D1, 8);                                                       // the known words of day 1 are due again after 7 days
   const pool = batPool(s, d); assert.ok(pool.due.length > 0 && pool.due.length + pool.fresh.length <= BAT.test);
@@ -392,7 +395,7 @@ test('G3: the bat test asks overdue reviews first (oldest first), then words met
   const fresh = batPool(s, D1); assert.equal(fresh.due.length, 0); assert.equal(fresh.fresh.length, BAT.test);   // day 1: nothing due, so it asks about words met today
 });
 
-test('G4: the test result moves the capacity (90%+ up, under 70% down, bounded); the gauge empties; leaving keeps it full; no stars', () => {
+oldTest('G4: the test result moves the capacity (90%+ up, under 70% down, bounded); the gauge empties; leaving keeps it full; no stars', () => {
   const fill = (s) => { for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id); };
   const hi = newState('son'); fill(hi); const r1 = batTest(hi, D1, () => true);
   assert.deepEqual([r1.out.bat.done, r1.out.bat.acc, hi.map.bat.cap, hi.map.bat.fill, hi.map.bat.met.length], [true, 1, BAT.cap + BAT.step, 0, 0]);
@@ -407,7 +410,7 @@ test('G4: the test result moves the capacity (90%+ up, under 70% down, bounded);
   assert.equal(r3.out.bat.done, false); assert.equal(view(left).bat.full, true); assert.equal(left.map.bat.cap, BAT.cap);
 });
 
-test('G5: a miss in the bat test follows the normal rules: overdue word back to tomorrow, new word back to learning', () => {
+oldTest('G5: a miss in the bat test follows the normal rules: overdue word back to tomorrow, new word back to learning', () => {
   const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'B2']) clear(s, id); const d = addDays(D1, 8);
   const node = nodeRun(IX, view(s, d), 'bat', s, WORDS, mulberry32(1)); const dueIds = batPool(s, d).due; assert.ok(dueIds.length > 0); const was = Object.fromEntries(dueIds.map((id) => [id, s.words[id].st]));
   exam(s, node, d, () => false);                                                  // a miss adds "once more" cards, so the queue grows
@@ -429,7 +432,7 @@ test('G6: reviews put off also bring the bat: overdue cards as many as the capac
   assert.equal(batState(s2, d).full, false); Object.assign(RULES, off);                                            // the rule can be switched off
 });
 
-test('G7: a tile run carries more reviews when more are waiting: half of the backlog, between 8 and 20', () => {
+oldTest('G7: a tile run carries more reviews when more are waiting: half of the backlog, between 8 and 20', () => {
   assert.deepEqual([0, 10, 16, 17, 30, 40, 500].map(tileDue), [8, 8, 8, 9, 15, 20, 20]);
   const s = newState('son'); WORDS.slice(20, 60).forEach((w) => { s.words[w.id] = { st: 'review', step: 1, due: D1, lastDay: '2026-11-01', firstDay: '2026-11-01', lapses: 0 }; });
   ensureMap(s).bat.cap = 80; const node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)); assert.equal(node.scope.duePerRun, 20);
@@ -459,4 +462,138 @@ test('W13: by default the function-word house is off the learning path: not on t
   assert.equal(atlasView(IX, s)[0].worlds[0].total, 60);
   setLeftOutKinds([]); try { const v2 = view(s); assert.equal(v2.houses.length, 1); assert.equal(v2.crown, false); assert.equal(worldWords(W1).length, 66); } finally { setLeftOutKinds(['sight']); }
   assert.equal(view(s).crown, true);
+});
+
+// ---- tile triage and bunch checks (card T-003; TRIAGE on, the default) ----
+// The child looks over a tile's new words and taps `unknown`. -> { node, run }; making the run records the passed words.
+function triageRun(state, id, unknown = [], today = D1, seed = 1) {
+  const node = nodeRun(IX, view(state, today), id, state, WORDS, mulberry32(seed)); assert.ok(node && node.triage, 'word list for ' + id);
+  const rng = mulberry32(seed + 1); triageScope(node, triagePlan(node.triage, unknown, rng), today);
+  return { node, run: new Run({ state, words: WORDS, today, rng, scope: node.scope, tag: node.tag }) };
+}
+// Plays a run the way the screen allows: a taught card only has "뜻 보기" (judge(false)); knows(id) decides every check.
+function playT(run, knows = () => true) {
+  const seen = []; let g = 0;
+  while (run.current && g++ < 500) {
+    const it = run.show(); seen.push({ ...it }); const right = () => it.options.findIndex((o) => o.id === it.id);
+    if (it.form === 'judge') { const r = run.judge(it.taught ? false : true); if (r.next === 'verify') run.pick(knows(it.id) ? right() : (right() + 1) % 3); }
+    else run.pick(it.role === 'relearn' || knows(it.id) ? right() : (right() + 1) % 3);
+    run.advance();
+  }
+  assert.ok(g < 500); return seen;
+}
+const finishT = (state, t, today = D1, reason = 'done') => { const rec = t.run.finish(reason); return { rec, out: settle(state, t.node, t.run, rec, today) }; };
+const D30 = addDays(D1, 30);
+
+test('T1: passed words are recorded as silver with no date in the tile\'s bunch; the bunch is due in 30 days; the gauge does not rise; the tile clears', () => {
+  const s = newState('son'); const t = triageRun(s, 'A1'); const words = W1._nodes.A1.words; const spot = t.node.scope.triage.spot;
+  assert.equal(spot.length, 2); assert.deepEqual(t.run.queue.map((q) => q.role), ['spot', 'spot']);
+  for (const id of words.filter((x) => !spot.includes(x))) assert.deepEqual(s.words[id], { firstDay: D1, lapses: 0, st: 'likely', lstep: 0, due: null, bunch: 'A1', lastDay: D1 });
+  assert.deepEqual(s.bunches.A1, { due: addDays(D1, 30), done: null }); assert.equal(gradeOf(s.words[words.find((x) => !spot.includes(x))]), 2);
+  playT(t.run); const r = finishT(s, t);
+  assert.ok(words.every((id) => s.words[id] && s.words[id].st === 'likely' && s.words[id].due === null && s.words[id].bunch === 'A1'));
+  assert.deepEqual([r.out.cleared, ensureMap(s).bat.fill, ensureMap(s).bat.met.length, r.rec.fresh, r.rec.reviews], [true, 0, 0, 0, 0]); assert.ok(r.rec.stars > 0);
+  const u = newState('son'); const tu = triageRun(u, 'B1', W1._nodes.B1.words.slice(0, 3)); playT(tu.run); finishT(u, tu);
+  assert.equal(u.map.bat.fill, 3); assert.equal(status(view(u), 'B1'), 'cleared');           // only the three words met on cards fill the gauge
+  const none = newState('son'); const tn = triageRun(none, 'C1', W1._nodes.C1.words); assert.deepEqual(none.bunches, {}); assert.equal(tn.run.queue.filter((q) => q.role === 'spot').length, 0);   // nothing passed: no bunch
+});
+
+test('T2: spot checks: 0 / 1 / 2 cards for 0 / 1-3 / 4+ passed words, first in the run; right = passed, wrong = learning word that comes back; state.verify keeps both', () => {
+  const ids = W1._nodes.A1.words;
+  for (let n = 0; n <= 10; n++) { const p = triagePlan(ids, ids.slice(n), mulberry32(n)); assert.equal(p.passed.length, n); assert.equal(p.spot.length, n === 0 ? 0 : n < 4 ? 1 : 2, 'passed ' + n); assert.ok(p.spot.every((x) => p.passed.includes(x))); }
+  const s = newState('son'); const t = triageRun(s, 'A1', ids.slice(0, 2)); const [a, b] = t.node.scope.triage.spot;
+  assert.deepEqual(t.run.queue.slice(0, 2).map((q) => [q.id, q.role, q.form]), [[a, 'spot', 'check'], [b, 'spot', 'check']]);
+  let it = t.run.show(); assert.equal(s.words[a], undefined); t.run.pick(it.options.findIndex((o) => o.id === a)); t.run.advance();
+  assert.deepEqual([s.words[a].st, s.words[a].due, s.words[a].bunch, t.run.combo], ['likely', null, 'A1', 1]);
+  it = t.run.show(); const res = t.run.pick((it.options.findIndex((o) => o.id === b) + 1) % 3);
+  assert.deepEqual([res.ok, t.run.combo, s.words[b].st, s.words[b].due], [false, 0, 'learn', addDays(D1, 1)]); assert.deepEqual(s.verify, [true, false]);
+  assert.ok(t.run.queue.some((q) => q.id === b && q.role === 'relearn' && q.final)); t.run.advance();
+  const seen = playT(t.run); assert.ok(seen.some((q) => q.id === b && q.role === 'relearn'));
+  assert.deepEqual([s.words[b].st, s.words[b].step, s.words[b].due, s.words[b].bunch], ['review', 0, addDays(D1, 1), undefined]);
+  const rec = t.run.finish(); assert.deepEqual([rec.spots, rec.spotOk], [2, 1]);
+  const d = newState('son'); const td = triageRun(d, 'A1', ids.slice(0, 9)); const only = td.run.show(); assert.equal(only.role, 'spot'); td.run.pick(-1);   // "몰라요" on a spot check
+  assert.deepEqual([d.words[only.id].st, d.verify], ['learn', [false]]);
+});
+
+test('T3: tapped words are taught: front, then one button that acts as "몰라요" (judge(false)); they end on the 1-day review', () => {
+  const s = newState('son'); const ids = W1._nodes.B1.words; const tapped = ids.slice(0, 4); const t = triageRun(s, 'B1', tapped);
+  const news = t.run.queue.filter((q) => q.role === 'new'); assert.deepEqual(news.map((q) => q.id).sort(), tapped.slice().sort());
+  assert.ok(news.every((q) => q.taught && q.form === 'judge')); assert.ok(t.run.queue.filter((q) => q.role === 'spot').every((q) => !tapped.includes(q.id)));
+  while (t.run.current.role === 'spot') { const it = t.run.show(); t.run.pick(it.options.findIndex((o) => o.id === it.id)); t.run.advance(); }
+  const it = t.run.show(); assert.equal(it.taught, true); const res = t.run.judge(false); assert.equal(res.next, 'reveal'); assert.equal(s.words[it.id].st, 'learn');
+  assert.equal(t.run.stats.claims, 0); t.run.advance(); playT(t.run); const rec = t.run.finish();
+  for (const id of tapped) assert.deepEqual([s.words[id].st, s.words[id].step, s.words[id].due], ['review', 0, addDays(D1, 1)]);
+  assert.deepEqual([rec.unknown, rec.learned, rec.fresh], [4, 4, 4]);
+});
+
+test('T4: leaving early: words not answered get no record and the tile stays open; next time the list holds only those; the bunch keeps its first date', () => {
+  const s = newState('son'); const ids = W1._nodes.A1.words; const t = triageRun(s, 'A1', ids.slice(0, 3)); const [a, b] = t.node.scope.triage.spot;
+  const it = t.run.show(); t.run.pick(it.options.findIndex((o) => o.id === a)); t.run.advance(); const r = finishT(s, t, D1, 'left');
+  assert.equal(r.out.cleared, false); assert.equal(s.words[b], undefined); assert.ok(ids.slice(0, 3).every((id) => !s.words[id])); assert.equal(status(view(s), 'A1'), 'open');
+  const d2 = addDays(D1, 2); const node = nodeRun(IX, view(s, d2), 'A1', s, WORDS, mulberry32(4)); assert.deepEqual(node.triage.slice().sort(), [b, ...ids.slice(0, 3)].sort());
+  const t2 = triageRun(s, 'A1', [], d2); playT(t2.run); const r2 = finishT(s, t2, d2);
+  assert.equal(r2.out.cleared, true); assert.deepEqual(s.bunches.A1, { due: addDays(D1, 30), done: null }); assert.ok(bunchLeft(s, 'A1').length >= 8);
+});
+
+// Three tiles looked over on three days, everything known: bunches A1, B1, C1 due on D1+30, +31, +32.
+function bunches3() { const s = newState('son'); ['A1', 'B1', 'C1'].forEach((id, i) => { const d = addDays(D1, i); const t = triageRun(s, id, [], d); playT(t.run); finishT(s, t, d); }); return s; }
+test('T5: bunch checks: none before the date; then 3 cards per bunch in tile and monster runs, 2 bunches at most, the oldest first; never in bat or castle tests', () => {
+  const s = bunches3(); assert.deepEqual(Object.values(s.bunches).map((b) => b.due), [D30, addDays(D1, 31), addDays(D1, 32)]);
+  assert.equal(nodeRun(IX, view(s, addDays(D1, 29)), 'A2', s, WORDS, mulberry32(1)).scope.audit, undefined);
+  const one = nodeRun(IX, view(s, D30), 'A2', s, WORDS, mulberry32(1)).scope.audit; assert.deepEqual(one.picks.map((p) => p.bunch), ['A1', 'A1', 'A1']);
+  const d = addDays(D1, 40); for (const w of W1._nodes.A2.words.slice(0, 8)) s.words[w] = { st: 'review', step: 1, due: d, firstDay: D1, lastDay: D1, lapses: 0 };   // enough due reviews for a monster
+  const v = view(s, d); const tile = nodeRun(IX, v, 'B2', s, WORDS, mulberry32(1)); const mon = nodeRun(IX, v, 'monster', s, WORDS, mulberry32(1));
+  for (const n of [tile, mon]) { assert.deepEqual(n.scope.audit.picks.map((p) => p.bunch), ['A1', 'A1', 'A1', 'B1', 'B1', 'B1'], n.kind); assert.equal(new Set(n.scope.audit.picks.map((p) => p.id)).size, 6);
+    assert.ok(n.scope.audit.picks.every((p) => bunchLeft(s, p.bunch).includes(p.id))); }
+  const mr = mkRun(s, mon, d); assert.equal(mr.queue.filter((q) => q.role === 'audit').length, 6); assert.equal(mr.queue.filter((q) => q.role === 'review').length, 8);
+  const tr = triageRun(s, 'B2', [], d); assert.deepEqual(tr.run.queue.slice(0, 2).map((q) => q.role), ['spot', 'spot']); assert.equal(tr.run.queue.filter((q) => q.role === 'audit').length, 6);
+  const c = newState('son'); for (const id of ['A1', 'A2']) { const t = triageRun(c, id); playT(t.run); finishT(c, t); }
+  const cv = view(c, D30); const castle = nodeRun(IX, cv, 'castle', c, WORDS, mulberry32(1)); assert.ok(castle && !castle.scope.audit); assert.ok(mkRun(c, castle, D30).queue.every((q) => q.role === 'castle'));
+  for (const w of W1._nodes.B1.words.slice(0, 5)) c.words[w] = { st: 'review', step: 1, due: D1, firstDay: D1, lastDay: D1, lapses: 0 }; ensureMap(c).bat.fill = 99;
+  const bat = nodeRun(IX, view(c, D30), 'bat', c, WORDS, mulberry32(1)); assert.ok(bat && !bat.scope.audit); assert.ok(mkRun(c, bat, D30).queue.every((q) => q.role !== 'audit'));
+});
+
+test('T6: all samples right: every word left in the bunch is gold, bunch "ok"; one wrong: it is learning (tomorrow), the rest get the 7-day check, bunch "split"; leaving early', () => {
+  const auditRun = (s, d, seed = 3) => new Run({ state: s, words: WORDS, today: d, rng: mulberry32(seed), scope: { noNew: true, audit: auditPick(s, d, mulberry32(seed)) } });
+  const ok = bunches3(); const r = auditRun(ok, D30); assert.equal(r.queue.length, 3); playT(r); const rec = r.finish();
+  assert.ok(W1._nodes.A1.words.every((id) => ok.words[id].st === 'done' && ok.words[id].due === null)); assert.deepEqual(ok.bunches.A1, { due: D30, done: D30, result: 'ok' });
+  assert.deepEqual([rec.bunchOk, rec.bunchDone, rec.reviews], [1, 1, 0]); assert.ok(rec.stars >= 9); assert.equal(bunchLeft(ok, 'B1').length, 10);
+  const sp = bunches3(); const r2 = auditRun(sp, D30); const miss = r2.queue[1].id; playT(r2, (id) => id !== miss); const rec2 = r2.finish();
+  assert.deepEqual([sp.words[miss].st, sp.words[miss].due], ['learn', addDays(D30, 1)]);
+  for (const id of W1._nodes.A1.words.filter((x) => x !== miss)) assert.deepEqual([sp.words[id].st, sp.words[id].lstep, sp.words[id].due], ['likely', 0, addDays(D30, 7)]);
+  assert.deepEqual([sp.bunches.A1.done, sp.bunches.A1.result, rec2.bunchOk, rec2.bunchDone], [D30, 'split', 0, 1]); assert.equal(planRun(sp, WORDS, addDays(D30, 7)).due.length, 9);
+  const lm = bunches3(); const r3 = auditRun(lm, D30); let it = r3.show(); r3.pick((it.options.findIndex((o) => o.id === it.id) + 1) % 3); r3.advance(); r3.finish('left');   // a miss, then out
+  assert.equal(lm.bunches.A1.result, 'split'); assert.equal(lm.words[it.id].st, 'learn'); assert.equal(bunchLeft(lm, 'A1').length, 0); assert.equal(lm.words[r3.queue[1].id].due, addDays(D30, 7));
+  const lo = bunches3(); const before = JSON.stringify(lo.words); const r4 = auditRun(lo, D30); it = r4.show(); r4.pick(it.options.findIndex((o) => o.id === it.id)); r4.advance(); r4.finish('left');   // right, then out
+  assert.deepEqual(lo.bunches.A1, { due: D30, done: null }); assert.equal(JSON.stringify(lo.words), before);
+  assert.equal(auditPick(lo, addDays(D30, 1), mulberry32(9)).picks.filter((p) => p.bunch === 'A1').length, 3);   // drawn again next time
+});
+
+test('T7: a passed word missed in a castle test becomes a learning word and is no longer sampled from its bunch', () => {
+  const s = newState('son'); for (const id of ['A1', 'A2']) { const t = triageRun(s, id); playT(t.run); finishT(s, t); }
+  const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const x = node.scope.castle.find((id) => bunchLeft(s, 'A1').includes(id)); assert.ok(x);
+  exam(s, node, D1, (id) => id !== x); assert.deepEqual([s.words[x].st, s.words[x].due, s.words[x].bunch], ['learn', addDays(D1, 1), 'A1']);
+  assert.ok(!bunchLeft(s, 'A1').includes(x)); for (let k = 0; k < 30; k++) assert.ok(auditPick(s, D30, mulberry32(k)).picks.every((p) => p.id !== x));
+});
+
+test('T8: with TRIAGE.on = false the tile and monster runs are as before: no word list, no spot or bunch cards', () => {
+  const s = bunches3(); const d = addDays(D1, 40); for (const w of W1._nodes.A2.words.slice(0, 8)) s.words[w] = { st: 'review', step: 1, due: d, firstDay: D1, lastDay: D1, lapses: 0 };
+  TRIAGE.on = false; try {
+    const v = view(s, d); const tile = nodeRun(IX, v, 'B2', s, WORDS, mulberry32(1)); const mon = nodeRun(IX, v, 'monster', s, WORDS, mulberry32(1));
+    assert.deepEqual([tile.triage, tile.scope.audit, mon.scope.audit, auditPick(s, d, mulberry32(1))], [undefined, undefined, undefined, null]);
+    const run = mkRun(s, tile, d); assert.ok(run.queue.every((q) => q.role === 'new' || q.role === 'review')); assert.equal(run.queue.filter((q) => q.role === 'new' && q.form === 'judge' && !q.taught).length, 10);
+    const f = newState('son'); clear(f, 'A1'); assert.ok(Object.values(f.words).every((r) => !('bunch' in r) && r.due)); assert.deepEqual(f.bunches, {});
+  } finally { TRIAGE.on = true; }
+});
+
+test('T10: passed words and bunch checks never change the schedule of any other word', () => {
+  const s = newState('son'); const other = worldWords(W2); other.forEach((id, i) => { s.words[id] = { st: i % 3 ? 'review' : 'done', step: i % 5, due: i % 3 ? addDays(D1, 60 + i) : null, firstDay: '2026-11-01', lastDay: '2026-11-01', lapses: 0 }; });
+  const before = JSON.stringify(other.map((id) => s.words[id]));
+  const ids = W1._nodes.A1.words; const t = triageRun(s, 'A1', ids.slice(0, 2)); const miss = t.node.scope.triage.spot[0]; playT(t.run, (id) => id !== miss); finishT(s, t);
+  const t2 = triageRun(s, 'B1', [], addDays(D1, 1)); playT(t2.run); finishT(s, t2, addDays(D1, 1));
+  const r = new Run({ state: s, words: WORDS, today: D30, rng: mulberry32(3), scope: { noNew: true, audit: auditPick(s, D30, mulberry32(3)) } }); const m = r.queue[0].id; playT(r, (id) => id !== m); r.finish();
+  const r2 = new Run({ state: s, words: WORDS, today: addDays(D1, 31), rng: mulberry32(4), scope: { noNew: true, audit: auditPick(s, addDays(D1, 31), mulberry32(4)) } }); playT(r2); r2.finish();
+  assert.deepEqual([s.bunches.A1.result, s.bunches.B1.result], ['split', 'ok']);
+  assert.equal(JSON.stringify(other.map((id) => s.words[id])), before);
+  assert.ok(Object.keys(s.words).every((id) => other.includes(id) || ids.includes(id) || W1._nodes.B1.words.includes(id)));
 });

@@ -153,3 +153,11 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 /* parent: where the record is kept, restore */
 .safety{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;background:#fff;border:3px solid var(--ink);padding:8px 12px;margin:10px 0;font-size:14px}.safety b{margin-right:6px}.safety .bad{color:var(--coral-d);font-weight:700}
 .parent .msg{color:var(--ink);text-shadow:none;min-height:0;margin:6px 0}.filebtn{cursor:pointer;display:inline-block}.parent select{font:inherit;padding:8px;border:3px solid var(--ink);background:#fff}
+/* tile triage: the new words as spellings, tap the unknown ones. Ten fit without scrolling on iPad (1180x820, 768x950). */
+.page.tri{max-width:1080px;padding-top:14px}.tri .title{font-size:36px;margin:6px 60px 14px}
+.twords{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:760px;margin:0 auto}
+@media (min-width:1000px){.twords{grid-template-columns:repeat(3,1fr);max-width:1000px}}
+.tw{min-height:80px;padding:8px 10px;background:var(--paper);border:5px solid var(--ink);box-shadow:0 6px 0 var(--ink);border-radius:18px;font-family:var(--word);font-size:34px;font-weight:800;color:var(--ink);word-break:break-word}
+.tw.on{background:#ffe9a8;outline:5px solid var(--go);outline-offset:-10px}.tw.on:after{content:" ?";color:var(--go)}
+.tw:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.act.see{max-width:520px}

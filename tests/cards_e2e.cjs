@@ -53,7 +53,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   for (let i = 0; i < 50; i++) { if (await fetch(BASE).then((r) => r.ok, () => false)) break; await sleep(100); }
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
   const ctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
-  let page = await open(ctx, 'today=2026-11-12&seed=5&sound=off&fast=1');
+  let page = await open(ctx, 'today=2026-11-12&triage=off&seed=5&sound=off&fast=1');
 
   // 1. the map
   await page.click('[data-act=pick][data-id=son]'); await page.waitForSelector('.world');
@@ -113,7 +113,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('home screen shows no numbers (no sibling comparison)', !/\d/.test(await page.textContent('.profiles')));
 
   // 5. day 2: the reviews of two tiles pile up into an optional monster; it does not block the roads
-  const d2 = await open(ctx, 'today=2026-11-13&seed=6&sound=off&fast=1');
+  const d2 = await open(ctx, 'today=2026-11-13&triage=off&seed=6&sound=off&fast=1');
   await d2.click('[data-act=pick][data-id=son]'); await d2.waitForSelector('.world');
   const before = await state(d2, 'son'); const dueIds = Object.keys(before.words).filter((id) => before.words[id].st === 'review' && before.words[id].due === '2026-11-13');
   ok('day 2: yesterday\'s learned words are due and form a monster', dueIds.length >= 8 && !!(await d2.$('[data-id=monster]')), 'due=' + dueIds.length);
@@ -133,7 +133,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 6. the whole world in one day: castle opens after two roads, check-only exam, key, bonus road x2, bag items
   const wctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   for (const w of WORDS) KNOWN.add(w.id);
-  const w1 = await open(wctx, 'today=2026-12-01&seed=11&sound=off&fast=1'); await w1.click('[data-act=pick][data-id=daughter]'); await w1.waitForSelector('.world');
+  const w1 = await open(wctx, 'today=2026-12-01&triage=off&seed=11&sound=off&fast=1'); await w1.click('[data-act=pick][data-id=daughter]'); await w1.waitForSelector('.world');
   await startNode(w1, 'A1'); await play(w1); await toMap(w1);
   await w1.click('[data-act=node][data-id=castle]');
   ok('castle stays locked until a path reaches it', /\blocked\b/.test(await nodeStatus(w1, 'castle')) && /성까지/.test(await w1.textContent('#msg')));
@@ -185,7 +185,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
 
   // 8. optional monster: 8+ due reviews put it on the map without blocking anything
   const mctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
-  const m1 = await open(mctx, 'today=2026-12-02&seed=3&sound=off&fast=1'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world');
+  const m1 = await open(mctx, 'today=2026-12-02&triage=off&seed=3&sound=off&fast=1'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world');
   await m1.evaluate(() => { const st = JSON.parse(localStorage.getItem('cards.v0.p.daughter') || 'null') || { v: 0, id: 'daughter', words: {}, verify: [], runs: [], log: [] };
     const ids = window.__cards.words.slice(0, 10).map((w) => w.id); for (const id of ids) st.words[id] = { st: 'review', step: 0, due: '2026-12-02', firstDay: '2026-12-01', lastDay: '2026-12-01', lapses: 0 };
     localStorage.setItem('cards.v0.p.daughter', JSON.stringify(st)); });
@@ -207,7 +207,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const wav = (() => { const n = 800, b = Buffer.alloc(44 + n); b.write('RIFF', 0); b.writeUInt32LE(36 + n, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(8000, 24); b.writeUInt32LE(8000, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34); b.write('data', 36); b.writeUInt32LE(n, 40); b.fill(128, 44); return b; })();   // 0.1 s of silence
   await fctx.route('**/audio/manifest.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ files: Object.fromEntries(WORDS.map((w) => [w.id, 'x.wav'])) }) }));
   await fctx.route('**/audio/x.wav', (r) => r.fulfill({ contentType: 'audio/wav', body: wav }));
-  const f1 = await open(fctx, 'today=2026-11-12&seed=7&fast=1');
+  const f1 = await open(fctx, 'today=2026-11-12&triage=off&seed=7&fast=1');
   await f1.click('[data-act=pick][data-id=daughter]'); await f1.waitForSelector('.world');
   ok('map screen says audio files are in use', /음원 파일/.test(await f1.textContent('#src')));
   ok('map fits the portrait screen without sideways scroll', await f1.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1));
@@ -219,7 +219,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 10. sound failure: no file and no system voice -> card stays locked, banner offers retry; parent can continue
   const nctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   await nctx.addInitScript(() => { Object.defineProperty(window, 'speechSynthesis', { value: undefined, configurable: true }); });
-  const n1 = await open(nctx, 'today=2026-11-12&seed=8&fast=1');
+  const n1 = await open(nctx, 'today=2026-11-12&triage=off&seed=8&fast=1');
   await n1.click('[data-act=pick][data-id=daughter]'); await n1.waitForSelector('.world'); await n1.click('[data-act=node][data-id=A1]');
   await n1.waitForSelector('#banner:not([hidden])', { timeout: 8000 });
   ok('no sound: banner with retry, answer buttons stay locked', /다시 듣기/.test(await n1.textContent('#banner')) && await n1.$eval('.act.yes', (b) => b.disabled));
@@ -248,7 +248,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
 
   // 10c. worlds: house with hear-and-pick cards, playhouses, key and crown, next world, world list, continent castle, next continent
   const xctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
-  const x = await open(xctx, 'today=2026-12-20&seed=21&sound=off&fast=1&houses=sight'); await x.click('[data-act=pick][data-id=son]'); await x.waitForSelector('.world');
+  const x = await open(xctx, 'today=2026-12-20&triage=off&seed=21&sound=off&fast=1&houses=sight'); await x.click('[data-act=pick][data-id=son]'); await x.waitForSelector('.world');
   const worldId = () => x.$eval('#world', (e) => e.dataset.world); const msg = () => x.textContent('#msg');
   ok('the first visit shows the world\'s opening line and its name', (await worldId()) === 'd1-01' && /첫 편지/.test(await msg()) && /새싹 들판 · 단어 마을/.test(await x.textContent('#wtitle')));
   await x.click('[data-act=node][data-id=G1]'); const m1x = await msg(); await x.click('[data-act=node][data-id=H1]');
@@ -312,7 +312,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 10d. the full deck: 4,610 cards and 30 worlds load and a first tile can be played; a world file of another version is refused
   const fullctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const fp = await fullctx.newPage(); fp.on('pageerror', (e) => errs.push(String(e)));
-  const t0 = Date.now(); await fp.goto(BASE + '?today=2026-12-21&seed=2&sound=off&fast=1&nosync=1'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
+  const t0 = Date.now(); await fp.goto(BASE + '?today=2026-12-21&triage=off&seed=2&sound=off&fast=1&nosync=1'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
   const full = await fp.evaluate(() => ({ words: window.__cards.words.length, worlds: window.__cards.ix.worlds.length, world: document.querySelector('#world').dataset.world, open: document.querySelectorAll('.node.open').length, nodes: document.querySelectorAll('.world .node').length, standIn: window.__cards.standIn, wide: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
   ok('full deck: 4,610 cards, 30 worlds, the first world\'s map with open tiles, fits the screen width', full.words === 4610 && full.worlds === 30 && full.world === 'p1-01' && full.open >= 2 && full.nodes >= 15 && full.wide, JSON.stringify(full) + ' load ' + loadMs + ' ms');
   ok('the stand-in world file is named as such', full.standIn ? /시험용/.test(await fp.textContent('#src')) : true);
@@ -330,15 +330,15 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   //      a record from a newer program is left alone
   const SAVE0 = fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', 'v0-prototype.json'), 'utf8');
   const uctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
-  const u = await open(uctx, 'today=2026-12-22&seed=4&sound=off&fast=1');
+  const u = await open(uctx, 'today=2026-12-22&triage=off&seed=4&sound=off&fast=1');
   await u.evaluate((t) => localStorage.setItem('cards.v0.p.son', t), SAVE0); await u.reload(); await u.waitForSelector('.profiles');
   await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
   ok('a record saved by the 60-word prototype opens after the update: its tiles, stars and gauge are there', /\bcleared\b/.test(await nodeStatus(u, 'A1')) && /\bcleared\b/.test(await nodeStatus(u, 'B1')) && /77/.test(await u.textContent('.maphud .chip:nth-of-type(1)')) && /20\/40/.test(await u.textContent('#batgauge')));
   await startNode(u, 'A2'); await play(u); await u.waitForSelector('.tiles');
   const up = await state(u, 'son');
-  ok('after playing on, the record is in the new format and still holds the old words', up.v === 1 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
+  ok('after playing on, the record is in the new format and still holds the old words', up.v === 2 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
   await u.evaluate(() => localStorage.setItem('cards.v0.p.son', '{"v":1,"id":"son","words":{"W0122'));           // cut off in the middle of a write
-  await u.goto(BASE + '?set=demo&today=2026-12-22&seed=4&sound=off&fast=1&nosync=1'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
+  await u.goto(BASE + '?set=demo&today=2026-12-22&triage=off&seed=4&sound=off&fast=1&nosync=1'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
   const dmg = await u.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cards.v0.p.son.damaged.')).map((k) => localStorage.getItem(k)));
   ok('a damaged record is set aside (not overwritten) and the child is told', dmg.length === 1 && dmg[0].startsWith('{"v":1,"id":"son"') && /따로 보관/.test(await u.textContent('#banner')));
   await u.click('[data-act=hide]'); await u.click('[data-act=home]'); await u.click('[data-act=parent]'); await u.waitForSelector('#safety');
@@ -357,7 +357,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 10g. a record that already holds function-word entries keeps them although the house is off the path
   const V1W = fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', 'v1-worlds.json'), 'utf8'); const v1w = JSON.parse(V1W);
   const gctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
-  const g = await open(gctx, 'today=2026-12-22&seed=4&sound=off&fast=1');
+  const g = await open(gctx, 'today=2026-12-22&triage=off&seed=4&sound=off&fast=1');
   await g.evaluate((t) => localStorage.setItem('cards.v0.p.daughter', t), V1W); await g.reload(); await g.waitForSelector('.profiles');
   await g.click('[data-act=pick][data-id=daughter]'); await g.waitForSelector('.world');
   const sightIdsF = WORDS.filter((w) => w.track === 'sight').map((w) => w.id); const heldF = Object.keys(v1w.words).filter((id) => sightIdsF.includes(id));
@@ -373,18 +373,18 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const idle = (p) => p.waitForFunction(() => window.__cards.sync && window.__cards.sync.pending.length === 0, null, { timeout: 8000 });
   const mac = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   const ipad = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
-  const mc = await open(mac, 'today=2026-12-10&seed=3&sound=off&fast=1', true);
+  const mc = await open(mac, 'today=2026-12-10&triage=off&seed=3&sound=off&fast=1', true);
   ok('home says the record is kept on this device and the Mac server', /이 기기 \+ Mac 서버/.test(await mc.textContent('#syncline')), await mc.textContent('#syncline'));
   await mc.click('[data-act=pick][data-id=son]'); await mc.waitForSelector('.world'); await startNode(mc, 'A1'); await play(mc); await idle(mc);
   ok('state file written on the server side', fs.existsSync(path.join(STATE, 'p.son.json')) && read('son').runs.length === 1 && Object.keys(read('son').words).length === 10);
-  const ip = await open(ipad, 'today=2026-12-11&seed=4&sound=off&fast=1', true);
+  const ip = await open(ipad, 'today=2026-12-11&triage=off&seed=4&sound=off&fast=1', true);
   const ipadSon = await state(ip, 'son');
   ok('a second device starts with the first one\'s progress', ipadSon && Object.keys(ipadSon.words).length === 10 && ipadSon.map.worlds['d1-01'].cleared.A1 === '2026-12-10');
   await ip.click('[data-act=pick][data-id=son]'); await ip.waitForSelector('.world');
   ok('its map shows the cleared tile and the next one open', /\bcleared\b/.test(await nodeStatus(ip, 'A1')) && /\bopen\b/.test(await nodeStatus(ip, 'A2')));
   ok('the other child\'s document was not created', !fs.existsSync(path.join(STATE, 'p.daughter.json')));
   await mc.evaluate(() => localStorage.clear());                                  // the browser threw its storage away
-  await mc.goto(BASE + '?set=demo&today=2026-12-12&seed=5&sound=off&fast=1'); await mc.waitForSelector('.profiles');
+  await mc.goto(BASE + '?set=demo&today=2026-12-12&triage=off&seed=5&sound=off&fast=1'); await mc.waitForSelector('.profiles');
   ok('a wiped browser gets everything back from the server', Object.keys((await state(mc, 'son')).words).length === 10);
 
   // server unreachable: the run still saves on the device, says so, and uploads later
@@ -414,6 +414,63 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const s1 = await open(sctx, 'today=2026-12-14&sound=off', true);
   ok('without a state API the home screen says device-only', /이 기기만/.test(await s1.textContent('#syncline')), await s1.textContent('#syncline'));
   await s1.close(); await sctx.close();
+
+  // 12. tile triage (on by default): the tile's new words as a list, the unknown ones tapped and taught, a spot check or two
+  //     of the rest, and 30 days later a sample check of each bunch mixed into another run
+  const tctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const t = await open(tctx, 'today=2026-11-12&seed=31&sound=off&fast=1'); await t.click('[data-act=pick][data-id=son]'); await t.waitForSelector('.world');
+  const curT = (p) => p.evaluate(() => { const r = window.__cards.run; const it = r && r.current; return it ? { id: it.id, form: it.form, role: it.role, taught: !!it.taught, verifying: !!it.verifying, ans: it.options ? it.options.findIndex((o) => o.id === it.id) : -1 } : null; });
+  async function playTri(p, knows = () => true) {                                   // a taught card has only "뜻 보기"; every check is answered by knows(id)
+    const seen = [];
+    for (let k = 0; k < 400; k++) {
+      await p.waitForSelector(READY, { timeout: 8000 }); if (await p.$('.tiles')) break;
+      const it = await curT(p); if (!it) continue; if (!it.verifying) seen.push(it);
+      if (it.form === 'check' || it.verifying) await answer(p, `.opt[data-i="${it.role === 'relearn' || knows(it.id) ? it.ans : (it.ans + 1) % 3}"]`);
+      else await answer(p, it.taught ? '.act.see' : '.act.yes');
+    }
+    return seen;
+  }
+  const fits = (p) => p.evaluate(() => document.scrollingElement.scrollHeight <= innerHeight + 1 && document.querySelector('#tgo').getBoundingClientRect().bottom <= innerHeight && [...document.querySelectorAll('.tw')].every((b) => b.getBoundingClientRect().bottom <= innerHeight));
+  await t.click('[data-act=node][data-id=A1]'); await t.waitForSelector('.twords');
+  const listIds = await t.$$eval('.tw', (bs) => bs.map((b) => b.dataset.id)); const appText = await t.textContent('#app');
+  const glossShown = TILE('A1').map((id) => WORDS.find((w) => w.id === id)).filter((w) => appText.includes(w.ko)).map((w) => w.ko);
+  ok('triage: pressing a tile shows its 10 new words as spellings, with no meaning or picture and no run started', listIds.length === 10 && listIds.slice().sort().join() === TILE('A1').slice().sort().join() && glossShown.length === 0 && !(await t.$('#app img.px, #app .emoji, .run')) && /모르는 단어를 눌러요/.test(await t.textContent('h1')), glossShown.join());
+  const land = await fits(t); await t.setViewportSize({ width: 768, height: 950 }); const port = await fits(t); await t.setViewportSize({ width: 1180, height: 820 });
+  ok('triage: the 10 words and the button fit without scrolling in landscape (1180x820) and portrait (768x950)', land && port, `landscape ${land} portrait ${port}`);
+  const goText = () => t.textContent('#tgo'); const g0 = await goText();
+  for (const id of listIds.slice(0, 3)) await t.click(`.tw[data-id="${id}"]`); const g3 = await goText();
+  await t.click(`.tw[data-id="${listIds[0]}"]`); const g2 = await goText(); const pressed = await t.$eval(`.tw[data-id="${listIds[0]}"]`, (b) => b.getAttribute('aria-pressed'));
+  for (const id of listIds.slice(1, 3)) await t.click(`.tw[data-id="${id}"]`); const gNone = await goText();
+  ok('triage: tapping marks and unmarks a word; the button reads "N개 배우러 가기" or "다 알아요"; no sound banner', g0 === '다 알아요' && g3 === '3개 배우러 가기' && g2 === '2개 배우러 가기' && pressed === 'false' && gNone === '다 알아요' && await t.$eval('#banner', (b) => b.hidden), [g0, g3, g2, pressed, gNone].join('|'));
+  const marked = listIds.slice(0, 3); for (const id of marked) await t.click(`.tw[data-id="${id}"]`);
+  await t.click('#tgo'); await t.waitForSelector(READY);
+  const firstTaughtBtn = async () => { const q = await t.evaluate(() => window.__cards.run.queue.map((x) => x.role)); return q; };
+  const q0 = await firstTaughtBtn(); const seenT = [];
+  for (let k = 0; k < 400; k++) {                                                    // play, and look at the buttons of the first taught card
+    await t.waitForSelector(READY, { timeout: 8000 }); if (await t.$('.tiles')) break; const it = await curT(t); if (!it) continue; if (!it.verifying) seenT.push(it);
+    if (it.taught && !seenT.btns) seenT.btns = await t.$$eval('#actions button', (bs) => bs.map((b) => b.textContent));
+    if (it.form === 'check' || it.verifying) await answer(t, `.opt[data-i="${it.ans}"]`); else await answer(t, it.taught ? '.act.see' : '.act.yes');
+  }
+  const taughtIds = seenT.filter((x) => x.role === 'new').map((x) => x.id);
+  ok('triage: the spot checks of passed words come first; only the marked words are taught, with one button "뜻 보기"', q0[0] === 'spot' && q0[1] === 'spot' && seenT[0].role === 'spot' && seenT[1].role === 'spot' && !marked.includes(seenT[0].id) && !marked.includes(seenT[1].id)
+    && taughtIds.length === 3 && taughtIds.slice().sort().join() === marked.slice().sort().join() && seenT.filter((x) => x.role === 'new').every((x) => x.taught && x.form === 'judge') && JSON.stringify(seenT.btns) === '["뜻 보기"]', q0.join() + ' ' + JSON.stringify(seenT.btns));
+  let tson = await state(t, 'son'); const passedA1 = listIds.slice(3);
+  ok('triage: the tile is cleared; passed words are silver with no date in bunch A1 (due in 30 days); marked words are on the 1-day review', /칸 클리어/.test(await t.textContent('h1'))
+    && passedA1.every((id) => tson.words[id].st === 'likely' && tson.words[id].due === null && tson.words[id].bunch === 'A1') && marked.every((id) => tson.words[id].st === 'review' && tson.words[id].due === '2026-11-13')
+    && JSON.stringify(tson.bunches) === '{"A1":{"due":"2026-12-12","done":null}}' && tson.v === 2 && tson.map.bat.fill === 3, JSON.stringify(tson.bunches) + ' fill ' + tson.map.bat.fill);
+  await toMap(t); await t.click('[data-act=node][data-id=B1]'); await t.waitForSelector('.twords'); await t.click('#tgo'); await t.waitForSelector(READY);
+  const qB = await t.evaluate(() => window.__cards.run.queue.map((x) => x.role)); const seenB = await playTri(t); tson = await state(t, 'son');
+  ok('triage: a tile where every word is known asks only the two spot checks and is cleared', qB.join() === 'spot,spot' && seenB.length === 2 && /칸 클리어/.test(await t.textContent('h1')) && TILE('B1').every((id) => tson.words[id].st === 'likely' && tson.words[id].bunch === 'B1'), qB.join());
+  await t.close();
+  const t30 = await open(tctx, 'today=2026-12-12&seed=32&sound=off&fast=1'); await t30.click('[data-act=pick][data-id=son]'); await t30.waitForSelector('.world');
+  await t30.click('[data-act=node][data-id=C1]'); await t30.waitForSelector('.twords'); await t30.click('#tgo'); await t30.waitForSelector(READY);
+  const q30 = await t30.evaluate(() => window.__cards.run.queue.map((x) => x.role + ':' + (x.bunch || ''))); const seen30 = await playTri(t30); const s30 = await state(t30, 'son');
+  const audits = q30.filter((x) => x.startsWith('audit:'));
+  ok('bunch check: 30 days later another tile run mixes in 3 sample cards from each due bunch (A1, B1), after its spot checks', audits.length === 6 && audits.filter((x) => x === 'audit:A1').length === 3 && audits.filter((x) => x === 'audit:B1').length === 3 && q30.slice(0, 2).every((x) => x.startsWith('spot:')) && seen30.filter((x) => x.role === 'audit').length === 6, q30.join());
+  ok('bunch check: all samples right -> every passed word of both bunches is gold and the bunches are closed "ok"', passedA1.concat(TILE('B1')).every((id) => s30.words[id].st === 'done' && s30.words[id].due === null) && s30.bunches.A1.result === 'ok' && s30.bunches.B1.result === 'ok' && s30.bunches.A1.done === '2026-12-12' && s30.bunches.C1.done === null, JSON.stringify(s30.bunches));
+  await t30.click('[data-act=today]'); await t30.waitForSelector('.world'); await t30.click('[data-act=home]'); await t30.click('[data-act=parent]'); const ptext = await t30.textContent('.parent');
+  ok('parent view shows the spot-check accuracy of passed words and the bunch checks passed / finished', /넘긴 단어 확인 정답률 100% \(6\/6\)/.test(ptext) && /묶음 확인 2\/2/.test(ptext), (/넘긴 단어[^,]*/.exec(ptext) || [''])[0] + ' ' + (/묶음 확인 \d+\/\d+/.exec(ptext) || [''])[0]);
+  await t30.close(); await tctx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

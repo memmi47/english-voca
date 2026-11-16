@@ -85,6 +85,19 @@ test('D6: restoring from a file or a server copy is a merge: nothing on either s
   assert.match(readBackup('nope', 'son').why, /JSON/); assert.match(readBackup(JSON.stringify({ names: {} }), 'son').why, /기록 파일이 아니/); assert.match(readBackup(JSON.stringify(backup), 'daughter').why, /다른 아이/);
 });
 
+test('D9: format 1 -> 2 (tile bunches): a format-1 record gets an empty bunch list and every word record as it was; the saved format-2 file opens with its bunches', () => {
+  assert.equal(SCHEMA, 2);
+  const v1 = JSON.parse(fs.readFileSync(path.join(SAVES, 'v1-worlds.json'), 'utf8')); assert.equal(v1.v, 1); const words = JSON.stringify(v1.words);
+  const m = migrate(JSON.parse(JSON.stringify(v1)), v1.id); assert.deepEqual([m.from, m.state.v, m.state.bunches], [1, 2, {}]); assert.equal(JSON.stringify(m.state.words), words);
+  const raw = JSON.parse(fs.readFileSync(path.join(SAVES, 'v2-bunches.json'), 'utf8')); assert.equal(raw.v, 2);
+  const s = migrate(JSON.parse(JSON.stringify(raw)), 'son'); assert.deepEqual([s.from, s.newer], [2, false]); assert.deepEqual(s.state.bunches, raw.bunches); assert.deepEqual(s.state.words, raw.words);
+  const res = Object.values(raw.bunches).map((b) => b.result || 'open').sort(); assert.deepEqual(res, ['ok', 'open', 'open', 'split']);
+  assert.ok(Object.values(raw.words).some((r) => r.st === 'likely' && r.due === null && r.bunch), 'passed words are in the file');
+  const st = mem({ k: JSON.stringify(raw) }); const rec = loadRecord(st, 'k', 'son'); assert.deepEqual([rec.damaged, rec.newer, Object.keys(rec.state.words).length], [false, false, Object.keys(raw.words).length]);
+  assert.deepEqual(mergeCards(raw, migrate(JSON.parse(JSON.stringify(v1)), 'son').state).bunches, raw.bunches);   // merging with an older device keeps the bunches
+  assert.ok(worldView(IX, IX.worlds[0], s.state, '2026-12-20').nodes.length > 0);
+});
+
 // ---- the server ----
 async function withServer(fn) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cards-safe-')); const port = 8093 + Math.floor(Math.random() * 300);

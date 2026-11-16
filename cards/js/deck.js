@@ -4,6 +4,8 @@
 //                        new -> learn (did not know)  -> review step 0..4 -> done
 // Review gaps are 1, 3, 7, 14, 30 days. "likely" words are only checked twice (7 and 30 days later).
 // From the 7-day step on, a review is always a check card (pick the meaning), never self-judgement.
+// Tile triage (map.TRIAGE): words the child did not mark on the tile's word list are "passed": silver with no date,
+// tagged with the tile's bunch. A few of them are checked at once (role 'spot'); the bunch is sampled again later (role 'audit').
 export const INTERVALS = [1, 3, 7, 14, 30];
 export const LIKELY_DAYS = [7, 30];
 export const CFG = {
@@ -31,8 +33,10 @@ export function shuffle(arr, rng) {
   return a;
 }
 
-export const SCHEMA = 1;                                // format of a saved record; upgrades live in store.js
-export function newState(id) { return { v: SCHEMA, id, words: {}, verify: [], runs: [], log: [] }; }
+export const SCHEMA = 2;                                // format of a saved record; upgrades live in store.js
+export function newState(id) { return { v: SCHEMA, id, words: {}, verify: [], runs: [], log: [], bunches: {} }; }
+// Passed words of a bunch that are still passed (not checked into learning or reviews since).
+export const bunchLeft = (state, b) => Object.keys(state.words).filter((id) => { const r = state.words[id]; return r.st === 'likely' && r.due == null && r.bunch === b; });
 
 // Card grade shown to the child. It is the memory state, not a separate score.
 // 0 not yet / still learning, 1 bronze (learned, early reviews), 2 silver (7-day step reached, or known at first sight), 3 gold (done)
@@ -96,27 +100,37 @@ function indexOf(words) {
 
 export class Run {
   // scope: see planRun; scope.castle = [ids] makes a check-only run over those words. items: { shield, flame } for this run only.
+  // scope.triage = { bunch, passed, tapped, spot, due }: the tile's word list was looked over (map.triageScope). Passed words
+  // that are not spot-checked are recorded right here; spot cards go first; tapped words are taught, not asked.
+  // scope.audit = { split, picks: [{ id, bunch }] }: sample checks of bunches that came due (map.auditPick), mixed in.
   constructor({ state, words, today, rng, now = () => Date.now(), cfg = CFG, boss = null, scope = {}, items = {}, tag = null }) {
     this.s = state; this.words = words; this.ix = indexOf(words); this.byId = this.ix.byId;
     this.today = today; this.rng = rng; this.now = now; this.cfg = cfg;
     this.boss = boss || { idx: 0, hp: cfg.bossHp, defeated: 0 };
     this.met = []; this.scope = scope; this.items = { shield: items.shield || 0, flame: !!items.flame }; this.shieldUsed = 0; this.tag = tag;
     this.combo = 0; this.i = 0; this.t0 = null; this.startedAt = now(); this.ended = null;
-    this.stats = { cards: 0, claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, ms: 0, stars: 0, castleOk: 0, castleMiss: 0, testOk: 0, testMiss: 0 };
+    this.stats = { cards: 0, claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, ms: 0, stars: 0, castleOk: 0, castleMiss: 0, testOk: 0, testMiss: 0, spots: 0, spotOk: 0, bunchOk: 0, bunchDone: 0 };
     this.changed = [];                                   // [{id, from, to}] grade changes in this run
-    const plan = planRun(state, words, today, cfg, scope); this.plan = plan;
+    const tri = scope.triage; const spot = new Set(tri ? tri.spot : []); const taught = new Set(tri ? tri.tapped : []);
+    if (tri) for (const id of tri.passed) if (!spot.has(id) && !state.words[id]) this._pass(id, tri);   // recorded when the run is made, before planRun sees them
+    const plan = planRun(state, words, today, cfg, tri ? { ...scope, newIds: (scope.newIds || words.map((w) => w.id)).filter((id) => !spot.has(id)) } : scope); this.plan = plan;
     // A new word, then up to two due cards, so reviews space out the new words.
     const q = []; const due = plan.due.slice();
     const dueItem = (id) => { const r = state.words[id];
       return { id, role: r.st === 'likely' ? 'likely' : 'review', form: r.st === 'likely' || r.step >= 2 || isSight(this.byId[id]) ? 'check' : 'judge' }; };
     // A word that was not learned on an earlier day comes back as a check card (role 'retry'), never as self-judgement.
-    for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : { id, role: 'new', form: isSight(this.byId[id]) ? 'check' : 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
+    // A tapped word was already called unknown: it is taught (front, then "뜻 보기" = judge(false)), never asked "know?" again.
+    for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : taught.has(id) ? { id, role: 'new', form: 'judge', taught: true } : { id, role: 'new', form: isSight(this.byId[id]) ? 'check' : 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
     while (due.length) q.push(dueItem(due.shift()));
     for (const id of plan.retries) q.push({ id, role: 'retry', form: 'check' });       // stranded learning words, as check cards
     // bat test (scope.bat = { due, fresh }): overdue reviews as check cards first (normal scheduling), then words met since the last test
     if (scope.bat) { this.queue = scope.bat.due.map((id) => (state.words[id].st === 'learn' ? { id, role: 'retry', form: 'check' } : { ...dueItem(id), form: 'check' })).concat(scope.bat.fresh.map((id) => ({ id, role: 'castle', form: 'check' }))); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     if (scope.castle) { this.queue = shuffle(scope.castle, rng).map((id) => ({ id, role: 'castle', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
-    this.queue = q;
+    // Bunch samples go at random places among the run's cards; the spot checks of the tile come first of all.
+    this.audits = {};
+    for (const p of scope.audit ? scope.audit.picks : []) { if (!bunchLeft(state, p.bunch).includes(p.id)) continue; const a = (this.audits[p.bunch] ||= { left: 0, miss: false, closed: false }); a.left++;
+      q.splice(Math.floor(rng() * (q.length + 1)), 0, { id: p.id, role: 'audit', form: 'check', bunch: p.bunch }); }
+    this.queue = (tri ? tri.spot.filter((id) => !state.words[id]).map((id) => ({ id, role: 'spot', form: 'check', bunch: tri.bunch })) : []).concat(q);
   }
   get current() { return this.ended ? null : this.queue[this.i] || null; }
   get left() { return Math.max(0, this.queue.length - this.i); }
@@ -157,6 +171,20 @@ export class Run {
     return shuffle(out, this.rng).map((x) => ({ id: x.id, ko: sight ? x.form : x.ko }));
   }
   _rec(id) { return this.s.words[id]; }
+  // A passed word joins its tile's bunch. The bunch is made with the first word; later words keep its date.
+  _pass(id, { bunch, due }) {
+    const b = (this.s.bunches ||= {}); b[bunch] ||= { due, done: null };
+    return this._set(id, { st: 'likely', lstep: 0, due: null, bunch });
+  }
+  _verify(ok) { this.s.verify.push(ok); if (this.s.verify.length > 40) this.s.verify.shift(); }
+  // One sample of a bunch answered. The bunch is settled when its last sample is answered (or, with a miss, when the run ends).
+  _audit(it, ok) { const a = this.audits[it.bunch]; if (!a) return; a.left--; if (!ok) a.miss = true; if (a.left <= 0) this._settle(it.bunch); }
+  _settle(bunch) {
+    const a = this.audits[bunch]; if (!a || a.closed) return; a.closed = true; const t = this.today; const split = this.scope.audit?.split ?? 7;
+    for (const id of bunchLeft(this.s, bunch)) this._set(id, a.miss ? { due: addDays(t, split) } : { st: 'done', due: null });   // split: the 7- and 30-day checks start (lstep stays 0)
+    const b = (this.s.bunches ||= {}); b[bunch] = { ...(b[bunch] || {}), done: t, result: a.miss ? 'split' : 'ok' };
+    this.stats.bunchDone++; if (!a.miss) this.stats.bunchOk++;
+  }
   _set(id, next) {
     const from = gradeOf(this.s.words[id]);
     this.s.words[id] = { firstDay: this.today, lapses: 0, ...this.s.words[id], ...next, lastDay: this.today };
@@ -172,6 +200,8 @@ export class Run {
     else if (it.role === 'review') { this.stats.reviews++; this.stats.reviewOk++;
       g = r.step >= INTERVALS.length - 1 ? this._set(it.id, { st: 'done', due: null }) : this._set(it.id, { step: r.step + 1, due: addDays(t, INTERVALS[r.step + 1]) }); }
     else if ((it.role === 'relearn' && it.final) || it.role === 'retry') { this.stats.learned++; g = this._set(it.id, { st: 'review', step: 0, due: addDays(t, INTERVALS[0]) }); }
+    else if (it.role === 'spot') { this.stats.spots++; this.stats.spotOk++; this._verify(true); g = this._pass(it.id, this.scope.triage); }   // passed after all
+    else if (it.role === 'audit') this._audit(it, true);                                  // not a review: rec.reviews leaves it out
     if (it.role === 'castle') this.stats.castleOk++;
     if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle' || it.role === 'retry')) this.stats.testOk++;
     if (it.role === 'new') this.met.push(it.id);
@@ -183,10 +213,11 @@ export class Run {
   _miss(it, { said, picked }) {
     const r = this._rec(it.id); const t = this.today; let g = null;
     if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle' || it.role === 'retry')) this.stats.testMiss++;
-    if (it.role === 'new') this.met.push(it.id);
+    if (it.role === 'new' || it.role === 'spot') this.met.push(it.id);
     if (said === 'wrong') { if (this.items.shield > 0) { this.items.shield--; this.shieldUsed++; } else this.combo = 0; }   // a wrong pick breaks the combo (a shield absorbs one); an honest "몰라요" does not
-    if (it.role === 'new' || it.role === 'likely' || it.role === 'retry') {
-      if (it.role === 'new') { this.stats.fresh++; this.stats.unknown++; } else if (it.role === 'likely') { this.stats.reviews++; this.stats.lapses++; }
+    if (it.role === 'spot') { this.stats.spots++; this._verify(false); }                 // a failed spot check is a failed "know" claim on a new card
+    if (it.role === 'new' || it.role === 'likely' || it.role === 'retry' || it.role === 'spot') {
+      if (it.role === 'new' || it.role === 'spot') { this.stats.fresh++; this.stats.unknown++; } else if (it.role === 'likely') { this.stats.reviews++; this.stats.lapses++; }
       g = this._set(it.id, { st: 'learn', due: addDays(t, 1), lapses: (r?.lapses || 0) + (it.role === 'likely' ? 1 : 0) });
       this._relearn(it.id);
     } else if (it.role === 'review') {
@@ -198,6 +229,8 @@ export class Run {
       g = this._set(it.id, { st: 'learn', due: addDays(t, 1) });         // not learned today: comes back as a new card tomorrow
     } else if (it.role === 'castle') {
       this.stats.castleMiss++; g = this._set(it.id, { st: 'learn', due: addDays(t, 1) });   // a failed exam card is not known: back as a check card tomorrow
+    } else if (it.role === 'audit') {
+      g = this._set(it.id, { st: 'learn', due: addDays(t, 1) }); this._audit(it, false);   // like a failed castle card
     }
     return this._done(it, { ok: false, said, picked, dmg: 0, grade: g });
   }
@@ -224,6 +257,7 @@ export class Run {
   }
   finish(reason = 'done') {
     if (this.ended) return this.ended;
+    for (const [b, a] of Object.entries(this.audits || {})) if (a.miss) this._settle(b);   // left early with a miss: split now; without one the bunch waits for the next run
     const n = this.s.runs.filter((r) => r.day === this.today).length + 1;
     this.ended = { day: this.today, n, reason, tag: this.tag, shieldBack: this.items.shield, ...this.stats, wall: this.now() - this.startedAt, changed: this.changed.length, endedAt: new Date(this.now()).toISOString() };
     this.s.runs.push(this.ended);
