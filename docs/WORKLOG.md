@@ -170,6 +170,8 @@
 
 | 2026-11-16 | Codex | C-004 회오리 도안 4종과 밝고 어두운 땅 검토판 | 이 줄을 추가한 커밋 (`codex/storm-sprites`) | 생성 재현, 기존 186개 도안 불변, 검토판 16/16. 게임 브라우저 115/115 (상위 작업자 실행); iPad 미확인 |
 
+| 2026-11-16 | Codex Astra → Sol | C-002 승인 예외 적용·형태 생성기와 검수표 구현, [Draft PR #8](https://github.com/memmi47/english-voca/pull/8) | `codex/word-forms` | 131형태/105원형; DB84+복수25 전수 추적; 생성/check·변조9종 거부 통과; 외부대조 포함101/DB만30; 부모·기기 미검수 |
+
 ## 9. 요청과 이번 설계의 검증
 
 - 최신 결과: 실제 `worlds.json`/`catalogue.json` 4,610개 배정, 픽셀 180개, 30세계 색, P1 검토 목록 완료. 표시 원본은 `world-art.json`으로 분리했다. 구현 경계와 명령은 [WORLD_GENERATOR_HANDOFF.md](WORLD_GENERATOR_HANDOFF.md), 도안/기기 검토는 [WORLD_PIXEL_HANDOFF.md](WORLD_PIXEL_HANDOFF.md)를 따른다.

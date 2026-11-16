@@ -1,0 +1,2303 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "source": {
+    "path": "reference/weekly-tool/vocabulary.json",
+    "sha256": "38b97c372feb8585eed6b9458194294039b4f8a62990ed44b6dfffb91e123130"
+  },
+  "inputs": {
+    "reference/weekly-tool/vocabulary.json": "38b97c372feb8585eed6b9458194294039b4f8a62990ed44b6dfffb91e123130",
+    "cards/data/catalogue.json": "1e27bde0334788bf4aaea2d9a764c3dc705faf37efd7e2f791a280813f3d85e9",
+    "tools/forms/evidence.json": "614a237bef13f98acf715a536a5b9b878bd71ae47a44a142a1003836d73dccee"
+  },
+  "counts": {
+    "forms": 131,
+    "bases": 105,
+    "byKind": {
+      "ing": 6,
+      "past": 79,
+      "plural": 23,
+      "pp": 16,
+      "s3": 7
+    },
+    "byRule": {
+      "double": 3,
+      "e-drop": 3,
+      "es": 6,
+      "irregular": 111,
+      "y-ied": 2,
+      "y-ies": 6
+    }
+  },
+  "audit": {
+    "rows": 1370,
+    "byStatus": {
+      "excluded": 1237,
+      "held": 2,
+      "included": 131
+    },
+    "excludedByReason": {
+      "ambiguous-pos": 383,
+      "approved-meaning-hold": 2,
+      "external-evidence-unavailable": 826,
+      "irregular-precedence": 14,
+      "same-spelling": 11,
+      "variant-unresolved": 3
+    },
+    "externalVerified": 125,
+    "unverified": 1245,
+    "includedExternalVerified": 101,
+    "includedDBOnly": 30,
+    "dbTracked": 84,
+    "requiredPluralsTracked": 25,
+    "dbByStatus": {
+      "excluded": 6,
+      "held": 1,
+      "included": 77
+    },
+    "requiredPluralsByStatus": {
+      "excluded": 6,
+      "held": 1,
+      "included": 18
+    }
+  },
+  "forms": [
+    {
+      "base": "W0245:기본:baby:1",
+      "baseForm": "baby",
+      "form": "babies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0245:기본:baby:1:plural",
+      "lookalikes": [
+        "bay",
+        "back",
+        "bake",
+        "bald"
+      ]
+    },
+    {
+      "base": "W0296:기본:be:1",
+      "baseForm": "be",
+      "form": "was",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "variant": "was",
+      "id": "F:W0296:기본:be:1:past:was",
+      "lookalikes": [
+        "bed",
+        "beg",
+        "bad",
+        "bag"
+      ]
+    },
+    {
+      "base": "W0296:기본:be:1",
+      "baseForm": "be",
+      "form": "were",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "variant": "were",
+      "id": "F:W0296:기본:be:1:past:were",
+      "lookalikes": [
+        "bed",
+        "beg",
+        "bad",
+        "bag"
+      ]
+    },
+    {
+      "base": "W0296:기본:be:1",
+      "baseForm": "be",
+      "form": "been",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0296:기본:be:1:pp",
+      "lookalikes": [
+        "bed",
+        "beg",
+        "bad",
+        "bag"
+      ]
+    },
+    {
+      "base": "W0308:기본:become:1",
+      "baseForm": "become",
+      "form": "became",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0308:기본:become:1:past",
+      "lookalikes": [
+        "income",
+        "welcome",
+        "come",
+        "beckon"
+      ]
+    },
+    {
+      "base": "W0319:기본:begin:1",
+      "baseForm": "begin",
+      "form": "began",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0319:기본:begin:1:past",
+      "lookalikes": [
+        "brain",
+        "bean",
+        "beg",
+        "bin"
+      ]
+    },
+    {
+      "base": "W0319:기본:begin:1",
+      "baseForm": "begin",
+      "form": "begun",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0319:기본:begin:1:pp",
+      "lookalikes": [
+        "brain",
+        "bean",
+        "beg",
+        "bin"
+      ]
+    },
+    {
+      "base": "W0332:기본:bend:1",
+      "baseForm": "bend",
+      "form": "bent",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0332:기본:bend:1:past",
+      "lookalikes": [
+        "band",
+        "bind",
+        "bed",
+        "blend"
+      ]
+    },
+    {
+      "base": "W0355:기본:bite:1",
+      "baseForm": "bite",
+      "form": "bit",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [
+        "W0354:기본:bit:1"
+      ],
+      "reviewed": false,
+      "id": "F:W0355:기본:bite:1:past",
+      "lookalikes": [
+        "bike",
+        "bake",
+        "bath",
+        "bill"
+      ]
+    },
+    {
+      "base": "W0373:기본:blow:1",
+      "baseForm": "blow",
+      "form": "blew",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0373:기본:blow:1:past",
+      "lookalikes": [
+        "bow",
+        "blue",
+        "book",
+        "boom"
+      ]
+    },
+    {
+      "base": "W0426:기본:break:1",
+      "baseForm": "break",
+      "form": "broke",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0426:기본:break:1:past",
+      "lookalikes": [
+        "bread",
+        "beak",
+        "breed",
+        "brick"
+      ]
+    },
+    {
+      "base": "W0426:기본:break:1",
+      "baseForm": "break",
+      "form": "broken",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0426:기본:break:1:pp",
+      "lookalikes": [
+        "bread",
+        "beak",
+        "breed",
+        "brick"
+      ]
+    },
+    {
+      "base": "W0440:기본:bring:1",
+      "baseForm": "bring",
+      "form": "brought",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0440:기본:bring:1:past",
+      "lookalikes": [
+        "blind",
+        "blink",
+        "brain",
+        "brick"
+      ]
+    },
+    {
+      "base": "W0459:기본:build:1",
+      "baseForm": "build",
+      "form": "built",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0459:기본:build:1:past",
+      "lookalikes": [
+        "blind",
+        "bully",
+        "bald",
+        "bill"
+      ]
+    },
+    {
+      "base": "W0480:기본:bus:1",
+      "baseForm": "bus",
+      "form": "buses",
+      "kind": "plural",
+      "rule": "es",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0480:기본:bus:1:plural",
+      "lookalikes": [
+        "bud",
+        "bug",
+        "bun",
+        "buy"
+      ]
+    },
+    {
+      "base": "W0490:기본:buy:1",
+      "baseForm": "buy",
+      "form": "bought",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0490:기본:buy:1:past",
+      "lookalikes": [
+        "bay",
+        "boy",
+        "bud",
+        "bug"
+      ]
+    },
+    {
+      "base": "W0491:기본:buzz:1",
+      "baseForm": "buzz",
+      "form": "buzzes",
+      "kind": "s3",
+      "rule": "es",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0491:기본:buzz:1:s3",
+      "lookalikes": [
+        "bulb",
+        "bull",
+        "bump",
+        "bunk"
+      ]
+    },
+    {
+      "base": "W0506:기본:calf:1",
+      "baseForm": "calf",
+      "form": "calves",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0506:기본:calf:1:plural",
+      "lookalikes": [
+        "call",
+        "calm",
+        "cafe",
+        "cage"
+      ]
+    },
+    {
+      "base": "W0551:기본:carry:1",
+      "baseForm": "carry",
+      "form": "carried",
+      "kind": "past",
+      "rule": "y-ied",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0551:기본:carry:1:past",
+      "lookalikes": [
+        "candy",
+        "curly",
+        "card",
+        "care"
+      ]
+    },
+    {
+      "base": "W0551:기본:carry:1",
+      "baseForm": "carry",
+      "form": "carries",
+      "kind": "s3",
+      "rule": "y-ies",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0551:기본:carry:1:s3",
+      "lookalikes": [
+        "candy",
+        "curly",
+        "card",
+        "care"
+      ]
+    },
+    {
+      "base": "W0560:기본:catch:1",
+      "baseForm": "catch",
+      "form": "caught",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0560:기본:catch:1:past",
+      "lookalikes": [
+        "coach",
+        "couch",
+        "cash",
+        "clutch"
+      ]
+    },
+    {
+      "base": "W0560:기본:catch:1",
+      "baseForm": "catch",
+      "form": "catches",
+      "kind": "s3",
+      "rule": "es",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0560:기본:catch:1:s3",
+      "lookalikes": [
+        "coach",
+        "couch",
+        "cash",
+        "clutch"
+      ]
+    },
+    {
+      "base": "W0633:기본:child:1",
+      "baseForm": "child",
+      "form": "children",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0633:기본:child:1:plural",
+      "lookalikes": [
+        "chill",
+        "chick",
+        "chief",
+        "chime"
+      ]
+    },
+    {
+      "base": "W0647:기본:choose:1",
+      "baseForm": "choose",
+      "form": "chose",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0647:기본:choose:1:past",
+      "lookalikes": [
+        "cheese",
+        "choice",
+        "chaos",
+        "chase"
+      ]
+    },
+    {
+      "base": "W0647:기본:choose:1",
+      "baseForm": "choose",
+      "form": "chosen",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0647:기본:choose:1:pp",
+      "lookalikes": [
+        "cheese",
+        "choice",
+        "chaos",
+        "chase"
+      ]
+    },
+    {
+      "base": "W0663:기본:city:1",
+      "baseForm": "city",
+      "form": "cities",
+      "kind": "plural",
+      "rule": "y-ies",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0663:기본:city:1:plural",
+      "lookalikes": [
+        "clay",
+        "copy",
+        "cozy",
+        "cute"
+      ]
+    },
+    {
+      "base": "W0737:기본:come:1",
+      "baseForm": "come",
+      "form": "came",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0737:기본:come:1:past",
+      "lookalikes": [
+        "comb",
+        "cone",
+        "cope",
+        "core"
+      ]
+    },
+    {
+      "base": "W0877:기본:creep:1",
+      "baseForm": "creep",
+      "form": "crept",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0877:기본:creep:1:past",
+      "lookalikes": [
+        "creek",
+        "creepy",
+        "cheap",
+        "cheek"
+      ]
+    },
+    {
+      "base": "W0936:기본:daisy:1",
+      "baseForm": "daisy",
+      "form": "daisies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W0936:기본:daisy:1:plural",
+      "lookalikes": [
+        "daily",
+        "dash",
+        "dish",
+        "day"
+      ]
+    },
+    {
+      "base": "W1047:기본:dig:1",
+      "baseForm": "dig",
+      "form": "dug",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1047:기본:dig:1:past",
+      "lookalikes": [
+        "die",
+        "dog",
+        "dad",
+        "dam"
+      ]
+    },
+    {
+      "base": "W1089:기본:do:1",
+      "baseForm": "do",
+      "form": "did",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1089:기본:do:1:past",
+      "lookalikes": [
+        "dog",
+        "dot",
+        "dad",
+        "dam"
+      ]
+    },
+    {
+      "base": "W1089:기본:do:1",
+      "baseForm": "do",
+      "form": "done",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1089:기본:do:1:pp",
+      "lookalikes": [
+        "dog",
+        "dot",
+        "dad",
+        "dam"
+      ]
+    },
+    {
+      "base": "W1122:기본:draw:1",
+      "baseForm": "draw",
+      "form": "drew",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1122:기본:draw:1:past",
+      "lookalikes": [
+        "drag",
+        "dawn",
+        "dead",
+        "deal"
+      ]
+    },
+    {
+      "base": "W1122:기본:draw:1",
+      "baseForm": "draw",
+      "form": "drawn",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1122:기본:draw:1:pp",
+      "lookalikes": [
+        "drag",
+        "dawn",
+        "dead",
+        "deal"
+      ]
+    },
+    {
+      "base": "W1130:기본:drink:1",
+      "baseForm": "drink",
+      "form": "drank",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1130:기본:drink:1:past",
+      "lookalikes": [
+        "drain",
+        "drill",
+        "drive",
+        "drip"
+      ]
+    },
+    {
+      "base": "W1132:기본:drive:1",
+      "baseForm": "drive",
+      "form": "drove",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1132:기본:drive:1:past",
+      "lookalikes": [
+        "dive",
+        "driver",
+        "drill",
+        "drink"
+      ]
+    },
+    {
+      "base": "W1132:기본:drive:1",
+      "baseForm": "drive",
+      "form": "driven",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1132:기본:drive:1:pp",
+      "lookalikes": [
+        "dive",
+        "driver",
+        "drill",
+        "drink"
+      ]
+    },
+    {
+      "base": "W1171:기본:eat:1",
+      "baseForm": "eat",
+      "form": "ate",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1171:기본:eat:1:past",
+      "lookalikes": [
+        "ear",
+        "east",
+        "eel",
+        "egg"
+      ]
+    },
+    {
+      "base": "W1171:기본:eat:1",
+      "baseForm": "eat",
+      "form": "eaten",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1171:기본:eat:1:pp",
+      "lookalikes": [
+        "ear",
+        "east",
+        "eel",
+        "egg"
+      ]
+    },
+    {
+      "base": "W1200:기본:elf:1",
+      "baseForm": "elf",
+      "form": "elves",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1200:기본:elf:1:plural",
+      "lookalikes": [
+        "elk",
+        "elm",
+        "ear",
+        "eat"
+      ]
+    },
+    {
+      "base": "W1334:기본:fall:1",
+      "baseForm": "fall",
+      "form": "fell",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1334:기본:fall:1:past",
+      "lookalikes": [
+        "fail",
+        "fill",
+        "full",
+        "face"
+      ]
+    },
+    {
+      "base": "W1364:기본:feed:1",
+      "baseForm": "feed",
+      "form": "fed",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1364:기본:feed:1:past",
+      "lookalikes": [
+        "feel",
+        "fee",
+        "fear",
+        "fern"
+      ]
+    },
+    {
+      "base": "W1366:기본:feel:1",
+      "baseForm": "feel",
+      "form": "felt",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1366:기본:feel:1:past",
+      "lookalikes": [
+        "feed",
+        "fuel",
+        "fee",
+        "fail"
+      ]
+    },
+    {
+      "base": "W1384:기본:fight:1",
+      "baseForm": "fight",
+      "form": "fought",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1384:기본:fight:1:past",
+      "lookalikes": [
+        "fish",
+        "fit",
+        "light",
+        "night"
+      ]
+    },
+    {
+      "base": "W1392:기본:find:1",
+      "baseForm": "find",
+      "form": "found",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1392:기본:find:1:past",
+      "lookalikes": [
+        "fine",
+        "fund",
+        "fin",
+        "fang"
+      ]
+    },
+    {
+      "base": "W1408:기본:fix:1",
+      "baseForm": "fix",
+      "form": "fixes",
+      "kind": "s3",
+      "rule": "es",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1408:기본:fix:1:s3",
+      "lookalikes": [
+        "fin",
+        "fir",
+        "fit",
+        "fox"
+      ]
+    },
+    {
+      "base": "W1439:기본:fly:1",
+      "baseForm": "fly",
+      "form": "flew",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1439:기본:fly:1:past",
+      "lookalikes": [
+        "flu",
+        "fry",
+        "fan",
+        "far"
+      ]
+    },
+    {
+      "base": "W1453:기본:foot:1",
+      "baseForm": "foot",
+      "form": "feet",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1453:기본:foot:1:plural",
+      "lookalikes": [
+        "food",
+        "fool",
+        "fort",
+        "fact"
+      ]
+    },
+    {
+      "base": "W1462:기본:forget:1",
+      "baseForm": "forget",
+      "form": "forgot",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1462:기본:forget:1:past",
+      "lookalikes": [
+        "ferret",
+        "forage",
+        "forest",
+        "former"
+      ]
+    },
+    {
+      "base": "W1463:기본:forgive:1",
+      "baseForm": "forgive",
+      "form": "forgave",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1463:기본:forgive:1:past",
+      "lookalikes": [
+        "foreign",
+        "fortune",
+        "fragile",
+        "forage"
+      ]
+    },
+    {
+      "base": "W1488:기본:freeze:1",
+      "baseForm": "freeze",
+      "form": "froze",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1488:기본:freeze:1:past",
+      "lookalikes": [
+        "freezer",
+        "freely",
+        "free",
+        "breeze"
+      ]
+    },
+    {
+      "base": "W1558:기본:get:1",
+      "baseForm": "get",
+      "form": "getting",
+      "kind": "ing",
+      "rule": "double",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1558:기본:get:1:ing",
+      "lookalikes": [
+        "gem",
+        "gas",
+        "gum",
+        "gun"
+      ]
+    },
+    {
+      "base": "W1558:기본:get:1",
+      "baseForm": "get",
+      "form": "got",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1558:기본:get:1:past",
+      "lookalikes": [
+        "gem",
+        "gas",
+        "gum",
+        "gun"
+      ]
+    },
+    {
+      "base": "W1567:기본:give:1",
+      "baseForm": "give",
+      "form": "gave",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1567:기본:give:1:past",
+      "lookalikes": [
+        "gale",
+        "game",
+        "gate",
+        "gaze"
+      ]
+    },
+    {
+      "base": "W1567:기본:give:1",
+      "baseForm": "give",
+      "form": "given",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1567:기본:give:1:pp",
+      "lookalikes": [
+        "gale",
+        "game",
+        "gate",
+        "gaze"
+      ]
+    },
+    {
+      "base": "W1584:기본:go:1",
+      "baseForm": "go",
+      "form": "went",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1584:기본:go:1:past",
+      "lookalikes": [
+        "gas",
+        "gem",
+        "get",
+        "gum"
+      ]
+    },
+    {
+      "base": "W1584:기본:go:1",
+      "baseForm": "go",
+      "form": "gone",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1584:기본:go:1:pp",
+      "lookalikes": [
+        "gas",
+        "gem",
+        "get",
+        "gum"
+      ]
+    },
+    {
+      "base": "W1584:기본:go:1",
+      "baseForm": "go",
+      "form": "goes",
+      "kind": "s3",
+      "rule": "es",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1584:기본:go:1:s3",
+      "lookalikes": [
+        "gas",
+        "gem",
+        "get",
+        "gum"
+      ]
+    },
+    {
+      "base": "W1597:기본:goose:1",
+      "baseForm": "goose",
+      "form": "geese",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1597:기본:goose:1:plural",
+      "lookalikes": [
+        "ghost",
+        "globe",
+        "glove",
+        "goods"
+      ]
+    },
+    {
+      "base": "W1643:기본:grow:1",
+      "baseForm": "grow",
+      "form": "grew",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1643:기본:grow:1:past",
+      "lookalikes": [
+        "glow",
+        "growl",
+        "gnaw",
+        "good"
+      ]
+    },
+    {
+      "base": "W1704:기본:have:1",
+      "baseForm": "have",
+      "form": "having",
+      "kind": "ing",
+      "rule": "e-drop",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1704:기본:have:1:ing",
+      "lookalikes": [
+        "hate",
+        "hive",
+        "heave",
+        "hail"
+      ]
+    },
+    {
+      "base": "W1704:기본:have:1",
+      "baseForm": "have",
+      "form": "had",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1704:기본:have:1:past",
+      "lookalikes": [
+        "hate",
+        "hive",
+        "heave",
+        "hail"
+      ]
+    },
+    {
+      "base": "W1716:기본:hear:1",
+      "baseForm": "hear",
+      "form": "heard",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1716:기본:hear:1:past",
+      "lookalikes": [
+        "head",
+        "heal",
+        "heap",
+        "heat"
+      ]
+    },
+    {
+      "base": "W1746:기본:hide:1",
+      "baseForm": "hide",
+      "form": "hid",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1746:기본:hide:1:past",
+      "lookalikes": [
+        "hike",
+        "hive",
+        "hate",
+        "have"
+      ]
+    },
+    {
+      "base": "W1767:기본:hold:1",
+      "baseForm": "hold",
+      "form": "held",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1767:기본:hold:1:past",
+      "lookalikes": [
+        "hole",
+        "hood",
+        "half",
+        "hall"
+      ]
+    },
+    {
+      "base": "W1985:기본:keep:1",
+      "baseForm": "keep",
+      "form": "kept",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W1985:기본:keep:1:past",
+      "lookalikes": [
+        "keen",
+        "knee",
+        "key",
+        "kneel"
+      ]
+    },
+    {
+      "base": "W2010:기본:knife:1",
+      "baseForm": "knife",
+      "form": "knives",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2010:기본:knife:1:plural",
+      "lookalikes": [
+        "kite",
+        "knee",
+        "sniff",
+        "life"
+      ]
+    },
+    {
+      "base": "W2013:기본:know:1",
+      "baseForm": "know",
+      "form": "knew",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2013:기본:know:1:past",
+      "lookalikes": [
+        "knee",
+        "knock",
+        "snow",
+        "now"
+      ]
+    },
+    {
+      "base": "W2013:기본:know:1",
+      "baseForm": "know",
+      "form": "known",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2013:기본:know:1:pp",
+      "lookalikes": [
+        "knee",
+        "knock",
+        "snow",
+        "now"
+      ]
+    },
+    {
+      "base": "W2050:기본:lay:1",
+      "baseForm": "lay",
+      "form": "laid",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2050:기본:lay:1:past",
+      "lookalikes": [
+        "law",
+        "lady",
+        "lazy",
+        "leg"
+      ]
+    },
+    {
+      "base": "W2053:기본:lead:1",
+      "baseForm": "lead",
+      "form": "led",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2053:기본:lead:1:past",
+      "lookalikes": [
+        "leaf",
+        "leak",
+        "lean",
+        "leap"
+      ]
+    },
+    {
+      "base": "W2055:기본:leaf:1",
+      "baseForm": "leaf",
+      "form": "leaves",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2055:기본:leaf:1:plural",
+      "lookalikes": [
+        "lead",
+        "leak",
+        "lean",
+        "leap"
+      ]
+    },
+    {
+      "base": "W2062:기본:leave:1",
+      "baseForm": "leave",
+      "form": "left",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [
+        "W2064:기본:left:1"
+      ],
+      "reviewed": false,
+      "id": "F:W2062:기본:leave:1:past",
+      "lookalikes": [
+        "learn",
+        "least",
+        "level",
+        "lever"
+      ]
+    },
+    {
+      "base": "W2072:기본:lend:1",
+      "baseForm": "lend",
+      "form": "lent",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2072:기본:lend:1:past",
+      "lookalikes": [
+        "land",
+        "lead",
+        "lane",
+        "leaf"
+      ]
+    },
+    {
+      "base": "W2088:기본:life:1",
+      "baseForm": "life",
+      "form": "lives",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2088:기본:life:1:plural",
+      "lookalikes": [
+        "lift",
+        "lime",
+        "line",
+        "live"
+      ]
+    },
+    {
+      "base": "W2141:기본:lose:1",
+      "baseForm": "lose",
+      "form": "lost",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2141:기본:lose:1:past",
+      "lookalikes": [
+        "loss",
+        "love",
+        "loose",
+        "loser"
+      ]
+    },
+    {
+      "base": "W2185:기본:make:1",
+      "baseForm": "make",
+      "form": "making",
+      "kind": "ing",
+      "rule": "e-drop",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2185:기본:make:1:ing",
+      "lookalikes": [
+        "male",
+        "mane",
+        "maze",
+        "maid"
+      ]
+    },
+    {
+      "base": "W2185:기본:make:1",
+      "baseForm": "make",
+      "form": "made",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2185:기본:make:1:past",
+      "lookalikes": [
+        "male",
+        "mane",
+        "maze",
+        "maid"
+      ]
+    },
+    {
+      "base": "W2189:기본:man:1",
+      "baseForm": "man",
+      "form": "men",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2189:기본:man:1:plural",
+      "lookalikes": [
+        "mad",
+        "map",
+        "mat",
+        "may"
+      ]
+    },
+    {
+      "base": "W2208:기본:marry:1",
+      "baseForm": "marry",
+      "form": "marries",
+      "kind": "s3",
+      "rule": "y-ies",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2208:기본:marry:1:s3",
+      "lookalikes": [
+        "march",
+        "marsh",
+        "mercy",
+        "mark"
+      ]
+    },
+    {
+      "base": "W2235:기본:mean:1",
+      "baseForm": "mean",
+      "form": "meant",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2235:기본:mean:1:past",
+      "lookalikes": [
+        "meal",
+        "meat",
+        "moan",
+        "man"
+      ]
+    },
+    {
+      "base": "W2246:기본:meet:1",
+      "baseForm": "meet",
+      "form": "met",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2246:기본:meet:1:past",
+      "lookalikes": [
+        "melt",
+        "mast",
+        "meal",
+        "mean"
+      ]
+    },
+    {
+      "base": "W2346:기본:mouse:1",
+      "baseForm": "mouse",
+      "form": "mice",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2346:기본:mouse:1:plural",
+      "lookalikes": [
+        "moose",
+        "mouth",
+        "movie",
+        "moss"
+      ]
+    },
+    {
+      "base": "W2558:기본:ox:1",
+      "baseForm": "ox",
+      "form": "oxen",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2558:기본:ox:1:plural",
+      "lookalikes": [
+        "oak",
+        "oar",
+        "oat",
+        "odd"
+      ]
+    },
+    {
+      "base": "W2626:기본:pay:1",
+      "baseForm": "pay",
+      "form": "paid",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2626:기본:pay:1:past",
+      "lookalikes": [
+        "pal",
+        "pan",
+        "pat",
+        "paw"
+      ]
+    },
+    {
+      "base": "W2651:기본:penny:1",
+      "baseForm": "penny",
+      "form": "pennies",
+      "kind": "plural",
+      "rule": "y-ies",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2651:기본:penny:1:plural",
+      "lookalikes": [
+        "plenty",
+        "pony",
+        "pen",
+        "bunny"
+      ]
+    },
+    {
+      "base": "W2669:기본:person:1",
+      "baseForm": "person",
+      "form": "people",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W2669:기본:person:1:plural",
+      "lookalikes": [
+        "period",
+        "poison",
+        "prison",
+        "personal"
+      ]
+    },
+    {
+      "base": "W3090:기본:ride:1",
+      "baseForm": "ride",
+      "form": "rode",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3090:기본:ride:1:past",
+      "lookalikes": [
+        "rice",
+        "ripe",
+        "rise",
+        "rude"
+      ]
+    },
+    {
+      "base": "W3093:기본:ring:1",
+      "baseForm": "ring",
+      "form": "rang",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3093:기본:ring:1:past",
+      "lookalikes": [
+        "rink",
+        "rain",
+        "rent",
+        "rice"
+      ]
+    },
+    {
+      "base": "W3099:기본:rise:1",
+      "baseForm": "rise",
+      "form": "rose",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [
+        "W3125:기본:rose:1"
+      ],
+      "reviewed": false,
+      "id": "F:W3099:기본:rise:1:past",
+      "lookalikes": [
+        "rice",
+        "ride",
+        "ripe",
+        "risk"
+      ]
+    },
+    {
+      "base": "W3150:기본:run:1",
+      "baseForm": "run",
+      "form": "ran",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3150:기본:run:1:past",
+      "lookalikes": [
+        "rub",
+        "rug",
+        "ruin",
+        "rag"
+      ]
+    },
+    {
+      "base": "W3196:기본:say:1",
+      "baseForm": "say",
+      "form": "said",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3196:기본:say:1:past",
+      "lookalikes": [
+        "sad",
+        "sap",
+        "saw",
+        "shy"
+      ]
+    },
+    {
+      "base": "W3252:기본:see:1",
+      "baseForm": "see",
+      "form": "saw",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [
+        "W3194:기본:saw:1"
+      ],
+      "reviewed": false,
+      "id": "F:W3252:기본:see:1:past",
+      "lookalikes": [
+        "set",
+        "seed",
+        "seek",
+        "seem"
+      ]
+    },
+    {
+      "base": "W3252:기본:see:1",
+      "baseForm": "see",
+      "form": "seen",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3252:기본:see:1:pp",
+      "lookalikes": [
+        "set",
+        "seed",
+        "seek",
+        "seem"
+      ]
+    },
+    {
+      "base": "W3263:기본:sell:1",
+      "baseForm": "sell",
+      "form": "sold",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3263:기본:sell:1:past",
+      "lookalikes": [
+        "seal",
+        "shell",
+        "smell",
+        "spell"
+      ]
+    },
+    {
+      "base": "W3265:기본:send:1",
+      "baseForm": "send",
+      "form": "sent",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3265:기본:send:1:past",
+      "lookalikes": [
+        "sand",
+        "seed",
+        "spend",
+        "seal"
+      ]
+    },
+    {
+      "base": "W3286:기본:shake:1",
+      "baseForm": "shake",
+      "form": "shook",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3286:기본:shake:1:past",
+      "lookalikes": [
+        "shade",
+        "shame",
+        "shape",
+        "share"
+      ]
+    },
+    {
+      "base": "W3299:기본:shelf:1",
+      "baseForm": "shelf",
+      "form": "shelves",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3299:기본:shelf:1:plural",
+      "lookalikes": [
+        "shell",
+        "shall",
+        "sheep",
+        "sheet"
+      ]
+    },
+    {
+      "base": "W3311:기본:shoot:1",
+      "baseForm": "shoot",
+      "form": "shot",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3311:기본:shoot:1:past",
+      "lookalikes": [
+        "short",
+        "shout",
+        "scoop",
+        "sheet"
+      ]
+    },
+    {
+      "base": "W3359:기본:sing:1",
+      "baseForm": "sing",
+      "form": "sang",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3359:기본:sing:1:past",
+      "lookalikes": [
+        "sink",
+        "song",
+        "swing",
+        "sand"
+      ]
+    },
+    {
+      "base": "W3363:기본:sink:1",
+      "baseForm": "sink",
+      "form": "sank",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3363:기본:sink:1:past",
+      "lookalikes": [
+        "sick",
+        "silk",
+        "sing",
+        "slink"
+      ]
+    },
+    {
+      "base": "W3367:기본:sit:1",
+      "baseForm": "sit",
+      "form": "sitting",
+      "kind": "ing",
+      "rule": "double",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3367:기본:sit:1:ing",
+      "lookalikes": [
+        "set",
+        "sip",
+        "sir",
+        "sift"
+      ]
+    },
+    {
+      "base": "W3367:기본:sit:1",
+      "baseForm": "sit",
+      "form": "sat",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3367:기본:sit:1:past",
+      "lookalikes": [
+        "set",
+        "sip",
+        "sir",
+        "sift"
+      ]
+    },
+    {
+      "base": "W3392:기본:sleep:1",
+      "baseForm": "sleep",
+      "form": "slept",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3392:기본:sleep:1:past",
+      "lookalikes": [
+        "sheep",
+        "sleet",
+        "steep",
+        "sweep"
+      ]
+    },
+    {
+      "base": "W3494:기본:speak:1",
+      "baseForm": "speak",
+      "form": "spoke",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3494:기본:speak:1:past",
+      "lookalikes": [
+        "sneak",
+        "spear",
+        "steak",
+        "spark"
+      ]
+    },
+    {
+      "base": "W3494:기본:speak:1",
+      "baseForm": "speak",
+      "form": "spoken",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3494:기본:speak:1:pp",
+      "lookalikes": [
+        "sneak",
+        "spear",
+        "steak",
+        "spark"
+      ]
+    },
+    {
+      "base": "W3503:기본:spend:1",
+      "baseForm": "spend",
+      "form": "spent",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3503:기본:spend:1:past",
+      "lookalikes": [
+        "speed",
+        "send",
+        "scene",
+        "scent"
+      ]
+    },
+    {
+      "base": "W3558:기본:stand:1",
+      "baseForm": "stand",
+      "form": "stood",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3558:기본:stand:1:past",
+      "lookalikes": [
+        "sand",
+        "sandy",
+        "sound",
+        "spend"
+      ]
+    },
+    {
+      "base": "W3576:기본:steal:1",
+      "baseForm": "steal",
+      "form": "stole",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3576:기본:steal:1:past",
+      "lookalikes": [
+        "steak",
+        "steam",
+        "seal",
+        "shell"
+      ]
+    },
+    {
+      "base": "W3709:기본:swim:1",
+      "baseForm": "swim",
+      "form": "swimming",
+      "kind": "ing",
+      "rule": "double",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3709:기본:swim:1:ing",
+      "lookalikes": [
+        "slim",
+        "sail",
+        "seam",
+        "seem"
+      ]
+    },
+    {
+      "base": "W3709:기본:swim:1",
+      "baseForm": "swim",
+      "form": "swam",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3709:기본:swim:1:past",
+      "lookalikes": [
+        "slim",
+        "sail",
+        "seam",
+        "seem"
+      ]
+    },
+    {
+      "base": "W3730:기본:take:1",
+      "baseForm": "take",
+      "form": "taking",
+      "kind": "ing",
+      "rule": "e-drop",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3730:기본:take:1:ing",
+      "lookalikes": [
+        "tale",
+        "tame",
+        "tape",
+        "tail"
+      ]
+    },
+    {
+      "base": "W3730:기본:take:1",
+      "baseForm": "take",
+      "form": "took",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3730:기본:take:1:past",
+      "lookalikes": [
+        "tale",
+        "tame",
+        "tape",
+        "tail"
+      ]
+    },
+    {
+      "base": "W3730:기본:take:1",
+      "baseForm": "take",
+      "form": "taken",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3730:기본:take:1:pp",
+      "lookalikes": [
+        "tale",
+        "tame",
+        "tape",
+        "tail"
+      ]
+    },
+    {
+      "base": "W3749:기본:teach:1",
+      "baseForm": "teach",
+      "form": "taught",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3749:기본:teach:1:past",
+      "lookalikes": [
+        "tease",
+        "torch",
+        "touch",
+        "track"
+      ]
+    },
+    {
+      "base": "W3759:기본:tell:1",
+      "baseForm": "tell",
+      "form": "told",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3759:기본:tell:1:past",
+      "lookalikes": [
+        "tall",
+        "toll",
+        "tail",
+        "tale"
+      ]
+    },
+    {
+      "base": "W3798:기본:thief:1",
+      "baseForm": "thief",
+      "form": "thieves",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3798:기본:thief:1:plural",
+      "lookalikes": [
+        "theft",
+        "thick",
+        "thigh",
+        "thing"
+      ]
+    },
+    {
+      "base": "W3802:기본:think:1",
+      "baseForm": "think",
+      "form": "thought",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3802:기본:think:1:past",
+      "lookalikes": [
+        "thank",
+        "thick",
+        "thing",
+        "thin"
+      ]
+    },
+    {
+      "base": "W3820:기본:throw:1",
+      "baseForm": "throw",
+      "form": "threw",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3820:기본:throw:1:past",
+      "lookalikes": [
+        "thaw",
+        "throat",
+        "trot",
+        "crow"
+      ]
+    },
+    {
+      "base": "W3869:기본:tooth:1",
+      "baseForm": "tooth",
+      "form": "teeth",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3869:기본:tooth:1:plural",
+      "lookalikes": [
+        "torch",
+        "touch",
+        "tough",
+        "truth"
+      ]
+    },
+    {
+      "base": "W3945:기본:try:1",
+      "baseForm": "try",
+      "form": "tried",
+      "kind": "past",
+      "rule": "y-ied",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3945:기본:try:1:past",
+      "lookalikes": [
+        "toy",
+        "tray",
+        "tap",
+        "tea"
+      ]
+    },
+    {
+      "base": "W3986:기본:understand:1",
+      "baseForm": "understand",
+      "form": "understood",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W3986:기본:understand:1:past",
+      "lookalikes": [
+        "underline",
+        "underpass",
+        "underwear",
+        "newsstand"
+      ]
+    },
+    {
+      "base": "W4118:기본:wash:1",
+      "baseForm": "wash",
+      "form": "washes",
+      "kind": "s3",
+      "rule": "es",
+      "source": "rule",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4118:기본:wash:1:s3",
+      "lookalikes": [
+        "wasp",
+        "wish",
+        "wail",
+        "wait"
+      ]
+    },
+    {
+      "base": "W4132:기본:wear:1",
+      "baseForm": "wear",
+      "form": "wore",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4132:기본:wear:1:past",
+      "lookalikes": [
+        "weak",
+        "war",
+        "weary",
+        "warm"
+      ]
+    },
+    {
+      "base": "W4132:기본:wear:1",
+      "baseForm": "wear",
+      "form": "worn",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4132:기본:wear:1:pp",
+      "lookalikes": [
+        "weak",
+        "war",
+        "weary",
+        "warm"
+      ]
+    },
+    {
+      "base": "W4188:기본:wife:1",
+      "baseForm": "wife",
+      "form": "wives",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4188:기본:wife:1:plural",
+      "lookalikes": [
+        "wide",
+        "wipe",
+        "wire",
+        "wise"
+      ]
+    },
+    {
+      "base": "W4196:기본:win:1",
+      "baseForm": "win",
+      "form": "won",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4196:기본:win:1:past",
+      "lookalikes": [
+        "wind",
+        "wing",
+        "wink",
+        "war"
+      ]
+    },
+    {
+      "base": "W4218:기본:wolf:1",
+      "baseForm": "wolf",
+      "form": "wolves",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4218:기본:wolf:1:plural",
+      "lookalikes": [
+        "walk",
+        "wall",
+        "wild",
+        "will"
+      ]
+    },
+    {
+      "base": "W4219:기본:woman:1",
+      "baseForm": "woman",
+      "form": "women",
+      "kind": "plural",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4219:기본:woman:1:plural",
+      "lookalikes": [
+        "wombat",
+        "human",
+        "moan",
+        "man"
+      ]
+    },
+    {
+      "base": "W4247:기본:write:1",
+      "baseForm": "write",
+      "form": "wrote",
+      "kind": "past",
+      "rule": "irregular",
+      "source": "db",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4247:기본:write:1:past",
+      "lookalikes": [
+        "white",
+        "writer",
+        "writhe",
+        "waste"
+      ]
+    },
+    {
+      "base": "W4247:기본:write:1",
+      "baseForm": "write",
+      "form": "written",
+      "kind": "pp",
+      "rule": "irregular",
+      "source": "list",
+      "clash": [],
+      "reviewed": false,
+      "id": "F:W4247:기본:write:1:pp",
+      "lookalikes": [
+        "white",
+        "writer",
+        "writhe",
+        "waste"
+      ]
+    }
+  ]
+}
