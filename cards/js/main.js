@@ -64,6 +64,7 @@ function applyTheme(w) {
     '--w-path': p.path, '--w-path-d': mix(p.path, 0, 0.25), '--w-path-l': mix(p.path, 255, 0.25), '--fg': light ? '#233f3a' : '#fff5db', '--fg-sh': light ? 'rgba(255,250,240,.85)' : '#233f3a' };
   for (const [k, v] of Object.entries(set)) s.setProperty(k, v);
 }
+const ro = (word) => { const c = String(word).charCodeAt(String(word).length - 1) - 0xac00; if (c < 0 || c > 11171) return `${word}(으)로`; const f = c % 28; return word + (f === 0 || f === 8 ? '로' : '으로'); };
 const musicOf = (w) => BAND_MUSIC[G.ix.contOf[w.id].band] || 'meadow';
 function banner(html) { const b = $('#banner'); b.innerHTML = html; b.hidden = false; }
 function hideBanner() { $('#banner').hidden = true; }
@@ -236,7 +237,7 @@ function front(it, w) {
   const g = gradeOf(G.st.words[w.id]); const chk = it.form === 'check' || it.verifying; const listen = chk && isSight(w) && !it.shown;   // a function word: hear it, pick the spelling
   $('#card').className = `card g${g} ${listen ? 'listen' : ''}`;
   $('#card').innerHTML = `<div class="tag ${chk ? 'chk' : ''}" id="tag">${chk ? (isSight(w) ? '확인! 글자를 골라요' : '확인! 뜻을 골라요') : TAG[it.role]}</div>
-    ${listen ? `<div class="ear" id="word" data-hidden="1">${anim('sparkle-a', 'sparkle-b', 48)}<span>소리를 듣고 글자를 골라요</span></div>` : `<div class="word" id="word">${esc(w.form)}</div>`}${HEAR}`;
+    ${listen ? `<div class="ear" id="word" data-hidden="1"><svg class="spr" width="96" height="96" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg><span>소리를 듣고 글자를 골라요</span></div>` : `<div class="word" id="word">${esc(w.form)}</div>`}${HEAR}`;
 }
 function judgeButtons() { $('#actions').innerHTML = `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
 function optionButtons(it) {
@@ -306,12 +307,12 @@ function endRun(reason) {
   if (ww.crown) lines.push(`<div class="gain" id="crowngain">${spr('crown', 32)} 이 세계의 왕관을 얻었어요</div>`);
   if (ww.key && w.outro) lines.push(`<p class="story">${esc(w.outro)}</p>`);
   if (ww.key && ww.nextWorld && w.story) lines.push(`<p class="story">${esc(w.story)}</p>`);
-  if (ww.finale?.pass) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ww.nextContinent.name)}(으)로 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
+  if (ww.finale?.pass) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ro(ww.nextContinent.name))} 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
   if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${pc(rw.bat.acc)}%). 박쥐 게이지가 0으로 돌아가요. ${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
   if (batNow && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
   if (batNow && node.kind === 'bat') lines.push('<p class="mut">미뤄 둔 복습이 아직 많아요. 박쥐가 한 번 더 와요.</p>');
   const exam = ww.castle || ww.finale; if (exam && !exam.pass) lines.push(`<p class="mut">${exam.ok}/${exam.total}장 맞혔어요. ${pc(exam.need)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
-  const go = batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ww.nextWorld.name}(으)로`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ww.nextContinent.name}(으)로`] : ['today', '▶ 지도로'];
+  const go = batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ro(ww.nextWorld.name)}`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ro(ww.nextContinent.name)}`] : ['today', '▶ 지도로'];
   const goId = ww.key && ww.nextWorld ? ww.nextWorld.id : ww.finale?.pass && ww.nextContinent ? ww.nextContinent.worlds[0].id : '';
   $('#app').innerHTML = `<div class="page center"><h1 class="title">${title}</h1>${lines.join('')}
   <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>${rec.bosses}</b><span>잡은 보스</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>

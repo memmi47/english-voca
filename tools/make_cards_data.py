@@ -88,4 +88,11 @@ fx = {'schemaVersion': 3, 'contentVersion': 'fixture-1', 'status': 'draft',
       'source': {'path': 'reference/weekly-tool/vocabulary.json', 'sha256': sha, 'selection': 'track in {vocab,sight} and old_priority in {P1,P2,P3}; kind=기본, sense_order=1', 'overrideVersion': None},
       'counts': {'lemmas': 4610, 'cards': 4610, 'continents': 3, 'worlds': 30, 'byBand': {'P1': 1215, 'P2': 2310, 'P3': 1085}}, 'continents': continents}
 (out / 'worlds.fixture.json').write_text(json.dumps(fx, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
+
+# ---- audio list for tools/cards_say_audio.sh: every card in the order the worlds meet them (number, card id, text) ----
+# Numbers follow the catalog (DB order), so a file keeps its name when the world assignment changes.
+num = {w['id']: i + 1 for i, w in enumerate(words)}; form = {w['id']: w['form'] for w in words}
+order = [x for c in continents for w in c['worlds'] for x in [i for n in w['map']['nodes'] for i in n.get('words', [])] + [i for s in w['sideActivities'] for t in s['tiles'] for i in t['words']]]
+aud = ROOT / 'cards/audio'; aud.mkdir(parents=True, exist_ok=True)
+(aud / 'words.tsv').write_text(''.join(f"{num[i]:04d}\t{i}\t{form[i]}\n" for i in order), encoding='utf-8')
 print('catalog:', len(words), 'cards;', sum(1 for w in words if 'emoji' in w), 'with a picture.  fixture: 30 worlds,', sum(1 for c in continents for w in c['worlds'] for n in w['map']['nodes'] if n['kind'] == 'tile'), 'tiles')
