@@ -42,9 +42,13 @@ function mergeMap(a, b) {
   for (const id of new Set([...Object.keys(a.conts || {}), ...Object.keys(b.conts || {})])) conts[id] = { castle: minStr(a.conts?.[id]?.castle, b.conts?.[id]?.castle) ?? null };
   const monsterDay = maxStr(a.monsterDay, b.monsterDay);
   const monsterN = Math.max(a.monsterDay === monsterDay ? a.monsterN || 1 : 0, b.monsterDay === monsterDay ? b.monsterN || 1 : 0);
-  return { stars: Math.max(a.stars || 0, b.stars || 0), keys: Object.values(worlds).filter((w) => w.castle).length, best: Math.max(a.best || 0, b.best || 0),
+  const out = { stars: Math.max(a.stars || 0, b.stars || 0), keys: Object.values(worlds).filter((w) => w.castle).length, best: Math.max(a.best || 0, b.best || 0),
     items: { shield: Math.max(a.items?.shield || 0, b.items?.shield || 0), flame: Math.max(a.items?.flame || 0, b.items?.flame || 0) },
     bag: a.bag ?? b.bag ?? null, worlds, conts, at: a.at ?? b.at ?? null, monsterDay, monsterN, bonusDay: maxStr(a.bonusDay, b.bonusDay), bat: mergeBat(a.bat, b.bat) };
+  // The tiles of the first prototype (store.STEPS[0] keeps them under `legacy`): nothing reads them, but a record is never made smaller.
+  const la = a.legacy, lb = b.legacy;
+  if (la || lb) out.legacy = { cleared: early(la?.cleared, lb?.cleared), castle: minStr(la?.castle, lb?.castle) ?? null };
+  return out;
 }
 // Bat gauge: the side that took the latest test has already emptied it, so it wins; otherwise the fuller gauge and the union of met words.
 function mergeBat(a, b) {

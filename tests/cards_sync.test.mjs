@@ -165,3 +165,14 @@ test('F7: merge: tile marks of unfinished runs are united; a tile cleared on eit
   const c = mp({ open: { A1: '2026-11-12' } }), d = mp({ cleared: { A1: '2026-11-12' } });
   for (const m of [mergeCards(c, d), mergeCards(d, c)]) assert.equal('open' in m.map.worlds.w1, false);
 });
+
+test('S12: the prototype tiles kept under map.legacy survive a merge in either order (one side or both carry them)', () => {
+  const a = state({ v: 2, words: { w1: word() } }), b = state({ v: 2, words: { w2: word() } });
+  a.map = { stars: 3, worlds: {}, conts: {}, legacy: { cleared: { A1: '2026-11-12', B1: '2026-11-13' }, castle: null } };
+  b.map = { stars: 1, worlds: {}, conts: {} };
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual(m.map.legacy, { cleared: { A1: '2026-11-12', B1: '2026-11-13' }, castle: null });
+  b.map.legacy = { cleared: { A1: '2026-11-11', C1: '2026-11-14' }, castle: '2026-11-15' };
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual(m.map.legacy, { cleared: { A1: '2026-11-11', B1: '2026-11-13', C1: '2026-11-14' }, castle: '2026-11-15' });
+  const c = state({ v: 2, words: {} }), d = state({ v: 2, words: {} }); c.map = { stars: 0, worlds: {}, conts: {} }; d.map = { stars: 0, worlds: {}, conts: {} };
+  assert.equal('legacy' in mergeCards(c, d).map, false);
+});
