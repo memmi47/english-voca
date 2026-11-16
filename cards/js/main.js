@@ -3,7 +3,8 @@ import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG 
 import { Sound } from './sound.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN } from './map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen } from './world.js';
-import { Sync } from './sync.js';
+import { Sync, mergeCards } from './sync.js';
+import { loadRecord, compact, totals, readBackup } from './store.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -30,8 +31,15 @@ window.__cards = G;
 
 // ---- storage: this device, plus a copy on the home server when tools/serve_cards.py is reachable ----
 const KEY = (id) => `cards.v0.p.${id}`;
-function load(id) { try { return JSON.parse(localStorage.getItem(KEY(id))) || newState(id); } catch { return newState(id); } }
-function save() { try { localStorage.setItem(KEY(G.pid), JSON.stringify(G.st)); G.sync?.changed('p.' + G.pid); return true; } catch (e) { banner(`저장에 실패했어요: ${esc(e.message)}`); return false; } }
+// A record is upgraded from older formats on reading (store.js). One that cannot be read is set aside, never overwritten;
+// one saved by a newer program than this page is shown but not changed.
+function loadRec(id) { try { return loadRecord(localStorage, KEY(id), id); } catch { return { state: newState(id), damaged: false, newer: false, missing: true }; } }
+const load = (id) => loadRec(id).state;
+const NEWER = '이 화면의 프로그램이 오래됐어요. 화면을 새로 고치면 이어서 할 수 있어요. 그때까지 이 기기에서는 기록이 바뀌지 않아요.';
+function save() {
+  if (G.readonly) { banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); return false; }
+  try { compact(G.st); localStorage.setItem(KEY(G.pid), JSON.stringify(G.st)); G.sync?.changed('p.' + G.pid); return true; } catch (e) { banner(`저장에 실패했어요: ${esc(e.message)}`); return false; }
+}
 function loadMeta() { try { return { names: { son: '아들', daughter: '딸' }, ...JSON.parse(localStorage.getItem('cards.v0.meta') || '{}') }; } catch { return { names: { son: '아들', daughter: '딸' } }; } }
 // Another device saved newer data: fold it into what this page holds in memory.
 function onMerged(nm, data) {
@@ -41,12 +49,16 @@ function onMerged(nm, data) {
 function syncLine() {
   const st = G.syncStatus || { available: false, pending: [] };
   if (G.volatile) return '이 브라우저는 저장을 막고 있어요. 기록이 새로고침 후 사라질 수 있습니다.';
+  if (st.stale) return '새 프로그램이 나왔어요. 화면을 새로 고치세요 (그 전까지 서버 기록은 건드리지 않아요).';
   if (!G.sync) return '기록 저장: 이 기기만 (서버 저장 꺼짐)';
   if (!st.available) return '기록 저장: 이 기기만. Mac의 서버(tools/serve_cards.py)에 연결되지 않았어요.';
   return st.pending.length ? '기록 저장: 서버에 올리는 중…' : '기록 저장: 이 기기 + Mac 서버';
 }
 function paintSync() { const el = document.getElementById('syncline'); if (el) el.textContent = syncLine(); }
-async function openProfile(id) { if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} } return today(id); }
+async function openProfile(id) {
+  const rec = loadRec(id); G.notice = rec.damaged ? '이 기기에 있던 기록을 읽을 수 없어 따로 보관했어요. 서버나 백업 파일의 기록으로 이어 갑니다(부모 기록 화면에서 복원할 수 있어요).' : '';   // set aside before the server copy is fetched
+  if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} } return today(id);
+}
 const name = (id) => G.meta.names[id];
 
 const PREF = 'cards.v0.pref';                           // this device only: music on/off, effects on/off
@@ -105,6 +117,7 @@ async function boot() {
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
+  document.addEventListener('change', (e) => { const f = e.target; if (!f.dataset?.restore || !f.files?.[0]) return; const id = f.dataset.restore; const rd = new FileReader(); rd.onload = () => restore(id, String(rd.result)); rd.onerror = () => { G.pmsg = '파일을 읽지 못했어요.'; parent(); }; rd.readAsText(f.files[0]); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { G.sync?.flush().catch(() => {}); return; } G.sync?.flush().catch(() => {}); if (G.view === 'card' && !G.busy) speak(true); });
   home();
 }
@@ -143,7 +156,8 @@ function housePos(w, h, taken) {
   best ||= { x: Math.min(940, a.x + 90), y: Math.min(520, a.y + 90) }; taken.push(best); return best;
 }
 function today(id, msg = '', wid = null) {
-  G.view = 'today'; G.pid = id; G.st = load(id); G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
+  const rec = loadRec(id); G.view = 'today'; G.pid = id; G.st = rec.state; G.readonly = rec.newer || !!G.syncStatus?.stale; G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
+  if (G.readonly) banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); else if (G.notice) { banner(`<span>${esc(G.notice)}</span><button data-act="hide">확인</button>`); G.notice = ''; }
   const st = G.st; const m = ensureMap(st);
   if (wid && G.ix.byId[wid] && worldOpen(G.ix, G.ix.byId[wid], st)) m.at = wid;
   const w = (G.world = currentWorld(G.ix, st)); const first = enterWorld(st, w, todayISO()); if (first || wid) save();
@@ -210,6 +224,7 @@ function atlas() {
 
 // ---- run ----
 async function start(nodeId) {
+  if (G.readonly) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);   // nothing can be saved: do not start
   await G.sound.unlock();                                  // inside the tap
   const seed = Number(qs.get('seed')) || Math.floor(Math.random() * 1e9); const rng = mulberry32(seed + G.st.runs.length);
   let node;
@@ -334,6 +349,7 @@ function endRun(reason) {
 
 // ---- lightning round (bonus house): true / false pairs, 60 seconds, touches no word ----
 async function startLightning() {
+  if (G.readonly) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);
   await G.sound.unlock(); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 7);
   G.lt = new Lightning({ state: G.st, words: G.words, rng, seconds: LT_SECONDS }); if (!G.lt.ready) return today(G.pid, MSG.bonusLocked);
   G.view = 'lightning'; band(true); G.ltEnd = Date.now() + LT_SECONDS * 1000; G.sound.scene('play');
@@ -408,16 +424,39 @@ function album() {
 function parent() {
   G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
-    const tot = R.reduce((t, r) => ({ cards: t.cards + r.cards, wall: t.wall + r.wall, claims: t.claims + r.claims, v: t.v + r.verifies, vok: t.vok + r.verifyOk, rv: t.rv + r.reviews, rok: t.rok + r.reviewOk }), { cards: 0, wall: 0, claims: 0, v: 0, vok: 0, rv: 0, rok: 0 });
-    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${G.words.length} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${R.length}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv})</p>
+    const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk };
+    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${G.words.length} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv})</p>
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
     ${R.slice(-60).map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${esc(r.tag || '-')}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
       <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>${R.length > 60 ? `<p class="small mut">최근 60판만 표시. 전체는 내보내기 파일에 있습니다.</p>` : ''}
-    <p class="row"><button class="sec" data-act="export" data-id="${id}">기록 내보내기(JSON)</button><button class="link" data-act="reset" data-id="${id}">기록 지우기</button></p>`; };
+    <p class="row"><button class="sec" data-act="export" data-id="${id}">기록 내보내기(파일)</button><label class="sec filebtn">파일에서 복원<input type="file" accept=".json,application/json" data-restore="${id}" hidden></label>
+      <select id="snap-${id}" aria-label="날짜별 사본"><option value="">날짜별 사본…</option></select><button class="sec" data-act="snap" data-id="${id}">그 날짜 사본에서 복원</button><button class="link" data-act="reset" data-id="${id}">이 기기의 기록 지우기</button></p>
+    <p class="small mut">복원은 지금 기록에 합치는 방식이라 어느 쪽 기록도 지워지지 않습니다.</p>`; };
   $('#app').innerHTML = `<div class="page parent"><button class="back" data-act="home" aria-label="처음으로">‹</button><h1 class="title">부모 기록</h1>
   <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과입니다. 소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
+  <div class="safety" id="safety"><b>기록 보관 상태</b><span>① 이 기기: ${G.volatile ? '저장 불가' : '저장 중'}</span><span id="sf-server">② Mac 서버: 확인 중…</span><span id="sf-daily">③ 날짜별 사본: 확인 중…</span><span id="sf-off">④ 외부 백업(GitHub): 확인 중…</span></div>
+  <p class="msg small" id="pmsg">${esc(G.pmsg || '')}</p>
   ${PROFILES.map(block).join('')}
   <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p></div>`;
+  paintSafety();
+}
+// The four places a record is kept, and the dated copies a parent can restore from.
+async function paintSafety() {
+  const set = (id, t, bad) => { const e = document.getElementById(id); if (e) { e.textContent = t; e.classList.toggle('bad', !!bad); } }; G.pmsg = '';
+  let ping = null; try { const r = await fetch('api/ping'); ping = r.ok ? await r.json() : null; } catch {}
+  if (!ping || !ping.store) { set('sf-server', '② Mac 서버: 연결 안 됨', true); set('sf-daily', '③ 날짜별 사본: 서버 필요', true); set('sf-off', '④ 외부 백업(GitHub): 서버 필요', true); return; }
+  set('sf-server', '② Mac 서버: 연결됨'); set('sf-daily', ping.daily ? `③ 날짜별 사본: ${ping.daily}일치 (최근 ${ping.lastDaily})` : '③ 날짜별 사본: 아직 없음', !ping.daily);
+  const off = ping.offsite; const age = off?.at ? (Date.now() - Date.parse(off.at)) / 864e5 : null;
+  set('sf-off', !off ? '④ 외부 백업(GitHub): 설정 안 됨 (docs/DATA_SAFETY.md)' : off.ok ? `④ 외부 백업(GitHub): ${off.at.slice(0, 10)}${age > 3 ? ' (3일 넘게 안 됨)' : ''}` : `④ 외부 백업(GitHub): 실패 (${off.at.slice(0, 10)})`, !off || !off.ok || age > 3);
+  for (const id of PROFILES) { try { const r = await fetch('api/snapshots/p.' + id); const days = r.ok ? (await r.json()).days : []; const sel = document.getElementById('snap-' + id); if (sel) sel.innerHTML = '<option value="">날짜별 사본…</option>' + days.slice().reverse().map((d) => `<option>${d}</option>`).join(''); } catch {} }
+}
+// Restore = merge into the current record. Nothing on either side is removed.
+function restore(id, text) {
+  const b = readBackup(text, id); if (!b.ok) { G.pmsg = `복원하지 못했어요: ${b.why}`; return parent(); }
+  const before = Object.keys(load(id).words).length; const merged = mergeCards(load(id), b.state);
+  try { localStorage.setItem(KEY(id), JSON.stringify(merged)); G.sync?.changed('p.' + id); G.pmsg = `${name(id)}: 복원했어요. 카드 기록 ${before}장 → ${Object.keys(merged.words).length}장 (파일에는 ${b.words}장).`; }
+  catch (e) { G.pmsg = `복원하지 못했어요: ${e.message}`; }
+  return parent();
 }
 function download(nm, obj) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 1)], { type: 'application/json' })); a.download = nm; document.body.appendChild(a); a.click(); a.remove(); }
 
@@ -428,6 +467,10 @@ async function onClick(e) {
     case 'music': await G.sound.unlock(); G.sound.setMusic(!G.sound.musicOn); savePref(); return today(G.pid);
     case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
     case 'home': return home();
+    case 'reload': return location.reload();
+    case 'hide': return hideBanner();
+    case 'snap': { const day = document.getElementById('snap-' + b.dataset.id)?.value; if (!day) { G.pmsg = '복원할 날짜를 먼저 고르세요.'; return parent(); }
+      try { const r = await fetch(`api/snapshot/p.${b.dataset.id}/${day}`); if (!r.ok) throw new Error('사본을 읽지 못했어요'); return restore(b.dataset.id, await r.text()); } catch (e) { G.pmsg = `복원하지 못했어요: ${e.message}`; return parent(); } }
     case 'pick': await G.sound.unlock(); return openProfile(b.dataset.id);
     case 'today': return today(G.pid);
     case 'atlas': return atlas();
@@ -451,7 +494,7 @@ async function onClick(e) {
     case 'quit': if (G.run) return endRun('left'); return today(G.pid);
     case 'album': return album();
     case 'peek': { const w = G.byId[b.dataset.id]; if (!w) return; const p = $('#peek'); if (p) p.innerHTML = `<b>${esc(w.form)}</b> ${esc(w.ko)} ${w.emoji || ''}`; await G.sound.unlock(); return G.sound.play(w.id, w.form); }
-    case 'parent': return parent();
+    case 'parent': G.pmsg = ''; return parent();
     case 'export': return download(`cards_${b.dataset.id}_${todayISO()}.json`, load(b.dataset.id));
     case 'reset': if (confirm(`${name(b.dataset.id)}의 카드 기록을 이 기기에서 지울까요?${G.syncStatus?.available ? ' (Mac 서버의 사본은 남아 있고 다음에 다시 불러옵니다)' : ''}`)) { localStorage.removeItem(KEY(b.dataset.id)); } return parent();
     case 'names': G.meta.names = { son: $('#nm-son').value.trim() || '아들', daughter: $('#nm-daughter').value.trim() || '딸' }; localStorage.setItem('cards.v0.meta', JSON.stringify(G.meta)); G.sync?.changed('meta'); return parent();

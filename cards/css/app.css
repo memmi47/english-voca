@@ -149,3 +149,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .mailtrack{position:relative;height:150px;max-width:620px;margin:18px auto;background:var(--paper);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);overflow:hidden}
 .mailzone{position:absolute;left:37%;width:26%;top:0;bottom:0;background:#ffe9a8;border-left:4px dashed var(--gold-d);border-right:4px dashed var(--gold-d)}
 .mailbox{position:absolute;top:22px;transform:translateX(-50%)}.game .go{display:inline-flex;align-items:center;justify-content:center;gap:10px}
+
+/* parent: where the record is kept, restore */
+.safety{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;background:#fff;border:3px solid var(--ink);padding:8px 12px;margin:10px 0;font-size:14px}.safety b{margin-right:6px}.safety .bad{color:var(--coral-d);font-weight:700}
+.parent .msg{color:var(--ink);text-shadow:none;min-height:0;margin:6px 0}.filebtn{cursor:pointer;display:inline-block}.parent select{font:inherit;padding:8px;border:3px solid var(--ink);background:#fff}

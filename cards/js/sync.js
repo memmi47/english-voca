@@ -2,6 +2,8 @@
 // localStorage stays the working copy; the server copy lets the Mac mini and the iPad share progress and
 // survives the browser clearing its storage. Without a server the cards work on this device only.
 // Adapted from the earlier game's sync.js (removed; commit 8acc013); only the document shapes and the merge rules differ.
+import { SCHEMA } from './deck.js';
+import { migrate } from './store.js';
 const SYNC_KEY = 'cards.v0.sync';
 const LOG_CAP = 5000;
 export const DOCS = ['meta', 'p.son', 'p.daughter'];
@@ -45,12 +47,17 @@ function mergeBat(a, b) {
 }
 
 // Pure and symmetric enough for two devices that both changed the same child's record.
+// Both sides are first brought to the current format. A record saved by a later program than this one is returned
+// untouched: this code does not know its fields and must not rewrite them.
 export function mergeCards(a, b) {
   if (!a) return b; if (!b) return a;
-  const out = { ...b, ...a, v: a.v ?? b.v ?? 0, id: a.id || b.id };
+  const ma = migrate(a), mb = migrate(b); if (ma.newer || mb.newer) return (ma.newer ? ma : mb).state; a = ma.state; b = mb.state;
+  const out = { ...b, ...a, v: Math.max(a.v || 0, b.v || 0), id: a.id || b.id };
   out.words = { ...(b.words || {}) };
   for (const [id, r] of Object.entries(a.words || {})) out.words[id] = out.words[id] ? newer(out.words[id], r) : r;
-  out.runs = uniq([...(a.runs || []), ...(b.runs || [])], (r) => [r.endedAt, r.day, r.n, r.tag].join('|')).sort((x, y) => String(x.endedAt).localeCompare(String(y.endedAt)));
+  // Old run records are folded into totals (store.compact). The side that folded further wins; runs it already counted are dropped.
+  const past = !a.past ? b.past : !b.past ? a.past : String(a.past.until) >= String(b.past.until) ? a.past : b.past; if (past) out.past = past; else delete out.past;
+  out.runs = uniq([...(a.runs || []), ...(b.runs || [])], (r) => [r.endedAt, r.day, r.n, r.tag].join('|')).filter((r) => !past || String(r.endedAt) > String(past.until)).sort((x, y) => String(x.endedAt).localeCompare(String(y.endedAt)));
   out.log = uniq([...(a.log || []), ...(b.log || [])], (e) => [e.t, e.id, e.role, e.form, e.ok].join('|')).sort((x, y) => String(x.t).localeCompare(String(y.t))).slice(-LOG_CAP);
   out.verify = (last(a.runs) >= last(b.runs) ? a.verify : b.verify) || [];       // adaptive check rate: follow the side that played last
   if (a.map || b.map) out.map = mergeMap(a.map, b.map);
@@ -64,7 +71,7 @@ export function mergeMeta(local, remote, localDirty) {
 export class Sync {
   constructor({ storage, fetchImpl, base = 'api/', onMerged = () => {}, onStatus = () => {}, debounceMs = 0 }) {
     this.s = storage; this.fetch = fetchImpl; this.base = base; this.onMerged = onMerged; this.onStatus = onStatus; this.debounceMs = debounceMs; this.timers = {};
-    this.available = null; this.lastError = null; this.inFlight = {}; this.again = {};
+    this.available = null; this.lastError = null; this.inFlight = {}; this.again = {}; this.stale = false;   // stale: the server holds a newer format than this program
     try { this.state = JSON.parse(this.s.getItem(SYNC_KEY)) || {}; } catch { this.state = {}; }
     this.state.revs ||= {}; this.state.dirty ||= {};
   }
@@ -73,7 +80,8 @@ export class Sync {
   _setLocal(name, data) { this.s.setItem(localKey(name), JSON.stringify(data)); }
   _merge(name, local, remote) { return name === 'meta' ? mergeMeta(local, remote, !!this.state.dirty[name]) : mergeCards(local, remote); }
   get pending() { return Object.keys(this.state.dirty).filter((k) => this.state.dirty[k]); }
-  _status() { this.onStatus({ available: this.available, pending: this.pending, error: this.lastError }); }
+  _status() { this.onStatus({ available: this.available, pending: this.pending, error: this.lastError, stale: this.stale }); }
+  _newer(name, data) { if (name !== 'meta' && data && Number.isInteger(data.v) && data.v > SCHEMA) { this.stale = true; return true; } return false; }
 
   // Called once at start. Never throws; without a server it just reports unavailable.
   async init(timeoutMs = 2500) {
@@ -92,6 +100,7 @@ export class Sync {
     if (r.status === 404) { this.state.revs[name] = 0; if (local) return this.push(name); return; }
     if (!r.ok) throw new Error('server ' + r.status);
     const remote = await r.json();
+    if (this._newer(name, remote.data)) { this._status(); return; }                 // an old page must not rewrite a newer record: reload first
     if (!local) { this._setLocal(name, remote.data); this.state.revs[name] = remote.rev; this.state.dirty[name] = false; this._saveState(); this.onMerged(name, remote.data); return; }
     if (this.state.revs[name] === remote.rev) { if (this.state.dirty[name]) return this.push(name); return; }
     const merged = this._merge(name, local, remote.data);
@@ -121,6 +130,7 @@ export class Sync {
             body: JSON.stringify({ baseRev: this.state.revs[name] || 0, data }) });
           if (r.status === 409) {                       // another device saved first: merge and retry
             const remote = await r.json();
+            if (this._newer(name, remote.data)) throw new Error('newer program on the server');
             const merged = this._merge(name, this._local(name), remote.data);
             this._setLocal(name, merged); this.state.revs[name] = remote.rev; this._saveState(); this.onMerged(name, merged);
             continue;

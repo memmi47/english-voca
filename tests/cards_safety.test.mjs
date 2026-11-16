@@ -1,0 +1,122 @@
+// Progress must survive program updates, damaged storage and bad writes (docs/DATA_SAFETY.md).
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { SCHEMA, newState, Run, mulberry32 } from '../cards/js/deck.js';
+import { migrate, compact, totals, loadRecord, readBackup } from '../cards/js/store.js';
+import { mergeCards, Sync } from '../cards/js/sync.js';
+import { ensureMap } from '../cards/js/map.js';
+import { indexWorlds, worldView } from '../cards/js/world.js';
+
+const SAVES = 'tests/fixtures/saves';
+const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const IX = indexWorlds(JSON.parse(fs.readFileSync('cards/data/demo/worlds.json', 'utf8')));
+const mem = (init = {}) => { const m = new Map(Object.entries(init)); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), key: (i) => [...m.keys()][i] ?? null, get length() { return m.size; }, _m: m }; };
+const word = (o = {}) => ({ st: 'review', step: 1, due: '2026-11-20', firstDay: '2026-11-10', lastDay: '2026-11-12', lapses: 0, ...o });
+const run = (i, o = {}) => ({ day: '2026-11-12', n: i, tag: 'A1', cards: 10, wall: 60000, claims: 3, verifies: 1, verifyOk: 1, reviews: 2, reviewOk: 2, fresh: 5, known: 3, unknown: 2, learned: 2, lapses: 0, bosses: 1, stars: 12, endedAt: `2026-11-12T10:${String(i % 60).padStart(2, '0')}:${String(Math.floor(i / 60)).padStart(2, '0')}Z`, ...o });
+
+test('D1: every record ever saved by an older program opens with the current one, with every word kept', () => {
+  const files = fs.readdirSync(SAVES).filter((f) => f.endsWith('.json')); assert.ok(files.length >= 2, 'fixtures for the old formats exist');
+  for (const f of files) {
+    const raw = JSON.parse(fs.readFileSync(path.join(SAVES, f), 'utf8')); const before = JSON.stringify(raw.words); const nWords = Object.keys(raw.words).length;
+    const m = migrate(JSON.parse(JSON.stringify(raw)), raw.id); assert.equal(m.newer, false, f); assert.equal(m.state.v, SCHEMA, f);
+    assert.equal(JSON.stringify(m.state.words), before, f + ': word records are untouched'); assert.equal(Object.keys(m.state.words).length, nWords);
+    assert.equal(m.state.runs.length, raw.runs.length); assert.equal(m.state.id, raw.id);
+    const m2 = migrate(JSON.parse(JSON.stringify(m.state)), raw.id); assert.deepEqual(m2.state, m.state, f + ': upgrading twice changes nothing');
+    const v = worldView(IX, IX.worlds[0], m.state, '2026-12-01'); assert.ok(v.nodes.length > 0, f + ': the map opens');                       // the game can use it
+    const r = new Run({ state: m.state, words: WORDS, today: '2026-12-01', rng: mulberry32(1), scope: { noNew: true, duePerRun: 5 } }); assert.ok(r.queue.length >= 0);
+    assert.equal(ensureMap(m.state).stars, raw.map?.stars ?? 0, f + ': stars kept');
+  }
+});
+
+test('D2: the prototype format (one world, tiles at the top of the map) is upgraded without losing what it held', () => {
+  const raw = JSON.parse(fs.readFileSync(path.join(SAVES, 'v0-prototype.json'), 'utf8')); assert.equal(raw.v, 0); assert.ok(raw.map.cleared.A1);
+  const s = migrate(raw, 'son').state; assert.equal(s.v, SCHEMA); assert.deepEqual(s.map.legacy.cleared, { A1: '2026-11-12', B1: '2026-11-12' }); assert.equal(s.map.legacy.castle, null);
+  assert.ok(!('cleared' in s.map) && !('castle' in s.map)); assert.deepEqual([s.map.stars, s.map.bat.fill, s.map.items.shield], [77, 20, 1]);
+  assert.deepEqual(migrate(null, 'son').state, newState('son')); assert.equal(migrate([], 'x').from, null);
+});
+
+test('D3: a record saved by a newer program is never rewritten by an older one: not on reading, not when merging, not when syncing', async () => {
+  const future = { v: SCHEMA + 1, id: 'son', words: { a: word() }, runs: [], verify: [], log: [], brandNew: { x: 1 } };
+  const m = migrate(JSON.parse(JSON.stringify(future)), 'son'); assert.equal(m.newer, true); assert.deepEqual(m.state, future);
+  const st = mem({ k: JSON.stringify(future) }); const rec = loadRecord(st, 'k', 'son'); assert.equal(rec.newer, true); assert.equal(st.getItem('k'), JSON.stringify(future));
+  const old = { ...newState('son'), words: { b: word() } };
+  assert.deepEqual(mergeCards(old, future), future); assert.deepEqual(mergeCards(future, old), future);
+  assert.equal(readBackup(JSON.stringify(future), 'son').ok, false);
+  // sync: the server holds the newer record, this page holds an older one -> nothing is written anywhere
+  const store = mem({ 'cards.v0.p.son': JSON.stringify(old) }); const puts = [];
+  const fetchImpl = async (u, o) => { if (o?.method === 'PUT') { puts.push(u); return { ok: true, status: 200, json: async () => ({ rev: 9 }) }; }
+    if (u.endsWith('ping')) return { ok: true, status: 200, json: async () => ({ ok: true, store: true }) };
+    if (u.endsWith('doc/p.son')) return { ok: true, status: 200, json: async () => ({ rev: 8, data: future }) }; return { ok: false, status: 404, json: async () => ({}) }; };
+  const statuses = []; const sync = new Sync({ storage: store, fetchImpl, onStatus: (s) => statuses.push(s) }); await sync.init();
+  assert.equal(sync.stale, true); assert.equal(puts.filter((u) => u.endsWith('p.son')).length, 0); assert.equal(store.getItem('cards.v0.p.son'), JSON.stringify(old)); assert.ok(statuses.at(-1).stale);
+});
+
+test('D4: a record that cannot be read is set aside, not overwritten; the three newest damaged copies are kept', () => {
+  const st = mem({ k: '{"v":1,"words":{"a":' }); const rec = loadRecord(st, 'k', 'son');
+  assert.deepEqual([rec.damaged, rec.newer, Object.keys(rec.state.words).length], [true, false, 0]); assert.equal(st.getItem('k'), null);
+  const kept = [...st._m.keys()].filter((k) => k.startsWith('k.damaged.')); assert.equal(kept.length, 1); assert.equal(st.getItem(kept[0]), '{"v":1,"words":{"a":');
+  const many = mem({ 'k.damaged.1': 'a', 'k.damaged.2': 'b', 'k.damaged.3': 'c', k: 'not json' }); loadRecord(many, 'k', 'son');
+  const left = [...many._m.keys()].filter((k) => k.startsWith('k.damaged.')).sort(); assert.equal(left.length, 3); assert.ok(!left.includes('k.damaged.1'));
+  for (const junk of ['null', '[]', '"text"', '42']) assert.equal(loadRecord(mem({ k: junk }), 'k', 'son').damaged, true, junk);   // valid JSON that is not a record
+  const none = loadRecord(mem(), 'k', 'son'); assert.deepEqual([none.missing, none.damaged], [true, false]);
+  const full = { getItem: () => 'broken', setItem: () => { throw new Error('QuotaExceededError'); }, removeItem: () => { throw new Error('no'); }, key: () => null, length: 0 };
+  assert.equal(loadRecord(full, 'k', 'son').damaged, true);                                                        // never throws
+});
+
+test('D5: old run records are folded into totals so the record stays small; the totals stay exact; merging does not count twice', () => {
+  const s = newState('son'); for (let i = 0; i < 620; i++) s.runs.push(run(i));
+  const before = totals(JSON.parse(JSON.stringify(s))); assert.equal(before.n, 620);
+  assert.equal(compact(s), true); assert.equal(s.runs.length, 300); assert.equal(s.past.n, 320); assert.equal(compact(s), false);
+  assert.deepEqual(totals(s), before);
+  const other = JSON.parse(JSON.stringify(s)); other.runs = []; other.past = undefined; for (let i = 0; i < 620; i++) other.runs.push(run(i));   // the same history, not folded, on another device
+  other.runs.push(run(700, { endedAt: '2026-11-13T09:00:00Z', day: '2026-11-13' }));
+  for (const m of [mergeCards(s, other), mergeCards(other, s)]) { assert.equal(m.past.n, 320); assert.equal(m.runs.length, 301); const t = totals(m); assert.equal(t.n, 621); assert.equal(t.cards, before.cards + 10); }
+  const size = JSON.stringify(s).length; for (let i = 0; i < 3000; i++) { s.runs.push(run(1000 + i, { endedAt: `2027-01-01T00:00:${String(i).padStart(5, '0')}Z` })); compact(s); }
+  assert.ok(s.runs.length <= 500); assert.ok(JSON.stringify(s).length < size * 2, 'three thousand more runs do not grow the record without bound');
+});
+
+test('D6: restoring from a file or a server copy is a merge: nothing on either side is lost; a wrong file is refused with a reason', () => {
+  const backup = { v: 0, id: 'son', words: { a: word({ st: 'done', due: null, lastDay: '2026-11-01' }), b: word({ lastDay: '2026-11-01' }) }, runs: [run(1)], verify: [], log: [], map: { stars: 30, keys: 0, best: 4, items: { shield: 2, flame: 0 }, bag: null, cleared: { A1: '2026-11-01' }, castle: null, monsterDay: null, bonusDay: null } };
+  const now = { ...newState('son'), words: { b: word({ step: 3, lastDay: '2026-11-20' }), c: word() }, runs: [run(2)], map: { ...ensureMap(newState('x')), stars: 12 } };
+  const r = readBackup(JSON.stringify(backup), 'son'); assert.equal(r.ok, true); assert.equal(r.words, 2);
+  const m = mergeCards(now, r.state); assert.deepEqual(Object.keys(m.words).sort(), ['a', 'b', 'c']); assert.equal(m.words.b.step, 3); assert.equal(m.words.a.st, 'done'); assert.equal(m.runs.length, 2); assert.equal(m.map.stars, 30); assert.equal(m.v, SCHEMA);
+  assert.equal(readBackup(JSON.stringify({ rev: 7, data: backup }), 'son').ok, true);                             // a server copy
+  assert.match(readBackup('nope', 'son').why, /JSON/); assert.match(readBackup(JSON.stringify({ names: {} }), 'son').why, /기록 파일이 아니/); assert.match(readBackup(JSON.stringify(backup), 'daughter').why, /다른 아이/);
+});
+
+// ---- the server ----
+async function withServer(fn) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cards-safe-')); const port = 8093 + Math.floor(Math.random() * 300);
+  const srv = spawn('python3', ['tools/serve_cards.py', '--port', String(port), '--state-dir', dir], { stdio: 'ignore' }); const base = `http://127.0.0.1:${port}/api/`;
+  try { for (let i = 0; i < 60; i++) { if (await fetch(base + 'ping').then((r) => r.ok, () => false)) break; await new Promise((r) => setTimeout(r, 100)); } await fn(base, dir); } finally { srv.kill(); }
+}
+const put = (base, name, baseRev, data) => fetch(base + 'doc/' + name, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseRev, data }) });
+const rec = (n, v = SCHEMA) => ({ v, id: 'son', words: Object.fromEntries(Array.from({ length: n }, (_, i) => ['w' + i, word()])), runs: [], verify: [], log: [{ t: 'x' }] });
+
+test('D7: server: a write that would take words away, or that comes from an older program, is refused and kept aside; the stored record stays', async () => {
+  await withServer(async (base, dir) => {
+    assert.equal((await put(base, 'p.son', 0, rec(40))).status, 200);
+    const shrink = await put(base, 'p.son', 1, rec(3)); const body = await shrink.json();
+    assert.equal(shrink.status, 409); assert.equal(body.refused, 'shrink'); assert.equal(Object.keys(body.data.words).length, 40);
+    assert.equal(Object.keys((await (await fetch(base + 'doc/p.son')).json()).data.words).length, 40);
+    assert.equal(fs.readdirSync(path.join(dir, 'rejected')).filter((f) => f.includes('shrink')).length, 1);
+    assert.equal((await put(base, 'p.son', 1, rec(37))).status, 200, 'a few words fewer is not a reset (two devices can differ a little)');
+    assert.equal((await put(base, 'p.son', 2, rec(45))).status, 200);
+    const old = await put(base, 'p.son', 3, rec(60, SCHEMA - 1)); assert.equal(old.status, 409); assert.equal((await old.json()).refused, 'older-format');
+    assert.equal((await put(base, 'meta', 0, { names: { son: 'a' } })).status, 200); assert.equal((await put(base, 'meta', 1, {})).status, 200);   // the names document is not a record
+    const small = await put(base, 'p.daughter', 0, rec(5)); assert.equal(small.status, 200); assert.equal((await put(base, 'p.daughter', 1, rec(1))).status, 200);   // too small to judge
+  });
+});
+
+test('D8: server: every day that was played leaves a dated copy that can be listed and fetched; previous versions are kept too', async () => {
+  await withServer(async (base, dir) => {
+    await put(base, 'p.son', 0, rec(12)); await put(base, 'p.son', 1, rec(14)); const today = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    const days = (await (await fetch(base + 'snapshots/p.son')).json()).days; assert.equal(days.length, 1); assert.match(days[0], /^\d{4}-\d{2}-\d{2}$/);
+    const snap = await (await fetch(`${base}snapshot/p.son/${days[0]}`)).json(); assert.equal(Object.keys(snap.data.words).length, 14); assert.equal(snap.data.log, undefined, 'the dated copy leaves the per-card log out');
+    assert.equal((await fetch(`${base}snapshot/p.son/2001-01-01`)).status, 404); assert.equal((await fetch(`${base}snapshot/p.x/${days[0]}`)).status, 404);
+    assert.equal(fs.readdirSync(path.join(dir, 'backup')).length, 1); assert.ok(Math.abs(Date.parse(days[0]) - Date.parse(today)) <= 864e5);
+    const ping = await (await fetch(base + 'ping')).json(); assert.deepEqual([ping.store, ping.daily, ping.lastDaily, ping.offsite], [true, 1, days[0], null]);
+    assert.equal(readBackup(JSON.stringify(snap), 'son').ok, true);
+  });
+});

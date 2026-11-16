@@ -31,7 +31,8 @@ export function shuffle(arr, rng) {
   return a;
 }
 
-export function newState(id) { return { v: 0, id, words: {}, verify: [], runs: [], log: [] }; }
+export const SCHEMA = 1;                                // format of a saved record; upgrades live in store.js
+export function newState(id) { return { v: SCHEMA, id, words: {}, verify: [], runs: [], log: [] }; }
 
 // Card grade shown to the child. It is the memory state, not a separate score.
 // 0 not yet / still learning, 1 bronze (learned, early reviews), 2 silver (7-day step reached, or known at first sight), 3 gold (done)

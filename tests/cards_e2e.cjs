@@ -324,6 +324,34 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('a world file of an unknown version is refused with a plain message', /버전/.test(await bad.textContent('#fatal')));
   await bad.close(); await fullctx.close();
 
+  // 10e. updates never reset progress: an old-format record opens, a damaged one is set aside and restored from a file,
+  //      a record from a newer program is left alone
+  const SAVE0 = fs.readFileSync(path.join(__dirname, 'fixtures', 'saves', 'v0-prototype.json'), 'utf8');
+  const uctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const u = await open(uctx, 'today=2026-12-22&seed=4&sound=off&fast=1');
+  await u.evaluate((t) => localStorage.setItem('cards.v0.p.son', t), SAVE0); await u.reload(); await u.waitForSelector('.profiles');
+  await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
+  ok('a record saved by the 60-word prototype opens after the update: its tiles, stars and gauge are there', /\bcleared\b/.test(await nodeStatus(u, 'A1')) && /\bcleared\b/.test(await nodeStatus(u, 'B1')) && /77/.test(await u.textContent('.maphud .chip:nth-of-type(1)')) && /20\/40/.test(await u.textContent('#batgauge')));
+  await startNode(u, 'A2'); await play(u); await u.waitForSelector('.tiles');
+  const up = await state(u, 'son');
+  ok('after playing on, the record is in the new format and still holds the old words', up.v === 1 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
+  await u.evaluate(() => localStorage.setItem('cards.v0.p.son', '{"v":1,"id":"son","words":{"W0122'));           // cut off in the middle of a write
+  await u.goto(BASE + '?set=demo&today=2026-12-22&seed=4&sound=off&fast=1&nosync=1'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
+  const dmg = await u.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cards.v0.p.son.damaged.')).map((k) => localStorage.getItem(k)));
+  ok('a damaged record is set aside (not overwritten) and the child is told', dmg.length === 1 && dmg[0].startsWith('{"v":1,"id":"son"') && /따로 보관/.test(await u.textContent('#banner')));
+  await u.click('[data-act=hide]'); await u.click('[data-act=home]'); await u.click('[data-act=parent]'); await u.waitForSelector('#safety');
+  await u.setInputFiles('input[data-restore=son]', { name: 'cards_son.json', mimeType: 'application/json', buffer: Buffer.from(SAVE0) });
+  await u.waitForFunction(() => /복원했어요/.test(document.querySelector('#pmsg')?.textContent || ''));
+  ok('a parent restores the record from an exported file; it is merged in', /0장 → 20장/.test(await u.textContent('#pmsg')) && Object.keys((await state(u, 'son')).words).length === 20);
+  await u.setInputFiles('input[data-restore=daughter]', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from(SAVE0) });
+  await u.waitForFunction(() => /복원하지 못했어요/.test(document.querySelector('#pmsg')?.textContent || ''));
+  ok('a file of the other child is refused with a reason', /다른 아이/.test(await u.textContent('#pmsg')) && (await state(u, 'daughter')) === null);
+  const future = JSON.stringify({ v: 99, id: 'son', words: { x: { st: 'done' } }, runs: [], verify: [], log: [], somethingNew: true });
+  await u.evaluate((t) => localStorage.setItem('cards.v0.p.son', t), future); await u.click('[data-act=home]'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
+  await u.click('[data-act=node][data-id=A1]'); await sleep(150);
+  ok('a record from a newer program is shown read-only: a reload is asked for, no run starts, nothing is written', /오래됐어요/.test(await u.textContent('#banner')) && !(await u.$('.run')) && (await u.evaluate(() => localStorage.getItem('cards.v0.p.son'))) === future);
+  await u.close(); await uctx.close();
+
   // 11. record sharing: progress made on one device ("Mac mini") shows on another ("iPad"), survives a wiped browser,
   //     survives the server being unreachable, and two devices that played apart end up with both
   const read = (id) => JSON.parse(fs.readFileSync(path.join(STATE, `p.${id}.json`), 'utf8')).data;
@@ -357,6 +385,13 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('after reconnecting, both devices\' tiles and runs are on the server', ['A1', 'B1', 'C1'].every((t) => merged.map.worlds['d1-01'].cleared[t]) && merged.runs.map((r) => r.tag).sort().join() === 'A1,B1,C1');
   ok('the device that reconnected holds the merged record too', JSON.stringify(Object.keys(macSt.map.worlds['d1-01'].cleared).sort()) === JSON.stringify(['A1', 'B1', 'C1']) && macSt.runs.length === 3);
   ok('merging touched no word schedule it should not: every word is on the server exactly once', Object.keys(merged.words).length === 30);
+  await mc.click('[data-act=today]').catch(() => {}); await mc.click('[data-act=home]'); await mc.click('[data-act=parent]');
+  await mc.waitForFunction(() => /연결됨/.test(document.querySelector('#sf-server')?.textContent || '') && document.querySelectorAll('#snap-son option').length >= 2, null, { timeout: 8000 });
+  ok('the parent screen shows where the record is kept: device, server, dated copies, and that the off-site backup is not set up', /저장 중/.test(await mc.textContent('#safety')) && /1일치/.test(await mc.textContent('#sf-daily')) && /설정 안 됨/.test(await mc.textContent('#sf-off')) && await mc.$eval('#sf-off', (e) => e.classList.contains('bad')));
+  const dayOpt = await mc.$eval('#snap-son option:nth-child(2)', (o) => o.value); await mc.evaluate(() => localStorage.removeItem('cards.v0.p.son'));
+  await mc.selectOption('#snap-son', dayOpt); await mc.click('[data-act=snap][data-id=son]'); await mc.waitForFunction(() => /복원했어요/.test(document.querySelector('#pmsg')?.textContent || ''));
+  ok('a dated copy on the server restores a record that was lost on the device', /0장 → 30장/.test(await mc.textContent('#pmsg')) && Object.keys((await state(mc, 'son')).words).length === 30, await mc.textContent('#pmsg'));
+  ok('the state folder holds the dated copies and the previous versions', fs.readdirSync(path.join(STATE, 'daily')).filter((f) => f.startsWith('p.son.')).length === 1 && fs.readdirSync(path.join(STATE, 'backup')).length >= 1);
   await mc.close(); await ip.close(); await mac.close(); await ipad.close();
   // a plain static host (no state API): the home screen says device-only
   const sctx = await browser.newContext({ viewport: { width: 1024, height: 700 } });

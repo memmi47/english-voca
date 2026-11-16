@@ -1,4 +1,4 @@
-"""Static server for the flashcard prototype in cards/ with HTTP Range support and a small state store.
+"""Static server for the cards game in cards/ with HTTP Range support and a small state store.
 
   python3 tools/serve_cards.py [--port 8090] [--host 0.0.0.0] [--state-dir state-cards]
 
@@ -7,18 +7,32 @@
   clearing its own storage and is shared between the Mac and the iPad.
     GET  -> {"rev": n, "data": {...}}                (404 if never saved)
     PUT  {"baseRev": n, "data": {...}} -> {"rev": n+1}   (409 + current doc if baseRev is stale)
-  Names are whitelisted. Every write is atomic and the previous versions are kept in
-  <state-dir>/backup/. Standard library only. Family LAN use; no authentication.
+  Names are whitelisted. Every write is atomic.
+- Progress is never thrown away by a write (docs/DATA_SAFETY.md):
+    <state-dir>/backup/    the 30 versions before the current one
+    <state-dir>/daily/     the last version of every day that was played (kept 400 days; without the per-card log)
+    <state-dir>/rejected/  writes that were refused: a record with clearly fewer words than the stored one, or one saved
+                           by an older program version than the stored one. The answer is 409 with the stored doc, so
+                           a normal client merges and tries again.
+    GET /api/snapshots/<name> -> {"days": [...]}     GET /api/snapshot/<name>/<day> -> {"rev", "data"}
+  /api/ping also reports the newest daily copy and the last off-site backup (written by tools/backup_state.sh).
+Standard library only. Family LAN use; no authentication.
 (Code carried over from the earlier game's tools/serve.py, which was removed; last version in commit 8acc013.)
 """
-import argparse, json, os, re, threading
+import argparse, datetime, json, os, re, threading, time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from functools import partial
 
 DOCS = {'meta', 'p.son', 'p.daughter'}
-MAX_BODY = 8 * 1024 * 1024
+MAX_BODY = 16 * 1024 * 1024
 KEEP_BACKUPS = 30
+KEEP_DAILY = 400
+KEEP_REJECTED = 20
+SHRINK_MIN, SHRINK_RATIO = 10, 0.9          # a child's record with 10+ words may not drop below 90% of its words
 LOCK = threading.Lock()
+
+def words_in(data): return len(data.get('words') or {}) if isinstance(data, dict) else 0
+def version_of(data): return int(data.get('v') or 0) if isinstance(data, dict) and isinstance(data.get('v'), (int, float)) else 0
 
 class H(SimpleHTTPRequestHandler):
     state_dir = 'state'
@@ -36,9 +50,31 @@ class H(SimpleHTTPRequestHandler):
         try:
             with open(self._doc_path(name), encoding='utf-8') as f: return json.load(f)
         except FileNotFoundError: return None
+    def _sub(self, kind):
+        d = os.path.join(self.state_dir, kind); os.makedirs(d, exist_ok=True); return d
+    def _keep(self, kind, name, n):
+        d = self._sub(kind); olds = sorted(x for x in os.listdir(d) if x.startswith(name + '.'))
+        for x in olds[:-n]: os.remove(os.path.join(d, x))
+    def _days(self, name):
+        d = self._sub('daily'); return sorted(x[len(name) + 1:-5] for x in os.listdir(d) if x.startswith(name + '.') and x.endswith('.json'))
     def do_GET(self):
-        if self.path.startswith('/api/'):
-            if self.path.split('?')[0] == '/api/ping': return self._json(200, {'ok': True, 'store': True})
+        path = self.path.split('?')[0]
+        if path.startswith('/api/'):
+            if path == '/api/ping':
+                with LOCK:
+                    days = sorted({d for n in DOCS for d in self._days(n)}); off = None
+                    try:
+                        with open(os.path.join(self.state_dir, 'offsite.json'), encoding='utf-8') as f: off = json.load(f)
+                    except (OSError, ValueError): pass
+                return self._json(200, {'ok': True, 'store': True, 'daily': len(days), 'lastDaily': days[-1] if days else None, 'offsite': off})
+            m = re.fullmatch(r'/api/snapshots/([a-z.]+)', path)
+            if m and m.group(1) in DOCS:
+                with LOCK: return self._json(200, {'days': self._days(m.group(1))})
+            m = re.fullmatch(r'/api/snapshot/([a-z.]+)/(\d{4}-\d{2}-\d{2})', path)
+            if m and m.group(1) in DOCS:
+                try:
+                    with open(os.path.join(self._sub('daily'), f'{m.group(1)}.{m.group(2)}.json'), encoding='utf-8') as f: return self._json(200, json.load(f))
+                except FileNotFoundError: return self._json(404, {'error': 'no copy for that day'})
             name = self._doc_name()
             if not name: return self._json(404, {'error': 'unknown doc'})
             with LOCK: doc = self._load(name)
@@ -58,16 +94,28 @@ class H(SimpleHTTPRequestHandler):
         with LOCK:
             cur = self._load(name); rev = cur['rev'] if cur else 0
             if base != rev: return self._json(409, cur or {'rev': 0, 'data': None})
-            os.makedirs(os.path.join(self.state_dir, 'backup'), exist_ok=True)
+            if cur and name.startswith('p.'):          # a write may add to a child's record, never take it away
+                had, got = words_in(cur['data']), words_in(data)
+                why = 'older-format' if version_of(data) < version_of(cur['data']) else 'shrink' if had >= SHRINK_MIN and got < had * SHRINK_RATIO else None
+                if why:
+                    with open(os.path.join(self._sub('rejected'), f'{name}.{int(time.time() * 1000)}.{why}.json'), 'w', encoding='utf-8') as f:
+                        json.dump({'baseRev': base, 'data': data}, f, ensure_ascii=False)
+                    self._keep('rejected', name, KEEP_REJECTED)
+                    return self._json(409, {**cur, 'refused': why})
             if cur:                                    # keep the version being replaced
-                with open(os.path.join(self.state_dir, 'backup', f'{name}.{rev:08d}.json'), 'w', encoding='utf-8') as f:
+                with open(os.path.join(self._sub('backup'), f'{name}.{rev:08d}.json'), 'w', encoding='utf-8') as f:
                     json.dump(cur, f, ensure_ascii=False)
-                olds = sorted(x for x in os.listdir(os.path.join(self.state_dir, 'backup')) if x.startswith(name + '.'))
-                for x in olds[:-KEEP_BACKUPS]: os.remove(os.path.join(self.state_dir, 'backup', x))
+                self._keep('backup', name, KEEP_BACKUPS)
+            doc = {'rev': rev + 1, 'data': data}
             tmp = self._doc_path(name) + '.tmp'
             with open(tmp, 'w', encoding='utf-8') as f:
-                json.dump({'rev': rev + 1, 'data': data}, f, ensure_ascii=False); f.flush(); os.fsync(f.fileno())
+                json.dump(doc, f, ensure_ascii=False); f.flush(); os.fsync(f.fileno())
             os.replace(tmp, self._doc_path(name))
+            # the last version of each day, without the per-card log (diagnostics only; it would triple the size)
+            day = datetime.date.today().isoformat(); slim = {'rev': rev + 1, 'data': {k: v for k, v in data.items() if k != 'log'}}
+            dtmp = os.path.join(self._sub('daily'), f'{name}.{day}.json.tmp')
+            with open(dtmp, 'w', encoding='utf-8') as f: json.dump(slim, f, ensure_ascii=False)
+            os.replace(dtmp, dtmp[:-4]); self._keep('daily', name, KEEP_DAILY)
         return self._json(200, {'rev': rev + 1})
 
     # ---- static files with Range ----
@@ -103,7 +151,7 @@ class H(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(); ap.add_argument('--port', type=int, default=8090); ap.add_argument('--host', default='127.0.0.1')
-    ap.add_argument('--state-dir', default=os.path.join(here, '..', 'state-cards'))
+    ap.add_argument('--state-dir', default=os.environ.get('CARDS_STATE_DIR') or os.path.join(here, '..', 'state-cards'))
     a = ap.parse_args(); H.state_dir = os.path.abspath(a.state_dir); os.makedirs(H.state_dir, exist_ok=True)
     print(f'serving cards/ on http://{a.host}:{a.port}/  state in {H.state_dir}  (Ctrl+C to stop)')
     ThreadingHTTPServer((a.host, a.port), partial(H, directory=os.path.join(here, '..', 'cards'))).serve_forever()
