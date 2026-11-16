@@ -597,3 +597,14 @@ test('T10: passed words and bunch checks never change the schedule of any other 
   assert.equal(JSON.stringify(other.map((id) => s.words[id])), before);
   assert.ok(Object.keys(s.words).every((id) => other.includes(id) || ids.includes(id) || W1._nodes.B1.words.includes(id)));
 });
+
+test('T11: a word passed into a bunch that was already checked gets its own 7-day check; a due bunch with no passed word left is closed', () => {
+  const s = newState('son'); const A1 = W1._nodes.A1.words; s.bunches = { A1: { due: D1, done: D1, result: 'ok' } };
+  const run = new Run({ state: s, words: WORDS, today: D1, rng: mulberry32(1), scope: { newIds: A1, newPerRun: 10, duePerRun: 0, triage: { bunch: 'A1', passed: A1.slice(0, 3), tapped: [], spot: [], due: addDays(D1, 30) } } });
+  for (const id of A1.slice(0, 3)) assert.deepEqual([s.words[id].st, s.words[id].due, s.words[id].bunch], ['likely', addDays(D1, 7), undefined]);
+  assert.deepEqual(s.bunches.A1, { due: D1, done: D1, result: 'ok' }); assert.ok(run);
+  const e = newState('x'); e.bunches = { B1: { due: D1, done: null }, C1: { due: D1, done: null } }; const C1 = W1._nodes.C1.words;
+  for (const id of C1.slice(0, 4)) e.words[id] = { st: 'likely', lstep: 0, due: null, bunch: 'C1', firstDay: '2026-10-01', lastDay: '2026-10-01', lapses: 0 };
+  const pick = auditPick(e, D1, mulberry32(2)); assert.deepEqual([e.bunches.B1.done, e.bunches.B1.result], [D1, 'empty']); assert.equal(e.bunches.C1.done, null);
+  assert.deepEqual([...new Set(pick.picks.map((p) => p.bunch))], ['C1']); assert.equal(pick.picks.length, 3);
+});

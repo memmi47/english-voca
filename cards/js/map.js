@@ -29,7 +29,7 @@ export function auditPick(state, today, rng) {
   if (!TRIAGE.on) return null;
   const open = Object.entries(state.bunches || {}).filter(([, b]) => !b.done && b.due && b.due <= today).sort((x, y) => x[1].due.localeCompare(y[1].due) || x[0].localeCompare(y[0]));
   const picks = []; let n = 0;
-  for (const [b] of open) { if (n >= TRIAGE.auditsPerRun) break; const left = bunchLeft(state, b); if (!left.length) continue; n++;   // a bunch with nothing left to sample does not take a place
+  for (const [b] of open) { if (n >= TRIAGE.auditsPerRun) break; const left = bunchLeft(state, b); if (!left.length) { state.bunches[b] = { ...state.bunches[b], done: today, result: 'empty' }; continue; } n++;   // a bunch with nothing left to sample (every passed word went to learning) is closed and takes no place
     for (const id of shuffle(left, rng).slice(0, TRIAGE.sample)) picks.push({ id, bunch: b }); }
   return picks.length ? { split: TRIAGE.splitDays, picks } : null;
 }

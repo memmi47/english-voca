@@ -172,8 +172,12 @@ export class Run {
   }
   _rec(id) { return this.s.words[id]; }
   // A passed word joins its tile's bunch. The bunch is made with the first word; later words keep its date.
+  // If the tile's bunch was already checked (the tile was left half done for a month), the word cannot wait for a
+  // sample that will never come: it gets its own 7- and 30-day checks, like a word the child called known on a card.
   _pass(id, { bunch, due }) {
-    const b = (this.s.bunches ||= {}); b[bunch] ||= { due, done: null };
+    const b = (this.s.bunches ||= {});
+    if (b[bunch]?.done) return this._set(id, { st: 'likely', lstep: 0, due: addDays(this.today, LIKELY_DAYS[0]) });
+    b[bunch] ||= { due, done: null };
     return this._set(id, { st: 'likely', lstep: 0, due: null, bunch });
   }
   _verify(ok) { this.s.verify.push(ok); if (this.s.verify.length > 40) this.s.verify.shift(); }
