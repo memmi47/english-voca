@@ -7,8 +7,14 @@
 #   CARDS_STATE_DIR=/other/state-cards bash tools/backup_state.sh ...  # when the server uses another state folder
 #
 # The records hold the children's names and progress: the target must be a private repository. This game's own
-# repository is public, so the script refuses to use it. Nothing is ever deleted from the backup: files are only added
-# or updated, and git keeps every earlier version.
+# repository is public, so the script refuses to use it. Before anything is copied, the place `origin` pushes to is
+# checked: a GitHub repository is asked about without signing in (public answers 200: refused; private looks missing,
+# 404: used; no answer or anything else: refused, it cannot be checked); a folder on this Mac (a bare repository on another
+# disk) is used; any other host is refused.
+#   CARDS_BACKUP_ASSUME_PRIVATE=1   skip that check (the parent has looked at the repository settings)
+#   CARDS_BACKUP_TEST_HTTP=404      the answer to use instead of asking GitHub (tests; no network)
+# Nothing is ever deleted from the backup: files are only added or updated, and git keeps every earlier version.
+# Success is recorded only when the push went through, also when nothing changed (an earlier commit may still be waiting).
 # The result (time, success, commit) is written to <state>/offsite.json; the parent screen shows it.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -26,6 +32,27 @@ GAME="$(cd "$HERE/.." && git rev-parse --show-toplevel 2>/dev/null || true)"
 TARGET="$(cd "$DEST" && git rev-parse --show-toplevel 2>/dev/null || true)"
 [ -n "$TARGET" ] || fail "git 저장소를 읽을 수 없습니다: $DEST"
 [ "$TARGET" != "$GAME" ] || fail "게임 저장소(공개)에는 기록을 올리지 않습니다. 별도의 비공개 저장소를 쓰세요"
+# Where `git push` sends: pushurl if set, else url (raw config, as written by git clone). Checked before anything is copied.
+URL="$(cd "$DEST" && { git config --get remote.origin.pushurl || git config --get remote.origin.url; } 2>/dev/null || true)"
+[ -n "$URL" ] || fail "올릴 곳(origin)이 설정되지 않았습니다: $DEST"
+if [ "${CARDS_BACKUP_ASSUME_PRIVATE:-}" != 1 ]; then
+  case "$URL" in
+    file://*|/*|./*|../*) PLACE=local ;;
+    *:*) PLACE=remote ;;                                 # https://host/..., ssh://..., or user@host:path
+    *) PLACE=local ;;                                    # a relative path
+  esac
+  if [ "$PLACE" = remote ]; then
+    REPO="$(printf '%s\n' "$URL" | sed -n -E 's#^(https?://([^@/]+@)?github\.com/|ssh://([^@/]+@)?github\.com/|([^@/:]+@)?github\.com:)([^/]+)/([^/]+)$#\5/\6#p' | sed -E 's#\.git$##')"
+    [ -n "$REPO" ] || fail "GitHub 저장소나 이 Mac의 폴더가 아닌 곳에는 올리지 않습니다: $URL"
+    CODE="${CARDS_BACKUP_TEST_HTTP:-}"
+    if [ -z "$CODE" ]; then CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "https://api.github.com/repos/$REPO" 2>/dev/null)" || true; fi
+    case "$CODE" in
+      404) ;;                                            # not visible without signing in: private
+      200) fail "공개 저장소에는 기록을 올리지 않습니다: $REPO (GitHub에서 Private으로 바꾸거나 비공개 저장소를 쓰세요)" ;;
+      *) fail "저장소가 비공개인지 확인할 수 없습니다: $REPO (응답 ${CODE:-없음}). 직접 확인했다면 CARDS_BACKUP_ASSUME_PRIVATE=1 로 실행하세요" ;;
+    esac
+  fi
+fi
 
 mkdir -p "$DEST/state-cards/daily" || fail "폴더를 만들 수 없습니다"
 found=0
@@ -40,7 +67,7 @@ if [ -d "$STATE/daily" ]; then for f in "$STATE"/daily/*.json; do [ -e "$f" ] &&
 cd "$DEST" || fail "폴더에 들어갈 수 없습니다"
 git add -A state-cards || fail "git add 실패"
 if git diff --cached --quiet; then
-  git push -q 2>/dev/null || true                     # nothing new; still try to deliver earlier commits
+  git push -q || fail "git push 실패 (바뀐 것은 없지만 이전 백업이 아직 올라가지 않았습니다. 네트워크나 인증을 확인하세요)"   # nothing new; earlier commits must still arrive
   note true "변경 없음" "$(git rev-parse --short HEAD 2>/dev/null || true)"; echo "백업: 바뀐 것이 없습니다."; exit 0
 fi
 git commit -q -m "기록 백업 $(date '+%Y-%m-%d %H:%M')" || fail "git commit 실패"

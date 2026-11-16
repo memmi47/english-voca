@@ -3,16 +3,19 @@
 // survives the browser clearing its storage. Without a server the cards work on this device only.
 // Adapted from the earlier game's sync.js (removed; commit 8acc013); only the document shapes and the merge rules differ.
 import { SCHEMA } from './deck.js';
-import { migrate } from './store.js';
+import { migrate, setAside } from './store.js';
 const SYNC_KEY = 'cards.v0.sync';
 const LOG_CAP = 5000;
 export const DOCS = ['meta', 'p.son', 'p.daughter'];
 const localKey = (name) => 'cards.v0.' + name;
 
-// How far a word has got. A later lastDay wins; on the same day the more advanced state wins.
+// How far a word has got. When both records carry the time of their last change (`at`, deck.Run._set), the later change
+// wins, so a miss later on the same day is kept. Otherwise a later lastDay wins; on the same day the more advanced state wins.
 const rank = (r) => (r.st === 'done' ? 100 : r.st === 'review' ? 10 + (r.step || 0) : r.st === 'likely' ? 5 + (r.lstep || 0) : 1);
 const evidence = (r) => [r.lastDay || '', r.firstDay || '', String(rank(r)).padStart(3, '0')];
-const newer = (x, y) => { const a = evidence(x), b = evidence(y); for (let i = 0; i < a.length; i++) { if (a[i] === b[i]) continue; return b[i] > a[i] ? y : x; } return x; };
+const stamped = (r) => Number.isFinite(r.at);
+const newer = (x, y) => { if (stamped(x) && stamped(y) && x.at !== y.at) return y.at > x.at ? y : x;
+  const a = evidence(x), b = evidence(y); for (let i = 0; i < a.length; i++) { if (a[i] === b[i]) continue; return b[i] > a[i] ? y : x; } return x; };
 const uniq = (arr, key) => { const seen = new Set(); return arr.filter((e) => { const k = key(e); if (seen.has(k)) return false; seen.add(k); return true; }); };
 const last = (runs) => (runs || []).reduce((m, r) => (String(r.endedAt || '') > m ? String(r.endedAt || '') : m), '');
 const maxStr = (x, y) => (x == null ? y : y == null ? x : String(x) >= String(y) ? x : y);
@@ -22,11 +25,15 @@ const minStr = (x, y) => (x == null ? y : y == null ? x : String(x) <= String(y)
 // earliest day. Keys are counted from the merged castles. Stars and items cannot be summed without knowing the common
 // base, so the larger value is kept: if both devices earned stars while apart, the smaller earning is lost. None of
 // this touches a word's schedule.
+// `open` marks tile runs that were started and not finished (world.startTile): united too, but a tile cleared on either
+// side is finished, so its mark goes. The key is left out when no mark is left (records without marks keep their shape).
 const early = (x, y) => { const out = { ...(y || {}) }; for (const [k, d] of Object.entries(x || {})) out[k] = minStr(out[k], d); return out; };
 function mergeWorlds(a = {}, b = {}) {
   const out = {};
   for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const x = a[id] || {}, y = b[id] || {};
-    out[id] = { castle: minStr(x.castle, y.castle) ?? null, seen: minStr(x.seen, y.seen) ?? null, cleared: early(x.cleared, y.cleared), stamps: early(x.stamps, y.stamps) }; }
+    const cleared = early(x.cleared, y.cleared), open = early(x.open, y.open); for (const k of Object.keys(cleared)) delete open[k];
+    out[id] = { castle: minStr(x.castle, y.castle) ?? null, seen: minStr(x.seen, y.seen) ?? null, cleared, stamps: early(x.stamps, y.stamps) };
+    if (Object.keys(open).length) out[id].open = open; }
   return out;
 }
 function mergeMap(a, b) {
@@ -87,7 +94,15 @@ export class Sync {
     this.state.revs ||= {}; this.state.dirty ||= {};
   }
   _saveState() { try { this.s.setItem(SYNC_KEY, JSON.stringify(this.state)); } catch {} }
-  _local(name) { try { const v = this.s.getItem(localKey(name)); return v ? JSON.parse(v) : null; } catch { return null; } }
+  // A local copy that cannot be read (not JSON, or not an object) is set aside first, like store.loadRecord does, and then
+  // counts as missing: the server copy may take the key, the original text is kept under a ".damaged." key.
+  _local(name) {
+    let v = null; try { v = this.s.getItem(localKey(name)); } catch { return null; }
+    if (v == null || v === '') return null;
+    let o = null; try { o = JSON.parse(v); } catch {}
+    if (o && typeof o === 'object' && !Array.isArray(o)) return o;
+    setAside(this.s, localKey(name), v); return null;
+  }
   _setLocal(name, data) { this.s.setItem(localKey(name), JSON.stringify(data)); }
   _merge(name, local, remote) { return name === 'meta' ? mergeMeta(local, remote, !!this.state.dirty[name]) : mergeCards(local, remote); }
   get pending() { return Object.keys(this.state.dirty).filter((k) => this.state.dirty[k]); }
@@ -108,6 +123,7 @@ export class Sync {
   async reconcile(name) {
     const r = await this.fetch(this.base + 'doc/' + name);
     const local = this._local(name);
+    if (this._newer(name, local)) { this._status(); return; }                       // a newer program saved on this device (another tab): this page sends nothing
     if (r.status === 404) { this.state.revs[name] = 0; if (local) return this.push(name); return; }
     if (!r.ok) throw new Error('server ' + r.status);
     const remote = await r.json();
@@ -136,6 +152,7 @@ export class Sync {
       try {
         for (let i = 0; i < tries; i++) {
           const data = this._local(name); if (!data) return;
+          if (this._newer(name, data)) throw new Error('newer program on this device');   // stale is set: reload first
           const sent = JSON.stringify(data);
           const r = await this.fetch(this.base + 'doc/' + name, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ baseRev: this.state.revs[name] || 0, data }) });

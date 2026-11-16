@@ -1,7 +1,9 @@
 // Flashcard prototype: record sharing between devices (cards/js/sync.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { Sync, mergeCards, mergeMeta } from '../cards/js/sync.js';
+import { Run, newState, mulberry32, addDays } from '../cards/js/deck.js';
 
 function memoryStorage() { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; }
 // In-memory stand-in for tools/serve_cards.py (same contract: rev check, 404, 409).
@@ -137,4 +139,29 @@ test('S11: tile bunches: a finished check wins (both finished: the earlier day),
     assert.deepEqual(['w1', 'w2', 'w3', 'w4'].map((id) => m.words[id].bunch), ['A1', 'A1', 'B1', 'E1']);
   }
   assert.deepEqual(ab.words, ba.words); assert.deepEqual(ab.bunches, ba.bunches);
+});
+
+test('F9: a miss later on the same day beats an earlier gold in either merge order (`at`, the time of the change); records without `at` keep the old rule', () => {
+  const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const id = WORDS[0].id; const D = '2026-11-16';
+  const base = () => ({ ...newState('son'), words: { [id]: { st: 'likely', lstep: 1, due: D, firstDay: '2026-10-01', lastDay: '2026-10-17', lapses: 0 } } });
+  const a = base(); const ra = new Run({ state: a, words: WORDS, today: D, rng: mulberry32(1), now: () => 1000, scope: { noNew: true } });   // device A, morning: the last check -> gold
+  let it = ra.show(); ra.pick(it.options.findIndex((o) => o.id === id)); assert.deepEqual([a.words[id].st, a.words[id].at], ['done', 1000]);
+  const b = base(); const rb = new Run({ state: b, words: WORDS, today: D, rng: mulberry32(1), now: () => 5000, scope: { castle: [id] } });   // device B, later: a castle card missed
+  it = rb.show(); rb.pick((it.options.findIndex((o) => o.id === id) + 1) % 3); assert.deepEqual([b.words[id].st, b.words[id].due, b.words[id].at], ['learn', addDays(D, 1), 5000]);
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual([m.words[id].st, m.words[id].due], ['learn', addDays(D, 1)]);
+  const old = (o) => word({ firstDay: D, lastDay: D, ...o });                                    // saved before `at` existed: same day, the more advanced state wins
+  for (const [x, y] of [[old({ st: 'done', due: null }), old({ st: 'learn' })], [old({ st: 'done', due: null, at: 1 }), old({ st: 'learn' })]]) {
+    for (const m of [mergeCards(state({ words: { w: x } }), state({ words: { w: y } })), mergeCards(state({ words: { w: y } }), state({ words: { w: x } }))]) assert.equal(m.words.w.st, 'done');
+  }
+  const tri = newState('son'); const ids = WORDS.slice(0, 4).map((w) => w.id);                    // words passed on the word list get the time too
+  new Run({ state: tri, words: WORDS, today: D, rng: mulberry32(1), now: () => 777, scope: { newIds: ids, newPerRun: 4, triage: { bunch: 'A1', passed: ids, tapped: [], spot: [], due: addDays(D, 30) } } });
+  assert.ok(ids.every((x) => tri.words[x].at === 777 && tri.words[x].bunch === 'A1'));
+});
+
+test('F7: merge: tile marks of unfinished runs are united; a tile cleared on either side drops its mark; no mark, no `open` key', () => {
+  const W = (o) => ({ castle: null, seen: null, cleared: {}, stamps: {}, ...o }); const mp = (w) => state({ map: { stars: 0, keys: 0, best: 0, items: { shield: 0, flame: 0 }, bag: null, worlds: { w1: W(w) }, conts: {}, monsterDay: null, bonusDay: null } });
+  const a = mp({ open: { A1: '2026-11-12', B1: '2026-11-12' } }), b = mp({ cleared: { A1: '2026-11-13' }, open: { C1: '2026-11-13' } });
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual(m.map.worlds.w1.open, { B1: '2026-11-12', C1: '2026-11-13' });
+  const c = mp({ open: { A1: '2026-11-12' } }), d = mp({ cleared: { A1: '2026-11-12' } });
+  for (const m of [mergeCards(c, d), mergeCards(d, c)]) assert.equal('open' in m.map.worlds.w1, false);
 });

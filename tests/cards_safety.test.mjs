@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { SCHEMA, newState, Run, mulberry32 } from '../cards/js/deck.js';
 import { migrate, compact, totals, loadRecord, readBackup } from '../cards/js/store.js';
 import { mergeCards, Sync } from '../cards/js/sync.js';
@@ -67,12 +67,13 @@ test('D4: a record that cannot be read is set aside, not overwritten; the three 
 test('D5: old run records are folded into totals so the record stays small; the totals stay exact; merging does not count twice', () => {
   const s = newState('son'); for (let i = 0; i < 620; i++) s.runs.push(run(i));
   const before = totals(JSON.parse(JSON.stringify(s))); assert.equal(before.n, 620);
-  assert.equal(compact(s), true); assert.equal(s.runs.length, 300); assert.equal(s.past.n, 320); assert.equal(compact(s), false);
+  const T = '2027-03-01';                                                          // compact folds only runs older than 30 days before this date (F2)
+  assert.equal(compact(s, T), true); assert.equal(s.runs.length, 300); assert.equal(s.past.n, 320); assert.equal(compact(s, T), false);
   assert.deepEqual(totals(s), before);
   const other = JSON.parse(JSON.stringify(s)); other.runs = []; other.past = undefined; for (let i = 0; i < 620; i++) other.runs.push(run(i));   // the same history, not folded, on another device
   other.runs.push(run(700, { endedAt: '2026-11-13T09:00:00Z', day: '2026-11-13' }));
   for (const m of [mergeCards(s, other), mergeCards(other, s)]) { assert.equal(m.past.n, 320); assert.equal(m.runs.length, 301); const t = totals(m); assert.equal(t.n, 621); assert.equal(t.cards, before.cards + 10); }
-  const size = JSON.stringify(s).length; for (let i = 0; i < 3000; i++) { s.runs.push(run(1000 + i, { endedAt: `2027-01-01T00:00:${String(i).padStart(5, '0')}Z` })); compact(s); }
+  const size = JSON.stringify(s).length; for (let i = 0; i < 3000; i++) { s.runs.push(run(1000 + i, { endedAt: `2027-01-01T00:00:${String(i).padStart(5, '0')}Z` })); compact(s, T); }
   assert.ok(s.runs.length <= 500); assert.ok(JSON.stringify(s).length < size * 2, 'three thousand more runs do not grow the record without bound');
 });
 
@@ -132,4 +133,92 @@ test('D8: server: every day that was played leaves a dated copy that can be list
     const ping = await (await fetch(base + 'ping')).json(); assert.deepEqual([ping.store, ping.daily, ping.lastDaily, ping.offsite], [true, 1, days[0], null]);
     assert.equal(readBackup(JSON.stringify(snap), 'son').ok, true);
   });
+});
+
+// ---- fixes from the cross review C-005 (card T-011) ----
+const ping = { ok: true, status: 200, json: async () => ({ ok: true, store: true }) };
+const missing = { ok: false, status: 404, json: async () => ({}) };
+
+test('F1: a record of a newer program saved on this device (another tab) is never sent to the server: not at start, not after a change', async () => {
+  const future = { v: SCHEMA + 1, id: 'son', words: { a: word(), futureWord: word() }, runs: [], verify: [], log: [], futureOnly: true }; const text = JSON.stringify(future);
+  for (const server of ['none', 'older']) {
+    const store = mem({ 'cards.v0.p.son': text }); const puts = [];
+    const fetchImpl = async (u, o) => { if (o?.method === 'PUT') { puts.push(u); return { ok: true, status: 200, json: async () => ({ rev: 9 }) }; } if (u.endsWith('ping')) return ping;
+      if (u.endsWith('doc/p.son') && server === 'older') return { ok: true, status: 200, json: async () => ({ rev: 3, data: { ...newState('son'), words: { b: word() } } }) }; return missing; };
+    const sync = new Sync({ storage: store, fetchImpl }); await sync.init();
+    sync.changed('p.son'); await sync.flush(); await new Promise((r) => setTimeout(r, 10));
+    assert.equal(puts.filter((u) => u.endsWith('p.son')).length, 0, server); assert.equal(sync.stale, true, server); assert.equal(store.getItem('cards.v0.p.son'), text, server);
+  }
+});
+
+test('F2: runs of the last 30 days are never folded, even past the limit, so another device\'s offline run survives the merge; older runs fold with exact totals', () => {
+  const at = (i) => new Date(Date.parse('2026-11-10T00:00:00Z') + i * 60000).toISOString();
+  const a = newState('son'); for (let i = 0; i < 501; i++) a.runs.push(run(i, { day: at(i).slice(0, 10), endedAt: at(i) }));   // the review's case: 501 runs a minute apart
+  assert.equal(compact(a, '2026-11-16'), false); assert.deepEqual([a.runs.length, a.past], [501, undefined]);
+  const b = newState('son'); b.runs = a.runs.slice(0, 100).map((r) => ({ ...r })); b.runs.push(run(0, { day: '2026-11-10', endedAt: '2026-11-10T01:40:30.000Z', tag: 'offline-other' }));
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) { assert.equal(totals(m).n, 502); assert.ok(m.runs.some((r) => r.tag === 'offline-other')); }
+  const o = newState('son'); for (let i = 0; i < 600; i++) { const old = i < 150; o.runs.push(run(i, { day: old ? '2026-09-01' : '2026-11-10', endedAt: old ? `2026-09-01T${at(i).slice(11)}` : at(i) })); }
+  const copy = JSON.parse(JSON.stringify(o)); const before = totals(copy);
+  assert.equal(compact(o, '2026-11-16'), true); assert.deepEqual([o.past.n, o.runs.length], [150, 450]); assert.ok(o.runs.every((r) => r.day === '2026-11-10'));   // the recent 450 stay although the limit is 500
+  assert.deepEqual(totals(o), before); assert.equal(compact(o, '2026-11-16'), false);
+  for (const m of [mergeCards(o, copy), mergeCards(copy, o)]) assert.deepEqual([totals(m).n, totals(m).cards], [600, before.cards]);   // the unfolded copy is not counted twice
+  assert.equal(compact(JSON.parse(JSON.stringify(copy))), false);                                        // no date given: nothing is folded
+});
+
+test('F3: at start the sync finds the local record damaged: it is set aside first, then the server copy takes its place (meta too)', async () => {
+  const server = { ...newState('son'), words: { s1: word() } }; const broken = '{"v":1,"words":{"localOnly":';
+  const store = mem({ 'cards.v0.p.son': broken, 'cards.v0.meta': '[1,' });
+  const fetchImpl = async (u, o) => { if (o?.method === 'PUT') return { ok: true, status: 200, json: async () => ({ rev: 9 }) }; if (u.endsWith('ping')) return ping;
+    if (u.endsWith('doc/p.son')) return { ok: true, status: 200, json: async () => ({ rev: 4, data: server }) };
+    if (u.endsWith('doc/meta')) return { ok: true, status: 200, json: async () => ({ rev: 2, data: { names: { son: '민수' } } }) }; return missing; };
+  await new Sync({ storage: store, fetchImpl }).init();
+  const kept = (k) => [...store._m.keys()].filter((x) => x.startsWith(k + '.damaged.'));
+  assert.equal(kept('cards.v0.p.son').length, 1); assert.equal(store.getItem(kept('cards.v0.p.son')[0]), broken);
+  assert.deepEqual(JSON.parse(store.getItem('cards.v0.p.son')), server);
+  assert.equal(kept('cards.v0.meta').length, 1); assert.equal(store.getItem(kept('cards.v0.meta')[0]), '[1,'); assert.deepEqual(JSON.parse(store.getItem('cards.v0.meta')).names, { son: '민수' });
+});
+
+// ---- tools/backup_state.sh, run for real against throwaway git repositories (no network: CARDS_BACKUP_TEST_HTTP) ----
+const GITENV = { ...process.env, GIT_CONFIG_GLOBAL: '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_TERMINAL_PROMPT: '0' };
+delete GITENV.CARDS_BACKUP_TEST_HTTP; delete GITENV.CARDS_BACKUP_ASSUME_PRIVATE; delete GITENV.CARDS_BACKUP_REPO; delete GITENV.CARDS_STATE_DIR;
+const git = (cwd, ...args) => execFileSync('git', args, { cwd, env: GITENV, stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim();
+// A bare repository standing in for the private one, a clone of it (as a parent would make), and a state folder with one record.
+function backupSetup() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cards-backup-')); const bare = path.join(root, 'remote.git'), dest = path.join(root, 'clone'), state = path.join(root, 'state');
+  git(root, 'init', '-q', '--bare', bare); git(root, 'clone', '-q', bare, dest);
+  git(dest, 'config', 'user.name', 'Test'); git(dest, 'config', 'user.email', 'test@example.invalid'); git(dest, 'config', 'commit.gpgsign', 'false');
+  git(dest, 'commit', '-q', '--allow-empty', '-m', 'start'); git(dest, 'push', '-q', '-u', 'origin', 'HEAD');
+  fs.mkdirSync(state); fs.writeFileSync(path.join(state, 'p.son.json'), JSON.stringify({ rev: 1, data: { v: SCHEMA, id: 'son', words: {} } }));
+  return { root, bare, dest, state };
+}
+const backup = (b, env = {}) => { const r = spawnSync('bash', ['tools/backup_state.sh', b.dest], { env: { ...GITENV, CARDS_STATE_DIR: b.state, ...env }, encoding: 'utf8' });
+  return { code: r.status, out: r.stdout + r.stderr, off: JSON.parse(fs.readFileSync(path.join(b.state, 'offsite.json'), 'utf8')) }; };
+const pushed = (b) => Number(git(b.bare, 'rev-list', '--count', 'HEAD'));
+// origin is a GitHub address; git is told to deliver pushes for it to the throwaway bare repository instead.
+const onGitHub = (b, url = 'https://github.com/example/cards-state.git') => { git(b.dest, 'remote', 'set-url', 'origin', url); git(b.dest, 'config', `url.${b.bare}.insteadOf`, url); return b; };
+
+test('F4: a backup that cannot be pushed is recorded as failed every time, also on a second run with nothing new', () => {
+  const b = backupSetup(); git(b.dest, 'remote', 'set-url', 'origin', path.join(b.root, 'nowhere.git'));   // a folder that does not exist: the push fails
+  const r1 = backup(b); assert.deepEqual([r1.code, r1.off.ok], [1, false], r1.out);
+  const r2 = backup(b); assert.deepEqual([r2.code, r2.off.ok], [1, false], r2.out); assert.match(r2.out, /git push 실패/);
+  assert.equal(Number(git(b.dest, 'rev-list', '--count', 'HEAD')), 2, 'committed in the clone once');
+  const c = backupSetup(); const r3 = backup(c); assert.deepEqual([r3.code, r3.off.ok, r3.off.note, pushed(c)], [0, true, '올림', 2], r3.out);   // a reachable folder: pushed
+  const r4 = backup(c); assert.deepEqual([r4.code, r4.off.ok, r4.off.note], [0, true, '변경 없음'], r4.out);
+});
+
+test('F5: the push target must be private: a public GitHub repository, one that cannot be checked, or another host is refused before anything is copied', () => {
+  for (const [code, why] of [['200', /공개 저장소/], ['000', /확인할 수 없습니다/], ['403', /확인할 수 없습니다/]]) {
+    const b = onGitHub(backupSetup()); const r = backup(b, { CARDS_BACKUP_TEST_HTTP: code });
+    assert.deepEqual([r.code, r.off.ok], [1, false], code); assert.match(r.out, why, code);
+    assert.equal(fs.existsSync(path.join(b.dest, 'state-cards')), false, code + ': nothing copied'); assert.equal(pushed(b), 1, code + ': nothing pushed');
+  }
+  const ssh = backupSetup(); git(ssh.dest, 'remote', 'set-url', 'origin', 'git@github.com:example/cards-state.git');
+  const rs = backup(ssh, { CARDS_BACKUP_TEST_HTTP: '200' }); assert.deepEqual([rs.code, fs.existsSync(path.join(ssh.dest, 'state-cards'))], [1, false]); assert.match(rs.out, /example\/cards-state/);
+  const other = backupSetup(); git(other.dest, 'remote', 'set-url', 'origin', 'https://git.example.com/x/y.git');
+  const ro = backup(other, { CARDS_BACKUP_TEST_HTTP: '404' }); assert.deepEqual([ro.code, fs.existsSync(path.join(other.dest, 'state-cards'))], [1, false]); assert.match(ro.out, /GitHub 저장소나/);
+  const priv = onGitHub(backupSetup()); const rp = backup(priv, { CARDS_BACKUP_TEST_HTTP: '404' });          // private: GitHub answers 404 without signing in
+  assert.deepEqual([rp.code, rp.off.ok, pushed(priv)], [0, true, 2], rp.out); assert.ok(fs.existsSync(path.join(priv.dest, 'state-cards', 'p.son.json')));
+  const local = backupSetup(); const rl = backup(local); assert.deepEqual([rl.code, rl.off.ok, pushed(local)], [0, true, 2], rl.out);   // a folder on this Mac
+  const told = onGitHub(backupSetup()); const rt = backup(told, { CARDS_BACKUP_TEST_HTTP: '000', CARDS_BACKUP_ASSUME_PRIVATE: '1' }); assert.deepEqual([rt.code, pushed(told)], [0, 2], rt.out);   // the parent checked it
+  const none = backupSetup(); git(none.dest, 'remote', 'remove', 'origin'); const rn = backup(none); assert.deepEqual([rn.code, fs.existsSync(path.join(none.dest, 'state-cards'))], [1, false]);
 });

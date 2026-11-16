@@ -47,6 +47,9 @@ const waiting = (r, today) => (r.st === 'review' || r.st === 'likely' || r.st ==
 export function dueCount(state, today) {
   return Object.values(state.words).filter((r) => (r.st === 'review' || r.st === 'likely') && r.due && r.due <= today && r.lastDay !== today).length;
 }
+// Cards a review run would show: reviews and words still to learn whose date has come and that were not scored today.
+// With fewer than MONSTER_AT of them there is no monster, so the map offers a plain review run (world.nodeRun 'review').
+export const waitingCount = (state, today) => Object.values(state.words).filter((r) => waiting(r, today) && r.due <= today).length;
 // Reviews (and words still to learn) that were due before today and are still waiting.
 export function overdueCount(state, today) { const edge = RULES.batGrace ? addDays(today, -RULES.batGrace) : today; return Object.values(state.words).filter((r) => waiting(r, today) && r.due < edge).length; }
 export const ripeCount = (state) => Object.values(state.words).filter(SEEN_OK).length;

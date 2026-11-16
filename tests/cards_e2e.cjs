@@ -151,6 +151,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await w1.click('[data-act=bat-go]'); await w1.waitForSelector(READY); await play(w1); await w1.waitForSelector('.tiles');
   const batDone = await state(w1, 'daughter');
   ok('passing the test empties the gauge and raises the capacity to 50', /박쥐를 쫓아냈어요/.test(await w1.textContent('h1')) && batDone.map.bat.fill === 0 && batDone.map.bat.cap === 50 && batDone.runs.at(-1).tag === 'bat', JSON.stringify(batDone.map.bat));
+  ok('F10: a bat test with no reviews left over says the gauge goes back to 0', /박쥐 게이지가 0으로 돌아가요/.test(await w1.textContent('.page')));
   await toMap(w1);
   ok('castle is open again once the bats are gone', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && !(await w1.$('[data-id=bat]')));
   await w1.click('[data-act=node][data-id=castle]'); await w1.waitForSelector(READY);
@@ -191,6 +192,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     localStorage.setItem('cards.v0.p.daughter', JSON.stringify(st)); });
   await m1.click('[data-act=home]'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world');
   ok('10 due reviews put a monster on the map', !!(await m1.$('[data-id=monster]')) && /몬스터 10/.test(await m1.textContent('[data-id=monster]')));
+  ok('F6: with a monster on the map there is no review button', !(await m1.$('[data-id=review]')));
   ok('the monster blocks nothing: road tiles stay open', /\bopen\b/.test(await nodeStatus(m1, 'A1')) && /\bopen\b/.test(await nodeStatus(m1, 'C1')));
   ok('the parent view lists the overdue reviews and the gauge', await (async () => { await m1.click('[data-act=home]'); await m1.click('[data-act=parent]'); const t = await m1.textContent('.parent'); await m1.click('[data-act=home]'); await m1.click('[data-act=pick][data-id=daughter]'); await m1.waitForSelector('.world'); return /밀린 복습 10장/.test(t) && /박쥐 0\/40/.test(t); })());
   await m1.click('[data-act=node][data-id=monster]'); await m1.waitForSelector(READY);
@@ -471,6 +473,69 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await t30.click('[data-act=today]'); await t30.waitForSelector('.world'); await t30.click('[data-act=home]'); await t30.click('[data-act=parent]'); const ptext = await t30.textContent('.parent');
   ok('parent view shows the spot-check accuracy of passed words and the bunch checks passed / finished', /넘긴 단어 확인 정답률 100% \(6\/6\)/.test(ptext) && /묶음 확인 2\/2/.test(ptext), (/넘긴 단어[^,]*/.exec(ptext) || [''])[0] + ' ' + (/묶음 확인 \d+\/\d+/.exec(ptext) || [''])[0]);
   await t30.close(); await tctx.close();
+
+  // 13. fixes from the cross review C-005 (card T-011)
+  // F1: two tabs of one browser. A record a newer program wrote in tab B stops tab A; a record of the same program is merged.
+  const f1ctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const ta = await open(f1ctx, 'today=2026-11-12&triage=off&seed=41&sound=off&fast=1'); await ta.click('[data-act=pick][data-id=son]'); await ta.waitForSelector('.world');
+  const tb = await open(f1ctx, 'today=2026-11-12&triage=off&seed=41&sound=off&fast=1');
+  const futureT = await tb.evaluate(() => { const k = 'cards.v0.p.son'; const s = JSON.parse(localStorage.getItem(k)); s.v = 3; s.futureOnly = true; s.words.futureWord = { st: 'done' }; const t = JSON.stringify(s); localStorage.setItem(k, t); return t; });
+  await ta.click('[data-act=node][data-id=A1]'); await sleep(150);
+  ok('F1: after tab B saved a record of a newer program, tab A starts no run, asks for a reload and writes nothing', !(await ta.$('.run')) && /오래됐어요/.test(await ta.textContent('#banner')) && (await ta.evaluate(() => localStorage.getItem('cards.v0.p.son'))) === futureT && await ta.evaluate(() => window.__cards.readonly));
+  await ta.evaluate(() => document.querySelector('[data-act=home]').click()); await ta.click('[data-act=pick][data-id=son]'); await ta.waitForSelector('.world');   // the reload banner lies over the back button
+  ok('F1: tab A still writes nothing after going back to the map', (await ta.evaluate(() => localStorage.getItem('cards.v0.p.son'))) === futureT);
+  await ta.close(); await tb.close(); await f1ctx.close();
+  const f1b = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const tc = await open(f1b, 'today=2026-11-12&triage=off&seed=42&sound=off&fast=1'); await tc.click('[data-act=pick][data-id=son]'); await tc.waitForSelector('.world');
+  const td = await open(f1b, 'today=2026-11-12&triage=off&seed=42&sound=off&fast=1'); const otherW = TILE('U1');
+  await td.evaluate((ids) => { const k = 'cards.v0.p.son'; const s = JSON.parse(localStorage.getItem(k)); for (const id of ids) s.words[id] = { st: 'likely', lstep: 0, due: '2026-11-19', firstDay: '2026-11-12', lastDay: '2026-11-12', lapses: 0 }; localStorage.setItem(k, JSON.stringify(s)); }, otherW);
+  await startNode(tc, 'A1'); await play(tc); await tc.waitForSelector('.tiles');
+  const both = await state(tc, 'son');
+  ok('F1: tab B saved more words of the same format, then tab A played and saved: both tabs\' words are kept', otherW.every((id) => both.words[id] && both.words[id].st === 'likely') && TILE('A1').every((id) => both.words[id]) && both.v === 2, Object.keys(both.words).length + ' words');
+  await tc.close(); await td.close(); await f1b.close();
+
+  // F6: every world and castle done, 3 words still to learn: a review button on the map starts a run of those 3
+  const f6 = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const r6 = await open(f6, 'today=2026-11-16&triage=off&seed=43&sound=off&fast=1');
+  const learn6 = await r6.evaluate(() => { const G = window.__cards; const s = { v: 2, id: 'son', words: {}, verify: [], runs: [], log: [], bunches: {}, map: { stars: 0, items: { shield: 0, flame: 0 }, bag: null, monsterDay: null, bonusDay: null, best: 0, keys: G.ix.worlds.length, worlds: {}, conts: {}, at: null, bat: { fill: 0, cap: 40, met: [], last: null } } };
+    for (const w of G.words) s.words[w.id] = { st: 'done', due: null, firstDay: '2026-11-01', lastDay: '2026-11-01', lapses: 0 };
+    for (const w of G.ix.worlds) s.map.worlds[w.id] = { castle: '2026-11-10', cleared: {}, stamps: {}, seen: '2026-11-01' }; for (const c of G.ix.continents) s.map.conts[c.id] = { castle: '2026-11-10' };
+    const ids = G.words.filter((w) => w.ko).slice(0, 3).map((w) => w.id); for (const id of ids) s.words[id] = { st: 'learn', due: '2026-11-15', firstDay: '2026-11-01', lastDay: '2026-11-14', lapses: 0 };
+    s.map.at = G.ix.worlds.at(-1).id; localStorage.setItem('cards.v0.p.son', JSON.stringify(s)); return ids; });
+  await r6.click('[data-act=pick][data-id=son]'); await r6.waitForSelector('.world');
+  ok('F6: all done but 3 words to learn: no monster, a "복습 3장" button', !(await r6.$('[data-id=monster]')) && /복습 3장/.test((await r6.textContent('[data-id=review]').catch(() => '')) || ''));
+  await startNode(r6, 'review'); const q6 = await r6.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.id));
+  ok('F6: the review run starts with those 3 words as re-tries', q6.length === 3 && learn6.every((id) => q6.includes('retry:' + id)), q6.join());
+  await play(r6, () => true); await r6.waitForSelector('.tiles'); const s6 = await state(r6, 'son');
+  ok('F6: after the run the words are on the 1-day review and the button is gone', learn6.every((id) => s6.words[id].st === 'review') && /\+\d+/.test(await r6.textContent('.gain')) && await (async () => { await toMap(r6); return !(await r6.$('[data-id=review]')); })());
+  await r6.close(); await f6.close();
+
+  // F7: leaving a tile with only the last re-check to go keeps it open and the next tile locked; finishing a run of it later clears it
+  const f7 = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const q7 = 'today=2026-11-12&triage=off&seed=44&sound=off&fast=1'; let p7 = await open(f7, q7); await p7.click('[data-act=pick][data-id=son]'); await p7.waitForSelector('.world');
+  await startNode(p7, 'A1'); const miss7 = await p7.evaluate(() => { window.__cards.run.rng = () => 0.9; return window.__cards.run.queue[9].id; });   // 0.9: no "know" is checked
+  for (let k = 0; k < 30; k++) { await p7.waitForSelector(READY); const it = await cur(p7); if (it.role !== 'new') break; await answer(p7, it.id === miss7 ? '.act.no' : '.act.yes'); }
+  const left7 = await p7.evaluate(() => ({ left: window.__cards.run.left, role: window.__cards.run.current.role }));
+  await p7.click('[data-act=quit]'); await p7.waitForSelector('.tiles'); const end7 = await p7.textContent('h1'); await toMap(p7);
+  const s7 = await state(p7, 'son');
+  ok('F7: left with only the last re-check to go: not cleared, the tile stays open and the next tile is locked', left7.left === 1 && left7.role === 'relearn' && !/칸 클리어/.test(end7) && Object.keys(s7.words).length === 10 && s7.map.worlds['d1-01'].open.A1 === '2026-11-12'
+    && /\bopen\b/.test(await nodeStatus(p7, 'A1')) && /\blocked\b/.test(await nodeStatus(p7, 'A2')) && /0\/6칸/.test(await p7.textContent('#wtitle')), JSON.stringify(left7) + ' ' + end7);
+  await p7.close(); p7 = await open(f7, q7); await p7.click('[data-act=pick][data-id=son]'); await p7.waitForSelector('.world');
+  ok('F7: the same after a reload', /\bopen\b/.test(await nodeStatus(p7, 'A1')) && /\blocked\b/.test(await nodeStatus(p7, 'A2')));
+  await startNode(p7, 'A1');
+  ok('F7: going back in finishes the tile (nothing left to show today): cleared, the next tile opens', /칸 클리어/.test(await p7.textContent('h1')) && await (async () => { await toMap(p7); return /\bcleared\b/.test(await nodeStatus(p7, 'A1')) && /\bopen\b/.test(await nodeStatus(p7, 'A2')); })() && !(await state(p7, 'son')).map.worlds['d1-01'].open.A1);
+  await p7.close(); await f7.close();
+
+  // F10: a bat test that leaves enough put-off reviews for another bat does not say the gauge goes back to 0
+  const f10 = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
+  const b10 = await open(f10, 'today=2026-11-20&triage=off&seed=45&sound=off&fast=1');
+  await b10.evaluate(() => { const s = { v: 2, id: 'daughter', words: {}, verify: [], runs: [], log: [], bunches: {} }; for (const w of window.__cards.words.filter((x) => x.ko)) s.words[w.id] = { st: 'review', step: 1, due: '2026-11-01', firstDay: '2026-10-20', lastDay: '2026-10-25', lapses: 0 };
+    localStorage.setItem('cards.v0.p.daughter', JSON.stringify(s)); });
+  await b10.click('[data-act=pick][data-id=daughter]'); await b10.waitForSelector('.world');
+  ok('F10: 80 put-off reviews bring the bat', !!(await b10.$('[data-id=bat]')));
+  await startNode(b10, 'bat'); await play(b10, () => true); await b10.waitForSelector('.tiles'); const page10 = await b10.textContent('.page');
+  ok('F10: the bat test is done but bats will come again: no "goes back to 0"', /박쥐를 쫓아냈어요/.test(await b10.textContent('h1')) && !/0으로 돌아가요/.test(page10) && /25\/25장/.test(page10) && await (async () => { await toMap(b10); return !!(await b10.$('[data-id=bat]')); })(), page10.slice(0, 160));
+  await b10.close(); await f10.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

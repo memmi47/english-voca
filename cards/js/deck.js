@@ -189,9 +189,10 @@ export class Run {
     const b = (this.s.bunches ||= {}); b[bunch] = { ...(b[bunch] || {}), done: t, result: a.miss ? 'split' : 'ok' };
     this.stats.bunchDone++; if (!a.miss) this.stats.bunchOk++;
   }
+  // `at` (ms from the injected clock) orders two changes of the same day when two devices' records are merged (sync.newer).
   _set(id, next) {
     const from = gradeOf(this.s.words[id]);
-    this.s.words[id] = { firstDay: this.today, lapses: 0, ...this.s.words[id], ...next, lastDay: this.today };
+    this.s.words[id] = { firstDay: this.today, lapses: 0, ...this.s.words[id], ...next, lastDay: this.today, at: this.now() };
     const to = gradeOf(this.s.words[id]);
     if (to !== from) this.changed.push({ id, from, to });
     return { from, to };
