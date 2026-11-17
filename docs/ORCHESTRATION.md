@@ -29,7 +29,7 @@
 | C 교차 | 상대편 설계 층 | Claude의 PR은 Astra가, Codex의 PR은 Fable이 읽는다. 카드의 완료 기준과 "바꾸면 안 되는 것"을 기준으로 | 지적 사항이 해결되거나 사용자에게 올라간다 |
 | D 기기 | 사용자 | iPad·맥미니에서 카드의 확인 목록대로 | 사용자가 병합한다 |
 
-- 점검 B는 `.github/workflows/tests.yml`이 PR마다 자동으로 돌린다(단위, 저장 호환 자료, 세계 자료 검사, 브라우저). 규칙 회귀(시뮬레이션 비교)는 아직 없다(T-009).
+- 점검 B는 `.github/workflows/tests.yml`이 PR마다 자동으로 돌린다(단위, 저장 호환 자료, 세계 자료 검사, 브라우저). 규칙 회귀(시뮬레이션 출력 비교, `tools/check_sim_baseline.mjs`)도 함께 돈다. 규칙을 일부러 바꾼 PR은 `node tools/check_sim_baseline.mjs --update`로 기준 파일(`tests/fixtures/sim/chosen-seeds2.txt`)을 고치고, PR 설명에 무엇이 왜 달라졌는지 적는다.
 - 주기: 카드 하나가 끝날 때마다 B, 묶음(관련 카드 3~5개)이 끝날 때마다 C와 D.
 
 ## 3. 작업 카드
