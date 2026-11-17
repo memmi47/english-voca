@@ -102,3 +102,18 @@ docs/ORCHESTRATION.md 와 docs/DATA_SAFETY.md 4절을 읽은 뒤 docs/tasks/C-01
 끝난 뒤 보고: PR 번호, 선물 단계와 그 근거, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
 ```
 
+## C-012 (2026-11-17, Sol에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md 와 docs/DATA_SAFETY.md 를 읽은 뒤 docs/tasks/C-012.md 를 수행한다.
+- 카드의 "고칠 수 있는 파일" 밖은 고치지 않는다. tools/serve_cards.py, tools/backup_state.sh, cards/* 는 고치지 않는다.
+- 어떤 경우에도 기록 폴더, state-cards/, 백업 저장소의 파일을 지우거나 덮어쓰지 않는다. 옮기지 않고 복사한다. sudo 와 시스템 설정 변경은 쓰지 않는다.
+- 이 환경에서 실제 LaunchAgent 를 등록하지 않는다. 검사는 임시 HOME 과 가짜 launchctl·scutil 로 스크립트를 실제 실행해서 한다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고 새 검사 여섯 개를 넣는다. 기존 검사는 지우거나 약하게 하지 않는다.
+- 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 브랜치 codex/mac-setup 으로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다.
+- 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 확인하지 못한 것(실제 macOS 실행 포함).
+```
+
