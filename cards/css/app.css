@@ -165,6 +165,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
    whirlwind to the right, so the stone, its lock and its marks stay visible. Only the whirlwind takes a tap. */
 .rider,.storm,.stormfx{position:absolute;z-index:3;width:min(4.8vw,48px);height:min(4.8vw,48px);line-height:0;padding:0;background:none}
 .rider{transform:translate(-100%,-120%);pointer-events:none}.rider .spr{width:100%;height:100%;filter:drop-shadow(3px 3px 0 rgba(35,63,58,.45))}
+.storm,.stormfx{width:min(6.4vw,64px);height:min(6.4vw,64px)}   /* larger than the rider: it must be seen coming, and it takes a child's tap */
 .storm{transform:translate(0,-120%);z-index:4}.storm .anim2,.storm .spr,.stormfx .spr{width:100%;height:100%}.storm .anim2{filter:drop-shadow(3px 3px 0 rgba(35,63,58,.45))}
 .storm.slide{transition:left .4s steps(8),top .4s steps(8)}.storm.spawn{animation:pop .4s steps(4)}.storm.held{outline:4px solid var(--go);outline-offset:2px}
 .storm:active{transform:translate(0,calc(-120% + 4px))}
