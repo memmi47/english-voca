@@ -187,6 +187,7 @@
 | 2026-11-17 | Codex Terra | C-008: 실제 30세계·471칸 회오리 거리/최초 형태와 확률 3×판 수 3×200씨앗 빈도 측정, 규칙 수정 없음 | 이 줄을 추가한 커밋 (`codex/storm-measure`) | 측정 종료 0(242.068초), 보고서 39행 출력 동일, 규칙 baseline 동일; 이상화 모델이며 iPad·실제 학습 빈도 미확인 |
 | 2026-11-17 | Codex Sol | C-012: Mac 설치·제거·업데이트 스크립트, 게임 밖 기록 복사·LaunchAgent·선택 21:07 백업·pull 전 사본, 안내와 새 검사 여섯 개 | 이 줄을 추가한 커밋 (`codex/mac-setup`) | bash 문법 3/3, 단위 106/106; shellcheck/plutil 없음(XML 파싱), 임시 HOME·가짜 명령으로 검증; 실제 macOS/iPad·원격 백업 미확인 |
 | 2026-11-17 | Codex Astra → Sol | C-011: PR #17에서 단일 몬스터·화면 체력·성 축하/문 열기·별 꾸미기·음악 기본 켜짐, 픽셀22개·신곡2개 구현 | [Draft PR #17](https://github.com/memmi47/english-voca/pull/17) | 단위100/100·브라우저175/175·픽셀20/20·음악44GM+12칩튠+16SFX·baseline 동일; 기존130파일/42곡metadata 보존, 기기 확인 대기 |
+| 2026-11-18 | Codex Astra → Sol | C-013: PR #18을 #17 위에 쌓고 merge 반영, K=max(ceil(0.6N),L+2)·우표2장·대륙70% 구현; Demo/ST3 승인 예외 적용 | [Draft PR #18](https://github.com/memmi47/english-voca/pull/18) | 생성 재현·생성기22/22·단위107/107·브라우저180/180·baseline 동일; 실제30지도/배정 보존, 최소3100/4489개(69.06%); 실기기·난이도 미확인 |
 
 ## 9. 요청과 이번 설계의 검증
 

@@ -170,9 +170,24 @@ def feedback_assets():
     sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>\n'+symbols+'</defs></svg>\n'
     return {Path('cards/assets/postal/feedback/manifest.json'):json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',Path('cards/assets/postal/feedback/sprites.svg'):sheet}
 
+def stamp_assets():
+    """Two original, lettered 16-grid gate stamps; separate from playhouse stamps."""
+    symbols={}
+    letters={'a':['.##.','#..#','#..#','####','#..#','#..#'], 'b':['###.','#..#','###.','#..#','#..#','###.']}
+    for key,color in [('a','t'),('b','p')]:
+        p=art.Pixels();p.rect(1,1,14,14,'k');p.rect(2,2,12,12,'w');p.rect(3,3,10,10,color)
+        for z in (2,6,10,14):p.dot(0,z,'w');p.dot(15,z,'w');p.dot(z,0,'w');p.dot(z,15,'w')
+        for y,row in enumerate(letters[key]):
+            for x,value in enumerate(row):
+                if value=='#':p.dot(x+6,y+5,'w')
+        symbols['c013-stamp-'+key]=dict(role='gate-stamp',label='관문 우표 '+key.upper(),size=16,grid=16,pixels=p.finish())
+    manifest=dict(version='postal-gate-stamps-1',license='Original project pixel artwork.',sheet='sprites.svg',grid=16,palette=art.PAL,symbols=symbols)
+    sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>\n'+''.join(f'<symbol id="{sid}" viewBox="0 0 16 16">{runs(s["pixels"])}</symbol>\n' for sid,s in symbols.items())+'</defs></svg>\n'
+    return {Path('cards/assets/postal/stamps/manifest.json'):json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',Path('cards/assets/postal/stamps/sprites.svg'):sheet}
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build() | feedback_assets()
+    files=build() | feedback_assets() | stamp_assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:

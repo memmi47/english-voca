@@ -3,7 +3,7 @@ Outputs schema v3 worlds.json + catalogue.json + an allocation report.
 Unresolved configuration stays explicit and prevents ready/playable output.
 """
 from pathlib import Path
-import argparse, collections, copy, hashlib, importlib.util, json, math, re, unicodedata
+import argparse, collections, copy, hashlib, heapq, importlib.util, json, math, re, unicodedata
 ROOT=Path(__file__).resolve().parents[1]
 SOURCE=ROOT/'reference/weekly-tool/vocabulary.json'
 EXPECTED_SHA='38b97c372feb8585eed6b9458194294039b4f8a62990ed44b6dfffb91e123130'
@@ -26,7 +26,11 @@ def validate_config(c):
         need(isinstance(rule,dict),f'{key} required')
         need(type(rule.get('cards')) is int and rule['cards']>0,f'{key}.cards must be a positive integer')
         need(type(rule.get('passRate')) in (int,float) and math.isfinite(rule['passRate']) and 0<rule['passRate']<=1,f'{key}.passRate must be in (0,1]')
-    need(c.get('continentGate')=='all-world-crowns-and-continent-castle','continent gate cannot be removed')
+    need(c.get('continentGate')=='all-world-castles-and-tiles-and-continent-castle','continent gate cannot be removed')
+    gate=c.get('worldGate',{})
+    need(isinstance(gate,dict),'worldGate must be an object')
+    need(gate.get('targetTileRate')==.6 and type(gate.get('minExtraTiles')) is int and gate['minExtraTiles']==2 and gate.get('stampPlacement')=='off-all-shortest-farthest-v1','unsupported world gate')
+    need(type(c.get('continentTileRate')) in (int,float) and math.isfinite(c['continentTileRate']) and .6<=c['continentTileRate']<=.8,'continentTileRate must be in 0.6..0.8')
     need(c.get('expressionPlacement')=='dedicated-tiles-within-general-worlds','expressions must be embedded in general worlds')
     need(c.get('expressionPrerequisites') in (None,'none'),'unsupported expression prerequisite policy')
 
@@ -107,6 +111,47 @@ def tile_pools(regular,phrases,cap,minimum):
     for i in range(total):out.append(('phrase',positions[i]) if i in positions else ('vocab',next(v)))
     return out
 
+def exploration_rule(world, settings):
+    """Place two stamps in distinct components outside ALL cheapest routes.
+
+    Costs count tiles on entry, including the source tile when measuring from a
+    tile. Thus dS[v]+dC[v]-weight(v) tests membership in any cheapest route.
+    Minigames are dead-end decorations and do not participate in this graph.
+    """
+    mp=world['map'];nodes={n['id']:n for n in mp['nodes'] if n['kind']!='minigame'}
+    adj={i:[] for i in nodes};weight={i:int(n['kind']=='tile') for i,n in nodes.items()}
+    for e in mp['edges']:
+        a,b=e['from'],e['to']
+        if a in nodes and b in nodes:adj[a].append(b);adj[b].append(a)
+    def distances(source):
+        dist={i:math.inf for i in nodes};dist[source]=weight[source];q=[(dist[source],source)]
+        while q:
+            d,v=heapq.heappop(q)
+            if d!=dist[v]:continue
+            for u in adj[v]:
+                nd=d+weight[u]
+                if nd<dist[u]:dist[u]=nd;heapq.heappush(q,(nd,u))
+        return dist
+    ds,dc=distances(mp['startNodeId']),distances(mp['castleNodeId'])
+    length=ds[mp['castleNodeId']];tiles=[i for i in nodes if weight[i]];n=len(tiles)
+    need(all(math.isfinite(ds[i]) for i in nodes),world['id']+': disconnected exploration graph')
+    k=max(math.ceil(settings['targetTileRate']*n),int(length)+settings['minExtraTiles'])
+    need(math.ceil(n/2)<=k<=math.floor(7*n/10),world['id']+': impossible exploration K range')
+    shortest={v for v in nodes if ds[v]+dc[v]-weight[v]==length}
+    unseen=set(nodes)-shortest;candidates=[]
+    while unseen:
+        first=min(unseen);unseen.remove(first);component={first};q=[first]
+        while q:
+            for u in adj[q.pop()]:
+                if u in unseen:unseen.remove(u);component.add(u);q.append(u)
+        choices=[v for v in component if weight[v]]
+        if choices:
+            best=min(choices,key=lambda v:(-(dc[v]-1),v));candidates.append((dc[best]-1,best))
+    candidates.sort(key=lambda item:(-item[0],item[1]))
+    need(len(candidates)>=2,world['id']+': two off-shortest branches required')
+    return dict(type='explore',nodeId=mp['castleNodeId'],**{key:world['castleRule'][key] for key in ('cards','passRate')},
+        minTiles=k,stamps=[dict(id=label,nodeId=tid) for label,(_,tid) in zip(('A','B'),candidates[:2])])
+
 def generate(config,overrides,manual,art,db,source_sha):
     validate_config(config);need(source_sha==EXPECTED_SHA,'reference DB changed; review before allocation')
     cards=select(db,overrides);groups=confusion_groups(cards,manual);byid={c['id']:c for c in cards};cap=config['maxCardsPerTile']
@@ -133,6 +178,7 @@ def generate(config,overrides,manual,art,db,source_sha):
             # JSON edge contract uses the literal keys from/to.
             world['map']['edges']=[{'from':e['fromId'],'to':e['toId']} for e in world['map']['edges']]
             world['castleRule']=dict(type='reach',nodeId=g['castleNodeId'],**config['worldCastle'])
+            world['castleRule']=exploration_rule(world,config['worldGate'])
             world['sideActivities']=[]
             world['nextWorldId']=f'{band.lower()}-{wi+2:02}' if wi+1<amount else None
             world['counts']=dict(vocab=len(regular),phrase=len(phrases),sight=0,cards=len(regular)+len(phrases),tiles=len(pools))
@@ -145,7 +191,7 @@ def generate(config,overrides,manual,art,db,source_sha):
         fname,intro,outro=finales[ci];rule=config['continentCastle']
         if rule is not None:need(rule['cards']<=sum(w['counts']['vocab']+w['counts']['phrase'] for w in worlds),'continent castle exceeds meaning pool')
         continents.append(dict(id=f'c{ci+1}',band=band,name=art['continents'][ci]['name'],story=stories[ci],worlds=worlds,
-            finale=dict(name=fname,intro=intro,outro=outro,required=True,unlock='all-world-crowns',cards=None if rule is None else rule['cards'],
+            finale=dict(name=fname,intro=intro,outro=outro,required=True,unlock='all-world-castles-and-tile-ratio',minTileRate=config['continentTileRate'],cards=None if rule is None else rule['cards'],
                 passRate=None if rule is None else rule['passRate'],status='pending-config' if rule is None else 'draft',nextContinentId=f'c{ci+2}' if ci<2 else None)))
     assignment=[(w['id'],[(n['id'],n.get('words',[])) for n in w['map']['nodes']],w['sideActivities']) for c in continents for w in c['worlds']]
     config_hash=digest(dump(config).encode());assignment_hash=digest(dump(assignment).encode())
@@ -193,8 +239,10 @@ def validate_output(worlds,catalogue,cap):
             need(not w['sideActivities'],'side activities must be empty')
             need(w['castleRule']['cards']==worlds['rules']['worldCastle']['cards'],'castle config not propagated')
             need(w['castleRule']['passRate']==worlds['rules']['worldCastle']['passRate'],'castle rate not propagated')
+            need(w['castleRule']==exploration_rule(w,worlds['rules']['worldGate']),'exploration gate differs from deterministic placement')
         need(count==sum(c['band']==continent['band'] and c['learningKind']!='sight' for c in cards.values()),'continent total')
         need(continent['finale']['required'] is True,'continent gate was removed')
+        need(continent['finale']['unlock']=='all-world-castles-and-tile-ratio' and continent['finale']['minTileRate']==worlds['rules']['continentTileRate'],'continent exploration gate not propagated')
     excluded=worlds['excluded'];need(len(excluded)==1 and excluded[0]['reason']=='function-words','exclusion policy')
     excluded_ids=excluded[0]['cardIds'];sight_ids={cid for cid,c in cards.items() if c['learningKind']=='sight'}
     need(len(excluded_ids)==121 and set(excluded_ids)==sight_ids,'excluded sight coverage')

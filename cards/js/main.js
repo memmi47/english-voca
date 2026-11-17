@@ -150,7 +150,7 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); await loadSprites('assets/postal/feedback/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -211,11 +211,12 @@ function today(id, msg = '', wid = null) {
   const ev = G.stormEv && G.stormEv.pid === id && G.stormEv.wid === w.id ? G.stormEv : null; G.stormEv = null;   // what the last run did to the whirlwind, shown once
   const sw = STORM.on ? stormOf(st, G.ix) : null; const storm = sw && sw.wid === w.id ? sw : null; const held = stormBlocks(st, w.id, G.ix);
   if (ev && ev.event === 'caught' && held && !v.bat.full) return caught();
+  const near = localFrontier(w, st, v);
   const at = (n) => `left:${n.x / 10}%;top:${n.y / 6}%`;
   const place = (n, inner, label, status, extra = '') => `<button class="node ${status} ${extra}" data-act="node" data-id="${esc(n.id)}" style="${at(n)}" aria-label="${esc(label)}">${inner}${label ? `<span class="lbl">${esc(label)}</span>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`;
   const nodes = v.nodes.map((n) => {
-    if (n.kind === 'tile') return place(n, spr(STONE[n.status] || 'stone-open', 64, 'big'), '', n.status, n.bonus ? 'bonus' : '');
-    if (n.kind === 'castle') return place(n, `${v.crown ? `<i class="crown">${spr('crown', 32)}</i>` : ''}${big('gate')}`, v.crown ? '왕관!' : w.castle?.name || '성', n.status, 'castle');
+    if (n.kind === 'tile') { const stamp = v.gate?.stamps.find((x) => x.nodeId === n.id); return place(n, spr(STONE[n.status] || 'stone-open', 64, 'big') + (stamp ? `<span class="gate-stamp ${stamp.collected ? 'collected' : ''}" data-stamp="${stamp.id}" data-collected="${stamp.collected}" aria-label="우표 ${stamp.id} ${stamp.collected ? '모음' : '모으기'}">${stampPic(stamp)}${stamp.collected ? '<b>✓</b>' : ''}</span>` : ''), '', n.status, `${n.bonus ? 'bonus' : ''} ${n.status === 'open' ? near.has(n.id) ? 'nearby' : 'distant' : ''}`); }
+    if (n.kind === 'castle') return place(n, `${v.crown ? `<i class="crown">${spr('crown', 32)}</i>` : ''}${v.castle.status !== 'cleared' && v.gate?.ready ? spr('c011-door-open',64,'big') : big('gate')}`, v.crown ? '왕관!' : w.castle?.name || '성', n.status, 'castle');
     if (n.kind === 'minigame') return place(n, `${big('playhouse')}${n.status === 'cleared' ? `<i class="crown">${spr('stamp', 32)}</i>` : ''}`, '놀이집', n.status === 'cleared' ? 'open done' : n.status, 'game');
     if (n.kind === 'start') return `<div class="node start" style="${at(n)}">${anim('flag-a', 'flag-b', 64)}<span class="lbl">출발</span></div>`;
     return `<div class="node free" style="${at(n)}">${big('sign')}</div>`;
@@ -224,15 +225,16 @@ function today(id, msg = '', wid = null) {
   const houses = v.houses.map((h) => { const p = housePos(w, h, taken); return place({ id: h.id, ...p }, big('post-office'), `${h.name} ${h.done}/${h.total}`, h.status, h.bonus ? 'house bonus' : 'house'); });
   const story = first ? w.intro : '';
   const stormHint = held ? '회오리에 잡혔어요! 회오리를 눌러 빠져나와요' : ev?.event === 'spawn' ? '회오리가 나타났어요' : ev?.event === 'move' ? '회오리가 다가와요' : ev?.event === 'gone' ? '회오리가 사라졌어요' : '';
-  const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : stormHint || story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 모든 왕관을 모았어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
+  const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : stormHint || story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 세계 성과 마을 조건을 채웠어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
   const dock = (id, inner, label, status, extra = '') => `<button class="dockbtn ${status} ${extra}" data-act="node" data-id="${id}" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span></button>`;
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
   <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><button class="chip gift-chip" data-act="wardrobe">${spr('c011-gift-closed', 24)} ${esc(nextGift(v.stars))}</button><button class="chip" title="열쇠" data-act="key-help">${spr('key', 24)} ${v.keys}</button><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
     <button class="tgl" data-act="atlas">세계 지도</button>
     <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}">♪ 음악 ${G.sound.musicOn ? '켜짐' : '꺼짐'}</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}">${spr('sound', 24)} 효과음 ${G.sound.sfx ? '켜짐' : '꺼짐'}</button></div>
   <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
-  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
-  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
+  <div class="gate-toolbar"><div id="world-stamps" class="world-stamps" aria-label="모은 관문 우표">${(v.gate?.stamps || []).map((x) => `<span class="stamp-chip ${x.collected ? 'collected' : 'missing'}" data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</div>
+  <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div></div>
+  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}${castleGate(w,v.gate,v.castle.status === 'cleared')}</div>
   <p class="msg" id="msg">${esc(hint)}</p>
   <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
@@ -272,12 +274,30 @@ function nodeClick(id) {
   const n = v.nodes.find((x) => x.id === id) || v.houses.find((x) => x.id === id); if (!n) return;
   if (held && n.status === 'open' && (n.kind === 'tile' || v.houses.includes(n))) return startStorm();
   if (n.kind === 'minigame') { if (n.status === 'locked') return out(MSG.gameLocked); return n.playable ? startGame(n) : out(MSG.soon); }
-  if (n.kind === 'castle' && n.status === 'locked') return out(MSG.castleLocked);
+  if (n.kind === 'castle' && n.status === 'locked') return out(v.gate ? gateMessage(v.gate) : MSG.castleLocked);
   if (n.kind === 'castle' && n.status === 'cleared') return out('이 성은 이미 깼어요.');
   if (n.status === 'locked') return out(MSG.locked);
   if (n.status === 'blocked') return out(MSG.blocked);
   if (n.status === 'cleared') return out(n.tiles ? '이 집은 다 읽었어요.' : '이 칸은 이미 깼어요.');
   return start(id);
+}
+
+// Only immediate choices from the rider glow. Other legal frontiers remain clickable.
+function localFrontier(w, st, view) {
+  const here = hereOf(st,w), root = w._nodes[here] ? here : w.map.startNodeId;
+  const seen = new Set([root]), q = [root], near = new Set(), open = new Set(view.nodes.filter((n) => n.kind === 'tile' && n.status === 'open').map((n) => n.id));
+  while(q.length) for(const id of w._adj[q.shift()] || []) {
+    if(open.has(id)) near.add(id);
+    if(!seen.has(id) && ['start','junction','plaza'].includes(w._nodes[id]?.kind)) { seen.add(id); q.push(id); }
+  }
+  return near;
+}
+const stampPic = (x, size=32) => spr(`c013-stamp-${x.id.toLowerCase()}`,size);
+const gateMessage = (g) => `마을 ${g.tilesDone}/${g.minTiles} · 우표 A ${g.stamps.find(x=>x.id==='A')?.collected ? '✓' : '·'} · 우표 B ${g.stamps.find(x=>x.id==='B')?.collected ? '✓' : '·'}${g.reachable ? '' : ' · 성까지 길을 이어요'}`;
+const continentGateText = (g) => `세계 성 ${g.worldsPassed}/${g.totalWorlds} · 마을 ${g.tilesDone}/${g.minTiles} (${Math.round(g.minTileRate*100)}%)`;
+function castleGate(w,g,cleared=false) {
+  if(!g) return ''; const n=w._nodes[w.map.castleNodeId];
+  return `<aside class="castle-gate ${g.ready ? 'ready' : ''}" id="castle-gate" data-ready="${g.ready}" data-cleared="${cleared}" style="left:clamp(8px,${n.x/10-21}%,calc(100% - 222px));${n.y < 280 ? 'top' : 'bottom'}:${n.y < 280 ? n.y/6+14 : (600-n.y)/6+12}%"><b>${cleared ? '성 통과 완료' : '성에 들어가려면'}</b><span class="gate-villages">마을 ${g.tilesDone}/${g.minTiles}</span><span class="gate-stamps">${g.stamps.map(x=>`<span data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x,24)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</span><small>${cleared ? '남은 마을은 선택해요' : g.ready ? '문이 열렸어요' : g.reachable ? '마을과 우표를 모아요' : '성까지 길을 이어요'}</small></aside>`;
 }
 
 // ---- world list ----
@@ -288,7 +308,7 @@ function atlas(transition = null) {
   $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
   <div id="door-stage"></div>${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
     <div class="wgrid">${c.worlds.map(wbtn).join('')}
-    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : c.finale.status === 'pending' ? '준비 중이에요' : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
+    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${c.finale.status === 'open' ? spr('c011-door-open',64,'big') : big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : c.finale.status === 'pending' ? '준비 중이에요' : '세계 성과 마을 조건을 채워요'}</i>${c.gate ? `<span class="continent-gate" data-ready="${c.gate.ready}">${esc(continentGateText(c.gate))}</span>` : ''}</button></div></section>`).join('')}
   <p class="msg" id="msg"></p></div>`;
   if (transition) showDoor(transition);
 }
@@ -715,7 +735,7 @@ async function onClick(e) {
     case 'atlas': return atlas();
     case 'goworld': if (G.ix.byId[b.dataset.id] && worldOpen(G.ix,G.ix.byId[b.dataset.id],G.st)) return today(G.pid, '', b.dataset.id); return;
     case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
-      $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}). 왕관은 그 세계의 모든 칸과 집, 성을 깨면 받아요.`; return; }
+      $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : c.gate ? `${c.name}: ${continentGateText(c.gate)}. 세계 성을 모두 깨고 마을을 더 돌아봐요. 왕관은 선택해서 모아요.` : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}).`; return; }
     case 'node': return nodeClick(b.dataset.id);
     case 'storm': if (G.view === 'today' && worldView(G.ix, G.world, G.st, todayISO()).bat.full) { $('#msg').textContent = MSG.blocked; return; } return startStorm();
     case 'st-opt': return stormPick(Number(b.dataset.i));

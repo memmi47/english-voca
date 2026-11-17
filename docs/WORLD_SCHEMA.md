@@ -24,7 +24,7 @@ UTF-8 JSON. `schemaVersion=3`, `contentVersion`, `status(draft|ready)`, `source{
 
 **현재 파일 구분:** `cards/data/world-art.json`은 `contentScope=presentation-only`, 배정 0장의 표시 원본이다. `cards/data/worlds.json`은 `contentScope=learning-map`, 대표 카드 4,489개를 실제 map/words에 배정하고 기능어 121개를 최상위 excluded에 기록한 생성 결과다. 두 파일 모두 `status=draft`, `playable=false`이며, 전체 worlds는 `pending[]`에 실제 음원·부모 뜻 검토·iPad 확인 등을 명시한다. `world-art.source`는 WORLD_BIBLE, `worlds.source`는 어휘 원본을 가리킨다. 전체 words 카탈로그는 `catalogue.json`으로 별도 제공한다.
 
-`worlds.rules`는 `maxCardsPerTile`, `worldCastle{cards,passRate}`, `continentCastle(null|{cards,passRate})`, `continentGate`, `expressionPlacement`, `expressionPrerequisites(null|none)` 설정이다. 현재 대륙 성은 40장·75%이며 `finale`는 `required=true`, `unlock=all-world-crowns`, `status=draft`다. null 설정에서도 필수 관문은 유지한다. `configSha256`, `assignmentSha256`로 규칙/배정 변경을 구분한다. `progressPolicy`의 fresh-start는 사용자 승인한 60단어 시제품에서 처음 옮길 때만 적용하며, 이후 배정 변경에는 다시 검토/이관이 필요하다.
+`worlds.rules`는 `maxCardsPerTile`, `worldCastle{cards,passRate}`, `worldGate{targetTileRate:0.6,minExtraTiles:2,stampPlacement:"off-all-shortest-farthest-v1"}`, `continentCastle(null|{cards,passRate})`, `continentTileRate:0.7`, `continentGate:"all-world-castles-and-tiles-and-continent-castle"`, `expressionPlacement`, `expressionPrerequisites(null|none)` 설정이다. 현재 대륙 성은 40장·75%이며 `finale`는 `required=true`, `unlock="all-world-castles-and-tile-ratio"`, `minTileRate=0.7`, `status=draft`다. null 설정에서도 필수 관문은 유지한다. `configSha256`, `assignmentSha256`로 규칙/배정 변경을 구분한다. C-013은 관문 설정과 파생 configSha256만 바꾸고 실제 30세계의 노드·선·카드 배열과 assignmentSha256은 그대로 유지한다. `progressPolicy`의 fresh-start는 사용자 승인한 60단어 시제품에서 처음 옮길 때만 적용하며, 이후 배정 변경에는 다시 검토/이관이 필요하다.
 
 v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` 노드와 선택 장식 보상을 추가한 계약이다. 모르는 버전·게임 유형은 명시적으로 준비 중 처리한다. 현재 기존 게임은 여전히 시제품 v1이며 v3를 자동으로 해석하지 못한다. 발행 ID는 이름·좌표가 바뀌어도 유지하며 이후 배정이 달라지면 명시적 진도 이관을 한다. 60단어 시제품 w1 기록은 WORKLOG 사용자 결정에 따라 처음부터 시작하고 가져오지 않는다.
 
@@ -40,7 +40,7 @@ v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` �
 | `intro,outro,story` | 각 두 문장 이내. 입장·성 통과·다음 이야기. |
 | `routes[]` | `{id,name,icon}` 장소 분위기. 독립 레인·품사·완료 조건이 아님. |
 | `map` | `startNodeId,castleNodeId,landscape,nodes[],edges[]`. 이동과 해제의 유일한 원본. |
-| `castleRule` | `{type:"reach",nodeId:castleNodeId,cards:12,passRate:0.8}`. |
+| `castleRule` | `{type:"explore",nodeId:castleNodeId,cards:12,passRate:0.8,minTiles:K,stamps:[{id:"A",nodeId},{id:"B",nodeId}]}`. K와 우표 두 장은 아래 계약을 따른다. |
 | `sideActivities[]` | 현재 빈 배열. 기능어는 학습 경로에서 제외하며 표현은 map의 phrase 칸에 있다. |
 | `nextWorldId,status` | 같은 대륙 다음 세계 또는 null, draft/ready. |
 
@@ -64,9 +64,19 @@ edge는 `{from,to}` 무방향 연결이다. 중복·자기 연결·고립 노드
 1. 시작점에서 완료 tile과 무료 노드만 통과하는 BFS로 도달 집합을 구한다. 미완료 tile 앞에서 멈추며 연결된 frontier 칸만 시작한다. 위치 좌표나 임의 단계 번호로 열지 않는다.
 2. 실제 게임은 기존 카드 첫 만남 완료·음성 조건을 충족해야 칸 완료다. 오디오 실패·판 중단 때 다음 지점으로 통과하지 않는다. 시안의 클릭 완료는 경로 체험만 위한 동작이다.
 3. 완료 칸은 무료로 되짚고 다른 갈림길·미방문 칸에 접근할 수 있다. 무료 이동은 별·게이지·복습 완료를 만들지 않는다.
-4. 성에 닿으면 세계 성 12장·80% 시험에 입장할 수 있다. ‘모든 구간 한 번’, ‘두 길 완료’, ‘같은 거리’ 조건은 없다. 성 통과 뒤 다음 세계를 열고 남은 학습 칸에는 기존 보너스 규칙을 적용한다.
-5. 세계 왕관은 모든 학습 칸+필수 학습 집+성 통과다. **놀이집 방문·게임 통과·놀이 도장은 왕관 조건이 아니다.** 짧은 경로는 당장 성에 가는 선택, 모든 어휘를 만나는 왕관은 별도 목표임을 숨기지 않는다. 대륙 이동의 모든 왕관 조건은 유지한다.
+4. 세계 성 입장은 완료 칸을 따라 성 옆에 도달 AND 지도 마을 K개 완료 AND 우표 A·B 두 장 획득이다. 성 시험은 세계에서 이미 만난 카드 12장·80%를 유지한다. ‘모든 구간 한 번’, ‘두 길 완료’, ‘같은 거리’ 조건은 없다. 성 통과 뒤 다음 세계를 열고 남은 학습 칸에는 기존 2배 보너스 규칙을 적용한다.
+5. 세계 왕관은 모든 학습 칸+필수 학습 집+성 통과다. **놀이집 방문·게임 통과·놀이 도장은 왕관 조건이 아니다.** 왕관은 선택 수집 목표다. 대륙 성은 그 대륙 모든 세계의 성 통과 AND 지도 마을 70% 이상 완료를 요구하며 왕관을 요구하지 않는다. 대륙 시험을 통과해야 다음 대륙이 열린다.
 6. 복습 몬스터는 선택이다. 박쥐 게이지가 가득 차면 기존 박쥐 시험이 새 학습 판보다 우선한다. 실제 게임에서는 새 놀이집 세션도 박쥐 처리 후 시작하도록 제안하되 진행 중인 카드·놀이 도중에는 끊지 않는다. 시안은 학습 엔진·박쥐 게이지가 없다.
+
+### C-013 관문 데이터와 계산된 표시 자료
+
+- N은 해당 세계 map.nodes의 `kind=tile` 개수다. L은 시작점에서 성까지 최소 학습 칸 수다. **K=max(ceil(3N/5),L+2)**이고 `ceil(N/2) ≤ K ≤ floor(7N/10)`을 만족해야 한다. 새 설정에서 불가능하면 생성을 거부하며 비율을 묵시 완화하지 않는다. 집·무료 노드·놀이집은 N과 대륙 비율에서 제외하되 기존 왕관의 학습 집 조건은 유지한다.
+- 우표는 map.nodes에 중복 필드를 넣지 않고 `castleRule.stamps`에 정확히 A/B 순서로 서로 다른 tile 두 개를 참조한다. minigame을 뺀 무방향 그래프에서 tile 진입 비용 1, 무료 노드 비용 0으로 양 끝 최단 거리를 계산한다. 모든 최단 경로 위 노드의 합집합을 제거한 뒤 tile이 있는 연결 성분을 갈래로 본다. 각 갈래의 성에서 가장 먼 tile(자기 tile을 제외한 학습 칸 거리)을 고르고, 거리 내림차순·node id 코드 포인트 사전순으로 첫 두 개를 A/B로 정한다. 동률·배열 순서·좌표·난수에 좌우되지 않는다. 우표가 서로 다른 갈래와 모든 최단 경로 밖에 있는지 독립 검사한다.
+- `type=explore`는 유효한 정수 minTiles, 시험 cards/passRate, castle nodeId 및 두 우표를 모두 요구한다. 명시된 explore 자료가 잘못되면 데이터 오류이며 reach로 조용히 되돌아가지 않는다. 별도 옛 fixture의 `type=reach` 또는 castleRule 없음은 기존 물리적 도달 조건을 유지한다. 이번 실제 30세계와 시험용 3세계는 모두 explore다.
+- 대륙 `finale`는 기존 cards/passRate/required/status/name/nextContinentId를 보존하고 `unlock:"all-world-castles-and-tile-ratio"`, `minTileRate:0.7`을 둔다. 필요 마을은 `ceil(minTileRate × 대륙 전체 tile 수)`다. 명시된 새 unlock에는 0.6…0.8의 유한한 minTileRate가 필수다. 옛 fixture에 새 unlock이 없으면 기존 모든 왕관 조건을 유지한다. pending-config 또는 null 시험 수치는 계속 준비 중이며 다음 대륙을 열지 않는다.
+- 마을 완료와 우표는 기존 `unitDone/tileDone`(모든 단어에 기록이 있고 미완료 open 표시가 없음)에서 계산한다. 우표를 아이 기록에 저장하지 않으며 놀이 도장 `ws.stamps`에도 쓰지 않는다. 단어 등급·복습 기한·학습 저장 형식/키는 바꾸지 않는다. 이미 통과한 세계·대륙 성 기록을 보존하고, 아직 못 깬 세계만 새 조건으로 판정한다.
+- `worldView.gate={tilesDone,totalTiles,minTiles,reachable,stamps:[{id,nodeId,collected}],ready}`, `continentView.gate={worldsPassed,totalWorlds,tilesDone,totalTiles,minTiles,minTileRate,ready}`는 저장하지 않는 화면 자료다. reach.castle은 물리적 도달 여부를 유지한다. 세계 성의 화면과 실제 시작은 같은 관문 계산을 쓰며 입장 직전에 현재 기록을 다시 검사한다. 대륙 성도 현재 조건으로 검사한다.
+- 시험용 지도만 사용자 승인에 따라 연결·좌표·추가 칸·같은 세계 안 카드 배정을 조정한다. 기존 세계/카드/칸 ID와 세계별 카드 집합, H1/H1-1은 유지한다. d1-01은 6칸/60장/K4/우표 B1·C1, d1-02와 d2-01은 각각 5칸/10장/K3/우표 T2·T4와 U2·U4다. 이 예외는 실제 30세계에 적용하지 않는다.
 
 ## 5. 긴 길의 선택 놀이집
 
@@ -248,6 +258,6 @@ Claude 연결 요청:
 - 놀이집은 학습 엔진과 분리한 화면이며 중단해도 학습 칸 완료를 만들지 않는다. profile별 장식 도장을 저장하고 오디오나 정답 기록을 조작하지 않는다.
 - 전체 카드 카탈로그는 catalogue.json으로 제공했다. 음원·세계별 진도·동기화는 Claude가 연결한다. 사용자 결정에 따라 시제품 w1은 새 시작이고 기존 카드/성/도장 기록을 새 진도로 자동 복사하지 않는다. 런타임 담당 `cards/js/*`, `cards/css/*`, `tests/*`는 이번 시안 작업에서 직접 수정하지 않는다.
 
-대륙 성은 필수 관문을 유지하되 40장·80%에서 낮출 기준이 미정이다. 설정이 null이면 준비 중으로 표시하고 다음 대륙을 열지 않는다. 모든 왕관 뒤 이미 만난 카드로 출제하고 중단 계획을 저장하며 실패해도 길·왕관을 빼앗지 않는 원칙은 유지한다. 두 아이 기록과 장식 도장은 분리하고 학습 일정·등급은 기존 엔진만 변경한다.
+대륙 성은 모든 세계 성과 지도 마을 70%를 요구하는 필수 관문이며 현재 40장·75%다. 설정이 null이면 준비 중으로 표시하고 다음 대륙을 열지 않는다. 이미 만난 카드로 세계별 고르게 출제하고 실패해도 길·왕관을 빼앗지 않는 원칙은 유지한다. 두 아이 기록과 장식 도장은 분리하고 학습 일정·등급은 기존 엔진만 변경한다.
 
 시안 내부 graph.version=3, edges의 `[from,to]`, 목표 cardCount는 검토 도구 형식이다. 배포 schemaVersion=3은 위 Node.words·객체 edge 계약을 따르고 시안 JSON을 그대로 배포하지 않는다.
