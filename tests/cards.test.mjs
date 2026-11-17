@@ -704,3 +704,70 @@ test('O4: in the real catalogue every meaning card gets three options with three
   console.log(`O4 counts: meaning cards ${meaning}, rule 3 applies ${themeRule}, falls back ${meaning - themeRule}`);
   assert.ok(meaning > 0);
 });
+
+// C-006: fill the remaining meaning choices from the exact POS bucket before the old fallback.
+test('O5: both wrong answers have the exact POS with and without enough same-theme candidates (200 draws each)', () => {
+  assert.equal(CFG.posOption, true);
+  for (const hasTheme of [true, false]) {
+    const nouns = themed(6).map((w, i) => ({ ...w, type: 'noun-picture', theme: hasTheme ? '동물' : `서로다른주제${i}` }));
+    const others = filler(30).map((w) => ({ ...w, pos: '동사', type: 'verb-picture' }));
+    nouns[0].type = 'verb-picture'; // Legacy type fallback would choose verbs, so this checks the new source.
+    const deck = [...nouns, ...others]; const byId = Object.fromEntries(deck.map((w) => [w.id, w]));
+    for (let seed = 1; seed <= 200; seed++) {
+      const ids = optIds(deck, nouns[0].id, seed);
+      assert.equal(ids.length, 3); assert.ok(ids.includes(nouns[0].id));
+      const wrong = ids.filter((id) => id !== nouns[0].id);
+      assert.equal(wrong.length, 2); assert.ok(wrong.every((id) => byId[id].pos === nouns[0].pos), `${hasTheme}/${seed}`);
+      if (hasTheme) assert.ok(wrong.some((id) => byId[id].theme === nouns[0].theme));
+    }
+  }
+});
+
+test('O6: missing POS or a bucket of four preserves choices and RNG calls with posOption on/off', () => {
+  const absent = [...themed(8).map(({ pos, ...w }) => w), ...filler(30)];
+  const four = [...themed(4), ...filler(30).map((w) => ({ ...w, pos: '동사' }))];
+  for (const deck of [absent, four]) for (let seed = 1; seed <= 200; seed++) {
+    const draw = (enabled) => { const random = mulberry32(seed); const trace = [];
+      const run = new Run({ state: newState('o'), words: deck, today: D1, cfg: { ...CFG, posOption: enabled }, rng: () => { const n = random(); trace.push(n); return n; } });
+      return { options: run._options(deck[0].id), trace }; };
+    assert.deepEqual(draw(true), draw(false), `${deck === absent ? 'missing' : 'four'}/${seed}`);
+  }
+});
+
+test('O7: the POS draw excludes confusion groups, repeated displays, and sight cards, and caps retries at 30', () => {
+  const deck = themed(9).map((w, i) => ({ ...w, theme: `별도주제${i}` }));
+  deck[0].groups = ['shared']; deck[1].groups = ['shared']; deck[2].ko = deck[0].ko;
+  deck[3].ko = '겹친오답'; deck[4].ko = '겹친오답';
+  deck.push({ id: 'sight-pos', form: 'the', ko: '', track: 'sight', type: 't', pos: '명사' });
+  for (let seed = 1; seed <= 200; seed++) {
+    const ids = optIds(deck, deck[0].id, seed);
+    assert.equal(ids.length, 3); assert.ok(ids.includes(deck[0].id));
+    assert.ok(!ids.some((id) => [deck[1].id, deck[2].id, 'sight-pos'].includes(id)), `seed ${seed}`);
+    assert.equal(new Set(ids.map((id) => deck.find((w) => w.id === id).ko)).size, 3);
+  }
+  // A degenerate RNG keeps hitting the answer. POS stops after 30, then the existing fallback rescues it.
+  const bounded = themed(5).map((w, i) => ({ ...w, theme: `単独${i}` }));
+  const run = new Run({ state: newState('o'), words: bounded, today: D1, rng: () => 0, cfg: { ...CFG, themeOption: false } });
+  const pool = run.ix.byPos.get(bounded[0].pos); let reads = 0;
+  run.ix.byPos.set(bounded[0].pos, new Proxy(pool, { get: (target, key) => { if (/^\d+$/.test(String(key))) reads++; return Reflect.get(target, key); } }));
+  assert.equal(run._options(bounded[0].id).length, 3); assert.equal(reads, 30);
+});
+
+test('O8: all real meaning cards have distinct displays; count both-POS and fallback outcomes', () => {
+  const cat = JSON.parse(fs.readFileSync('cards/data/catalogue.json', 'utf8'));
+  const words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
+  const byId = Object.fromEntries(words.map((w) => [w.id, w]));
+  const run = new Run({ state: newState('o'), words, today: D1, rng: mulberry32(7), cfg: { ...CFG, posOption: true } });
+  let bothPos = 0, other = 0;
+  for (const w of words) {
+    if (w.track === 'sight' || !w.ko) continue;
+    const options = run._options(w.id); const wrong = options.filter((o) => o.id !== w.id);
+    assert.equal(options.length, 3, w.id); assert.equal(wrong.length, 2, w.id);
+    assert.equal(new Set(options.map((o) => o.ko)).size, 3, w.id);
+    assert.ok(wrong.every((o) => byId[o.id].ko && byId[o.id].track !== 'sight' && !confusableOf(w, byId[o.id])), w.id);
+    if (w.pos && wrong.every((o) => byId[o.id].pos === w.pos)) bothPos++; else other++;
+  }
+  assert.equal(bothPos + other, words.filter((w) => w.track !== 'sight' && w.ko).length);
+  assert.ok(bothPos > 0);
+  console.log(`O8 counts (seed 7, catalogue order, one draw/card): both wrong answers same POS ${bothPos}; otherwise ${other}; total ${bothPos + other}`);
+});
