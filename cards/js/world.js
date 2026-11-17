@@ -24,6 +24,17 @@ export function indexWorlds(doc) {
     worlds.push(w); byId[w.id] = w; contOf[w.id] = c;
     w._nodes = Object.fromEntries(w.map.nodes.map((n) => [n.id, n])); w._adj = Object.fromEntries(w.map.nodes.map((n) => [n.id, []]));
     for (const e of w.map.edges) { if (!w._nodes[e.from] || !w._nodes[e.to]) throw new Error(`${w.id}: 선이 없는 칸을 가리켜요 (${e.from} - ${e.to})`); w._adj[e.from].push(e.to); w._adj[e.to].push(e.from); }
+    if (w.castleRule?.type === 'explore') {
+      const rule = w.castleRule, tiles = w.map.nodes.filter((n) => n.kind === 'tile');
+      if (!Number.isInteger(rule.cards) || rule.cards < 1 || !Number.isFinite(rule.passRate) || rule.passRate <= 0 || rule.passRate > 1 ||
+          !Number.isInteger(rule.minTiles) || rule.minTiles < 1 || rule.minTiles > tiles.length || rule.nodeId !== w.map.castleNodeId ||
+          !Array.isArray(rule.stamps) || rule.stamps.length !== 2 || rule.stamps[0]?.id !== 'A' || rule.stamps[1]?.id !== 'B' ||
+          new Set(rule.stamps.map((s) => s.nodeId)).size !== 2 || rule.stamps.some((s) => w._nodes[s.nodeId]?.kind !== 'tile'))
+        throw new Error(`${w.id}: 성의 마을 수와 우표 배치를 읽을 수 없어요.`);
+    }
+    if (c.finale?.unlock === 'all-world-castles-and-tile-ratio' &&
+        (!Number.isFinite(c.finale.minTileRate) || c.finale.minTileRate < 0.6 || c.finale.minTileRate > 0.8))
+      throw new Error(`${c.id}: 대륙 성의 마을 비율을 읽을 수 없어요.`);
     for (const u of unitsIn(w)) for (const id of u.words) wordWorld[id] = w.id;
   }
   return { doc, continents: doc.continents, worlds, byId, contOf, wordWorld };
@@ -64,6 +75,17 @@ export function reach(w, state) {
   return { reached, open, castle, games };
 }
 
+// Derived only from completed map tiles; neither gate stamps nor totals are
+// written to a child's records (ws.stamps remains minigame decoration only).
+function worldGate(w, state, r = reach(w, state)) {
+  const tiles = w.map.nodes.filter((n) => n.kind === 'tile'), rule = w.castleRule;
+  const tilesDone = tiles.filter((n) => tileDone(state, w.id, n.id, n.words)).length;
+  const stamps = rule?.type === 'explore' ? rule.stamps.map((s) => ({ ...s, collected: tileDone(state, w.id, s.nodeId, w._nodes[s.nodeId].words) })) : [];
+  const minTiles = rule?.type === 'explore' ? rule.minTiles : 0;
+  return { tilesDone, totalTiles: tiles.length, minTiles, reachable: r.castle, stamps,
+    ready: r.castle && tilesDone >= minTiles && stamps.every((s) => s.collected) };
+}
+
 export function crowned(w, state) { return !!wstate(state, w.id).castle && unitsIn(w).every((u) => unitDone(state, u)); }
 // A continent castle the world file marks as not decided yet (status "pending-config", or cards / passRate given as null) is
 // "준비 중": it never starts and never opens the next continent. A file without a finale uses the defaults.
@@ -77,8 +99,15 @@ export function worldOpen(ix, w, state) {
 }
 export function continentView(ix, c, state) {
   const crowns = c.worlds.filter((w) => crowned(w, state)).length; const passed = cstate(state, c.id).castle;
-  return { id: c.id, name: c.name, story: c.story, crowns, total: c.worlds.length,
-    finale: { ...finaleOf(c), name: c.finale?.name || `${c.name}의 큰 성`, intro: c.finale?.intro || '', outro: c.finale?.outro || '', status: passed ? 'cleared' : finaleOf(c).pending ? 'pending' : crowns === c.worlds.length ? 'open' : 'locked', day: passed } };
+  const tiles = c.worlds.flatMap((w) => w.map.nodes.filter((n) => n.kind === 'tile').map((n) => ({ w, n })));
+  const worldsPassed = c.worlds.filter((w) => !!wstate(state, w.id).castle).length;
+  const tilesDone = tiles.filter(({ w, n }) => tileDone(state, w.id, n.id, n.words)).length;
+  const minTileRate = c.finale?.unlock === 'all-world-castles-and-tile-ratio' ? c.finale.minTileRate : null;
+  const minTiles = minTileRate === null ? tiles.length : Math.ceil(minTileRate * tiles.length);
+  const ready = minTileRate === null ? crowns === c.worlds.length : worldsPassed === c.worlds.length && tilesDone >= minTiles;
+  const gate = { worldsPassed, totalWorlds: c.worlds.length, tilesDone, totalTiles: tiles.length, minTiles, minTileRate, ready };
+  return { id: c.id, name: c.name, story: c.story, crowns, total: c.worlds.length, gate,
+    finale: { ...finaleOf(c), name: c.finale?.name || `${c.name}의 큰 성`, intro: c.finale?.intro || '', outro: c.finale?.outro || '', status: passed ? 'cleared' : finaleOf(c).pending ? 'pending' : ready ? 'open' : 'locked', day: passed } };
 }
 // The world list: what is open, what has a key (castle), what has a crown.
 export function atlasView(ix, state) {
@@ -98,10 +127,10 @@ export function currentWorld(ix, state) {
 // What the map of one world shows. Node status: cleared | open | locked | blocked (a full bat gauge comes first).
 export function worldView(ix, w, state, today) {
   const m = ensureMap(state); const ws = wstate(state, w.id); const r = reach(w, state); const bat = batState(state, today); const due = dueCount(state, today); const wait = waitingCount(state, today);
-  const castleDone = !!ws.castle; const gate = (s) => (s === 'open' && bat.full ? 'blocked' : s);
+  const castleDone = !!ws.castle; const gate = (s) => (s === 'open' && bat.full ? 'blocked' : s); const exploration = worldGate(w, state, r);
   const nodes = w.map.nodes.map((n) => {
     if (n.kind === 'tile') { const cleared = tileDone(state, w.id, n.id, n.words); return { ...n, status: cleared ? 'cleared' : gate(r.open.has(n.id) ? 'open' : 'locked'), bonus: castleDone && !cleared, left: n.words.filter((id) => !state.words[id]).length }; }
-    if (n.kind === 'castle') return { ...n, status: castleDone ? 'cleared' : gate(r.castle ? 'open' : 'locked') };
+    if (n.kind === 'castle') return { ...n, status: castleDone ? 'cleared' : gate(exploration.ready ? 'open' : 'locked') };
     if (n.kind === 'minigame') return { ...n, status: !r.games.has(n.id) ? 'locked' : ws.stamps[n.id] ? 'cleared' : 'open', playable: GAMES.has(n.gameType) };
     return { ...n, status: 'free' };
   });
@@ -114,7 +143,7 @@ export function worldView(ix, w, state, today) {
   const units = unitsIn(w).length, unitsDone = unitsIn(w).filter((u) => unitDone(state, u)).length;
   const monster = due >= MONSTER_AT && (m.monsterDay !== today || (m.monsterN || 1) < RULES.monsterPerDay);
   const ripe = ripeCount(state); const c = ix.contOf[w.id];
-  return { today, world: w, nodes, houses, castle: nodes.find((n) => n.kind === 'castle'), crown: castleDone && unitsDone === units, units, unitsDone,
+  return { today, world: w, nodes, houses, gate: exploration, castle: nodes.find((n) => n.kind === 'castle'), crown: castleDone && unitsDone === units, units, unitsDone,
     monster: { present: monster, count: due }, review: { present: !monster && wait > 0, count: wait }, bat: { fill: bat.fill, cap: bat.cap, full: bat.full, overdue: bat.overdue, limit: bat.limit, byDebt: bat.byDebt },
     bonus: { status: m.bonusDay === today ? 'used' : ripe < LIGHTNING_MIN ? 'locked' : 'open', ripe }, stars: m.stars, items: { ...m.items }, bag: m.bag, keys: m.keys, best: m.best,
     next: w.nextWorldId ? ix.byId[w.nextWorldId] : null, continent: continentView(ix, c, state), firstVisit: !ws.seen };
@@ -139,7 +168,7 @@ export function nodeRun(ix, view, id, state, words, rng) {
   const n = view.nodes.find((x) => x.id === id);
   if (n && n.kind === 'tile') return n.status === 'open' && !caught ? unitRun(n, n.bonus) : null;
   if (n && n.kind === 'castle') {
-    if (n.status !== 'open') return null; const rule = w.castleRule || {};
+    if (n.status !== 'open' || !worldGate(w, state).ready || wstate(state, w.id).castle) return null; const rule = w.castleRule || {};
     const pool = shuffle(worldWords(w).filter((x) => state.words[x]), rng).slice(0, rule.cards ?? CASTLE.cards);
     return pool.length ? { kind: 'castle', wid: w.id, tag: 'castle:' + w.id, pass: rule.passRate ?? CASTLE.pass, scope: { castle: pool } } : null;
   }

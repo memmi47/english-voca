@@ -240,27 +240,30 @@ oldTest('W4: an early exit leaves the tile uncleared; the unseen words are drawn
   assert.equal(nodeRun(IX, view(s, addDays(D1, 1)), 'A1', s, WORDS, mulberry32(1)).scope.newIds.length, 10);
 });
 
-oldTest('W5: the castle opens as soon as a path reaches it (free nodes are walked through); a short path is enough', () => {
-  const s = newState('son'); clear(s, 'C1'); assert.equal(view(s).castle.status, 'locked');           // C2 still stands between the start and the square
-  clear(s, 'C2'); const v = view(s); assert.equal(v.castle.status, 'open'); assert.equal(status(v, 'G2'), 'open');   // the playhouse hangs on C2
-  assert.deepEqual(['A1', 'B1', 'A2', 'B2'].map((id) => status(v, id)), ['open', 'open', 'open', 'open']);          // from the square the child can also walk back into the other paths
+oldTest('W5: reaching the castle is necessary but the minimum villages and both stamps are also required', () => {
+  const s = newState('son'); ensureMap(s).bat.cap = 80;
+  clear(s, 'C1'); assert.equal(view(s).castle.status, 'locked');
+  clear(s, 'C2'); assert.equal(view(s).castle.status, 'locked'); assert.equal(status(view(s), 'G2'), 'open');
+  clear(s, 'A2'); let v = view(s); assert.equal(v.gate.reachable, true); assert.equal(v.gate.tilesDone, 3); assert.equal(v.castle.status, 'locked');
+  clear(s, 'B1'); v = view(s); assert.equal(v.castle.status, 'open'); assert.equal(v.gate.ready, true);
+  assert.deepEqual(['A1', 'B1', 'A2', 'B2'].map((id) => status(v, id)), ['open', 'cleared', 'cleared', 'open']);
   const r = reach(W1, s); assert.ok(r.reached.has('plaza') && r.castle);
 });
 
 oldLegacy('W6: castle: 12 check cards from this world\'s met words; 80% gives the key and opens the next world; leftovers pay double; no crown yet', () => {
-  const s = newState('son'); clear(s, 'A1'); clear(s, 'A2');
-  assert.equal(worldOpen(IX, W2, s), false);
+  const s = newState('son'); ensureMap(s).bat.cap = 80; for (const id of ['A1', 'A2', 'B1', 'C1']) clear(s, id);
+  assert.equal(view(s).gate.ready, true); assert.equal(worldOpen(IX, W2, s), false);
   const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
   assert.ok(run.queue.length === 12 && run.queue.every((q) => q.role === 'castle' && q.form === 'check' && worldWords(W1).includes(q.id) && s.words[q.id]));
   play(run, () => true); const rec = run.finish(); const r = settle(s, node, run, rec, D1);
   assert.deepEqual([r.key, r.castle.pass, r.castle.ok, r.castle.total, r.crown, r.nextWorld.id], [true, true, 12, 12, false, 'd1-02']);
   const v = view(s); assert.deepEqual([v.castle.status, v.keys, v.crown], ['cleared', 1, false]); assert.equal(worldOpen(IX, W2, s), true);
   assert.ok(v.nodes.filter((n) => n.kind === 'tile' && n.status !== 'cleared').every((n) => n.bonus)); assert.equal(v.houses[0].bonus, true);
-  assert.equal(clear(s, 'B1').mult, 2);
+  assert.equal(clear(s, 'B2').mult, 2);
 });
 
 oldTest('W7: a failed castle card is not known: back to learning, due tomorrow; below the pass rate there is no key and the castle stays open', () => {
-  const s = newState('son'); clear(s, 'A1'); clear(s, 'A2'); const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
+  const s = newState('son'); ensureMap(s).bat.cap = 80; for (const id of ['A1', 'A2', 'B1', 'C1']) clear(s, id); const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node);
   const missed = []; let n = 0;
   while (run.current) { const it = run.show(); const ans = it.options.findIndex((o) => o.id === it.id); const miss = n++ < 4; if (miss) missed.push(it.id); run.pick(miss ? (ans + 1) % 3 : ans); run.advance(); }
   const rec = run.finish(); const r = settle(s, node, run, rec, D1);
@@ -306,7 +309,7 @@ test('W11: worlds open in order: the next world needs the castle before it, the 
   const a = atlasView(IX, s); assert.deepEqual(a.map((c) => [c.id, c.crowns, c.total, c.finale.status]), [['d1', 0, 2, 'locked'], ['d2', 0, 1, 'locked']]);
 });
 
-test('W12: the continent castle opens only with every crown; it draws met cards evenly from every world; passing opens the next continent', () => {
+test('W12: the continent castle needs all world castles and the village ratio; it draws met cards evenly from every world; passing opens the next continent', () => {
   const s = newState('son'); meetAll(s, W1); meetAll(s, W2); const m = ensureMap(s);
   m.worlds['d1-01'] = { castle: D1, cleared: {}, stamps: {}, seen: D1 }; assert.equal(atlasView(IX, s)[0].finale.status, 'locked'); assert.equal(finaleRun(IX, DOC.continents[0], s, D1, mulberry32(1)), null);
   m.worlds['d1-02'] = { castle: D1, cleared: {}, stamps: {}, seen: D1 }; const a = atlasView(IX, s)[0]; assert.deepEqual([a.crowns, a.finale.status, a.finale.cards, a.finale.pass], [2, 'open', 10, 0.7]);
@@ -379,7 +382,8 @@ oldTest('G1: the gauge gains 1 per new word and loses 1 per review answered, nev
 oldLegacy('G2: a full gauge stops everything but the bat test; with nothing to ask it is not "full"', () => {
   const s = newState('son'); clear(s, 'A1'); clear(s, 'A2'); clear(s, 'B1'); assert.equal(view(s).bat.full, false);
   clear(s, 'B2'); const v = view(s); assert.deepEqual([v.bat.fill, v.bat.cap, v.bat.full, v.bat.byDebt], [40, 40, true, false]);
-  assert.deepEqual([status(v, 'C1'), v.castle.status, status(v, 'H1'), status(v, 'C2'), status(v, 'G1')], ['blocked', 'blocked', 'blocked', 'blocked', 'open']);   // play is not blocked
+  assert.deepEqual([status(v, 'C1'), v.castle.status, status(v, 'H1'), status(v, 'C2'), status(v, 'G1')], ['blocked', 'locked', 'blocked', 'blocked', 'open']);   // missing stamp keeps castle locked; play is not blocked
+  const ready = structuredClone(s); for (const id of W1._nodes.C1.words) ready.words[id] = { st: 'done', due: null }; assert.equal(view(ready).gate.ready, true); assert.equal(view(ready).castle.status, 'blocked'); assert.equal(nodeRun(IX, view(ready), 'castle', ready, WORDS, mulberry32(1)), null);
   for (const id of ['C1', 'castle', 'monster', 'H1']) assert.equal(nodeRun(IX, v, id, s, WORDS, mulberry32(1)), null, id);
   assert.ok(nodeRun(IX, v, 'bat', s, WORDS, mulberry32(1)));
   const empty = newState('son'); ensureMap(empty).bat.fill = 99; assert.equal(view(empty).bat.full, false);   // gauge full but no word to ask about
@@ -547,7 +551,7 @@ test('T5: bunch checks: none before the date; then 3 cards per bunch in tile and
     assert.ok(n.scope.audit.picks.every((p) => bunchLeft(s, p.bunch).includes(p.id))); }
   const mr = mkRun(s, mon, d); assert.equal(mr.queue.filter((q) => q.role === 'audit').length, 6); assert.equal(mr.queue.filter((q) => q.role === 'review').length, 8);
   const tr = triageRun(s, 'B2', [], d); assert.deepEqual(tr.run.queue.slice(0, 2).map((q) => q.role), ['spot', 'spot']); assert.equal(tr.run.queue.filter((q) => q.role === 'audit').length, 6);
-  const c = newState('son'); for (const id of ['A1', 'A2']) { const t = triageRun(c, id); playT(t.run); finishT(c, t); }
+  const c = newState('son'); for (const id of ['A1', 'A2', 'B1', 'C1']) { const t = triageRun(c, id); playT(t.run); finishT(c, t); }
   const cv = view(c, D30); const castle = nodeRun(IX, cv, 'castle', c, WORDS, mulberry32(1)); assert.ok(castle && !castle.scope.audit); assert.ok(mkRun(c, castle, D30).queue.every((q) => q.role === 'castle'));
   for (const w of W1._nodes.B1.words.slice(0, 5)) c.words[w] = { st: 'review', step: 1, due: D1, firstDay: D1, lastDay: D1, lapses: 0 }; ensureMap(c).bat.fill = 99;
   const bat = nodeRun(IX, view(c, D30), 'bat', c, WORDS, mulberry32(1)); assert.ok(bat && !bat.scope.audit); assert.ok(mkRun(c, bat, D30).queue.every((q) => q.role !== 'audit'));
@@ -570,8 +574,8 @@ test('T6: all samples right: every word left in the bunch is gold, bunch "ok"; o
 });
 
 test('T7: a passed word missed in a castle test becomes a learning word and is no longer sampled from its bunch', () => {
-  const s = newState('son'); for (const id of ['A1', 'A2']) { const t = triageRun(s, id); playT(t.run); finishT(s, t); }
-  const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const x = node.scope.castle.find((id) => bunchLeft(s, 'A1').includes(id)); assert.ok(x);
+  const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'C1']) { const t = triageRun(s, id); playT(t.run); finishT(s, t); }
+  const node = nodeRun(IX, view(s), 'castle', s, WORDS, () => .999); const x = node.scope.castle.find((id) => bunchLeft(s, 'A1').includes(id)); assert.ok(x);
   exam(s, node, D1, (id) => id !== x); assert.deepEqual([s.words[x].st, s.words[x].due, s.words[x].bunch], ['learn', addDays(D1, 1), 'A1']);
   assert.ok(!bunchLeft(s, 'A1').includes(x)); for (let k = 0; k < 30; k++) assert.ok(auditPick(s, D30, mulberry32(k)).picks.every((p) => p.id !== x));
 });
@@ -770,4 +774,80 @@ test('O8: all real meaning cards have distinct displays; count both-POS and fall
   assert.equal(bothPos + other, words.filter((w) => w.track !== 'sight' && w.ko).length);
   assert.ok(bothPos > 0);
   console.log(`O8 counts (seed 7, catalogue order, one draw/card): both wrong answers same POS ${bothPos}; otherwise ${other}; total ${bothPos + other}`);
+});
+
+// C-013: gate stamps are computed from tile completion, never saved as prizes.
+const meetTiles = (state, world, ids) => {
+  for (const tid of ids) for (const id of world._nodes[tid].words)
+    state.words[id] = { st: 'done', due: null, firstDay: D1, lastDay: D1, lapses: 0 };
+};
+test('W14: the shortest route reaches the castle but lacks the village minimum and both stamps', () => {
+  const s = newState('son'); meetTiles(s, W1, ['A1', 'A2']); const v = view(s);
+  assert.equal(reach(W1, s).castle, true); assert.equal(v.gate.reachable, true);
+  assert.deepEqual([v.gate.tilesDone, v.gate.totalTiles, v.gate.minTiles, v.gate.ready], [2, 6, 4, false]);
+  assert.deepEqual(v.gate.stamps.map((x) => [x.id, x.collected]), [['A', false], ['B', false]]);
+  assert.equal(v.castle.status, 'locked'); assert.equal(nodeRun(IX, v, 'castle', s, WORDS, mulberry32(1)), null);
+});
+test('W15: K alone is insufficient; both stamps open the castle and an unfinished stamp tile closes even a stale view', () => {
+  const s = newState('son'); meetTiles(s, W1, ['A1', 'A2', 'B1', 'B2']); let v = view(s);
+  assert.equal(v.gate.tilesDone, 4); assert.deepEqual(v.gate.stamps.map((x) => x.collected), [true, false]); assert.equal(v.castle.status, 'locked');
+  for (const id of W1._nodes.B2.words) delete s.words[id]; meetTiles(s, W1, ['C1']); v = view(s);
+  assert.equal(v.gate.tilesDone, 4); assert.equal(v.castle.status, 'open'); assert.ok(nodeRun(IX, v, 'castle', s, WORDS, mulberry32(1)));
+  const before = JSON.stringify([s.words, s.bunches, s.forms]);
+  ensureMap(s).worlds[W1.id].open = { C1: D1 };
+  assert.equal(view(s).gate.stamps[1].collected, false); assert.equal(view(s).gate.tilesDone, 3);
+  assert.equal(nodeRun(IX, v, 'castle', s, WORDS, mulberry32(1)), null, 'entry must recheck live records');
+  assert.deepEqual(ensureMap(s).worlds[W1.id].stamps, {}); assert.equal(JSON.stringify([s.words, s.bunches, s.forms]), before);
+});
+oldTest('W16: a legal gate and castle pass open the next world while other branch villages stay optional and pay double', () => {
+  const s = newState('son'); ensureMap(s).bat.cap = 80;
+  for (const id of ['A1', 'A2', 'B1', 'C1']) clear(s, id);
+  assert.equal(view(s).gate.ready, true); assert.equal(worldOpen(IX, W2, s), false);
+  const result = exam(s, nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)), D1);
+  assert.equal(result.out.castle.pass, true); assert.equal(worldOpen(IX, W2, s), true); assert.equal(view(s).crown, false);
+  assert.deepEqual(['B2', 'C2'].map((id) => [status(view(s), id), view(s).nodes.find((n) => n.id === id).bonus]), [['open', true], ['open', true]]);
+  assert.equal(clear(s, 'B2').mult, 2); assert.equal(view(s).crown, false);
+});
+test('W17: continent admission requires every world castle and ceil(70% villages), with no crowns; unfinished villages do not count', () => {
+  const s = newState('son'); meetTiles(s, W1, ['A1', 'A2', 'B1', 'C1']); meetTiles(s, W2, ['T1', 'T2', 'T4']);
+  const m = ensureMap(s); for (const w of [W1, W2]) m.worlds[w.id] = { castle: D1, cleared: {}, stamps: {}, seen: D1 };
+  let v = atlasView(IX, s)[0]; assert.deepEqual([v.gate.worldsPassed, v.gate.totalWorlds, v.gate.tilesDone, v.gate.totalTiles, v.gate.minTiles, v.gate.minTileRate], [2, 2, 7, 11, 8, .7]);
+  assert.equal(v.finale.status, 'locked'); assert.equal(finaleRun(IX, DOC.continents[0], s, D1, mulberry32(1)), null);
+  meetTiles(s, W1, ['B2']); v = atlasView(IX, s)[0]; assert.equal(v.crowns, 0); assert.equal(v.gate.tilesDone, 8); assert.equal(v.finale.status, 'open');
+  assert.ok(finaleRun(IX, DOC.continents[0], s, D1, mulberry32(1)));
+  m.worlds[W1.id].open = { B2: D1 }; m.worlds[W1.id].cleared.B2 = D1;
+  assert.equal(atlasView(IX, s)[0].gate.tilesDone, 7); assert.equal(finaleRun(IX, DOC.continents[0], s, D1, mulberry32(1)), null);
+  delete m.worlds[W1.id].open.B2; m.worlds[W2.id].castle = null;
+  assert.equal(atlasView(IX, s)[0].gate.tilesDone, 8); assert.equal(finaleRun(IX, DOC.continents[0], s, D1, mulberry32(1)), null);
+});
+test('W18: previously passed world and continent castles stay cleared even when their new gates are not met', () => {
+  const s = newState('son'); const m = ensureMap(s);
+  m.worlds[W1.id] = { castle: '2026-11-01', cleared: {}, stamps: {}, seen: '2026-11-01' }; m.conts.d1 = { castle: '2026-11-02' };
+  const before = JSON.stringify(s.words); assert.equal(view(s).gate.ready, false); assert.equal(view(s).castle.status, 'cleared');
+  assert.equal(worldOpen(IX, W2, s), true); assert.equal(worldOpen(IX, W3, s), true);
+  assert.equal(atlasView(IX, s)[0].gate.ready, false); assert.equal(atlasView(IX, s)[0].finale.status, 'cleared');
+  assert.equal(m.worlds[W1.id].castle, '2026-11-01'); assert.equal(m.conts.d1.castle, '2026-11-02'); assert.equal(JSON.stringify(s.words), before);
+});
+test('W19: all 30 real world gates can be satisfied, and only their met cards enter unchanged castle exams', () => {
+  const ix = indexWorlds(JSON.parse(fs.readFileSync('cards/data/worlds.json', 'utf8'))); assert.equal(ix.worlds.length, 30);
+  for (const w of ix.worlds) {
+    const s = newState('son'), tiles = w.map.nodes.filter((n) => n.kind === 'tile'); meetTiles(s, w, tiles.map((n) => n.id));
+    const v = worldView(ix, w, s, D1), k = w.castleRule.minTiles;
+    assert.ok(k >= Math.ceil(tiles.length / 2) && k <= Math.floor(tiles.length * .7), w.id);
+    assert.equal(v.gate.stamps.length, 2); assert.equal(new Set(v.gate.stamps.map((x) => x.nodeId)).size, 2);
+    assert.ok(v.gate.stamps.every((x) => x.collected)); assert.equal(v.gate.ready, true); assert.equal(v.castle.status, 'open');
+    const before = JSON.stringify(s.words), node = nodeRun(ix, v, w.map.castleNodeId, s, [], mulberry32(1));
+    assert.equal(node.scope.castle.length, 12); assert.equal(node.pass, .8); assert.ok(node.scope.castle.every((id) => s.words[id] && worldWords(w).includes(id)));
+    assert.equal(JSON.stringify(s.words), before); assert.deepEqual(ensureMap(s).worlds[w.id].stamps, {});
+  }
+});
+test('W20: malformed explicit exploration rules are data errors; absent or reach legacy rules retain physical reach', () => {
+  for (const change of [(w) => delete w.castleRule.minTiles, (w) => delete w.castleRule.stamps, (w) => delete w.castleRule.cards, (w) => { w.castleRule.stamps[1].nodeId = w.castleRule.stamps[0].nodeId; }]) {
+    const doc = JSON.parse(JSON.stringify(DOC)); change(doc.continents[0].worlds[0]); assert.throws(() => indexWorlds(doc), /우표/);
+  }
+  const bad = JSON.parse(JSON.stringify(DOC)); delete bad.continents[0].finale.minTileRate; assert.throws(() => indexWorlds(bad), /비율/);
+  for (const legacy of [undefined, { type: 'reach', cards: 12, passRate: .8 }]) {
+    const doc = JSON.parse(JSON.stringify(DOC)); doc.continents[0].worlds[0].castleRule = legacy; const ix = indexWorlds(doc), w = ix.worlds[0], s = newState('son'); meetTiles(s, w, ['A1', 'A2']);
+    assert.equal(worldView(ix, w, s, D1).castle.status, 'open'); assert.ok(nodeRun(ix, worldView(ix, w, s, D1), w.map.castleNodeId, s, WORDS, mulberry32(1)));
+  }
 });

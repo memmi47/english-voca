@@ -3,7 +3,7 @@ Writes cards/data/demo/catalog.json and cards/data/demo/worlds.json (schemaVersi
 The game loads it with ?set=demo. The full game uses cards/data/catalog.json + worlds(.fixture).json (tools/make_cards_data.py).
 Usage: python3 -I tools/make_cards_demo.py
 """
-import json, collections
+import json, collections, importlib.util
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 db = json.loads((ROOT / 'reference/weekly-tool/vocabulary.json').read_text(encoding='utf-8'))
@@ -101,11 +101,27 @@ W3 = {'id': 'd2-01', 'name': '바다 마을', 'title': '바다 마을', 'concept
       'map': {'startNodeId': 's', 'castleNodeId': 'k', 'landscape': '섬과 다리', 'nodes': [node('s', 'start', 100, 300), tile('U1', 450, 220, [w['form'] for w in w3[:5]]), tile('U2', 450, 450, [w['form'] for w in w3[5:]]), node('k', 'castle', 880, 220)],
               'edges': [edge('s', 'U1'), edge('U1', 'k'), edge('s', 'U2')]},
       'castleRule': {'type': 'reach', 'nodeId': 'k', 'cards': 5, 'passRate': 0.8}, 'sideActivities': [], 'nextWorldId': None, 'status': 'ready'}
+# C-013: only the demo graph may change. Keep all existing IDs and each
+# world's card set, and make the two stamp branches longer than its main path.
+for n in W1['map']['nodes']:
+    if n['id'] in ('A2','plaza','castle'):
+        n['x'],n['y']={'A2':(700,300),'plaza':(820,300),'castle':(940,300)}[n['id']]
+for e in W1['map']['edges']:
+    if e['from'] in ('B2','C2') and e['to']=='plaza':e['to']='A2'
+for w,prefix in ((W2,'T'),(W3,'U')):
+    prior=[cid for n in w['map']['nodes'] if n['kind']=='tile' for cid in n['words']]
+    coords=[(450,300),(300,150),(650,150),(300,450),(650,450)]
+    w['map']['nodes']=[node('s','start',100,300)]+[node(f'{prefix}{i+1}','tile',*coords[i],words=prior[2*i:2*i+2]) for i in range(5)]+[node('k','castle',900,300)]
+    w['map']['edges']=[edge(a,b) for a,b in [('s',prefix+'1'),(prefix+'1','k'),('s',prefix+'2'),(prefix+'2',prefix+'3'),(prefix+'3','k'),('s',prefix+'4'),(prefix+'4',prefix+'5'),(prefix+'5','k')]]
+spec=importlib.util.spec_from_file_location('make_worlds',ROOT/'tools/make_worlds.py')
+generation=importlib.util.module_from_spec(spec);spec.loader.exec_module(generation)
+gate_settings={'targetTileRate':.6,'minExtraTiles':2,'stampPlacement':'off-all-shortest-farthest-v1'}
+for w in (W1,W2,W3):w['castleRule']=generation.exploration_rule(w,gate_settings)
 doc = {'schemaVersion': 3, 'contentVersion': 'demo-1', 'status': 'ready', 'note': '시험·체험용 작은 세계(대륙 2, 세계 3, 카드 86). 전체 게임용이 아니다.',
        'source': {'path': 'reference/weekly-tool/vocabulary.json', 'sha256': None, 'selection': 'hand-picked demo', 'overrideVersion': None},
        'counts': {'lemmas': 86, 'cards': 86, 'continents': 2, 'worlds': 3, 'byBand': {'P1': 76, 'P2': 10}},
-       'continents': [{'id': 'd1', 'band': 'P1', 'name': '새싹 들판', 'story': '가까운 친구들을 만나요.', 'worlds': [W1, W2], 'finale': {'cards': 10, 'passRate': 0.7}},
-                      {'id': 'd2', 'band': 'P2', 'name': '굽이굽이 바다', 'story': '섬과 섬을 이어요.', 'worlds': [W3], 'finale': {'cards': 6, 'passRate': 0.7}}]}
+       'continents': [{'id': 'd1', 'band': 'P1', 'name': '새싹 들판', 'story': '가까운 친구들을 만나요.', 'worlds': [W1, W2], 'finale': {'cards': 10, 'passRate': 0.7,'unlock':'all-world-castles-and-tile-ratio','minTileRate':.7}},
+                      {'id': 'd2', 'band': 'P2', 'name': '굽이굽이 바다', 'story': '섬과 섬을 이어요.', 'worlds': [W3], 'finale': {'cards': 6, 'passRate': 0.7,'unlock':'all-world-castles-and-tile-ratio','minTileRate':.7}}]}
 used = [x for c in doc['continents'] for w in c['worlds'] for n in w['map']['nodes'] for x in n.get('words', [])] + [x for c in doc['continents'] for w in c['worlds'] for h in w['sideActivities'] for t in h['tiles'] for x in t['words']]
 assert sorted(used) == sorted(w['id'] for w in words), 'every card belongs to exactly one tile or house'
 out = ROOT / 'cards/data/demo'; out.mkdir(parents=True, exist_ok=True)

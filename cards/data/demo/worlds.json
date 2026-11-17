@@ -101,8 +101,8 @@
        {
         "id": "A2",
         "kind": "tile",
-        "x": 500,
-        "y": 120,
+        "x": 700,
+        "y": 300,
         "words": [
          "W0427:기본:breakfast:1",
          "W0621:기본:cheese:1",
@@ -191,13 +191,13 @@
        {
         "id": "plaza",
         "kind": "junction",
-        "x": 720,
+        "x": 820,
         "y": 300
        },
        {
         "id": "castle",
         "kind": "castle",
-        "x": 920,
+        "x": 940,
         "y": 300
        },
        {
@@ -250,7 +250,7 @@
        },
        {
         "from": "B2",
-        "to": "plaza"
+        "to": "A2"
        },
        {
         "from": "start",
@@ -262,7 +262,7 @@
        },
        {
         "from": "C2",
-        "to": "plaza"
+        "to": "A2"
        },
        {
         "from": "plaza",
@@ -279,10 +279,21 @@
       ]
      },
      "castleRule": {
-      "type": "reach",
+      "type": "explore",
       "nodeId": "castle",
       "cards": 12,
-      "passRate": 0.8
+      "passRate": 0.8,
+      "minTiles": 4,
+      "stamps": [
+       {
+        "id": "A",
+        "nodeId": "B1"
+       },
+       {
+        "id": "B",
+        "nodeId": "C1"
+       }
+      ]
      },
      "sideActivities": [
       {
@@ -360,25 +371,49 @@
        {
         "id": "T1",
         "kind": "tile",
-        "x": 380,
+        "x": 450,
         "y": 300,
         "words": [
          "W0080:기본:alien:1",
-         "W0245:기본:baby:1",
-         "W0446:기본:brother:1",
-         "W0673:기본:classmate:1",
-         "W0849:기본:cousin:1"
+         "W0245:기본:baby:1"
         ]
        },
        {
         "id": "T2",
         "kind": "tile",
-        "x": 660,
-        "y": 300,
+        "x": 300,
+        "y": 150,
         "words": [
-         "W0953:기본:daughter:1",
+         "W0446:기본:brother:1",
+         "W0673:기본:classmate:1"
+        ]
+       },
+       {
+        "id": "T3",
+        "kind": "tile",
+        "x": 650,
+        "y": 150,
+        "words": [
+         "W0849:기본:cousin:1",
+         "W0953:기본:daughter:1"
+        ]
+       },
+       {
+        "id": "T4",
+        "kind": "tile",
+        "x": 300,
+        "y": 450,
+        "words": [
          "W1352:기본:father:1",
-         "W1566:기본:girl:1",
+         "W1566:기본:girl:1"
+        ]
+       },
+       {
+        "id": "T5",
+        "kind": "tile",
+        "x": 650,
+        "y": 450,
+        "words": [
          "W1610:기본:grandfather:1",
          "W1611:기본:grandmother:1"
         ]
@@ -397,19 +432,50 @@
        },
        {
         "from": "T1",
+        "to": "k"
+       },
+       {
+        "from": "s",
         "to": "T2"
        },
        {
         "from": "T2",
+        "to": "T3"
+       },
+       {
+        "from": "T3",
+        "to": "k"
+       },
+       {
+        "from": "s",
+        "to": "T4"
+       },
+       {
+        "from": "T4",
+        "to": "T5"
+       },
+       {
+        "from": "T5",
         "to": "k"
        }
       ]
      },
      "castleRule": {
-      "type": "reach",
+      "type": "explore",
       "nodeId": "k",
       "cards": 6,
-      "passRate": 0.8
+      "passRate": 0.8,
+      "minTiles": 3,
+      "stamps": [
+       {
+        "id": "A",
+        "nodeId": "T2"
+       },
+       {
+        "id": "B",
+        "nodeId": "T4"
+       }
+      ]
      },
      "sideActivities": [],
      "nextWorldId": null,
@@ -418,7 +484,9 @@
    ],
    "finale": {
     "cards": 10,
-    "passRate": 0.7
+    "passRate": 0.7,
+    "unlock": "all-world-castles-and-tile-ratio",
+    "minTileRate": 0.7
    }
   },
   {
@@ -477,24 +545,48 @@
         "id": "U1",
         "kind": "tile",
         "x": 450,
-        "y": 220,
+        "y": 300,
         "words": [
          "W0662:기본:citizen:1",
-         "W0747:기본:community:1",
-         "W1226:기본:enemy:1",
-         "W1497:기본:friendship:1",
-         "W1545:기본:generation:1"
+         "W0747:기본:community:1"
         ]
        },
        {
         "id": "U2",
         "kind": "tile",
-        "x": 450,
+        "x": 300,
+        "y": 150,
+        "words": [
+         "W1226:기본:enemy:1",
+         "W1497:기본:friendship:1"
+        ]
+       },
+       {
+        "id": "U3",
+        "kind": "tile",
+        "x": 650,
+        "y": 150,
+        "words": [
+         "W1545:기본:generation:1",
+         "W1612:기본:grandparent:1"
+        ]
+       },
+       {
+        "id": "U4",
+        "kind": "tile",
+        "x": 300,
         "y": 450,
         "words": [
-         "W1612:기본:grandparent:1",
          "W1826:기본:husband:1",
-         "W2054:기본:leader:1",
+         "W2054:기본:leader:1"
+        ]
+       },
+       {
+        "id": "U5",
+        "kind": "tile",
+        "x": 650,
+        "y": 450,
+        "words": [
          "W2405:기본:neighbor:1",
          "W2406:기본:neighborhood:1"
         ]
@@ -502,8 +594,8 @@
        {
         "id": "k",
         "kind": "castle",
-        "x": 880,
-        "y": 220
+        "x": 900,
+        "y": 300
        }
       ],
       "edges": [
@@ -518,14 +610,45 @@
        {
         "from": "s",
         "to": "U2"
+       },
+       {
+        "from": "U2",
+        "to": "U3"
+       },
+       {
+        "from": "U3",
+        "to": "k"
+       },
+       {
+        "from": "s",
+        "to": "U4"
+       },
+       {
+        "from": "U4",
+        "to": "U5"
+       },
+       {
+        "from": "U5",
+        "to": "k"
        }
       ]
      },
      "castleRule": {
-      "type": "reach",
+      "type": "explore",
       "nodeId": "k",
       "cards": 5,
-      "passRate": 0.8
+      "passRate": 0.8,
+      "minTiles": 3,
+      "stamps": [
+       {
+        "id": "A",
+        "nodeId": "U2"
+       },
+       {
+        "id": "B",
+        "nodeId": "U4"
+       }
+      ]
      },
      "sideActivities": [],
      "nextWorldId": null,
@@ -534,7 +657,9 @@
    ],
    "finale": {
     "cards": 6,
-    "passRate": 0.7
+    "passRate": 0.7,
+    "unlock": "all-world-castles-and-tile-ratio",
+    "minTileRate": 0.7
    }
   }
  ]

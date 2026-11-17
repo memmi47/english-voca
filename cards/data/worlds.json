@@ -30,12 +30,18 @@
       "cards": 40,
       "passRate": 0.75
     },
-    "continentGate": "all-world-crowns-and-continent-castle",
+    "continentGate": "all-world-castles-and-tiles-and-continent-castle",
     "expressionPlacement": "dedicated-tiles-within-general-worlds",
     "expressionPrerequisites": "none",
-    "note": "대륙 성은 40장·75%, 표현 구성어 선행 관문은 없다."
+    "note": "대륙 성은 40장·75%, 표현 구성어 선행 관문은 없다.",
+    "worldGate": {
+      "targetTileRate": 0.6,
+      "minExtraTiles": 2,
+      "stampPlacement": "off-all-shortest-farthest-v1"
+    },
+    "continentTileRate": 0.7
   },
-  "configSha256": "7fc1402ebb6ddcb41c45987c9d950ba8190888bcf481c1f901255700a8d50dc7",
+  "configSha256": "88381eafa295f43fdbe577068f22e6ad6bc79889b7c20b942b8c858d17bb5adc",
   "assignmentSha256": "ea675ce1747c6abc1242bec8aa091c4bd2ad0f5e7f7e6e84df9c21b6f2c954dd",
   "progressPolicy": {
     "legacyPrototype": "w1",
@@ -695,10 +701,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-01-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-01-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-01-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-02",
@@ -1206,10 +1223,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-02-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-02-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-02-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-03",
@@ -1716,10 +1744,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-03-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-03-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-03-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-04",
@@ -2226,10 +2265,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-04-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-04-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-04-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-05",
@@ -2721,10 +2771,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-05-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-05-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-05-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-06",
@@ -3216,10 +3277,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-06-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-06-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-06-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-07",
@@ -3711,10 +3783,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-07-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-07-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-07-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p1-08",
@@ -4206,10 +4289,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p1-08-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 9,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p1-08-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p1-08-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": null,
@@ -4227,7 +4321,8 @@
         "intro": "들판의 길을 모두 돌아봤어. 배를 타기 전에 다시 만나 보자!",
         "outro": "배가 바다로 나아가. 새 친구들에게 편지를 전하자!",
         "required": true,
-        "unlock": "all-world-crowns",
+        "unlock": "all-world-castles-and-tile-ratio",
+        "minTileRate": 0.7,
         "cards": 40,
         "passRate": 0.75,
         "status": "draft",
@@ -4767,10 +4862,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-01-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-01-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-01-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-02",
@@ -5309,10 +5415,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-02-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-02-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-02-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-03",
@@ -5851,10 +5968,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-03-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-03-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-03-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-04",
@@ -6393,10 +6521,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-04-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-04-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-04-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-05",
@@ -6935,10 +7074,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-05-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-05-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-05-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-06",
@@ -7476,10 +7626,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-06-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-06-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-06-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-07",
@@ -8017,10 +8178,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-07-main-4",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-07-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-07-detour-2-2"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-08",
@@ -8558,10 +8730,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-08-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-08-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-08-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-09",
@@ -9099,10 +9282,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-09-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-09-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-09-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-10",
@@ -9640,10 +9834,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-10-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-10-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-10-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-11",
@@ -10180,10 +10385,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-11-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-11-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-11-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-12",
@@ -10720,10 +10936,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-12-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-12-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-12-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-13",
@@ -11260,10 +11487,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-13-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-13-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-13-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-14",
@@ -11800,10 +12038,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-14-main-4",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-14-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-14-detour-2-2"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p2-15",
@@ -12354,10 +12603,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p2-15-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 11,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p2-15-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p2-15-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": null,
@@ -12375,7 +12635,8 @@
         "intro": "섬마다 편지를 전했어. 하늘로 가기 전에 다시 만나 보자!",
         "outro": "배가 구름 위로 올라가. 마지막 편지를 찾으러 가자!",
         "required": true,
-        "unlock": "all-world-crowns",
+        "unlock": "all-world-castles-and-tile-ratio",
+        "minTileRate": 0.7,
         "cards": 40,
         "passRate": 0.75,
         "status": "draft",
@@ -12930,10 +13191,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-01-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 11,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-01-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-01-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p3-02",
@@ -13487,10 +13759,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-02-main-4",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 11,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-02-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-02-detour-2-2"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p3-03",
@@ -14029,10 +14312,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-03-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-03-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-03-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p3-04",
@@ -14571,10 +14865,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-04-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-04-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-04-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p3-05",
@@ -15113,10 +15418,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-05-main-7",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-05-detour-1-1"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-05-detour-3-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p3-06",
@@ -15654,10 +15970,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-06-main-5",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-06-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-06-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": "p3-07",
@@ -16195,10 +16522,21 @@
             ]
           },
           "castleRule": {
-            "type": "reach",
+            "type": "explore",
             "nodeId": "p3-07-main-6",
             "cards": 12,
-            "passRate": 0.8
+            "passRate": 0.8,
+            "minTiles": 10,
+            "stamps": [
+              {
+                "id": "A",
+                "nodeId": "p3-07-detour-1-2"
+              },
+              {
+                "id": "B",
+                "nodeId": "p3-07-detour-2-1"
+              }
+            ]
           },
           "sideActivities": [],
           "nextWorldId": null,
@@ -16216,7 +16554,8 @@
         "intro": "돌아오는 길을 모두 이었어. 친구들을 맞을 준비를 하자!",
         "outro": "편지가 모두 집에 닿았어. 우리 길에서 다시 만나!",
         "required": true,
-        "unlock": "all-world-crowns",
+        "unlock": "all-world-castles-and-tile-ratio",
+        "minTileRate": 0.7,
         "cards": 40,
         "passRate": 0.75,
         "status": "draft",

@@ -9,8 +9,14 @@
     "cards": 40,
     "passRate": 0.75
   },
-  "continentGate": "all-world-crowns-and-continent-castle",
+  "continentGate": "all-world-castles-and-tiles-and-continent-castle",
   "expressionPlacement": "dedicated-tiles-within-general-worlds",
   "expressionPrerequisites": "none",
-  "note": "대륙 성은 40장·75%, 표현 구성어 선행 관문은 없다."
+  "note": "대륙 성은 40장·75%, 표현 구성어 선행 관문은 없다.",
+  "worldGate": {
+    "targetTileRate": 0.6,
+    "minExtraTiles": 2,
+    "stampPlacement": "off-all-shortest-farthest-v1"
+  },
+  "continentTileRate": 0.7
 }

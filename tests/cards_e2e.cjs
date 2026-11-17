@@ -27,7 +27,7 @@ async function open(ctx, q, sync = false) {
 }
 const state = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('cards.v0.p.' + i)), id);
 const cur = (page) => page.evaluate(() => { const r = window.__cards.run; const it = r && r.current; return it ? { id: it.id, form: it.form, role: it.role, verifying: !!it.verifying, ans: it.options ? it.options.findIndex((o) => o.id === it.id) : -1 } : null; });
-const nodeStatus = (page, id) => page.$eval(`[data-act=node][data-id=${id}]`, (b) => b.className.replace('node', '').trim());
+const nodeStatus = (page, id) => page.$eval(`[data-act=node][data-id=${id}]`, (b) => [...b.classList].filter(c=>['open','cleared','locked','blocked','used','done'].includes(c)).join(' '));
 // A node is pressed on its picture, like a finger would.
 async function startNode(page, id) { await page.click(`[data-act=node][data-id=${id}]`); await page.waitForSelector(READY, { timeout: 8000 }); }
 async function answer(page, sel) {
@@ -132,7 +132,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('a tile run starts with its new words', /^n/.test(order) && !/r/.test(order.slice(0, 1)), order);
   await d2.close();
 
-  // 6. the whole world in one day: castle opens after two roads, check-only exam, key, bonus road x2, bag items
+  // 6. exploration: stamps and K before a castle, check-only exam, key, bonus road x2, bag items
   const wctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   for (const w of WORDS) KNOWN.add(w.id);
   const w1 = await open(wctx, 'today=2026-12-01&triage=off&seed=11&sound=off&fast=1'); await w1.click('[data-act=pick][data-id=daughter]'); await w1.waitForSelector('.world');
@@ -140,12 +140,12 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await w1.click('[data-act=node][data-id=castle]');
   ok('castle stays locked until a path reaches it', /\blocked\b/.test(await nodeStatus(w1, 'castle')) && /성까지/.test(await w1.textContent('#msg')));
   for (const id of ['A2', 'B1']) { await startNode(w1, id); await play(w1); await toMap(w1); }
-  ok('one finished path opens the castle (through the square); the gauge shows 30 of 40 after three tiles', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && /30\/40/.test(await w1.textContent('#batgauge')));
-  await startNode(w1, 'B2'); await play(w1);
+  ok('a reached castle stays locked at three of four villages with only stamp A; the gauge still shows 30 of 40', /\blocked\b/.test(await nodeStatus(w1, 'castle')) && /30\/40/.test(await w1.textContent('#batgauge')) && await w1.evaluate(()=>{const g=window.__cards;return g.world.castleRule.minTiles===4&&document.querySelector('#castle-gate .gate-villages').textContent==='마을 3/4'&&document.querySelector('#world-stamps [data-stamp=A]').dataset.collected==='true'&&document.querySelector('#world-stamps [data-stamp=B]').dataset.collected==='false';}));
+  await startNode(w1, 'C1'); await play(w1);
   ok('the fourth tile fills the gauge: the end screen announces the bats and offers the test', /박쥐 게이지가 가득/.test(await w1.textContent('.page')) && (await w1.$eval('.go', (b) => b.dataset.act)) === 'bat-go');
   await toMap(w1);
-  ok('full gauge: the bat node appears and every other node says the bats come first', !!(await w1.$('[data-id=bat]')) && /\bblocked\b/.test(await nodeStatus(w1, 'castle')) && /\bblocked\b/.test(await nodeStatus(w1, 'C1')));
-  await w1.click('[data-act=node][data-id=C1]'); ok('a tile cannot start while the gauge is full', /박쥐/.test(await w1.textContent('#msg')) && !(await w1.$('.run')));
+  ok('full gauge: the bat node appears and every other node says the bats come first', !!(await w1.$('[data-id=bat]')) && /\bblocked\b/.test(await nodeStatus(w1, 'castle')) && /\bblocked\b/.test(await nodeStatus(w1, 'B2')));
+  await w1.click('[data-act=node][data-id=B2]'); ok('a tile cannot start while the gauge is full', /박쥐/.test(await w1.textContent('#msg')) && !(await w1.$('.run')));
   await startNode(w1, 'bat'); const batQ = await w1.evaluate(() => window.__cards.run.queue.map((q) => q.form + ':' + q.role));
   ok('the bat test is 25 check cards over the words just met', batQ.length === 25 && batQ.every((x) => x.startsWith('check:')), batQ.length + ' ' + batQ[0]);
   await w1.click('[data-act=quit]'); await w1.waitForSelector('.tiles');
@@ -156,6 +156,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('F10: a bat test with no reviews left over says the gauge goes back to 0', /박쥐 게이지가 0으로 돌아가요/.test(await w1.textContent('.page')));
   await toMap(w1);
   ok('castle is open again once the bats are gone', /\bopen\b/.test(await nodeStatus(w1, 'castle')) && !(await w1.$('[data-id=bat]')));
+  ok('C013: both collected stamps agree on tiles, HUD and castle conditions; the gate uses an open door', await w1.evaluate(()=>['A','B'].every(id=>document.querySelector(`#world-stamps [data-stamp=${id}]`).dataset.collected==='true'&&document.querySelector(`#castle-gate [data-stamp=${id}]`).dataset.collected==='true'&&document.querySelector(`.node .gate-stamp[data-stamp=${id}]`).dataset.collected==='true')&&document.querySelector('#castle-gate').dataset.ready==='true'&&!!document.querySelector('.node.castle use[href="#c011-door-open"]')&&!!document.querySelector('#c013-stamp-a rect[fill="#387D74"]')&&!!document.querySelector('#c013-stamp-b rect[fill="#E89AA8"]')&&Object.keys(window.__cards.st.map.worlds['d1-01'].stamps).length===0&&!('gateStamps' in window.__cards.st.map.worlds['d1-01'])));
+  fs.mkdirSync('/tmp/c013-screens',{recursive:true}); await w1.setViewportSize({width:1180,height:820}); await w1.screenshot({path:'/tmp/c013-screens/world-gates.png',animations:'disabled'}); await w1.setViewportSize({width:1024,height:700});
   await w1.click('[data-act=node][data-id=castle]'); await w1.waitForSelector(READY);
   const castleQ = await w1.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.form));
   ok('castle is a check-only run of 12 cards', castleQ.length === 12 && castleQ.every((x) => x === 'castle:check'));
@@ -164,7 +166,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await toMap(w1);
   ok('castle shows cleared, key counted, what is left over is bonus x2', /\bcleared\b/.test(await nodeStatus(w1, 'castle')) && (await w1.textContent('.maphud .chip:nth-of-type(2)')).trim() === '1' && (await w1.$$('.node .x2')).length === 2);   // the house is off the path now: only the two left-over tiles   // the two tiles left over and the house
   const starsBefore = await w1.evaluate(() => window.__cards.st.map.stars);
-  await startNode(w1, 'C1'); await play(w1); const gain = Number((/\+(\d+)/.exec(await w1.textContent('.gain')) || [])[1]);
+  await startNode(w1, 'B2'); await play(w1); const gain = Number((/\+(\d+)/.exec(await w1.textContent('.gain')) || [])[1]);
   ok('bonus road pays double stars', /\(×2\)/.test(await w1.textContent('.gain')) && gain > 0 && (await state(w1, 'daughter')).map.stars === starsBefore + gain, 'gain=' + gain);
   const dau = await state(w1, 'daughter');
   ok('map rewards left no trace in any word record', Object.values(dau.words).every((r) => !('stars' in r) && !('item' in r) && !('bonus' in r)));
@@ -302,12 +304,12 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await x.click('[data-act=atlas]'); await x.waitForSelector('.atlas');
   const atl = await x.evaluate(() => ({ crown: !!document.querySelector('.wcard[data-id="d1-01"] use[href="#crown"]'), here: document.querySelector('.wcard.here').dataset.id, locked: document.querySelector('.wcard[data-id="d2-01"]').disabled, finale: document.querySelector('.wcard.finale[data-id="d1"]').className }));
   ok('world list: crown on the finished world, the current world marked, the next continent closed, the big castle locked', atl.crown && atl.here === 'd1-02' && atl.locked && /\blocked\b/.test(atl.finale), JSON.stringify(atl));
-  await x.click('.wcard.finale[data-id="d1"]'); ok('the locked big castle says what it needs', /왕관을 모두 모으면/.test(await msg()) && /1\/2/.test(await msg()));
+  await x.click('.wcard.finale[data-id="d1"]'); ok('the locked big castle says what it needs', /세계 성 1\/2/.test(await msg()) && /마을 6\/8 \(70%\)/.test(await msg()));
   await x.click('.wcard[data-id="d1-01"]'); await x.waitForSelector('#world[data-world="d1-01"]'); ok('an earlier world can be visited again', /왕관/.test(await x.textContent('#wtitle')));
   await x.click('[data-act=atlas]'); await x.click('.wcard[data-id="d1-02"]'); await x.waitForSelector('#world[data-world="d1-02"]');
-  for (const id of ['T1', 'T2']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
+  for (const id of ['T1', 'T2', 'T3', 'T4', 'T5']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
   await startNode(x, 'k'); await play(x); await x.waitForSelector('.tiles'); await toMap(x);
-  ok('with every crown of the continent the map points to the big castle', /큰 성에 도전/.test(await msg()));
+  ok('with every world castle and enough villages the map points to the big castle', /큰 성에 도전/.test(await msg()));
   await x.click('[data-act=atlas]'); await x.waitForSelector('.wcard.finale.open'); await x.click('.wcard.finale[data-id="d1"]'); await x.waitForSelector(READY);
   const fq = await x.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.form));
   ok('the big castle is a check-only run over the continent (10 cards in the demo)', fq.length === 10 && fq.every((q) => q === 'castle:check') && (await x.evaluate(() => window.__cards.node.pass)) === 0.7);
@@ -603,9 +605,9 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     pic: !!document.querySelector('#storm use[href="#fx-storm-a"]') && !!document.getElementById('fx-storm-a'), msg: document.querySelector('#msg')?.textContent || '', saved: (JSON.parse(localStorage.getItem('cards.v0.p.' + window.__cards.pid)).map || {}).storm || null }));
   const stCur = (p) => p.evaluate(() => { const r = window.__cards.srun; const c = r && r.current; return c ? { id: c.id, form: c.form, baseForm: c.baseForm, ko: c.ko, ans: c.options.indexOf(c.baseForm), again: r.queue[r.i].again, tag: document.querySelector('#tag')?.textContent || '' } : null; });
   const keep14 = (s) => JSON.stringify([s.words, s.bunches || {}, s.map.bat]);
-  const Q14 = 'today=2026-11-20&triage=off&seed=51&sound=off&fast=1&storm=now';
+  const Q14 = 'today=2026-11-20&triage=off&seed=53&sound=off&fast=1&storm=now'; // Demo four farthest candidates: seed53 picks B1 so two actual moves are observed.
   const zctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
-  let z = await open(zctx, Q14); await seed14(z, 'son', BASES14, null);
+  let z = await open(zctx, Q14); await seed14(z, 'son', [...new Set([...BASES14,...TILE('B1'),...TILE('C1')])], null); // ready both gate stamps without touching the rider or storm rule
   await z.click('[data-act=pick][data-id=son]'); await z.waitForSelector('.world'); const z0 = await look14(z);
   await startNode(z, 'A1'); await play(z); await toMap(z); const z1 = await look14(z); const dA1 = dist14('A1');
   const far = Math.max(...W14.map.nodes.filter((n) => n.kind === 'tile').map((n) => dA1[n.id]));
@@ -620,7 +622,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('회오리 2: each finished run moves it one step toward the rider; when it reaches the rider, "휩쓸렸어요" shows and the storm run starts', z2.rider === 'A2' && dA2[z2.storm] === dA2[z1.storm] - 1 && /다가와요/.test(z2.msg)
     && /성 시험 결과/.test(castleEnd) && sawCaught && runStarted && zs.map.storm && zs.map.storm.node === 'A2', JSON.stringify({ z2, from: z1.storm, castleEnd, sawCaught, runStarted, storm: zs.map.storm }));
   await z.reload(); await z.waitForSelector('.profiles'); await z.click('[data-act=pick][data-id=son]'); await z.waitForSelector('.world'); const z3 = await look14(z);
-  await z.click('[data-act=node][data-id=B1]'); const toStorm = await z.waitForSelector('.storm-run .opt:not([disabled])', { timeout: 8000 }).then(() => true, () => false);
+  await z.click('[data-act=node][data-id=B2]'); const toStorm = await z.waitForSelector('.storm-run .opt:not([disabled])', { timeout: 8000 }).then(() => true, () => false);
   ok('회오리 3: after a reload the rider is still caught; pressing a tile opens the storm run, not the tile', z3.storm === 'A2' && z3.rider === 'A2' && z3.held && /잡혔어요/.test(z3.msg) && toStorm && !(await z.evaluate(() => window.__cards.run)), JSON.stringify(z3));
   const before14 = await state(z, 'son'); const order14 = []; let missed14 = null; let line14 = '';
   for (let k = 0; k < 20; k++) {
@@ -633,7 +635,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('회오리 4: a card answered wrong shows "form → base 뜻" and comes back once at the end; word records, bunches and the bat gauge are the same before and after', order14.length === 6 && order14.filter((c) => c.id === missed14).length === 2 && order14[5].id === missed14 && order14[5].again && /한 번 더/.test(order14[5].tag)
     && order14.slice(0, 5).every((c) => !c.again) && line14 === `${m14.form} → ${m14.baseForm} ${m14.ko}` && !!m14.ko && keep14(before14) === keep14(after14) && after14.forms[missed14].ok === 0, JSON.stringify({ n: order14.length, line14, missed14 }));
   const endTitle = await z.textContent('h1'); const starTxt = await z.textContent('#stormstars').catch(() => ''); const gained = after14.map.stars - before14.map.stars; await toMap(z); const z5 = await look14(z);
-  await z.click('[data-act=node][data-id=B1]'); const tileRun = await z.waitForSelector(READY, { timeout: 8000 }).then(async () => !!(await z.evaluate(() => window.__cards.run)) && !(await z.$('.storm-run')), () => false);
+  await z.click('[data-act=node][data-id=B2]'); const tileRun = await z.waitForSelector(READY, { timeout: 8000 }).then(async () => !!(await z.evaluate(() => window.__cards.run)) && !(await z.$('.storm-run')), () => false);
   ok('회오리 5: finished: "빠져나왔어요", 4 stars for 4 first answers right, the whirlwind is gone and a tile starts its own run again', /회오리에서 빠져나왔어요/.test(endTitle) && gained === 4 && /\+4/.test(starTxt) && !z5.storm && !after14.map.storm && tileRun
     && after14.runs.at(-1).kind === 'storm' && after14.runs.at(-1).fresh === 0, JSON.stringify({ endTitle, gained, z5 }));
   await z.click('[data-act=quit]'); await z.waitForSelector('.tiles'); await toMap(z); await z.click('[data-act=home]'); await z.click('[data-act=parent]'); const pf = await z.textContent('[data-forms=son]').catch(() => '');
@@ -733,6 +735,19 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const cancelled=await fanPage.evaluate(async()=>{const s=window.__cards.sound,record=s._recording;let release;s._recording=()=>new Promise(r=>release=r);const p=s.jingle('world-fanfare');s.cancelFanfares();release(null);await p;s._recording=record;return ![...s.jingleNodes].some(n=>n.fanfare)&&!s.music.ducked;});
   ok('C011: leaving a celebration cancels an awaited fanfare without a late chip fallback',cancelled);
   await fanPage.close();await fanctx.close();
+
+
+  const gatectx=await browser.newContext({viewport:{width:1180,height:820},hasTouch:true}),gp=await open(gatectx,'today=2026-11-12&triage=off&seed=53&sound=off&fast=1');
+  await gp.evaluate(async()=>{const{newState}=await import('./js/deck.js'),{ensureMap}=await import('./js/map.js');const g=window.__cards,s=newState('son'),m=ensureMap(s);m.at='d1-01';m.worlds['d1-01']={castle:null,cleared:{},stamps:{},seen:'2026-11-12',here:'A2'};for(const n of g.ix.byId['d1-01'].map.nodes.filter(n=>['A1','A2'].includes(n.id)))for(const id of n.words)s.words[id]={st:'done',step:0,due:null};localStorage.setItem('cards.v0.p.son',JSON.stringify(s));});
+  await gp.click('[data-act=pick][data-id=son]');await gp.waitForSelector('.world');
+  const frontier=await gp.evaluate(()=>({near:[...document.querySelectorAll('.node.open.nearby')].map(e=>e.dataset.id).sort(),far:[...document.querySelectorAll('.node.open.distant')].map(e=>e.dataset.id).sort(),disabled:[...document.querySelectorAll('.node.open.distant')].some(e=>e.disabled)}));
+  ok('C013: only open villages adjacent through local free nodes glow, while remote choices remain enabled',frontier.near.join()==='B2,C2'&&frontier.far.join()==='B1,C1'&&!frontier.disabled,JSON.stringify(frontier));
+  await startNode(gp,'B1');ok('C013: a faded remote village remains a legal learning choice',await gp.evaluate(()=>window.__cards.node.unit==='B1'&&window.__cards.run.queue.length===10));await gp.click('[data-act=quit]');await gp.waitForSelector('.tiles');
+  await gp.evaluate(async()=>{const{ensureMap}=await import('./js/map.js');const g=window.__cards,m=ensureMap(g.st);g.st.words={};for(const w of g.ix.continents[0].worlds){m.worlds[w.id]={castle:'2026-11-11',cleared:{},stamps:{},seen:'2026-11-12'};const count=w.id==='d1-01'?4:4;for(const n of w.map.nodes.filter(n=>n.kind==='tile').slice(0,count))for(const id of n.words)g.st.words[id]={st:'done',step:0,due:null};}m.at='d1-01';m.bat={fill:0,cap:40,met:[],last:null};localStorage.setItem('cards.v0.p.son',JSON.stringify(g.st));});
+  await toMap(gp);ok('C013: an already passed castle keeps its completed label when new stamp conditions are missing',await gp.evaluate(()=>document.querySelector('#castle-gate').dataset.cleared==='true'&&document.querySelector('#castle-gate').dataset.ready==='false'&&/성 통과 완료/.test(document.querySelector('#castle-gate').textContent)&&/남은 마을은 선택/.test(document.querySelector('#castle-gate').textContent)&&document.querySelector('.node.castle').classList.contains('cleared')));await gp.click('[data-act=atlas]');
+  ok('C013: continent castle opens at all world castles and 8/11 villages with no crowns required',await gp.evaluate(()=>document.querySelector('.wcard.finale[data-id=d1]').classList.contains('open')&&document.querySelector('.wcard.finale[data-id=d1] .continent-gate').textContent==='세계 성 2/2 · 마을 8/8 (70%)'&&!document.querySelector('.cont[data-cont=d1] .wcard use[href="#crown"]')));
+  await gp.screenshot({path:'/tmp/c013-screens/continent-gates.png',animations:'disabled'});
+  await gp.close();await gatectx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

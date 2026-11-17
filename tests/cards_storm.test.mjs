@@ -77,7 +77,7 @@ test('ST3: it appears on the tile farthest from the rider along the map\'s edges
   assert.deepEqual(stormTick(ls, LOOP, FX, lt, D, always), { event: 'move', node: 'T3' }); assert.deepEqual(stormTick(ls, LOOP, FX, lt, D, always), { event: 'caught', node: 's' });
   const tied = withForms(6); ensureMap(tied).worlds['d1-01'] = { castle: null, cleared: {}, stamps: {}, seen: null, here: 'A1' }; const spots = new Set();
   for (let k = 0; k < 20; k++) { const s = JSON.parse(JSON.stringify(tied)); const vals = [0, k / 20]; let i = 0; spots.add(stormTick(s, IX, FX, TILE, D, () => vals[i++]).node); }
-  assert.deepEqual([...spots].sort(), ['B2', 'C2'], 'two tiles equally far: either one, at random');
+  assert.deepEqual([...spots].sort(), ['B1', 'B2', 'C1', 'C2'], 'four tiles equally far: any one, at random');
 });
 
 test('ST4: with the bat gauge full nothing appears and nothing moves; a run finished in another world takes the whirlwind away', () => {
