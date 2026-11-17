@@ -222,3 +222,22 @@ test('F5: the push target must be private: a public GitHub repository, one that 
   const told = onGitHub(backupSetup()); const rt = backup(told, { CARDS_BACKUP_TEST_HTTP: '000', CARDS_BACKUP_ASSUME_PRIVATE: '1' }); assert.deepEqual([rt.code, pushed(told)], [0, 2], rt.out);   // the parent checked it
   const none = backupSetup(); git(none.dest, 'remote', 'remove', 'origin'); const rn = backup(none); assert.deepEqual([rn.code, fs.existsSync(path.join(none.dest, 'state-cards'))], [1, false]);
 });
+
+test('R3 (C-007): a push setting that sends another branch cannot make a backup look uploaded: the commit goes to origin by branch name and is checked there', () => {
+  const b = backupSetup(); const start = git(b.dest, 'rev-parse', 'HEAD'); const br = git(b.dest, 'symbolic-ref', '--short', 'HEAD');
+  git(b.dest, 'branch', 'archive'); git(b.dest, 'push', '-q', 'origin', 'archive'); git(b.dest, 'config', 'remote.origin.push', 'archive:archive');
+  const r = backup(b); assert.deepEqual([r.code, r.off.ok], [0, true], r.out);
+  const head = git(b.dest, 'rev-parse', 'HEAD'); assert.notEqual(head, start); assert.equal(git(b.bare, 'rev-parse', `refs/heads/${br}`), head, 'the backup commit is on the remote branch');
+});
+
+test('R4 (C-007): every address a push really goes to is checked: a public GitHub push URL beside a private one is refused; a pushRemote elsewhere receives nothing', () => {
+  const b = backupSetup(); const pub = 'https://github.com/c007-audit/public.git'; const other = path.join(b.root, 'public.git'); git(b.root, 'init', '-q', '--bare', other);
+  git(b.dest, 'config', `url.${other}.insteadOf`, pub); git(b.dest, 'config', '--add', 'remote.origin.pushurl', pub); git(b.dest, 'config', '--add', 'remote.origin.pushurl', b.bare);
+  const r = backup(b, { CARDS_BACKUP_TEST_HTTP: '200' }); assert.deepEqual([r.code, r.off.ok], [1, false], r.out); assert.match(r.out, /공개 저장소/);
+  assert.equal(fs.existsSync(path.join(b.dest, 'state-cards')), false, 'nothing copied');
+  const c = backupSetup(); const pubDir = path.join(c.root, 'publish.git'); git(c.root, 'init', '-q', '--bare', pubDir); git(c.dest, 'remote', 'add', 'publish', pubDir);
+  const br = git(c.dest, 'symbolic-ref', '--short', 'HEAD'); git(c.dest, 'config', `branch.${br}.pushRemote`, 'publish');
+  const rc = backup(c); assert.deepEqual([rc.code, rc.off.ok], [0, true], rc.out); assert.equal(git(c.bare, 'rev-parse', `refs/heads/${br}`), git(c.dest, 'rev-parse', 'HEAD'));
+  assert.throws(() => git(pubDir, 'rev-parse', '--verify', '-q', `refs/heads/${br}`), 'the pushRemote got nothing');
+});
+

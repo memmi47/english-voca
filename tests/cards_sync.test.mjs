@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Sync, mergeCards, mergeMeta } from '../cards/js/sync.js';
+import { loadRecord } from '../cards/js/store.js';
 import { Run, newState, mulberry32, addDays } from '../cards/js/deck.js';
 
 function memoryStorage() { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; }
@@ -178,3 +179,32 @@ test('S12: the prototype tiles kept under map.legacy survive a merge in either o
   const c = state({ v: 2, words: {} }), d = state({ v: 2, words: {} }); c.map = { stars: 0, worlds: {}, conts: {} }; d.map = { stars: 0, worlds: {}, conts: {} };
   assert.equal('legacy' in mergeCards(c, d).map, false);
 });
+
+test('R1 (C-007): another tab saves while the server body is on its way: the sync decides on the local copy as it is then (same format: merged; newer format: left alone)', async () => {
+  const key = 'cards.v0.p.son';
+  for (const future of [false, true]) {
+    const s = memoryStorage(); s.setItem(key, JSON.stringify({ ...newState('son'), words: { old: word() } }));
+    let release; const body = new Promise((r) => { release = r; }); let entered = false;
+    const sync = new Sync({ storage: s, fetchImpl: async (u, o) => (o ? { ok: true, status: 200, json: async () => ({ rev: 99 }) } : { ok: true, status: 200, json: () => { entered = true; return body; } }) });
+    sync.state.revs['p.son'] = 1;
+    const p = sync.reconcile('p.son'); for (let i = 0; i < 5 && !entered; i++) await new Promise((r) => setImmediate(r)); assert.ok(entered);
+    const b = JSON.parse(s.getItem(key)); b.words.tabB = word({ lastDay: '2026-11-17' }); b.forms = { onlyB: { n: 1, ok: 1, last: '2026-11-17', at: 1001 } }; if (future) b.v += 1;
+    s.setItem(key, JSON.stringify(b));                                                   // tab B, while A waits for the body
+    release({ rev: 98, data: { ...newState('son'), words: { remote: word() } } }); await p;
+    const out = JSON.parse(s.getItem(key));
+    assert.ok(out.words.tabB && out.forms.onlyB, `${future}: tab B's word and form kept`);
+    if (future) { assert.equal(out.v, b.v, 'newer format left as it is'); assert.equal(out.words.remote, undefined); assert.equal(sync.stale, true); }
+    else assert.ok(out.words.remote && out.words.old, 'same format: merged with the server copy');
+  }
+});
+
+test('R2 (C-007): a damaged local copy that cannot be kept aside (storage full) is never replaced: the sync stops and loadRecord says kept: false', async () => {
+  const key = 'cards.v0.p.son'; const text = '{"v":3,"words":{"localOnly":';
+  const s = memoryStorage(); const set = s.setItem; s.setItem = (k, v) => { if (k.includes('.damaged.')) throw new Error('QuotaExceededError'); set(k, v); };
+  s.setItem(key, text);
+  const sync = new Sync({ storage: s, fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ rev: 5, data: { ...newState('son'), words: { r: word() } } }) }) });
+  await assert.rejects(sync.reconcile('p.son')); assert.equal(s.getItem(key), text);
+  const rec = loadRecord(s, key, 'son'); assert.deepEqual([rec.damaged, rec.kept], [true, false]); assert.equal(s.getItem(key), text);
+  const ok = memoryStorage(); ok.setItem(key, text); assert.deepEqual([loadRecord(ok, key, 'son').kept, ok.getItem(key)], [true, null], 'kept aside when there is room');
+});
+

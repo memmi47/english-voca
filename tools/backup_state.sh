@@ -32,26 +32,38 @@ GAME="$(cd "$HERE/.." && git rev-parse --show-toplevel 2>/dev/null || true)"
 TARGET="$(cd "$DEST" && git rev-parse --show-toplevel 2>/dev/null || true)"
 [ -n "$TARGET" ] || fail "git 저장소를 읽을 수 없습니다: $DEST"
 [ "$TARGET" != "$GAME" ] || fail "게임 저장소(공개)에는 기록을 올리지 않습니다. 별도의 비공개 저장소를 쓰세요"
-# Where `git push` sends: pushurl if set, else url (raw config, as written by git clone). Checked before anything is copied.
-URL="$(cd "$DEST" && { git config --get remote.origin.pushurl || git config --get remote.origin.url; } 2>/dev/null || true)"
-[ -n "$URL" ] || fail "올릴 곳(origin)이 설정되지 않았습니다: $DEST"
-if [ "${CARDS_BACKUP_ASSUME_PRIVATE:-}" != 1 ]; then
+# Where `git push origin` really sends: every push URL of origin, with insteadOf / pushInsteadOf rewriting applied
+# (C-007 R4). All of them are checked before anything is copied; the push below names origin and the branch explicitly,
+# so branch.*.pushRemote and remote.origin.push cannot send it elsewhere.
+BRANCH="$(cd "$DEST" && git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+[ -n "$BRANCH" ] || fail "백업 저장소가 브랜치에 있지 않습니다(detached HEAD): $DEST"
+URLS="$(cd "$DEST" && git remote get-url --push --all origin 2>/dev/null || true)"
+[ -n "$URLS" ] || fail "올릴 곳(origin)이 설정되지 않았습니다: $DEST"
+# The addresses as written in the config too (before rewriting): both lists must pass the check.
+RAW="$(cd "$DEST" && { git config --get-all remote.origin.pushurl || git config --get-all remote.origin.url; } 2>/dev/null || true)"
+check_url() {
+  local URL="$1" PLACE REPO CODE
   case "$URL" in
     file://*|/*|./*|../*) PLACE=local ;;
     *:*) PLACE=remote ;;                                 # https://host/..., ssh://..., or user@host:path
     *) PLACE=local ;;                                    # a relative path
   esac
-  if [ "$PLACE" = remote ]; then
-    REPO="$(printf '%s\n' "$URL" | sed -n -E 's#^(https?://([^@/]+@)?github\.com/|ssh://([^@/]+@)?github\.com/|([^@/:]+@)?github\.com:)([^/]+)/([^/]+)$#\5/\6#p' | sed -E 's#\.git$##')"
-    [ -n "$REPO" ] || fail "GitHub 저장소나 이 Mac의 폴더가 아닌 곳에는 올리지 않습니다: $URL"
-    CODE="${CARDS_BACKUP_TEST_HTTP:-}"
-    if [ -z "$CODE" ]; then CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "https://api.github.com/repos/$REPO" 2>/dev/null)" || true; fi
-    case "$CODE" in
-      404) ;;                                            # not visible without signing in: private
-      200) fail "공개 저장소에는 기록을 올리지 않습니다: $REPO (GitHub에서 Private으로 바꾸거나 비공개 저장소를 쓰세요)" ;;
-      *) fail "저장소가 비공개인지 확인할 수 없습니다: $REPO (응답 ${CODE:-없음}). 직접 확인했다면 CARDS_BACKUP_ASSUME_PRIVATE=1 로 실행하세요" ;;
-    esac
-  fi
+  [ "$PLACE" = remote ] || return 0
+  REPO="$(printf '%s\n' "$URL" | sed -n -E 's#^(https?://([^@/]+@)?github\.com/|ssh://([^@/]+@)?github\.com/|([^@/:]+@)?github\.com:)([^/]+)/([^/]+)$#\5/\6#p' | sed -E 's#\.git$##')"
+  [ -n "$REPO" ] || fail "GitHub 저장소나 이 Mac의 폴더가 아닌 곳에는 올리지 않습니다: $URL"
+  CODE="${CARDS_BACKUP_TEST_HTTP:-}"
+  if [ -z "$CODE" ]; then CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "https://api.github.com/repos/$REPO" 2>/dev/null)" || true; fi
+  case "$CODE" in
+    404) ;;                                              # not visible without signing in: private
+    200) fail "공개 저장소에는 기록을 올리지 않습니다: $REPO (GitHub에서 Private으로 바꾸거나 비공개 저장소를 쓰세요)" ;;
+    *) fail "저장소가 비공개인지 확인할 수 없습니다: $REPO (응답 ${CODE:-없음}). 직접 확인했다면 CARDS_BACKUP_ASSUME_PRIVATE=1 로 실행하세요" ;;
+  esac
+}
+if [ "${CARDS_BACKUP_ASSUME_PRIVATE:-}" != 1 ]; then
+  while IFS= read -r U; do [ -n "$U" ] && check_url "$U"; done <<EOF_URLS
+$RAW
+$URLS
+EOF_URLS
 fi
 
 mkdir -p "$DEST/state-cards/daily" || fail "폴더를 만들 수 없습니다"
@@ -65,12 +77,25 @@ done
 if [ -d "$STATE/daily" ]; then for f in "$STATE"/daily/*.json; do [ -e "$f" ] && { cp "$f" "$DEST/state-cards/daily/" || fail "복사 실패: $f"; }; done; fi
 
 cd "$DEST" || fail "폴더에 들어갈 수 없습니다"
+# Sends HEAD to origin's branch by name, then asks every push URL whether that branch now points at HEAD (C-007 R3).
+push_checked() {
+  local HEADC U GOT
+  HEADC="$(git rev-parse HEAD)" || return 1
+  git push -q origin "HEAD:refs/heads/$BRANCH" || return 1
+  while IFS= read -r U; do
+    [ -n "$U" ] || continue
+    GOT="$(git ls-remote "$U" "refs/heads/$BRANCH" 2>/dev/null | cut -f1)"
+    [ "$GOT" = "$HEADC" ] || { echo "올린 곳에서 백업 커밋을 확인하지 못했습니다: $U" >&2; return 1; }
+  done <<EOF_URLS
+$URLS
+EOF_URLS
+}
 git add -A state-cards || fail "git add 실패"
 if git diff --cached --quiet; then
-  git push -q || fail "git push 실패 (바뀐 것은 없지만 이전 백업이 아직 올라가지 않았습니다. 네트워크나 인증을 확인하세요)"   # nothing new; earlier commits must still arrive
+  push_checked || fail "git push 실패 (바뀐 것은 없지만 이전 백업이 아직 올라가지 않았습니다. 네트워크나 인증을 확인하세요)"   # nothing new; earlier commits must still arrive
   note true "변경 없음" "$(git rev-parse --short HEAD 2>/dev/null || true)"; echo "백업: 바뀐 것이 없습니다."; exit 0
 fi
 git commit -q -m "기록 백업 $(date '+%Y-%m-%d %H:%M')" || fail "git commit 실패"
-git push -q || fail "git push 실패 (네트워크나 인증을 확인하세요. 기록은 이 Mac의 백업 폴더에 커밋되어 있습니다)"
+push_checked || fail "git push 실패 또는 확인 실패 (네트워크나 인증을 확인하세요. 기록은 이 Mac의 백업 폴더에 커밋되어 있습니다)"
 note true "올림" "$(git rev-parse --short HEAD)"
 echo "백업 완료: $(git rev-parse --short HEAD)"

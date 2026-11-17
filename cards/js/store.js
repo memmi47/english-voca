@@ -70,7 +70,9 @@ export function loadRecord(storage, key, id) {
   let text = null; try { text = storage.getItem(key); } catch { return { state: newState(id), damaged: false, newer: false, missing: true }; }
   if (text == null || text === '') return { state: newState(id), damaged: false, newer: false, missing: true };
   try { const m = migrate(JSON.parse(text), id); if (m.from === null) throw new Error('not a record'); return { state: m.state, damaged: false, newer: m.newer, missing: false, from: m.from }; }
-  catch { setAside(storage, key, text); return { state: newState(id), damaged: true, newer: false, missing: false }; }
+  // kept: false = the damaged text could not be copied aside (storage full). It is still under the main key, so the caller
+  // must not save over it (C-007 R2): main.js opens the child read-only.
+  catch { const kept = setAside(storage, key, text); return { state: newState(id), damaged: true, newer: false, missing: false, kept }; }
 }
 // Checks a file a parent chose for "restore": it must be one child's record (or a server snapshot of it).
 export function readBackup(text, id) {

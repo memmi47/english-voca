@@ -70,7 +70,7 @@ function syncLine() {
 }
 function paintSync() { const el = document.getElementById('syncline'); if (el) el.textContent = syncLine(); }
 async function openProfile(id) {
-  const rec = loadRec(id); G.notice = rec.damaged ? '이 기기에 있던 기록을 읽을 수 없어 따로 보관했어요. 서버나 백업 파일의 기록으로 이어 갑니다(부모 기록 화면에서 복원할 수 있어요).' : '';   // set aside before the server copy is fetched
+  const rec = loadRec(id); G.notice = rec.damaged && rec.kept === false ? '이 기기에 있던 기록을 읽을 수 없는데, 저장 공간이 모자라 따로 보관하지도 못했어요. 그 기록을 지우지 않도록 이 기기에서는 기록을 바꾸지 않아요. 부모 기록 화면에서 서버나 백업 파일로 복원해 주세요.' : rec.damaged ? '이 기기에 있던 기록을 읽을 수 없어 따로 보관했어요. 서버나 백업 파일의 기록으로 이어 갑니다(부모 기록 화면에서 복원할 수 있어요).' : '';   // set aside before the server copy is fetched
   if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} } return today(id);
 }
 const name = (id) => G.meta.names[id];
@@ -199,7 +199,7 @@ function housePos(w, h, taken) {
 }
 function today(id, msg = '', wid = null) {
   clearPresentation();
-  const rec = loadRec(id); G.view = 'today'; G.pid = id; G.st = rec.state; try { G.seen = stored(); } catch { G.seen = null; } G.readonly = rec.newer || !!G.syncStatus?.stale; G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
+  const rec = loadRec(id); G.view = 'today'; G.pid = id; G.st = rec.state; try { G.seen = stored(); } catch { G.seen = null; } G.readonly = rec.newer || rec.kept === false || !!G.syncStatus?.stale; G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
   if (G.readonly) banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); else if (G.notice) { banner(`<span>${esc(G.notice)}</span><button data-act="hide">확인</button>`); G.notice = ''; }
   const st = G.st; const m = ensureMap(st);
   if (wid && G.ix.byId[wid] && worldOpen(G.ix, G.ix.byId[wid], st)) m.at = wid;

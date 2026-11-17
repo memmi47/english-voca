@@ -132,7 +132,8 @@ export class Sync {
     if (v == null || v === '') return null;
     let o = null; try { o = JSON.parse(v); } catch {}
     if (o && typeof o === 'object' && !Array.isArray(o)) return o;
-    setAside(this.s, localKey(name), v); return null;
+    if (setAside(this.s, localKey(name), v)) return null;
+    throw new Error('damaged local copy could not be kept (storage full): nothing is written over it');   // C-007 R2
   }
   _setLocal(name, data) { this.s.setItem(localKey(name), JSON.stringify(data)); }
   _merge(name, local, remote) { return name === 'meta' ? mergeMeta(local, remote, !!this.state.dirty[name]) : mergeCards(local, remote, this.ix); }
@@ -153,12 +154,15 @@ export class Sync {
 
   async reconcile(name) {
     const r = await this.fetch(this.base + 'doc/' + name);
-    const local = this._local(name);
-    if (this._newer(name, local)) { this._status(); return; }                       // a newer program saved on this device (another tab): this page sends nothing
-    if (r.status === 404) { this.state.revs[name] = 0; if (local) return this.push(name); return; }
+    const before = this._local(name);
+    if (this._newer(name, before)) { this._status(); return; }                      // a newer program saved on this device (another tab): this page sends nothing
+    if (r.status === 404) { this.state.revs[name] = 0; if (before) return this.push(name); return; }
     if (!r.ok) throw new Error('server ' + r.status);
     const remote = await r.json();
     if (this._newer(name, remote.data)) { this._status(); return; }                 // an old page must not rewrite a newer record: reload first
+    // Another tab may have saved while the body was on its way (C-007 R1): decide on the local copy as it is now.
+    const local = this._local(name);
+    if (this._newer(name, local)) { this._status(); return; }
     if (!local) { this._setLocal(name, remote.data); this.state.revs[name] = remote.rev; this.state.dirty[name] = false; this._saveState(); this.onMerged(name, remote.data); return; }
     if (this.state.revs[name] === remote.rev) { if (this.state.dirty[name]) return this.push(name); return; }
     const merged = this._merge(name, local, remote.data);
@@ -190,7 +194,8 @@ export class Sync {
           if (r.status === 409) {                       // another device saved first: merge and retry
             const remote = await r.json();
             if (this._newer(name, remote.data)) throw new Error('newer program on the server');
-            const merged = this._merge(name, this._local(name), remote.data);
+            const now = this._local(name); if (this._newer(name, now)) throw new Error('newer program on this device');   // re-read after the wait (C-007 R1)
+            const merged = this._merge(name, now, remote.data);
             this._setLocal(name, merged); this.state.revs[name] = remote.rev; this._saveState(); this.onMerged(name, merged);
             continue;
           }
