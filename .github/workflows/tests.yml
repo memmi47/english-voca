@@ -31,6 +31,8 @@ jobs:
           python3 -I tools/make_worlds.py --check
           python3 -I tools/check_world_generation.py
           python3 -I tools/audit_p1_review.py --check
+      - name: Rule baseline (simulation output unchanged)
+        run: node tools/check_sim_baseline.mjs
       - name: Install the test browser
         run: npm install --no-save --no-package-lock playwright && npx playwright install --with-deps chromium
       - name: Browser tests
