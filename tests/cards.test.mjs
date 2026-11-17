@@ -662,3 +662,45 @@ test('F8: a continent castle marked pending-config (or with cards / passRate nul
     const out = pass(ix, s, node); assert.deepEqual([out.finale.pass, out.nextContinent.id, worldOpen(ix, ix.byId['d2-01'], s)], [true, 'd2', true]);
   }
 });
+
+// T-006: one wrong answer of a meaning card comes from the same theme and part of speech.
+const themed = (n, over = {}, theme = '동물', pos = '명사') => Array.from({ length: n }, (_, i) => ({ id: `${theme}${pos}${i}`, form: `w${theme}${i}`, ko: `${theme}-${i}`, type: 't', theme, pos, ...over }));
+const filler = (n) => Array.from({ length: n }, (_, i) => ({ id: `f${i}`, form: `fill${i}`, ko: `채움${i}`, type: 't', theme: `딴${i}`, pos: '명사' }));
+const optIds = (deck, id, seed, cfg) => { const r = new Run({ state: newState('o'), words: deck, today: D1, rng: mulberry32(seed), cfg: { ...CFG, ...cfg } }); return r._options(id).map((o) => o.id); };
+const confusableOf = (a, b) => !!(a.groups && b.groups && a.groups.some((g) => b.groups.includes(g)));
+
+test('O1: a card with 5+ same theme and part of speech candidates always gets at least one wrong answer from them (200 draws)', () => {
+  const deck = [...themed(6), ...filler(30)]; const id = deck[0].id; let n = 0;
+  for (let k = 1; k <= 200; k++) { const ids = optIds(deck, id, k); assert.equal(ids.length, 3); assert.ok(ids.includes(id));
+    assert.ok(ids.some((x) => x !== id && deck.find((w) => w.id === x).theme === '동물'), `seed ${k}`); n++; }
+  assert.equal(n, 200);
+});
+
+test('O2: with 4 candidates, a theme containing 보완 or 기타, or no theme, the options equal those with themeOption off (same seed)', () => {
+  const four = [...themed(5), ...filler(30)];                                     // 4 candidates besides the card itself
+  const hole = [...themed(8, {}, '동물(보완)'), ...filler(30)], etc = [...themed(8, {}, '기타'), ...filler(30)];
+  const none = [...themed(8).map(({ theme, pos, ...w }) => w), ...filler(30)];
+  for (const [deck, id] of [[four, four[0].id], [hole, hole[0].id], [etc, etc[0].id], [none, none[0].id]])
+    for (let k = 1; k <= 50; k++) assert.deepEqual(optIds(deck, id, k, { themeOption: true }), optIds(deck, id, k, { themeOption: false }));
+  const on = [...themed(8), ...filler(30)]; let differs = false;                  // sanity: with enough candidates, the switch does matter
+  for (let k = 1; k <= 50; k++) if (optIds(on, on[0].id, k, { themeOption: true }).join() !== optIds(on, on[0].id, k, { themeOption: false }).join()) differs = true;
+  assert.ok(differs);
+});
+
+test('O3: a same-theme card that shares a confusion group, or shows the same text, is never offered', () => {
+  const deck = [...themed(9), ...filler(20)]; deck[0].groups = ['g']; deck[1].groups = ['g']; deck[2].ko = deck[0].ko;
+  for (let k = 1; k <= 200; k++) { const ids = optIds(deck, deck[0].id, k); assert.ok(!ids.includes(deck[1].id) && !ids.includes(deck[2].id), `seed ${k}`); assert.equal(new Set(ids.map((x) => deck.find((w) => w.id === x).ko)).size, 3); }
+});
+
+test('O4: in the real catalogue every meaning card gets three options with three different displays (all cards, once each)', () => {
+  const cat = JSON.parse(fs.readFileSync('cards/data/catalogue.json', 'utf8'));
+  const words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
+  const run = new Run({ state: newState('o'), words, today: D1, rng: mulberry32(7) }); let meaning = 0, themeRule = 0;
+  const key = (w) => `${w.theme}|${w.pos}`; const byKey = new Map();
+  for (const w of words) { const a = byKey.get(key(w)) || []; a.push(w); byKey.set(key(w), a); }
+  for (const w of words) { if (w.track === 'sight' || !w.ko) continue; meaning++;
+    const o = run._options(w.id); assert.equal(o.length, 3, w.id); assert.equal(new Set(o.map((x) => x.ko)).size, 3, w.id); assert.ok(o.some((x) => x.id === w.id), w.id);
+    if (w.theme && w.pos && !/기타|보완/.test(w.theme) && byKey.get(key(w)).filter((x) => x.id !== w.id && x.track !== 'sight' && x.ko && x.ko !== w.ko && !confusableOf(w, x)).length >= 5) themeRule++; }
+  console.log(`O4 counts: meaning cards ${meaning}, rule 3 applies ${themeRule}, falls back ${meaning - themeRule}`);
+  assert.ok(meaning > 0);
+});
