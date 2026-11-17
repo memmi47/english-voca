@@ -161,3 +161,19 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tw.on{background:#ffe9a8;outline:5px solid var(--go);outline-offset:-10px}.tw.on:after{content:" ?";color:var(--go)}
 .tw:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
 .act.see{max-width:520px}
+/* the delivery rider and the whirlwind (card T-008): both sit on the upper part of their tile, the rider to the left, the
+   whirlwind to the right, so the stone, its lock and its marks stay visible. Only the whirlwind takes a tap. */
+.rider,.storm,.stormfx{position:absolute;z-index:3;width:min(4.8vw,48px);height:min(4.8vw,48px);line-height:0;padding:0;background:none}
+.rider{transform:translate(-100%,-120%);pointer-events:none}.rider .spr{width:100%;height:100%;filter:drop-shadow(3px 3px 0 rgba(35,63,58,.45))}
+.storm{transform:translate(0,-120%);z-index:4}.storm .anim2,.storm .spr,.stormfx .spr{width:100%;height:100%}.storm .anim2{filter:drop-shadow(3px 3px 0 rgba(35,63,58,.45))}
+.storm.slide{transition:left .4s steps(8),top .4s steps(8)}.storm.spawn{animation:pop .4s steps(4)}.storm.held{outline:4px solid var(--go);outline-offset:2px}
+.storm:active{transform:translate(0,calc(-120% + 4px))}
+.stormfx{transform:translate(0,-120%);pointer-events:none}.stormfx.gone{animation:fade 1s steps(5) forwards}
+@keyframes pop{0%{transform:translate(0,-120%) scale(.2)}100%{transform:translate(0,-120%) scale(1)}}
+@keyframes fade{0%{opacity:1}100%{opacity:0}}
+.stormhero{position:relative;display:inline-block;margin:10px auto}.stormhero .letters{position:absolute;right:-40px;top:-10px}
+.storm-card .letters{position:absolute;left:14px;top:12px;line-height:0;opacity:.8}
+.stitle{color:var(--fg);text-shadow:2px 2px 0 var(--fg-sh);font-size:20px}
+.stline{font-family:var(--word);font-size:clamp(34px,7vw,64px);font-weight:800;line-height:1.2}.stline span{font-family:var(--pix);display:block;font-size:clamp(28px,5.5vw,48px);font-weight:700}
+.storm-run .opts{flex:1 1 100%}
+.storm-run .act.opt.right,.storm-run .act.opt.wrong{opacity:1}

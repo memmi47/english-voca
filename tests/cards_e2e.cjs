@@ -22,6 +22,7 @@ async function open(ctx, q, sync = false) {
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
+  if (!/(^|&)storm=/.test(q)) q += '&storm=off';                       // whirlwinds (T-008) only in section 14
   await page.goto(BASE + '?set=demo&' + q); await page.waitForSelector('.profiles'); return page;
 }
 const state = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('cards.v0.p.' + i)), id);
@@ -243,7 +244,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await v1.waitForFunction(() => window.__cards.sound.music && window.__cards.sound.music.on, null, { timeout: 8000 });
   ok('music toggle plays the map loop and is remembered', await v1.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && JSON.parse(localStorage.getItem('cards.v0.pref')).music === true));
   await v1.evaluate(() => window.__cards.sound.sfxPlay('hit')); ok('effects can play through the real synth without errors', await v1.evaluate(() => window.__cards.sound.ctx.state !== 'closed'));
-  await v1.goto(BASE + '?set=demo&today=2026-11-12&seed=9&fast=1&nosync=1'); await v1.waitForSelector('.profiles');
+  await v1.goto(BASE + '?set=demo&today=2026-11-12&seed=9&fast=1&nosync=1&storm=off'); await v1.waitForSelector('.profiles');
   await v1.click('[data-act=pick][data-id=son]'); await v1.waitForSelector('.world');
   ok('the music choice persists after a reload', await v1.evaluate(() => window.__cards.sound.musicOn));
   await v1.close(); await vctx.close();
@@ -314,7 +315,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 10d. the full deck: 4,610 cards and 30 worlds load and a first tile can be played; a world file of another version is refused
   const fullctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const fp = await fullctx.newPage(); fp.on('pageerror', (e) => errs.push(String(e)));
-  const t0 = Date.now(); await fp.goto(BASE + '?today=2026-12-21&triage=off&seed=2&sound=off&fast=1&nosync=1'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
+  const t0 = Date.now(); await fp.goto(BASE + '?today=2026-12-21&triage=off&seed=2&sound=off&fast=1&nosync=1&storm=off'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
   const full = await fp.evaluate(() => ({ words: window.__cards.words.length, worlds: window.__cards.ix.worlds.length, world: document.querySelector('#world').dataset.world, open: document.querySelectorAll('.node.open').length, nodes: document.querySelectorAll('.world .node').length, standIn: window.__cards.standIn, wide: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
   ok('full deck: 4,610 cards, 30 worlds, the first world\'s map with open tiles, fits the screen width', full.words === 4610 && full.worlds === 30 && full.world === 'p1-01' && full.open >= 2 && full.nodes >= 15 && full.wide, JSON.stringify(full) + ' load ' + loadMs + ' ms');
   ok('the stand-in world file is named as such', full.standIn ? /시험용/.test(await fp.textContent('#src')) : true);
@@ -324,7 +325,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await fp.click('[data-act=yes]'); await fp.waitForFunction(() => window.__cards.run.i >= 1 || document.querySelector('.opt'), null, { timeout: 8000 });
   await fp.close();
   const bad = await fullctx.newPage(); await bad.route('**/data/worlds.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ schemaVersion: 9, continents: [] }) }));
-  await bad.goto(BASE + '?today=2026-12-21&sound=off&nosync=1'); await bad.waitForSelector('#fatal');
+  await bad.goto(BASE + '?today=2026-12-21&sound=off&nosync=1&storm=off'); await bad.waitForSelector('#fatal');
   ok('a world file of an unknown version is refused with a plain message', /버전/.test(await bad.textContent('#fatal')));
   await bad.close(); await fullctx.close();
 
@@ -340,7 +341,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const up = await state(u, 'son');
   ok('after playing on, the record is in the new format and still holds the old words', up.v === 3 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
   await u.evaluate(() => localStorage.setItem('cards.v0.p.son', '{"v":1,"id":"son","words":{"W0122'));           // cut off in the middle of a write
-  await u.goto(BASE + '?set=demo&today=2026-12-22&triage=off&seed=4&sound=off&fast=1&nosync=1'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
+  await u.goto(BASE + '?set=demo&today=2026-12-22&triage=off&seed=4&sound=off&fast=1&nosync=1&storm=off'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
   const dmg = await u.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cards.v0.p.son.damaged.')).map((k) => localStorage.getItem(k)));
   ok('a damaged record is set aside (not overwritten) and the child is told', dmg.length === 1 && dmg[0].startsWith('{"v":1,"id":"son"') && /따로 보관/.test(await u.textContent('#banner')));
   await u.click('[data-act=hide]'); await u.click('[data-act=home]'); await u.click('[data-act=parent]'); await u.waitForSelector('#safety');
@@ -386,7 +387,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('its map shows the cleared tile and the next one open', /\bcleared\b/.test(await nodeStatus(ip, 'A1')) && /\bopen\b/.test(await nodeStatus(ip, 'A2')));
   ok('the other child\'s document was not created', !fs.existsSync(path.join(STATE, 'p.daughter.json')));
   await mc.evaluate(() => localStorage.clear());                                  // the browser threw its storage away
-  await mc.goto(BASE + '?set=demo&today=2026-12-12&triage=off&seed=5&sound=off&fast=1'); await mc.waitForSelector('.profiles');
+  await mc.goto(BASE + '?set=demo&today=2026-12-12&triage=off&seed=5&sound=off&fast=1&storm=off'); await mc.waitForSelector('.profiles');
   ok('a wiped browser gets everything back from the server', Object.keys((await state(mc, 'son')).words).length === 10);
 
   // server unreachable: the run still saves on the device, says so, and uploads later
@@ -536,6 +537,71 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await startNode(b10, 'bat'); await play(b10, () => true); await b10.waitForSelector('.tiles'); const page10 = await b10.textContent('.page');
   ok('F10: the bat test is done but bats will come again: no "goes back to 0"', /박쥐를 쫓아냈어요/.test(await b10.textContent('h1')) && !/0으로 돌아가요/.test(page10) && /25\/25장/.test(page10) && await (async () => { await toMap(b10); return !!(await b10.$('[data-id=bat]')); })(), page10.slice(0, 160));
   await b10.close(); await f10.close();
+
+  // 14. 회오리 (card T-008): the delivery rider and the whirlwind on the map, and the storm run of word forms. Every section
+  //     above runs with storm=off (open() adds it); only here are whirlwinds on, with ?storm=now (no chance draw) and fixed seeds.
+  const W14 = WORLDS.find((w) => w.id === 'd1-01');
+  const dist14 = (from) => { const d = { [from]: 0 }; const q = [from]; while (q.length) { const v = q.shift(); for (const e of W14.map.edges) for (const [a, b] of [[e.from, e.to], [e.to, e.from]]) if (a === v && !(b in d)) { d[b] = d[v] + 1; q.push(b); } } return d; };
+  const FORMS14 = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'cards', 'data', 'forms.json'), 'utf8')).forms.filter((f) => !f.clash.length && WORDS.some((w) => w.id === f.base));
+  const inW14 = new Set(W14.map.nodes.flatMap((n) => n.words || [])); const BASES14 = [...new Set(FORMS14.map((f) => f.base))].filter((b) => inW14.has(b));   // base words of the demo forms on this map
+  const met14 = (o) => ({ st: 'review', step: 2, due: '2027-01-30', firstDay: '2026-11-01', lastDay: '2026-11-10', lapses: 0, ...o });
+  const map14 = (extra) => ({ stars: 0, items: { shield: 0, flame: 0 }, bag: null, monsterDay: null, bonusDay: null, best: 0, keys: 0, worlds: {}, conts: {}, at: 'd1-01', bat: { fill: 0, cap: 40, met: [], last: null }, ...extra });
+  const seed14 = (p, pid, ids, map) => p.evaluate(([pid, ids, map, rec]) => { const s = { v: 2, id: pid, words: {}, verify: [], runs: [], log: [], bunches: {} }; for (const id of ids) s.words[id] = rec; if (map) s.map = map; localStorage.setItem('cards.v0.p.' + pid, JSON.stringify(s)); }, [pid, ids, map, met14()]);
+  const look14 = (p) => p.evaluate(() => ({ storm: document.querySelector('#storm')?.dataset.node || null, held: !!document.querySelector('#storm.held'), rider: document.querySelector('#rider')?.dataset.node || null,
+    pic: !!document.querySelector('#storm use[href="#fx-storm-a"]') && !!document.getElementById('fx-storm-a'), msg: document.querySelector('#msg')?.textContent || '', saved: (JSON.parse(localStorage.getItem('cards.v0.p.' + window.__cards.pid)).map || {}).storm || null }));
+  const stCur = (p) => p.evaluate(() => { const r = window.__cards.srun; const c = r && r.current; return c ? { id: c.id, form: c.form, baseForm: c.baseForm, ko: c.ko, ans: c.options.indexOf(c.baseForm), again: r.queue[r.i].again, tag: document.querySelector('#tag')?.textContent || '' } : null; });
+  const keep14 = (s) => JSON.stringify([s.words, s.bunches || {}, s.map.bat]);
+  const Q14 = 'today=2026-11-20&triage=off&seed=51&sound=off&fast=1&storm=now';
+  const zctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  let z = await open(zctx, Q14); await seed14(z, 'son', BASES14, null);
+  await z.click('[data-act=pick][data-id=son]'); await z.waitForSelector('.world'); const z0 = await look14(z);
+  await startNode(z, 'A1'); await play(z); await toMap(z); const z1 = await look14(z); const dA1 = dist14('A1');
+  const far = Math.max(...W14.map.nodes.filter((n) => n.kind === 'tile').map((n) => dA1[n.id]));
+  ok('회오리 1: five or more base words with forms met, a run finished: the whirlwind appears on the farthest tile and the rider stands on the tile just cleared', BASES14.length >= 5 && !z0.storm && z0.rider === 'start'
+    && z1.rider === 'A1' && !!z1.storm && dA1[z1.storm] === far && z1.saved && z1.saved.node === z1.storm && z1.pic && /회오리가 나타났어요/.test(z1.msg), JSON.stringify({ bases: BASES14.length, z0, z1 }));
+  await startNode(z, 'A2'); await play(z); await toMap(z); const z2 = await look14(z); const dA2 = dist14('A2');
+  await z.click('[data-act=node][data-id=castle]'); await z.waitForSelector(READY);              // a castle run does not move the rider: answered wrong on purpose so the castle stays open
+  for (let k = 0; k < 40; k++) { await z.waitForSelector(READY, { timeout: 8000 }); if (await z.$('.tiles')) break; const it = await cur(z); if (!it) continue; await answer(z, `.opt[data-i="${(it.ans + 1) % 3}"]`); }
+  const castleEnd = await z.textContent('h1'); await z.click('[data-act=today]');
+  const sawCaught = await z.waitForSelector('#caught', { timeout: 4000 }).then(async () => /회오리에 휩쓸렸어요/.test(await z.textContent('#caught')), () => false);
+  const runStarted = await z.waitForSelector('.storm-run .opt:not([disabled])', { timeout: 8000 }).then(() => true, () => false); const zs = await state(z, 'son');
+  ok('회오리 2: each finished run moves it one step toward the rider; when it reaches the rider, "휩쓸렸어요" shows and the storm run starts', z2.rider === 'A2' && dA2[z2.storm] === dA2[z1.storm] - 1 && /다가와요/.test(z2.msg)
+    && /성 시험 결과/.test(castleEnd) && sawCaught && runStarted && zs.map.storm && zs.map.storm.node === 'A2', JSON.stringify({ z2, from: z1.storm, castleEnd, sawCaught, runStarted, storm: zs.map.storm }));
+  await z.reload(); await z.waitForSelector('.profiles'); await z.click('[data-act=pick][data-id=son]'); await z.waitForSelector('.world'); const z3 = await look14(z);
+  await z.click('[data-act=node][data-id=B1]'); const toStorm = await z.waitForSelector('.storm-run .opt:not([disabled])', { timeout: 8000 }).then(() => true, () => false);
+  ok('회오리 3: after a reload the rider is still caught; pressing a tile opens the storm run, not the tile', z3.storm === 'A2' && z3.rider === 'A2' && z3.held && /잡혔어요/.test(z3.msg) && toStorm && !(await z.evaluate(() => window.__cards.run)), JSON.stringify(z3));
+  const before14 = await state(z, 'son'); const order14 = []; let missed14 = null; let line14 = '';
+  for (let k = 0; k < 20; k++) {
+    await z.waitForSelector('.storm-run .opt:not([disabled]), .tiles', { timeout: 8000 }); if (await z.$('.tiles')) break; const c = await stCur(z); order14.push(c);
+    const wrong = missed14 === null; if (wrong) missed14 = c.id;
+    await z.click(`.opt[data-i="${wrong ? (c.ans + 1) % 3 : c.ans}"]`); await z.waitForSelector('#goon');
+    if (wrong) line14 = (await z.textContent('#stline')).replace(/\s+/g, ' ').trim(); await z.click('#goon');
+  }
+  await z.waitForSelector('.tiles'); const after14 = await state(z, 'son'); const m14 = order14.find((c) => c.id === missed14) || {};
+  ok('회오리 4: a card answered wrong shows "form → base 뜻" and comes back once at the end; word records, bunches and the bat gauge are the same before and after', order14.length === 6 && order14.filter((c) => c.id === missed14).length === 2 && order14[5].id === missed14 && order14[5].again && /한 번 더/.test(order14[5].tag)
+    && order14.slice(0, 5).every((c) => !c.again) && line14 === `${m14.form} → ${m14.baseForm} ${m14.ko}` && !!m14.ko && keep14(before14) === keep14(after14) && after14.forms[missed14].ok === 0, JSON.stringify({ n: order14.length, line14, missed14 }));
+  const endTitle = await z.textContent('h1'); const starTxt = await z.textContent('#stormstars').catch(() => ''); const gained = after14.map.stars - before14.map.stars; await toMap(z); const z5 = await look14(z);
+  await z.click('[data-act=node][data-id=B1]'); const tileRun = await z.waitForSelector(READY, { timeout: 8000 }).then(async () => !!(await z.evaluate(() => window.__cards.run)) && !(await z.$('.storm-run')), () => false);
+  ok('회오리 5: finished: "빠져나왔어요", 4 stars for 4 first answers right, the whirlwind is gone and a tile starts its own run again', /회오리에서 빠져나왔어요/.test(endTitle) && gained === 4 && /\+4/.test(starTxt) && !z5.storm && !after14.map.storm && tileRun
+    && after14.runs.at(-1).kind === 'storm' && after14.runs.at(-1).fresh === 0, JSON.stringify({ endTitle, gained, z5 }));
+  await z.click('[data-act=quit]'); await z.waitForSelector('.tiles'); await toMap(z); await z.click('[data-act=home]'); await z.click('[data-act=parent]'); const pf = await z.textContent('[data-forms=son]').catch(() => '');
+  ok('회오리 부모 화면: one line of word-form progress (finished forms / forms that can be asked)', pf === '변신 단어: 끝난 형태 0 / 낼 수 있는 형태 8', pf);
+  await z.close(); await zctx.close();
+  // 6: the forms file cannot be read: the game opens as before, no whirlwind, a saved one blocks nothing
+  const nfx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true }); await nfx.route('**/data/forms.json', (r) => r.abort());
+  const n14 = await open(nfx, Q14); await seed14(n14, 'son', BASES14, map14({ storm: { wid: 'd1-01', node: 'start', day: '2026-11-20' } }));
+  await n14.click('[data-act=pick][data-id=son]'); await n14.waitForSelector('.world'); const n6 = await look14(n14); const on6 = await n14.evaluate(() => [window.__cards.fx]);
+  await startNode(n14, 'A1'); const run6 = await n14.evaluate(() => !!window.__cards.run); await play(n14); await toMap(n14); const n6b = await look14(n14);
+  ok('회오리 6: forms.json blocked: the map opens, no whirlwind is drawn or made, a tile under a saved whirlwind starts as usual', !n6.storm && !n6b.storm && on6[0] === null && run6 && !(await n14.$('#fatal')) && !(await state(n14, 'son')).map.storm, JSON.stringify({ n6, n6b }));
+  await n14.close(); await nfx.close();
+  // 7: a full bat gauge: the whirlwind waits and the bat test comes first
+  const bctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  const b14 = await open(bctx, Q14); await seed14(b14, 'daughter', BASES14, map14({ bat: { fill: 40, cap: 40, met: BASES14, last: null }, storm: { wid: 'd1-01', node: 'C2', day: '2026-11-20' } }));
+  await b14.click('[data-act=pick][data-id=daughter]'); await b14.waitForSelector('.world'); const b7 = await look14(b14); const batDock = !!(await b14.$('[data-id=bat]'));
+  await b14.click('#storm'); await sleep(100); const msg7 = await b14.textContent('#msg'); const noStorm7 = !(await b14.$('.storm-run'));
+  await startNode(b14, 'bat'); const batRun = await b14.evaluate(() => window.__cards.node.kind); await play(b14); await b14.waitForSelector('.tiles'); await toMap(b14); const b7b = await look14(b14);
+  ok('회오리 7: bat gauge full: the bat test opens first (pressing the whirlwind says so), and after the bat test the whirlwind has not moved', b7.storm === 'C2' && batDock && /박쥐/.test(msg7) && noStorm7 && batRun === 'bat' && b7b.storm === 'C2' && b7b.saved && b7b.saved.node === 'C2', JSON.stringify({ b7, msg7, b7b }));
+  await b14.close(); await bctx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

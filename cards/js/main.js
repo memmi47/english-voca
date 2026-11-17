@@ -5,6 +5,7 @@ import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLi
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, setLeftOutKinds, startTile } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
+import { STORM, indexForms, formDone, hereOf, stormOf, stormBlocks, stormRelease, stormTick, StormRun, settleStorm } from './storm.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -26,7 +27,7 @@ async function loadSprites(url = 'assets/postal/sprites.svg') {
   catch { /* the game still works with plain boxes if the sheet is missing */ }
 }
 const LT_SECONDS = FAST ? 3 : 60;
-const G = { ix: null, world: null, node: null, lt: null, game: null, words: [], byId: {}, meta: null, pid: null, st: null, run: null, boss: null, view: 'home', busy: false, timer: null, sound: null };
+const G = { fx: null, srun: null, stormEv: null, ix: null, world: null, node: null, lt: null, game: null, words: [], byId: {}, meta: null, pid: null, st: null, run: null, boss: null, view: 'home', busy: false, timer: null, sound: null };
 window.__cards = G;
 
 // ---- storage: this device, plus a copy on the home server when tools/serve_cards.py is reachable ----
@@ -47,7 +48,7 @@ function catchUp(text = stored(), aside = true) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) { if (aside) { setAside(localStorage, KEY(G.pid), text); G.seen = null; } return true; }   // unreadable: kept aside, never overwritten
   const m = migrate(raw, G.pid); G.seen = text;
   if (m.newer) { G.readonly = true; banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); return false; }
-  fold(mergeCards(G.st, m.state)); return true;
+  fold(mergeCards(G.st, m.state, G.ix)); return true;
 }
 function save() {
   if (G.readonly) { banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); return false; }
@@ -107,6 +108,25 @@ function px(emoji, n = 56) {
 const pimg = (e, n = 56, cls = '') => `<img class="px ${cls}" src="${px(e, n)}" width="${n}" height="${n}" alt="">`;
 const usedMs = (st) => st.runs.filter((r) => r.day === todayISO()).reduce((a, r) => a + r.wall, 0);
 
+// Word forms for the whirlwind (storm.js, card T-008). No file, an unreadable one or ?storm=off: no whirlwind (STORM.on false),
+// and the game opens as before. The demo set keeps only the forms whose base word is one of its cards.
+async function loadForms() {
+  if (qs.get('storm') === 'off') { G.fx = null; STORM.on = false; return; }   // test-only: no whirlwind
+  let doc = null; try { const r = await fetch('data/forms.json'); if (r.ok) doc = await r.json(); } catch {}
+  if (doc && Array.isArray(doc.forms) && DATA !== 'data/') doc = { ...doc, forms: doc.forms.filter((f) => f && G.byId[f.base]) };
+  G.fx = indexForms(doc); STORM.on = !!G.fx;
+  if (qs.get('storm') === 'now' && G.fx) STORM.chance = 1;            // test-only: a whirlwind comes whenever the rules allow one
+}
+// The whirlwind pictures (C-004) live in the world pixel sheet; a world file without that sheet (the demo set) gets only them.
+const STORM_SHEET = 'assets/postal/world-pixels/sprites.svg';
+async function loadStormSprites() {
+  if (document.getElementById('fx-storm-a')) return;
+  try { const r = await fetch(STORM_SHEET); if (!r.ok) return; const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+    const keep = [...doc.querySelectorAll('symbol[id^="fx-storm"]')].map((x) => x.outerHTML).join(''); if (!keep) return;
+    const d = document.createElement('div'); d.className = 'sheet'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+    d.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg">${keep}</svg>`; document.body.prepend(d); } catch { /* no picture: the whirlwind is drawn as an empty button */ }
+}
+
 async function boot() {
   let storage; try { storage = window.localStorage; storage.setItem('_t', '1'); storage.removeItem('_t'); } catch { storage = null; }
   G.volatile = !storage; G.syncStatus = { available: false, pending: [] };
@@ -125,11 +145,12 @@ async function boot() {
     G.dataNote = G.standIn ? '세계 파일: 시험용(단어 배정 임시)' : doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
   } catch (e) { $('#app').innerHTML = `<div class="page center"><h1 class="title">열 수 없어요</h1><p class="note" id="fatal">${esc(e.message)}</p></div>`; return; }
+  await loadForms();
   if (storage && qs.get('nosync') !== '1') {
-    G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
+    G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); if (G.pack) await loadSprites(G.pack); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -143,7 +164,7 @@ async function boot() {
 
 // ---- home ----
 function home() {
-  G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]));
+  G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]));
   $('#app').innerHTML = `<div class="page center"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
   <div class="hero">${anim('flag-a', 'flag-b', 64)}</div>
   <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}"><svg class="spr" width="96" height="96" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${id === 'son' ? 'teal' : 'gold'}-${id === 'son' ? 'idle' : 'wave'}"/></svg>${esc(name(id))}</button>`).join('')}</div>
@@ -179,9 +200,14 @@ function today(id, msg = '', wid = null) {
   if (G.readonly) banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); else if (G.notice) { banner(`<span>${esc(G.notice)}</span><button data-act="hide">확인</button>`); G.notice = ''; }
   const st = G.st; const m = ensureMap(st);
   if (wid && G.ix.byId[wid] && worldOpen(G.ix, G.ix.byId[wid], st)) m.at = wid;
-  const w = (G.world = currentWorld(G.ix, st)); const first = enterWorld(st, w, todayISO()); if (first || wid) save();
+  const w = (G.world = currentWorld(G.ix, st)); const first = enterWorld(st, w, todayISO());
+  const released = !G.readonly && stormRelease(st, G.ix, G.fx, todayISO());   // a whirlwind with nothing left to ask never holds the rider
+  if (first || wid || released) save();
   applyTheme(w); G.sound.scene(musicOf(w));
   const v = worldView(G.ix, w, st, todayISO()); const c = gradeCounts(st, G.words); const used = usedMs(st);   // shown to the parent; there is no daily time cap (user decision 2026-11-12)
+  const ev = G.stormEv && G.stormEv.pid === id && G.stormEv.wid === w.id ? G.stormEv : null; G.stormEv = null;   // what the last run did to the whirlwind, shown once
+  const sw = STORM.on ? stormOf(st, G.ix) : null; const storm = sw && sw.wid === w.id ? sw : null; const held = stormBlocks(st, w.id, G.ix);
+  if (ev && ev.event === 'caught' && held && !v.bat.full) return caught();
   const at = (n) => `left:${n.x / 10}%;top:${n.y / 6}%`;
   const place = (n, inner, label, status, extra = '') => `<button class="node ${status} ${extra}" data-act="node" data-id="${esc(n.id)}" style="${at(n)}" aria-label="${esc(label)}">${inner}${label ? `<span class="lbl">${esc(label)}</span>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`;
   const nodes = v.nodes.map((n) => {
@@ -194,7 +220,8 @@ function today(id, msg = '', wid = null) {
   const taken = w.map.nodes.map((n) => ({ x: n.x, y: n.y }));
   const houses = v.houses.map((h) => { const p = housePos(w, h, taken); return place({ id: h.id, ...p }, big('post-office'), `${h.name} ${h.done}/${h.total}`, h.status, h.bonus ? 'house bonus' : 'house'); });
   const story = first ? w.intro : '';
-  const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 모든 왕관을 모았어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
+  const stormHint = held ? '회오리에 잡혔어요! 회오리를 눌러 빠져나와요' : ev?.event === 'spawn' ? '회오리가 나타났어요' : ev?.event === 'move' ? '회오리가 다가와요' : ev?.event === 'gone' ? '회오리가 사라졌어요' : '';
+  const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : stormHint || story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 모든 왕관을 모았어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
   const dock = (id, inner, label, status, extra = '') => `<button class="dockbtn ${status} ${extra}" data-act="node" data-id="${id}" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span></button>`;
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
   <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><span class="chip" title="열쇠">${spr('key', 24)} ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
@@ -202,7 +229,7 @@ function today(id, msg = '', wid = null) {
     <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}">♪ 음악 ${G.sound.musicOn ? '켜짐' : '꺼짐'}</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}">${spr('sound', 24)} 효과음 ${G.sound.sfx ? '켜짐' : '꺼짐'}</button></div>
   <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
   <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div>
-  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}</div>
+  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
   <p class="msg" id="msg">${esc(hint)}</p>
   <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
@@ -214,14 +241,33 @@ function today(id, msg = '', wid = null) {
     <div class="legend"><span class="g3">${spr(MEDAL[3], 24)} 금 ${c[3]}</span><span class="g2">${spr(MEDAL[2], 24)} 은 ${c[2]}</span><span class="g1">${spr(MEDAL[1], 24)} 동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
     <button class="sec" data-act="album">이 세계의 카드첩</button></div>
   <p class="mut small center" id="src">소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="mut small center" id="syncline">${esc(syncLine())}</p></div>`;
+  slideStorm(w, ev, storm);
+}
+// The rider stands on the upper left of its tile, the whirlwind on the upper right of its own, so neither hides the stone,
+// its lock or its marks. Only the whirlwind can be pressed.
+function stormLayer(w, st, storm, ev, held, at) {
+  const h = w._nodes[hereOf(st, w)]; const col = G.pid === 'daughter' ? 'gold' : 'teal';
+  const rider = h ? `<div class="rider" id="rider" data-node="${esc(h.id)}" style="${at(h)}"><svg class="spr" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${col}-${held ? 'walk1' : 'idle'}"/></svg></div>` : '';
+  let out = rider;
+  if (storm) { const from = ev && ev.event === 'move' && !FAST && w._nodes[ev.from] ? w._nodes[ev.from] : w._nodes[storm.node];   // drawn where it was, then slides over
+    out += `<button class="storm ${held ? 'held' : ''} ${ev?.event === 'spawn' ? 'spawn' : ''}" id="storm" data-act="storm" data-node="${esc(storm.node)}" style="${at(from)}" aria-label="회오리">${anim('fx-storm-a', 'fx-storm-b', 48, 'fast')}</button>`; }
+  if (ev && ev.event === 'gone' && w._nodes[ev.node]) out += `<div class="stormfx gone" id="stormgone" style="${at(w._nodes[ev.node])}">${spr('fx-storm-gone', 48)}</div>`;
+  return out;
+}
+function slideStorm(w, ev, storm) {
+  if (!storm || !ev || ev.event !== 'move' || FAST) return; const b = $('#storm'); const n = w._nodes[storm.node]; if (!b || !n) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => { b.classList.add('slide'); b.style.left = `${n.x / 10}%`; b.style.top = `${n.y / 6}%`; }));
 }
 function nodeClick(id) {
   const st = G.st; const v = worldView(G.ix, G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
   if (id === 'bat') return v.bat.full ? start('bat') : out('박쥐 게이지가 아직 안 찼어요');
   if (v.bat.full) return out(MSG.blocked);                  // a full gauge: the test comes first
   if (id === 'bonus') { if (v.bonus.status === 'open') return startLightning(); return out(v.bonus.status === 'used' ? MSG.used : MSG.bonusLocked); }
-  if (id === 'monster' || id === 'review') return start(id);
+  // Caught by the whirlwind: the tiles, houses, monster and review of this world lead to the storm run (castles do not wait).
+  const held = stormBlocks(st, G.world.id, G.ix);
+  if (id === 'monster' || id === 'review') return held ? startStorm() : start(id);
   const n = v.nodes.find((x) => x.id === id) || v.houses.find((x) => x.id === id); if (!n) return;
+  if (held && n.status === 'open' && (n.kind === 'tile' || v.houses.includes(n))) return startStorm();
   if (n.kind === 'minigame') { if (n.status === 'locked') return out(MSG.gameLocked); return n.playable ? startGame(n) : out(MSG.soon); }
   if (n.kind === 'castle' && n.status === 'locked') return out(MSG.castleLocked);
   if (n.kind === 'castle' && n.status === 'cleared') return out('이 성은 이미 깼어요.');
@@ -360,7 +406,9 @@ function next() { clearTimeout(G.timer); if (G.view !== 'card' || !G.busy) retur
 
 function endRun(reason) {
   clearTimeout(G.timer); G.sound.stop(); const run = G.run; const node = G.node; const rec = run.finish(reason); G.boss = { ...run.boss, day: todayISO(), pid: G.pid };
-  const rw = settleRun(G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); const ww = settleWorld(G.ix, G.st, node, rec, todayISO()); save(); G.sync?.flush().catch(() => {});
+  const was = stormOf(G.st, G.ix); const heldBefore = !!node.wid && stormBlocks(G.st, node.wid, G.ix);
+  const rw = settleRun(G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); const ww = settleWorld(G.ix, G.st, node, rec, todayISO());
+  stormAfter(node, rec, was, heldBefore); save(); G.sync?.flush().catch(() => {});
   G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from); const w = G.world; const pc = (x) => Math.round(x * 100);
   const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
   const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : '성 시험 결과',
@@ -387,6 +435,67 @@ function endRun(reason) {
   G.sound.scene(musicOf(w));
   const jg = batNow ? 'bat' : ww.key || ww.finale?.pass ? 'victory' : ww.cleared || rw.monster || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) setTimeout(() => G.sound.jingle(jg), 150);
   if (ww.key) setTimeout(() => G.sound.jingle('key'), 1800); else if (ww.cleared) G.sound.sfxPlay('stamp');
+}
+
+// ---- the whirlwind (storm.js): one step per finished run, then a storm run of word forms when it reaches the rider ----
+// Called once after settleRun and settleWorld; the result is shown when the end screen is closed (the next map of that world).
+function stormAfter(node, rec, was, heldBefore) {
+  const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 101 + G.st.runs.length);
+  const t = stormTick(G.st, G.ix, G.fx, { wid: node.wid, kind: node.kind, reason: rec.reason }, todayISO(), rng); let event = t.event;
+  // The rules leave a rider who walks onto the whirlwind's tile caught without an event (storm.js): the screen shows it as caught.
+  if (!event && node.wid && !heldBefore && stormBlocks(G.st, node.wid, G.ix)) event = 'caught';
+  G.stormEv = event ? { pid: G.pid, event, wid: was?.wid || node.wid, from: was?.node || null, node: t.node || stormOf(G.st, G.ix)?.node || null } : null;
+}
+// "회오리에 휩쓸렸어요!": shown for a moment, then the storm run starts (a tap starts it sooner).
+function caught() {
+  G.view = 'caught'; band(false); clearTimeout(G.timer); G.sound.sfxPlay('gate');
+  $('#app').innerHTML = `<div class="page center caught" id="caught"><h1 class="title">회오리에 휩쓸렸어요!</h1>
+  <div class="hero stormhero">${anim('fx-storm-a', 'fx-storm-b', 128, 'fast')}<span class="letters">${spr('fx-storm-letters', 64)}</span></div>
+  <p class="note">변신한 단어의 원래 모습을 찾으면 빠져나와요</p><button class="go" data-act="storm">시작</button></div>`;
+  G.timer = setTimeout(() => { if (G.view === 'caught') startStorm(); }, FAST ? 400 : 1600);
+}
+async function startStorm() {
+  clearTimeout(G.timer);
+  if (G.readonly || !catchUp()) return banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`);
+  const v = worldView(G.ix, G.world, G.st, todayISO()); if (v.bat.full) return today(G.pid, MSG.blocked);   // the bat test comes first
+  await G.sound.unlock(); const rng = mulberry32((Number(qs.get('seed')) || Math.floor(Math.random() * 1e9)) + 202 + G.st.runs.length);
+  const run = STORM.on && G.fx ? new StormRun({ state: G.st, fx: G.fx, words: G.words, today: todayISO(), rng }) : null;
+  if (!run || !run.cards.length) { if (stormRelease(G.st, G.ix, G.fx, todayISO())) save(); return today(G.pid); }   // nothing to ask: no empty run
+  G.srun = run; G.view = 'storm'; band(true); G.busy = false; G.sound.sfxPlay('step'); G.sound.scene('study');
+  $('#app').innerHTML = `<div class="run storm-run">
+  <header class="hud"><button class="x" data-act="st-quit" aria-label="그만하기">✕</button>
+    <div class="boss">${anim('fx-storm-a', 'fx-storm-b', 48, 'fast')}<b class="stitle">회오리 탈출</b></div><div class="left" id="left"></div></header>
+  <section class="stage"><div class="card" id="card"></div></section>
+  <footer class="actions" id="actions"></footer></div>`;
+  stormCard();
+}
+function stormCard() {
+  const r = G.srun; const c = r.show(); if (!c) return stormEnd('done');
+  G.busy = false; $('#left').textContent = `남은 카드 ${r.left}`;
+  $('#card').className = 'card in storm-card';
+  $('#card').innerHTML = `<div class="tag" id="tag">${r.queue[r.i].again ? '한 번 더! ' : ''}원래 단어를 골라요</div><span class="letters">${spr('fx-storm-letters', 48)}</span><div class="word" id="word">${esc(c.form)}</div>`;
+  $('#actions').innerHTML = `<div class="opts">${c.options.map((o, i) => `<button class="act opt en" data-act="st-opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+  // The form's own sound if a file was made for it (tools/cards_say_audio.sh, cards/audio/forms.tsv); otherwise silent.
+  if (G.sound.files[c.id]) G.sound.play(c.id, c.form).catch(() => {});
+}
+function stormPick(i) {
+  if (G.busy || G.view !== 'storm' || !G.srun?.current) return; G.busy = true;
+  const res = G.srun.pick(i); save(); G.sound.sfxPlay(res.ok ? 'correct' : 'miss');
+  document.querySelectorAll('[data-act=st-opt]').forEach((b, k) => { b.disabled = true; if (b.textContent === res.answer) b.classList.add('right'); else if (k === i) b.classList.add('wrong'); });
+  const card = $('#card'); card.className = `card back storm-card ${res.ok ? 'ok' : 'learn'}`;
+  card.innerHTML = `<div class="tag">${res.ok ? '맞았어요!' : '이 단어예요'}</div><div class="stline" id="stline"><b>${esc(res.form)}</b> → <b>${esc(res.answer)}</b>${res.ko ? ` <span>${esc(res.ko)}</span>` : ''}</div>${res.ok || res.again ? '' : '<div class="line">끝에 한 번 더 나와요</div>'}`;
+  $('#actions').insertAdjacentHTML('beforeend', `<button class="act goon" data-act="st-next" id="goon">다음 ▶</button>`);
+}
+function stormNext() { if (G.view !== 'storm' || !G.busy) return; G.srun.advance(); stormCard(); }
+function stormEnd(reason) {
+  const run = G.srun; if (!run) return today(G.pid); G.sound.stop(); const rec = run.finish(reason); const out = settleStorm(G.st, rec, todayISO()); save(); G.sync?.flush().catch(() => {});
+  G.srun = null; G.view = 'end'; band(false); hideBanner(); G.sound.scene(musicOf(G.world));
+  const n = run.cards.length; const okN = run.stats.formOk;
+  $('#app').innerHTML = `<div class="page center"><h1 class="title">${out.cleared ? '회오리에서 빠져나왔어요' : '회오리가 남았어요'}</h1>
+  ${out.cleared ? `<div class="hero stormhero">${spr('fx-storm-gone', 96)}</div>${out.stars > 0 ? `<div class="gain" id="stormstars">${spr('star', 32)} +${out.stars}</div>` : ''}` : '<p class="mut">회오리를 다시 누르면 처음부터 풀 수 있어요.</p>'}
+  <div class="tiles"><div><b id="stormok">${okN}/${n}</b><span>맞힌 수</span></div><div><b>${out.stars}</b><span>받은 별</span></div><div><b>${rec.cards}</b><span>넘긴 카드</span></div></div>
+  <button class="go" data-act="today">▶ 지도로</button></div>`;
+  if (out.cleared) setTimeout(() => G.sound.jingle('clear'), 150);
 }
 
 // ---- lightning round (bonus house): true / false pairs, 60 seconds, touches no word ----
@@ -468,6 +577,7 @@ function parent() {
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
     const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk, sp: T.spots, spok: T.spotOk, bd: T.bunchDone, bok: T.bunchOk };
     return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv}), 넘긴 단어 확인 정답률 ${pct(tot.spok, tot.sp)} (${tot.spok}/${tot.sp}), 묶음 확인 ${tot.bok}/${tot.bd}</p>
+    ${formsLine(st)}
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
     ${R.slice(-60).map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${esc(r.tag || '-')}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
       <td>${r.claims}</td><td>${r.verifyOk}/${r.verifies}</td><td>${r.known}/${r.unknown}</td><td>${r.learned}</td><td>${r.reviewOk}/${r.reviews}</td><td>${r.bosses}</td></tr>`).join('') || '<tr><td colspan="13">기록 없음</td></tr>'}</table>${R.length > 60 ? `<p class="small mut">최근 60판만 표시. 전체는 내보내기 파일에 있습니다.</p>` : ''}
@@ -482,6 +592,11 @@ function parent() {
   <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p></div>`;
   paintSafety();
 }
+// Word forms (storm.js): finished forms / forms that can be asked (their base word was met). Nothing about the other child.
+function formsLine(st) {
+  if (!G.fx) return ''; const can = G.fx.forms.filter((f) => st.words[f.base]); const done = can.filter((f) => formDone((st.forms || {})[f.id])).length;
+  return `<p class="small" data-forms="${esc(st.id)}">변신 단어: 끝난 형태 ${done} / 낼 수 있는 형태 ${can.length}</p>`;
+}
 // The four places a record is kept, and the dated copies a parent can restore from.
 async function paintSafety() {
   const set = (id, t, bad) => { const e = document.getElementById(id); if (e) { e.textContent = t; e.classList.toggle('bad', !!bad); } }; G.pmsg = '';
@@ -495,7 +610,7 @@ async function paintSafety() {
 // Restore = merge into the current record. Nothing on either side is removed.
 function restore(id, text) {
   const b = readBackup(text, id); if (!b.ok) { G.pmsg = `복원하지 못했어요: ${b.why}`; return parent(); }
-  const before = Object.keys(load(id).words).length; const merged = mergeCards(load(id), b.state);
+  const before = Object.keys(load(id).words).length; const merged = mergeCards(load(id), b.state, G.ix);
   try { localStorage.setItem(KEY(id), JSON.stringify(merged)); G.sync?.changed('p.' + id); G.pmsg = `${name(id)}: 복원했어요. 카드 기록 ${before}장 → ${Object.keys(merged.words).length}장 (파일에는 ${b.words}장).`; }
   catch (e) { G.pmsg = `복원하지 못했어요: ${e.message}`; }
   return parent();
@@ -504,7 +619,7 @@ function download(nm, obj) { const a = document.createElement('a'); a.href = URL
 
 async function onClick(e) {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return; const a = b.dataset.act;
-  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node', 'mem', 'mail', 'tmark'].includes(a)) G.sound.sfxPlay('tap');
+  if (!['yes', 'no', 'opt', 'hear', 'lt-yes', 'lt-no', 'node', 'mem', 'mail', 'tmark', 'st-opt', 'storm'].includes(a)) G.sound.sfxPlay('tap');
   switch (a) {
     case 'music': await G.sound.unlock(); G.sound.setMusic(!G.sound.musicOn); savePref(); return today(G.pid);
     case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
@@ -520,6 +635,10 @@ async function onClick(e) {
     case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
       $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}). 왕관은 그 세계의 모든 칸과 집, 성을 깨면 받아요.`; return; }
     case 'node': return nodeClick(b.dataset.id);
+    case 'storm': if (G.view === 'today' && worldView(G.ix, G.world, G.st, todayISO()).bat.full) { $('#msg').textContent = MSG.blocked; return; } return startStorm();
+    case 'st-opt': return stormPick(Number(b.dataset.i));
+    case 'st-next': return stormNext();
+    case 'st-quit': return stormEnd('left');
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
     case 'mem': return memPick(Number(b.dataset.i));

@@ -2,6 +2,7 @@
 
   cards/data/catalog.json          every study card (4,610): id, form, Korean gloss, picture type, band, track, emoji
   cards/data/worlds.fixture.json   a stand-in world file in the schemaVersion 3 shape (docs/WORLD_SCHEMA.md)
+  cards/audio/words.tsv, forms.tsv the audio lists for tools/cards_say_audio.sh (cards, and word forms from cards/data/forms.json)
 
 The fixture exists so the game can be built and tested before the real world generator (Astra's lane) delivers
 cards/data/worlds.json. Its maps come from tools/preview_world_maps.py (the approved map sketches); its word assignment
@@ -95,4 +96,11 @@ num = {w['id']: i + 1 for i, w in enumerate(words)}; form = {w['id']: w['form'] 
 order = [x for c in continents for w in c['worlds'] for x in [i for n in w['map']['nodes'] for i in n.get('words', [])] + [i for s in w['sideActivities'] for t in s['tiles'] for i in t['words']]]
 aud = ROOT / 'cards/audio'; aud.mkdir(parents=True, exist_ok=True)
 (aud / 'words.tsv').write_text(''.join(f"{num[i]:04d}\t{i}\t{form[i]}\n" for i in order), encoding='utf-8')
+# Word-form audio list (whirlwind cards, card T-008): one line per form that can be asked (forms whose spelling clashes with
+# another card's base word are left out, as in cards/js/storm.js). Number = 'f' + place in cards/data/forms.json, so a file
+# keeps its name when forms are added or left out later. Read by tools/cards_say_audio.sh next to words.tsv.
+forms = json.loads((out / 'forms.json').read_text(encoding='utf-8'))['forms']
+askable = [(k + 1, f) for k, f in enumerate(forms) if f.get('id') and f.get('base') and f.get('baseForm') and f.get('form') and not f.get('clash')]
+(aud / 'forms.tsv').write_text(''.join(f"f{k:03d}\t{f['id']}\t{f['form']}\n" for k, f in askable), encoding='utf-8')
+print('forms:', len(askable), 'word forms in cards/audio/forms.tsv.', end='  ')
 print('catalog:', len(words), 'cards;', sum(1 for w in words if 'emoji' in w), 'with a picture.  fixture: 30 worlds,', sum(1 for c in continents for w in c['worlds'] for n in w['map']['nodes'] if n['kind'] == 'tile'), 'tiles')
