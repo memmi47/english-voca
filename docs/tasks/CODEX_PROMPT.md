@@ -87,3 +87,18 @@ docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-010.md 를 수행한다.
 끝난 뒤 보고: PR 번호, 쓴 사운드폰트와 라이선스, 곡 목록(세계 판 포함 개수), 음악 폴더 크기, 각 명령의 통과 수, 확인하지 못한 것.
 ```
 
+## C-011 (2026-11-17, Astra에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md 와 docs/DATA_SAFETY.md 4절을 읽은 뒤 docs/tasks/C-011.md 를 수행한다.
+- Astra가 먼저 화면 흐름(몬스터, 성 통과 연출, 세계 지도의 문, 선물 단계와 그 근거)을 정해 PR 설명에 올리고, 그다음 Sol이 구현한다.
+- 이 카드에 한해 cards/js/main.js, cards/css/app.css, cards/js/sound.js(음악 기본값과 빵빠레 재생만), 그림·음악 생성기와 그 출력, tests/cards_e2e.cjs 를 고친다. 규칙 코드(deck.js, map.js, world.js, store.js, sync.js, storm.js)와 저장 형식, 아이 기록의 저장 키는 바꾸지 않는다. 저장 형식을 바꾸지 않고는 할 수 없는 것이 나오면 멈추고 카드에 질문을 적는다.
+- 보상(별·열쇠·선물·꾸미기)이 복습 일정이나 카드 등급을 바꾸게 하지 않는다. 형제를 비교하는 화면은 만들지 않는다.
+- 새 그림과 곡은 모두 새로 만든다. 실제 게임의 캐릭터·그림·음악을 흉내 내지 않는다. 이모지를 그림으로 쓰지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 새 브라우저 검사 다섯 개와 화면 캡처 네 장의 경로를 적는다. 기존 검사는 지우거나 약하게 하지 않는다(음악 기본값 검사 한 개만 이유를 적고 기대값을 바꾼다). node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 브랜치 codex/play-feedback-1 로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다.
+- 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 선물 단계와 그 근거, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
+```
+
