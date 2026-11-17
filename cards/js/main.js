@@ -164,7 +164,7 @@ async function boot() {
 
 // ---- home ----
 function home() {
-  G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]));
+  G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id });
   $('#app').innerHTML = `<div class="page center"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
   <div class="hero">${anim('flag-a', 'flag-b', 64)}</div>
   <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}"><svg class="spr" width="96" height="96" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${id === 'son' ? 'teal' : 'gold'}-${id === 'son' ? 'idle' : 'wave'}"/></svg>${esc(name(id))}</button>`).join('')}</div>
@@ -203,7 +203,7 @@ function today(id, msg = '', wid = null) {
   const w = (G.world = currentWorld(G.ix, st)); const first = enterWorld(st, w, todayISO());
   const released = !G.readonly && stormRelease(st, G.ix, G.fx, todayISO());   // a whirlwind with nothing left to ask never holds the rider
   if (first || wid || released) save();
-  applyTheme(w); G.sound.scene(musicOf(w));
+  applyTheme(w); G.sound.scene(musicOf(w), { worldId: w.id });
   const v = worldView(G.ix, w, st, todayISO()); const c = gradeCounts(st, G.words); const used = usedMs(st);   // shown to the parent; there is no daily time cap (user decision 2026-11-12)
   const ev = G.stormEv && G.stormEv.pid === id && G.stormEv.wid === w.id ? G.stormEv : null; G.stormEv = null;   // what the last run did to the whirlwind, shown once
   const sw = STORM.on ? stormOf(st, G.ix) : null; const storm = sw && sw.wid === w.id ? sw : null; const held = stormBlocks(st, w.id, G.ix);
@@ -321,7 +321,7 @@ function begin(node, rng) {
   const items = takeBag(G.st); G.node = node; startTile(G.st, node, todayISO()); if (!save() && G.readonly) return;   // the mark is saved before any word is
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
-  G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study');
+  G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study', node.kind === 'finale' ? { variant: 'continent-castle' } : {});
   $('#app').innerHTML = `<div class="run">
   <header class="hud"><button class="x" data-act="quit" aria-label="그만하기">✕</button>
     <div class="boss"><span class="boss-emoji" id="boss"></span><div class="hpbar"><i id="hp"></i></div><span class="floater" id="floater"></span></div>
@@ -432,7 +432,7 @@ function endRun(reason) {
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
   <button class="go" data-act="${go[0]}" data-id="${esc(goId)}">${esc(go[1])}</button>${go[0] !== 'today' ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
   G.run = null; G.node = null;
-  G.sound.scene(musicOf(w));
+  G.sound.scene(musicOf(w), { worldId: w.id });
   const jg = batNow ? 'bat' : ww.key || ww.finale?.pass ? 'victory' : ww.cleared || rw.monster || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) setTimeout(() => G.sound.jingle(jg), 150);
   if (ww.key) setTimeout(() => G.sound.jingle('key'), 1800); else if (ww.cleared) G.sound.sfxPlay('stamp');
 }
@@ -448,7 +448,7 @@ function stormAfter(node, rec, was, heldBefore) {
 }
 // "회오리에 휩쓸렸어요!": shown for a moment, then the storm run starts (a tap starts it sooner).
 function caught() {
-  G.view = 'caught'; band(false); clearTimeout(G.timer); G.sound.sfxPlay('gate');
+  G.view = 'caught'; band(false); clearTimeout(G.timer); G.sound.sfxPlay('gate'); G.sound.jingle('storm-caught');
   $('#app').innerHTML = `<div class="page center caught" id="caught"><h1 class="title">회오리에 휩쓸렸어요!</h1>
   <div class="hero stormhero">${anim('fx-storm-a', 'fx-storm-b', 128, 'fast')}<span class="letters">${spr('fx-storm-letters', 64)}</span></div>
   <p class="note">변신한 단어의 원래 모습을 찾으면 빠져나와요</p><button class="go" data-act="storm">시작</button></div>`;
@@ -461,7 +461,7 @@ async function startStorm() {
   await G.sound.unlock(); const rng = mulberry32((Number(qs.get('seed')) || Math.floor(Math.random() * 1e9)) + 202 + G.st.runs.length);
   const run = STORM.on && G.fx ? new StormRun({ state: G.st, fx: G.fx, words: G.words, today: todayISO(), rng }) : null;
   if (!run || !run.cards.length) { if (stormRelease(G.st, G.ix, G.fx, todayISO())) save(); return today(G.pid); }   // nothing to ask: no empty run
-  G.srun = run; G.view = 'storm'; band(true); G.busy = false; G.sound.sfxPlay('step'); G.sound.scene('study');
+  G.srun = run; G.view = 'storm'; band(true); G.busy = false; G.sound.sfxPlay('step'); G.sound.scene('storm');
   $('#app').innerHTML = `<div class="run storm-run">
   <header class="hud"><button class="x" data-act="st-quit" aria-label="그만하기">✕</button>
     <div class="boss">${anim('fx-storm-a', 'fx-storm-b', 48, 'fast')}<b class="stitle">회오리 탈출</b></div><div class="left" id="left"></div></header>
@@ -489,7 +489,7 @@ function stormPick(i) {
 function stormNext() { if (G.view !== 'storm' || !G.busy) return; G.srun.advance(); stormCard(); }
 function stormEnd(reason) {
   const run = G.srun; if (!run) return today(G.pid); G.sound.stop(); const rec = run.finish(reason); const out = settleStorm(G.st, rec, todayISO()); save(); G.sync?.flush().catch(() => {});
-  G.srun = null; G.view = 'end'; band(false); hideBanner(); G.sound.scene(musicOf(G.world));
+  G.srun = null; G.view = 'end'; band(false); hideBanner(); G.sound.scene(musicOf(G.world), { worldId: G.world.id });
   const n = run.cards.length; const okN = run.stats.formOk;
   $('#app').innerHTML = `<div class="page center"><h1 class="title">${out.cleared ? '회오리에서 빠져나왔어요' : '회오리가 남았어요'}</h1>
   ${out.cleared ? `<div class="hero stormhero">${spr('fx-storm-gone', 96)}</div>${out.stars > 0 ? `<div class="gain" id="stormstars">${spr('star', 32)} +${out.stars}</div>` : ''}` : '<p class="mut">회오리를 다시 누르면 처음부터 풀 수 있어요.</p>'}
@@ -516,7 +516,7 @@ function ltAnswer(says) {
   $('#card').classList.add(ok ? 'okflash' : 'badflash'); setTimeout(() => { if (G.view === 'lightning') ltNext(); }, FAST ? 10 : 160);
 }
 function ltEnd() {
-  clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; band(false); G.sound.stop(); G.sound.sfxPlay('lightning-end'); G.sound.scene(musicOf(G.world));
+  clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; band(false); G.sound.stop(); G.sound.sfxPlay('lightning-end'); G.sound.scene(musicOf(G.world), { worldId: G.world.id });
   const r = settleLightning(G.st, G.lt, todayISO()); save(); G.sync?.flush().catch(() => {}); const sc = G.lt.score;
   $('#app').innerHTML = `<div class="page center"><h1 class="title">번개 끝!</h1><div class="tiles"><div><b>${sc}</b><span>맞힌 수</span></div><div><b>${G.st.map.best}</b><span>내 최고 기록</span></div></div>
   ${r.newBest ? '<div class="gain">새 기록!</div>' : ''}${r.item ? `<div class="gain">${spr(ITEM_SPR[r.item], 40)} ${ITEMS[r.item].name}을 얻었어요</div>` : r.first ? '<p class="mut">3개 이상 맞히면 아이템을 줘요</p>' : ''}
@@ -558,7 +558,7 @@ function mailDrop() {
   else { G.sound.sfxPlay('retry'); $('#ghint').textContent = '조금만 더 기다렸다가 눌러요.'; }
 }
 function endGame() {
-  const g = G.game; if (!g) return; const fresh = stampGame(G.st, G.world, g.node.id, todayISO()); if (fresh) save(); G.view = 'end'; G.game = null; G.sound.scene(musicOf(G.world)); G.sound.sfxPlay('stamp'); if (fresh) setTimeout(() => G.sound.jingle('item'), 200);
+  const g = G.game; if (!g) return; const fresh = stampGame(G.st, G.world, g.node.id, todayISO()); if (fresh) save(); G.view = 'end'; G.game = null; G.sound.scene(musicOf(G.world), { worldId: G.world.id }); G.sound.sfxPlay('stamp'); if (fresh) setTimeout(() => G.sound.jingle('item'), 200);
   $('#app').innerHTML = `<div class="page center"><h1 class="title">잘 놀았어요!</h1><div class="gain" id="stampgain">${spr('stamp', 40)} ${fresh ? '엽서에 놀이 도장을 찍었어요' : '이 도장은 이미 모았어요'}</div>
   <p class="mut">놀이 도장은 카드 공부와는 상관없는 기념이에요.</p><button class="go" data-act="today">▶ 지도로</button></div>`;
 }

@@ -126,7 +126,7 @@ B: D5:1 F#5:1 B5:2
 32: C#5:1 E5:1 A4:1 R:1
 ```
 
-반복 화성은 B′ 끝의 딸림화음에서 A 첫 으뜸화음으로 돌아온다. 일반 반주는 C3–G5, 주선율은 이동 후 MIDI 55–88, 베이스는 MIDI 36–55에 둔다. 범위를 벗어나면 트랙 전체를 옥타브 단위로 옮기며 선율 중간의 음만 접지 않는다.
+반복 화성은 B′ 끝의 딸림화음에서 A 첫 으뜸화음으로 돌아온다. 일반 반주는 C3–G5, 주선율은 이동 후 MIDI 55–88에 둔다. 베이스의 원곡 음역은 세계별 조 옮김 전 MIDI 36–55이며, ±2반음 이동 후 허용 음역은 MIDI 34–57이다(현재 생성 결과 34–56). 이 범위는 선택한 GM 베이스의 낮은 음역에 적합하며, 원곡의 좁은 범위로 되돌리려고 세계별 베이스를 한 옥타브 올리지 않는다. 주선율이 지정 음역을 벗어나면 트랙 전체를 옥타브 단위로 옮기며 선율 중간의 음만 접지 않는다.
 
 반주 P0은 화음의 낮은 root–third–fifth–third를 0·1·2·3박, 각 0.7박으로 친다. P1은 0·2박에 1.4박 화음, 1.5·3.5박에 fifth 단음을 0.35박 친다. 베이스 P0은 root 0박·fifth 2박 각 1.7박, P1은 root 0박 1.2박·fifth 1.5박 0.35박·root 2.5박 1박. ch4는 0박의 third/fifth 3.6박 지속(피치카토는 0·2박 각 0.4박), ch5 응답은 4·8·12·16마디 끝 두 음을 1박씩 한 옥타브 아래에서 연주한다. A′의 추가 응답과 겹치지 않는다. sky는 반주를 한 옥타브 낮추고 P0 음을 0·2박만 친다.
 
@@ -208,13 +208,13 @@ storm M:
 
 1. 1회 음악 길이를 MIDI 실제 tempo 메타값으로 계산한다. `N = round(bars * 4 * tempoUs * 44100 / 1_000_000)` samples, 한 마디 `P = round(4 * tempoUs * 44100 / 1_000_000)`. BPM 표시값을 다시 반올림해서 쓰지 않는다.
 2. 렌더용 임시 MIDI는 같은 32/16마디를 **3회** 연주하고 모든 note-off 뒤 **1마디 이상 release tail**을 둔다. 최종 v3 MIDI 원본은 음악 한 회와 tail이며, 임시 3회본은 Git에 넣지 않는다. 중앙 회차를 이용해 앞 회차 잔향이 첫 박에 이미 존재하게 한다.
-3. 중앙 회차의 N samples를 본체로, 앞 한 마디를 pre-roll로, 뒤 한 마디 이상을 여유로 보존한다. 처음/끝에서 강제로 무음으로 fade하여 박자가 꺼지게 하지 않는다.
-4. 파형 경계에 불연속이 남으면 **10ms(441 samples) 짧은 오프라인 선형 crossfade**로 본체 첫 10ms를 직전 끝의 자연스러운 다음 10ms와 혼합한다. 첫 sample은 끝의 연속 sample, 441번째부터는 원래 첫 부분이다. 본체 길이 N은 바꾸지 않는다. 필요한 경우 pre-roll 마지막 한 마디를 수정된 본체의 마지막 한 마디로, 뒤 여유 첫 한 마디를 수정된 본체 첫 한 마디로 맞춰 코덱에 연속 문맥을 준다. 잔향을 녹음한 원 PCM은 별도로 확인한다. 한 박/한 마디를 겹쳐 곡 길이를 줄이는 방식은 쓰지 않는다.
-5. 보정 PCM을 AAC로 인코딩한다. `encodedDelaySamples`는 packet 정보(실험 1024), `decodedOffsetSamples`는 **상호상관 실측 잔여 앞 지연**(실험 0)으로 별도로 기록한다. `loopStart = (P + decodedOffsetSamples)/44100`, `loopEnd = (P + N + decodedOffsetSamples)/44100`. 별도 decoder가 다른 offset을 보이면 자동으로 추측하지 말고 측정·기록 후 해결한다.
-6. `decodeAudioData`한 buffer에서 loopStart/End를 설정하고 `source.start(when, loopStart)`로 첫 박부터 시작한다. pre-roll을 처음에 들려주거나 HTMLAudio `.loop`를 쓰지 않는다. Web Audio가 출력 장치 sample rate로 resample하더라도 경계는 초 단위로 적용한다.
+3. 중앙 회차의 N samples를 본체로 삼는다. 최종 PCM은 `[본체 마지막 P samples][본체 N samples][본체 첫 2P samples]`, 총 `N+3P` samples로 포장한다. 앞 한 마디는 pre-roll, 뒤 두 마디는 반복 위상 선택과 최소 한 마디 여유를 위한 연속 문맥이다. 처음/끝에서 강제로 무음으로 fade하여 박자가 꺼지게 하지 않는다.
+4. 파형 경계에 불연속이 남으면 **10ms(441 samples) 짧은 오프라인 선형 crossfade**로 본체 첫 10ms를 직전 끝의 자연스러운 다음 10ms와 혼합한다. 첫 sample은 끝의 연속 sample, 441번째부터는 원래 첫 부분이다. 본체 길이 N은 바꾸지 않는다. pre-roll 한 마디와 뒤 여유 두 마디도 수정된 본체의 대응 구간으로 맞춰 코덱에 연속 문맥을 준다. 잔향을 녹음한 원 PCM은 별도로 확인한다. 한 박/한 마디를 겹쳐 곡 길이를 줄이는 방식은 쓰지 않는다.
+5. 보정 PCM을 AAC로 인코딩한다. `encodedDelaySamples`는 packet 정보(실험 1024), `decodedOffsetSamples`는 **상호상관 실측 잔여 앞 지연**(실험 0)으로 별도로 기록한다. 첫 박 직전 쉼표와 첫 박 attack의 10ms RMS 차이는 음악적으로 정상이어도 이음매 검사를 통과하지 못할 수 있다. 따라서 실제 디코딩 파형에서 `phase = 0, 441, 882, ...` samples(한 마디 P 이내)를 순서대로 검사하고 양 채널의 아래 RMS·sample jump 기준을 모두 만족하는 **첫 후보**를 `loopPhaseSamples`로 고른다. 모든 후보가 실패하면 중단하며 기준을 완화하지 않는다. `startOffset = (P + decodedOffsetSamples)/44100`, `loopStart = (P + loopPhaseSamples + decodedOffsetSamples)/44100`, `loopEnd = loopStart + N/44100`, `tailSamples = 2P - loopPhaseSamples`(최소 P). 파일은 다시 자르거나 인코딩하지 않으므로 후보 검사와 실제 파일이 일치한다. 다른 decoder가 다른 offset을 보이면 자동으로 추측하지 말고 측정·기록 후 해결한다.
+6. `decodeAudioData`한 buffer에서 loopStart/End를 설정하고 `source.start(when, startOffset)`로 **첫 박부터** 시작한다. startOffset은 loopStart보다 앞일 수 있다. 최초 진입에서 첫 박부터 위상 경계까지의 짧은 부분을 들려준 뒤, 반복은 그 위상에서 정확히 N samples 동안 돈다. 이렇게 하면 시작이 악구 중간으로 바뀌지 않고, 반복 경계만 지속음의 연속 구간에 놓인다. pre-roll을 처음에 들려주거나 HTMLAudio `.loop`를 쓰지 않는다. Web Audio가 출력 장치 sample rate로 resample하더라도 경계는 초 단위로 적용한다.
 7. 검사에서 AAC를 실제 decode하고 경계 양옆 10ms RMS 차이 6dB 이내, 마지막→첫 sample jump가 각 채널에서 `max(.01, 경계 주변 일반 인접sample차 p99*2)` 이내인지 보고한다. 적어도 3회 연결한 WAV도 Git 밖으로 만들어 듣는다. 이 수치만으로 음악적 이음매를 보증하지 않으므로 iPad/mac 실제 반복 청취 목록은 남긴다.
 
-반복 구간만 약 40–90초, prefix/tail은 각 한 마디 정도다. 42파일 합계는 대략 30–34MB로 예상한다. 이는 예측이며 최종 `du -sh`와 실제 byte 합계를 기록한다. **40MB 초과 시 파일을 숨겨 빼거나 기준을 바꾸지 말고 C-010의 막히면에 결과를 적고 중단한다.**
+반복 구간만 약 40–90초, prefix는 한 마디, 뒤 문맥은 두 마디이며 위상을 고른 실제 loopEnd 뒤에는 최소 한 마디가 남는다. 42파일 합계는 대략 30–34MB로 예상한다. 이는 예측이며 최종 `du -sh`와 실제 byte 합계를 기록한다. **40MB 초과 시 파일을 숨겨 빼거나 기준을 바꾸지 말고 C-010의 막히면에 결과를 적고 중단한다.**
 
 ## 7. manifest와 재생 계약
 
@@ -231,8 +231,8 @@ tracks: {
     bars: 32, beatsPerBar: 4, tempoUs, bpm,
     transpose: 0, leadProgram: 12, accompaniment: "P0", drums: true,
     programs: [12,24,32,45,73], channels: [1,2,3,4,5,10],
-    sampleRate: 44100, frames, loopStart, loopEnd, gain: 1,
-    encodedDelaySamples, decodedOffsetSamples, preRollSamples, loopSamples,
+    sampleRate: 44100, frames, startOffset, loopStart, loopEnd, gain: 1,
+    encodedDelaySamples, decodedOffsetSamples, preRollSamples, loopPhaseSamples, loopSamples,
     tailSamples, duration, loudnessLufs, truePeakDb },
   ...
   "clear": { file: "clear.m4a", kind: "jingle", loopStart: 0,
@@ -268,10 +268,30 @@ tracks: {
 1. 음악을 켜고 데모 대륙 1의 두 지도를 실제 화면 흐름으로 연다. `backend === 'gm'`, 서로 다른 `.file`과 요청, `track.id === 'meadow'`, `seen.has('scene:meadow')`를 확인한다.
 2. 신규 context에서 `**/assets/postal/music-gm/*.m4a` 요청을 막아 chip backend가 켜지고 기존 track이 재생되며 오류 화면과 uncaught error가 없는지 확인한다. 캐시된 이전 음원을 이용하지 않는다.
 3. 카드 판에서 실제 단어 재생 경로가 호출될 때 음악 `ducked`와 gain 목표가 정상의 0.18배가 되는지 확인한다. 말 종료/정지 뒤 회복도 확인한다. 테스트가 `.duck(true)`를 직접 호출해서 통과시키지 않는다.
-4. 실제 재생 중 AudioBufferSourceNode `.loop`, `.loopStart`, `.loopEnd`가 그 파일 manifest 값과 일치하고 source가 loopStart에서 시작되는지 확인한다. 모의 객체의 값만 확인하지 않는다.
+4. 실제 재생 중 AudioBufferSourceNode `.loop`, `.loopStart`, `.loopEnd`가 그 파일 manifest 값과 일치하고 source가 manifest startOffset(첫 박)에서 시작되는지 확인한다. loopStart보다 앞에서 시작하는 것은 위상 선택에 따른 의도된 동작이다. 모의 객체의 값만 확인하지 않는다.
 
 카드의 전체 명령을 실행한다: 생성기, 렌더러, 음악 검사, 전체 단위 검사, 전체 브라우저 검사(예상 153), `check_sim_baseline`, 용량. 생성기 재실행 후 기존 JSON/SFX/v2 MIDI와 새 MIDI·목록이 안정적인지 확인한다. 최종 보고에 도구 버전, 폰트 hash, 42곡 수, 용량, 실제 delay/offset 범위, LUFS/peak/seam 결과, 테스트 결과를 적는다. README 음악 절, 카드 결과, BOARD 상태, WORKLOG 8절 한 줄도 허용 범위에서 갱신한다.
 
 ## 막히면
 
 현재 추가 사용자 결정이 필요한 항목은 없다. 라이선스와 폰트를 확보했고 오프라인 렌더링 도구도 실제 작동한다. 구현 중 승인된 범위를 넘어서는 선택이 필요하거나 40MB를 넘으면 C-010의 같은 절에 구체적인 질문/측정치를 적고 멈춘다. iPad/mac의 음색·말소리 우선·반복 이음매 청취는 사용자 확인 목록으로 남으며 자동 검사 통과와 혼동하지 않는다.
+
+## 9. 구현·실행 결과 (2026-11-17)
+
+설계는 [Draft PR #12](https://github.com/memmi47/english-voca/pull/12)에 먼저 게시한 뒤 구현했다. 원곡 MIDI 3개와 세계·화면·징글 MIDI 42개, 실제 AAC 42개(세계 30 + 화면 5 + 징글 7)를 생성·녹음했다. 기존 칩튠 12곡·효과음 16개와 v2 MIDI는 보존했다. 규칙·저장·자료·기존 음원 등 보호 대상 43파일의 SHA-256은 작업 전과 동일하다.
+
+FluidSynth 2.4.4와 GeneralUser GS 2.0.3(위 고정 SHA-256), FFmpeg/FFprobe 7.1.5, Chromium 156.0.8078.79로 실제 검사했다. chorus off, reverb room-size .2 / damp .4 / width .5 / level .15, AAC-LC 44,100Hz stereo 96kbps이다. 최초 검사에서 MP4 기본 movie timescale 1,000 때문에 일부 편집 목록이 최대 44 samples를 반올림해 브라우저 길이가 원 PCM과 달랐다. 인코더에 `-movie_timescale 44100`을 지정해 해결했으며 최종 42개 모두 실제 `decodeAudioData` frames가 manifest와 정확히 같다. raw priming은 전부 1,024 samples, 세 비무음 창 상호상관으로 측정한 잔여 decode offset은 전부 0이다.
+
+반복곡은 −24.1..−24.0 LUFS, 공부곡은 −27.1 LUFS, 징글 유성 몸통 RMS는 −24.040..−23.990 dBFS이다. 최대 true peak는 −7.4 dBTP, clipping은 0이다. 디코딩 파형의 위상 선택은 0..1,323 samples(0..30ms), 경계 양쪽 10ms RMS 차이는 최대 5.757dB이며 양 채널 sample jump도 정한 p99 기준을 통과했다. 첫 재생은 첫 박의 `startOffset`, 반복은 manifest의 별도 `loopStart`/`loopEnd`를 실제 AudioBufferSourceNode에 적용한다.
+
+실행 결과:
+
+- 생성기 재실행: 최종 manifest와 MIDI 45개가 byte 단위로 동일하며 렌더 측정값·tail·phase·startOffset을 보존한다.
+- 렌더러: 실제 42/42 녹음·정규화·AAC 인코딩 완료. 사운드폰트는 저장소 밖에 유지했다.
+- 음악 검사: 기존 칩튠 12곡 + SFX 16개와 새 GM 42개 통과. AAC 형식·실제 decode·길이·음량·MIDI/hash·반복 경계 모두 확인했다.
+- 단위 검사 100/100, 브라우저 153/153(기존 149개 그대로 + 새 검사 4개), 규칙 baseline 출력 동일. 최종 AAC에서도 153/153을 다시 확인했다.
+- `du -sh cards/assets/postal/music-gm`: **34M**. 실제 폴더 합계 **35,097,239 bytes**, AAC만 35,022,540 bytes로 40MB보다 작다.
+
+이 환경에서는 설치된 Chromium을 사용하도록 Git 밖의 `/tmp/c010-chromium.cjs` preload를 지정했다. 저장소의 기존 브라우저 launch 코드는 바꾸지 않았다. 로컬 socket/child-process 제약이 있는 검사는 허용된 실행 환경에서 재실행해 통과했다. 검사 명령은 기존 note/SFX norm을 재보정하거나 규칙 baseline을 갱신하지 않았다.
+
+대륙별 3회 연결 청취 WAV는 저장소 밖 `/workspace/scratch/c010-listening/{p1-01,p2-01,p3-01}-three-loops.wav`에 만들었다. 이는 청취용 산출물이며 사람이 들어 확인했다는 뜻은 아니다. **iPad/mac에서 음색·단어 음성 우선·반복 이음매를 듣는 사용자 확인은 아직 미완료**다.

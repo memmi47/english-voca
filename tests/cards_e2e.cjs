@@ -310,6 +310,38 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('the second continent has its own music and colours', await x.evaluate(() => window.__cards.sound.seen.has('scene:sea') && document.documentElement.style.getPropertyValue('--w-ground') === '#75B7B1'));
   await x.click('[data-act=home]'); await x.click('[data-act=parent]');
   ok('the parent view counts keys, crowns and big castles', /열쇠 2\/3/.test(await x.textContent('.parent')) && /왕관 2/.test(await x.textContent('.parent')) && /큰 성 1\/2/.test(await x.textContent('.parent')) && /복습 정답률/.test(await x.textContent('.parent')));
+  // C-010: actual recorded assets, real Web Audio sources and word-file playback.
+  const gmSeed = await state(x, 'son'); gmSeed.map.at = 'd1-01'; gmSeed.words = {};
+  const gmctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  await gmctx.addInitScript((st) => localStorage.setItem('cards.v0.p.son', JSON.stringify(st)), gmSeed);
+  await gmctx.addInitScript(() => { window.__gmStarts = []; const start = AudioBufferSourceNode.prototype.start; AudioBufferSourceNode.prototype.start = function (...args) { window.__gmStarts.push({ source: this, offset: args[1] || 0 }); return start.apply(this, args); }; });
+  const gmWord = Buffer.alloc(44 + 32000); wav.copy(gmWord, 0, 0, 44); gmWord.writeUInt32LE(32036, 4); gmWord.writeUInt32LE(32000, 40);
+  for (let i = 44; i < gmWord.length; i++) gmWord[i] = 128 + Math.round(18 * Math.sin((i - 44) * Math.PI * 2 * 220 / 8000));
+  await gmctx.route('**/audio/manifest.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ files: Object.fromEntries(WORDS.map((w) => [w.id, 'gm-word.wav'])) }) }));
+  await gmctx.route('**/audio/gm-word.wav', (r) => r.fulfill({ contentType: 'audio/wav', body: gmWord }));
+  const gmPage = await open(gmctx, 'today=2026-12-20&triage=off&seed=9&fast=1'); const gmRequests = [];
+  gmPage.on('request', (r) => { if (/music-gm\/.*\.m4a/.test(r.url())) gmRequests.push(r.url()); });
+  await gmPage.click('[data-act=pick][data-id=son]'); await gmPage.click('[data-act=music]');
+  await gmPage.waitForFunction(() => window.__cards.sound.music?.backend === 'gm');
+  const gmFirst = await gmPage.evaluate(() => window.__cards.sound.music.file);
+  await gmPage.click('[data-act=atlas]'); await gmPage.click('.wcard[data-id="d1-02"]');
+  await gmPage.waitForFunction((first) => window.__cards.sound.music?.backend === 'gm' && window.__cards.sound.music.file !== first, gmFirst);
+  ok('GM: two world maps play different recorded files with the logical meadow id', await gmPage.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && window.__cards.sound.seen.has('scene:meadow')) && new Set(gmRequests).size >= 2);
+  ok('GM: actual AudioBufferSourceNode loop boundaries and starting offset match the manifest', await gmPage.evaluate(async () => { const s = window.__cards.sound, m = s.music, manifest = await (await fetch('assets/postal/music-gm/manifest.json')).json(), e = manifest.tracks[m.assetId]; return m.source instanceof AudioBufferSourceNode && m.source.loop && m.source.loopStart === e.loopStart && m.source.loopEnd === e.loopEnd && m.startOffset === e.startOffset && window.__gmStarts.some((call) => call.source === m.source && call.offset === e.startOffset); }));
+  await gmPage.click('[data-act=atlas]'); await gmPage.click('.wcard[data-id="d1-01"]'); await startNode(gmPage, 'A1');
+  await gmPage.waitForFunction(() => { const s = window.__cards.sound; return s.music?.backend === 'gm' && s.music.ducked && s.el && !s.el.paused; });
+  const gmDucked = await gmPage.evaluate(() => { const s = window.__cards.sound; return s.music.ducked && Math.abs(s.music.gainTarget - s.music.volume * .18) < 1e-8; });
+  await gmPage.evaluate(() => window.__cards.sound.stop()); await gmPage.waitForTimeout(200);
+  ok('GM: real card word playback ducks music to 0.18 and word stop restores it', gmDucked && await gmPage.evaluate(() => !window.__cards.sound.music.ducked && Math.abs(window.__cards.sound.music.gainTarget - window.__cards.sound.music.volume) < 1e-8));
+  await gmPage.close(); await gmctx.close();
+  const blockedctx = await browser.newContext(); const blockedErrors = [];
+  await blockedctx.route('**/assets/postal/music-gm/*.m4a', (r) => r.abort());
+  const blockedPage = await open(blockedctx, 'today=2026-11-12&seed=9&fast=1'); blockedPage.on('pageerror', (e) => blockedErrors.push(String(e)));
+  await blockedPage.click('[data-act=pick][data-id=son]'); await blockedPage.click('[data-act=music]');
+  await blockedPage.waitForFunction(() => window.__cards.sound.music?.backend === 'chip' && window.__cards.sound.music.on);
+  ok('GM: blocked recordings fall back to the original chip loop without an error screen', await blockedPage.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && window.__cards.sound.fails === 0 && !!document.querySelector('.world')) && blockedErrors.length === 0);
+  await blockedPage.close(); await blockedctx.close();
+
   await x.close(); await xctx.close();
 
   // 10d. the full deck: 4,610 cards and 30 worlds load and a first tile can be played; a world file of another version is refused
