@@ -338,7 +338,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('a record saved by the 60-word prototype opens after the update: its tiles, stars and gauge are there', /\bcleared\b/.test(await nodeStatus(u, 'A1')) && /\bcleared\b/.test(await nodeStatus(u, 'B1')) && /77/.test(await u.textContent('.maphud .chip:nth-of-type(1)')) && /20\/40/.test(await u.textContent('#batgauge')));
   await startNode(u, 'A2'); await play(u); await u.waitForSelector('.tiles');
   const up = await state(u, 'son');
-  ok('after playing on, the record is in the new format and still holds the old words', up.v === 2 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
+  ok('after playing on, the record is in the new format and still holds the old words', up.v === 3 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
   await u.evaluate(() => localStorage.setItem('cards.v0.p.son', '{"v":1,"id":"son","words":{"W0122'));           // cut off in the middle of a write
   await u.goto(BASE + '?set=demo&today=2026-12-22&triage=off&seed=4&sound=off&fast=1&nosync=1'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
   const dmg = await u.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cards.v0.p.son.damaged.')).map((k) => localStorage.getItem(k)));
@@ -459,7 +459,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   let tson = await state(t, 'son'); const passedA1 = listIds.slice(3);
   ok('triage: the tile is cleared; passed words are silver with no date in bunch A1 (due in 30 days); marked words are on the 1-day review', /칸 클리어/.test(await t.textContent('h1'))
     && passedA1.every((id) => tson.words[id].st === 'likely' && tson.words[id].due === null && tson.words[id].bunch === 'A1') && marked.every((id) => tson.words[id].st === 'review' && tson.words[id].due === '2026-11-13')
-    && JSON.stringify(tson.bunches) === '{"A1":{"due":"2026-12-12","done":null}}' && tson.v === 2 && tson.map.bat.fill === 3, JSON.stringify(tson.bunches) + ' fill ' + tson.map.bat.fill);
+    && JSON.stringify(tson.bunches) === '{"A1":{"due":"2026-12-12","done":null}}' && tson.v === 3 && tson.map.bat.fill === 3, JSON.stringify(tson.bunches) + ' fill ' + tson.map.bat.fill);
   await toMap(t); await t.click('[data-act=node][data-id=B1]'); await t.waitForSelector('.twords'); await t.click('#tgo'); await t.waitForSelector(READY);
   const qB = await t.evaluate(() => window.__cards.run.queue.map((x) => x.role)); const seenB = await playTri(t); tson = await state(t, 'son');
   ok('triage: a tile where every word is known asks only the two spot checks and is cleared', qB.join() === 'spot,spot' && seenB.length === 2 && /칸 클리어/.test(await t.textContent('h1')) && TILE('B1').every((id) => tson.words[id].st === 'likely' && tson.words[id].bunch === 'B1'), qB.join());
@@ -479,7 +479,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const f1ctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   const ta = await open(f1ctx, 'today=2026-11-12&triage=off&seed=41&sound=off&fast=1'); await ta.click('[data-act=pick][data-id=son]'); await ta.waitForSelector('.world');
   const tb = await open(f1ctx, 'today=2026-11-12&triage=off&seed=41&sound=off&fast=1');
-  const futureT = await tb.evaluate(() => { const k = 'cards.v0.p.son'; const s = JSON.parse(localStorage.getItem(k)); s.v = 3; s.futureOnly = true; s.words.futureWord = { st: 'done' }; const t = JSON.stringify(s); localStorage.setItem(k, t); return t; });
+  const futureT = await tb.evaluate(() => { const k = 'cards.v0.p.son'; const s = JSON.parse(localStorage.getItem(k)); s.v = s.v + 1; s.futureOnly = true; s.words.futureWord = { st: 'done' }; const t = JSON.stringify(s); localStorage.setItem(k, t); return t; });
   await ta.click('[data-act=node][data-id=A1]'); await sleep(150);
   ok('F1: after tab B saved a record of a newer program, tab A starts no run, asks for a reload and writes nothing', !(await ta.$('.run')) && /오래됐어요/.test(await ta.textContent('#banner')) && (await ta.evaluate(() => localStorage.getItem('cards.v0.p.son'))) === futureT && await ta.evaluate(() => window.__cards.readonly));
   await ta.evaluate(() => document.querySelector('[data-act=home]').click()); await ta.click('[data-act=pick][data-id=son]'); await ta.waitForSelector('.world');   // the reload banner lies over the back button
@@ -491,7 +491,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await td.evaluate((ids) => { const k = 'cards.v0.p.son'; const s = JSON.parse(localStorage.getItem(k)); for (const id of ids) s.words[id] = { st: 'likely', lstep: 0, due: '2026-11-19', firstDay: '2026-11-12', lastDay: '2026-11-12', lapses: 0 }; localStorage.setItem(k, JSON.stringify(s)); }, otherW);
   await startNode(tc, 'A1'); await play(tc); await tc.waitForSelector('.tiles');
   const both = await state(tc, 'son');
-  ok('F1: tab B saved more words of the same format, then tab A played and saved: both tabs\' words are kept', otherW.every((id) => both.words[id] && both.words[id].st === 'likely') && TILE('A1').every((id) => both.words[id]) && both.v === 2, Object.keys(both.words).length + ' words');
+  ok('F1: tab B saved more words of the same format, then tab A played and saved: both tabs\' words are kept', otherW.every((id) => both.words[id] && both.words[id].st === 'likely') && TILE('A1').every((id) => both.words[id]) && both.v === 3, Object.keys(both.words).length + ' words');
   await tc.close(); await td.close(); await f1b.close();
 
   // F6: every world and castle done, 3 words still to learn: a review button on the map starts a run of those 3

@@ -4,6 +4,7 @@
 // schedule or grade.
 import { shuffle } from './deck.js';
 import { ensureMap, dueCount, waitingCount, batState, batPool, tileDue, MONSTER_AT, RULES, LIGHTNING_MIN, ripeCount, TRIAGE, auditPick } from './map.js';
+import { stormBlocks } from './storm.js';
 
 export const FREE = new Set(['start', 'junction', 'plaza']);          // nodes anyone can walk through
 export const CASTLE = { cards: 12, pass: 0.8 };                       // defaults when a world carries no castleRule
@@ -124,23 +125,26 @@ export function nodeRun(ix, view, id, state, words, rng) {
   const w = view.world;
   if (id === 'bat') return view.bat.full ? { kind: 'bat', wid: w.id, tag: 'bat', scope: { bat: batPool(state, view.today, rng) } } : null;
   if (view.bat.full) return null;                                       // a full gauge: the test comes first, nothing else starts
+  // The whirlwind stands on the rider's node (storm.js): tile, monster and review runs of this world wait for the storm run.
+  const caught = stormBlocks(state, w.id, ix);
   // With triage on, tile and monster runs carry due bunch checks (scope.audit), and a tile with words not met yet lists them
   // (node.triage) so the screen asks which are unknown before the run is made (map.triageScope).
   const audit = (scope) => { const a = auditPick(state, view.today, rng); if (a) scope.audit = a; return scope; };
+  if (caught && (id === 'monster' || id === 'review')) return null;
   if (id === 'monster') return view.monster.present ? { kind: 'monster', wid: w.id, tag: 'monster', scope: audit({ noNew: true, duePerRun: 14 }) } : null;
   // A few cards waiting and no monster (also after every world and castle is done): the same cards as a monster run, no item.
   if (id === 'review') return view.review.present ? { kind: 'review', wid: w.id, tag: 'review', scope: audit({ noNew: true, duePerRun: 14 }) } : null;
   const unitRun = (u, bonus) => { const node = { kind: 'tile', wid: w.id, tag: u.id, unit: u.id, bonus, scope: audit({ newIds: u.words, newPerRun: u.words.length, duePerRun: tileDue(view.monster.count) }) };
     const unseen = u.words.filter((x) => !state.words[x]); if (TRIAGE.on && unseen.length) node.triage = unseen; return node; };
   const n = view.nodes.find((x) => x.id === id);
-  if (n && n.kind === 'tile') return n.status === 'open' ? unitRun(n, n.bonus) : null;
+  if (n && n.kind === 'tile') return n.status === 'open' && !caught ? unitRun(n, n.bonus) : null;
   if (n && n.kind === 'castle') {
     if (n.status !== 'open') return null; const rule = w.castleRule || {};
     const pool = shuffle(worldWords(w).filter((x) => state.words[x]), rng).slice(0, rule.cards ?? CASTLE.cards);
     return pool.length ? { kind: 'castle', wid: w.id, tag: 'castle:' + w.id, pass: rule.passRate ?? CASTLE.pass, scope: { castle: pool } } : null;
   }
   const h = view.houses.find((x) => x.id === id);
-  if (h) { if (h.status !== 'open') return null; const t = h.tiles.find((x) => !x.cleared); return t ? unitRun(t, h.bonus) : null; }
+  if (h) { if (h.status !== 'open' || caught) return null; const t = h.tiles.find((x) => !x.cleared); return t ? unitRun(t, h.bonus) : null; }
   return null;
 }
 // The continent castle: cards met anywhere in the continent, the same number from every world.
@@ -163,6 +167,7 @@ export function settleWorld(ix, state, node, rec, today) {
     const w = ix.byId[node.wid]; const u = unitsIn(w).find((x) => x.id === node.unit); const ws = wstate(state, w.id);
     if (u && rec.reason === 'done' && ws.open?.[u.id]) delete ws.open[u.id];   // the run reached its end; a run left early keeps the mark
     if (u && unitDone(state, u) && !ws.cleared[u.id]) { ws.cleared[u.id] = today; out.cleared = true; }
+    if (u && u.node && rec.reason === 'done' && unitDone(state, u)) ws.here = u.node;   // the rider (storm.js) stands on the tile just cleared
     out.crown = out.cleared && crowned(w, state);
   } else if (node.kind === 'castle') {
     const w = ix.byId[node.wid]; const ws = wstate(state, w.id); const total = rec.castleOk + rec.castleMiss; const pass = rec.reason === 'done' && total > 0 && rec.castleOk / total >= node.pass;

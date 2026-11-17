@@ -87,9 +87,9 @@ test('D6: restoring from a file or a server copy is a merge: nothing on either s
 });
 
 test('D9: format 1 -> 2 (tile bunches): a format-1 record gets an empty bunch list and every word record as it was; the saved format-2 file opens with its bunches', () => {
-  assert.equal(SCHEMA, 2);
+  assert.equal(SCHEMA, 3);                                                         // the current format (T-007 raised it from 2)
   const v1 = JSON.parse(fs.readFileSync(path.join(SAVES, 'v1-worlds.json'), 'utf8')); assert.equal(v1.v, 1); const words = JSON.stringify(v1.words);
-  const m = migrate(JSON.parse(JSON.stringify(v1)), v1.id); assert.deepEqual([m.from, m.state.v, m.state.bunches], [1, 2, {}]); assert.equal(JSON.stringify(m.state.words), words);
+  const m = migrate(JSON.parse(JSON.stringify(v1)), v1.id); assert.deepEqual([m.from, m.state.v, m.state.bunches], [1, SCHEMA, {}]); assert.equal(JSON.stringify(m.state.words), words);
   const raw = JSON.parse(fs.readFileSync(path.join(SAVES, 'v2-bunches.json'), 'utf8')); assert.equal(raw.v, 2);
   const s = migrate(JSON.parse(JSON.stringify(raw)), 'son'); assert.deepEqual([s.from, s.newer], [2, false]); assert.deepEqual(s.state.bunches, raw.bunches); assert.deepEqual(s.state.words, raw.words);
   const res = Object.values(raw.bunches).map((b) => b.result || 'open').sort(); assert.deepEqual(res, ['ok', 'open', 'open', 'split']);

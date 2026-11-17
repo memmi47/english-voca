@@ -28,17 +28,20 @@ const minStr = (x, y) => (x == null ? y : y == null ? x : String(x) <= String(y)
 // `open` marks tile runs that were started and not finished (world.startTile): united too, but a tile cleared on either
 // side is finished, so its mark goes. The key is left out when no mark is left (records without marks keep their shape).
 const early = (x, y) => { const out = { ...(y || {}) }; for (const [k, d] of Object.entries(x || {})) out[k] = minStr(out[k], d); return out; };
-function mergeWorlds(a = {}, b = {}) {
+// The rider's place (`here`, storm.js) is not progress: it follows the side that played last (`aLast`), else the other side.
+function mergeWorlds(a = {}, b = {}, aLast = true) {
   const out = {};
   for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const x = a[id] || {}, y = b[id] || {};
     const cleared = early(x.cleared, y.cleared), open = early(x.open, y.open); for (const k of Object.keys(cleared)) delete open[k];
     out[id] = { castle: minStr(x.castle, y.castle) ?? null, seen: minStr(x.seen, y.seen) ?? null, cleared, stamps: early(x.stamps, y.stamps) };
-    if (Object.keys(open).length) out[id].open = open; }
+    if (Object.keys(open).length) out[id].open = open;
+    const here = aLast ? x.here ?? y.here : y.here ?? x.here; if (here != null) out[id].here = here; }
   return out;
 }
-function mergeMap(a, b) {
+// aLast: side a played last (its latest run ended no earlier than b's). The whirlwind follows that side, also when it has none.
+function mergeMap(a, b, aLast = true) {
   if (!a) return b; if (!b) return a;
-  const worlds = mergeWorlds(a.worlds, b.worlds); const conts = {};
+  const worlds = mergeWorlds(a.worlds, b.worlds, aLast); const conts = {};
   for (const id of new Set([...Object.keys(a.conts || {}), ...Object.keys(b.conts || {})])) conts[id] = { castle: minStr(a.conts?.[id]?.castle, b.conts?.[id]?.castle) ?? null };
   const monsterDay = maxStr(a.monsterDay, b.monsterDay);
   const monsterN = Math.max(a.monsterDay === monsterDay ? a.monsterN || 1 : 0, b.monsterDay === monsterDay ? b.monsterN || 1 : 0);
@@ -48,6 +51,26 @@ function mergeMap(a, b) {
   // The tiles of the first prototype (store.STEPS[0] keeps them under `legacy`): nothing reads them, but a record is never made smaller.
   const la = a.legacy, lb = b.legacy;
   if (la || lb) out.legacy = { cleared: early(la?.cleared, lb?.cleared), castle: minStr(la?.castle, lb?.castle) ?? null };
+  // Whirlwinds of the day: the same rule as the monsters. The whirlwind itself: the side that played last (keys only when present).
+  if (a.stormDay || b.stormDay) { out.stormDay = maxStr(a.stormDay, b.stormDay); out.stormN = Math.max(a.stormDay === out.stormDay ? a.stormN || 1 : 0, b.stormDay === out.stormDay ? b.stormN || 1 : 0); }
+  if ('storm' in a || 'storm' in b) { const p = aLast ? a : b, o = aLast ? b : a; out.storm = ('storm' in p ? p.storm : o.storm) ?? null; }
+  return out;
+}
+// After a merge, a rider or a whirlwind on a node the world file does not have is dropped (nobody gets stuck on a missing
+// node). Needs the world index; without one the record is left as it is (storm.js ignores such a whirlwind anyway).
+function dropMissing(map, ix) {
+  if (!map || !ix) return map;
+  const out = { ...map, worlds: { ...(map.worlds || {}) } };
+  for (const [id, ws] of Object.entries(out.worlds)) if (ws && ws.here != null && !ix.byId[id]?._nodes?.[ws.here]) { const { here, ...rest } = ws; out.worlds[id] = rest; }
+  if (out.storm && !ix.byId[out.storm.wid]?._nodes?.[out.storm.node]) out.storm = null;
+  return out;
+}
+// Form records (storm.js): per form the later change (`at`) wins; same time or no time: the one asked more often.
+function mergeForms(a = {}, b = {}) {
+  const out = {};
+  for (const id of new Set([...Object.keys(a), ...Object.keys(b)])) { const x = a[id], y = b[id];
+    if (!x || !y) { out[id] = { ...(x || y) }; continue; }
+    out[id] = { ...(stamped(x) && stamped(y) && x.at !== y.at ? (y.at > x.at ? y : x) : (y.n || 0) > (x.n || 0) ? y : x) }; }
   return out;
 }
 // Bat gauge: the side that took the latest test has already emptied it, so it wins; otherwise the fuller gauge and the union of met words.
@@ -60,7 +83,8 @@ function mergeBat(a, b) {
 // Pure and symmetric enough for two devices that both changed the same child's record.
 // Both sides are first brought to the current format. A record saved by a later program than this one is returned
 // untouched: this code does not know its fields and must not rewrite them.
-export function mergeCards(a, b) {
+// ix (optional): the world index (world.indexWorlds), used to drop a rider or whirlwind on a node the world file does not have.
+export function mergeCards(a, b, ix = null) {
   if (!a) return b; if (!b) return a;
   const ma = migrate(a), mb = migrate(b); if (ma.newer || mb.newer) return (ma.newer ? ma : mb).state; a = ma.state; b = mb.state;
   const out = { ...b, ...a, v: Math.max(a.v || 0, b.v || 0), id: a.id || b.id };
@@ -68,12 +92,13 @@ export function mergeCards(a, b) {
   for (const [id, r] of Object.entries(a.words || {})) { const o = out.words[id]; if (!o) { out.words[id] = r; continue; } const w = newer(o, r); const other = w === o ? r : o;
     out.words[id] = !('bunch' in w) && other.bunch != null ? { ...w, bunch: other.bunch } : w; }   // the bunch tag is kept whichever side wins
   out.bunches = mergeBunches(a.bunches, b.bunches);
+  out.forms = mergeForms(a.forms, b.forms);
   // Old run records are folded into totals (store.compact). The side that folded further wins; runs it already counted are dropped.
   const past = !a.past ? b.past : !b.past ? a.past : String(a.past.until) >= String(b.past.until) ? a.past : b.past; if (past) out.past = past; else delete out.past;
   out.runs = uniq([...(a.runs || []), ...(b.runs || [])], (r) => [r.endedAt, r.day, r.n, r.tag].join('|')).filter((r) => !past || String(r.endedAt) > String(past.until)).sort((x, y) => String(x.endedAt).localeCompare(String(y.endedAt)));
   out.log = uniq([...(a.log || []), ...(b.log || [])], (e) => [e.t, e.id, e.role, e.form, e.ok].join('|')).sort((x, y) => String(x.t).localeCompare(String(y.t))).slice(-LOG_CAP);
   out.verify = (last(a.runs) >= last(b.runs) ? a.verify : b.verify) || [];       // adaptive check rate: follow the side that played last
-  if (a.map || b.map) out.map = mergeMap(a.map, b.map);
+  if (a.map || b.map) out.map = dropMissing(mergeMap(a.map, b.map, last(a.runs) >= last(b.runs)), ix);
   return out;
 }
 // Tile bunches: a finished check wins (both finished: the earlier one); both open: the earlier due date.
@@ -91,8 +116,8 @@ export function mergeMeta(local, remote, localDirty) {
 }
 
 export class Sync {
-  constructor({ storage, fetchImpl, base = 'api/', onMerged = () => {}, onStatus = () => {}, debounceMs = 0 }) {
-    this.s = storage; this.fetch = fetchImpl; this.base = base; this.onMerged = onMerged; this.onStatus = onStatus; this.debounceMs = debounceMs; this.timers = {};
+  constructor({ storage, fetchImpl, base = 'api/', onMerged = () => {}, onStatus = () => {}, debounceMs = 0, ix = null }) {
+    this.ix = ix; this.s = storage; this.fetch = fetchImpl; this.base = base; this.onMerged = onMerged; this.onStatus = onStatus; this.debounceMs = debounceMs; this.timers = {};
     this.available = null; this.lastError = null; this.inFlight = {}; this.again = {}; this.stale = false;   // stale: the server holds a newer format than this program
     try { this.state = JSON.parse(this.s.getItem(SYNC_KEY)) || {}; } catch { this.state = {}; }
     this.state.revs ||= {}; this.state.dirty ||= {};
@@ -108,7 +133,7 @@ export class Sync {
     setAside(this.s, localKey(name), v); return null;
   }
   _setLocal(name, data) { this.s.setItem(localKey(name), JSON.stringify(data)); }
-  _merge(name, local, remote) { return name === 'meta' ? mergeMeta(local, remote, !!this.state.dirty[name]) : mergeCards(local, remote); }
+  _merge(name, local, remote) { return name === 'meta' ? mergeMeta(local, remote, !!this.state.dirty[name]) : mergeCards(local, remote, this.ix); }
   get pending() { return Object.keys(this.state.dirty).filter((k) => this.state.dirty[k]); }
   _status() { this.onStatus({ available: this.available, pending: this.pending, error: this.lastError, stale: this.stale }); }
   _newer(name, data) { if (name !== 'meta' && data && Number.isInteger(data.v) && data.v > SCHEMA) { this.stale = true; return true; } return false; }

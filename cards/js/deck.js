@@ -34,8 +34,8 @@ export function shuffle(arr, rng) {
   return a;
 }
 
-export const SCHEMA = 2;                                // format of a saved record; upgrades live in store.js
-export function newState(id) { return { v: SCHEMA, id, words: {}, verify: [], runs: [], log: [], bunches: {} }; }
+export const SCHEMA = 3;                                // format of a saved record; upgrades live in store.js
+export function newState(id) { return { v: SCHEMA, id, words: {}, verify: [], runs: [], log: [], bunches: {}, forms: {} }; }
 // Passed words of a bunch that are still passed (not checked into learning or reviews since).
 export const bunchLeft = (state, b) => Object.keys(state.words).filter((id) => { const r = state.words[id]; return r.st === 'likely' && r.due == null && r.bunch === b; });
 
