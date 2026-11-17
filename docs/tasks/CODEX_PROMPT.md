@@ -70,3 +70,20 @@ docs/ORCHESTRATION.md 와 docs/tasks/T-006.md(앞선 작업과 그 검토)를 �
 끝난 뒤 보고: 카드별 한 줄(PR 번호, 통과한 검사, 확인하지 못한 것). C-007은 심각도별 문제 수와 가장 심각한 것 하나를 덧붙인다.
 ```
 
+## C-010 (2026-11-17, Astra에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-010.md 를 수행한다.
+- Astra가 먼저 곡 구성과 악기 배정, 세계별 변화 규칙, 사운드폰트 선택과 그 라이선스 근거를 docs/research/music_gm.md 에 정하고 PR 설명에 올린다. 그다음 Sol이 생성기, 녹음 스크립트, 재생 코드를 구현한다.
+- 모든 곡은 새로 쓴다. 실제 게임·방송·광고 음악을 흉내 내지 않는다.
+- 이 카드에 한해 cards/js/sound.js 와 cards/js/main.js(음악 고르는 줄만), tests/cards_e2e.cjs(검사 추가만)를 고친다. 카드의 "고칠 수 있는 파일" 밖은 고치지 않는다. 규칙 코드와 저장 형식은 건드리지 않는다.
+- 사운드폰트는 녹음 결과의 배포가 허용된 무료 것만 쓰고, 파일 자체는 저장소에 넣지 않는다. 유료 도구·음원은 쓰지 않는다.
+- 녹음 파일이 없거나 못 읽으면 지금 칩튠으로 돌아가야 한다. 칩튠 자료와 chip.js 는 지우지 않는다.
+- 이 환경에서 사운드폰트나 FluidSynth를 받을 수 없으면 카드의 "막히면" 첫 항목대로 녹음 전까지만 하고 그 사실을 적는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적는다. 새 브라우저 검사 네 개를 넣는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 브랜치 codex/gm-music 으로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다.
+- 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 쓴 사운드폰트와 라이선스, 곡 목록(세계 판 포함 개수), 음악 폴더 크기, 각 명령의 통과 수, 확인하지 못한 것.
+```
+
