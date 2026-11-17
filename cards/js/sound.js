@@ -86,7 +86,7 @@ export class Sound {
     });
   }
   // ---- chiptune layer (chip.js): sound effects, jingles and looping music, all synthesized ----
-  // Preferences: music is off until someone turns it on; effects are on. `log` records every effect name (used by tests).
+  // Preferences: main.js enables music on first use and respects saved choices; effects are on. `log` records every effect name (used by tests).
   async chipInit() {
     if (this.chip) return this.chip;
     try {
@@ -134,19 +134,23 @@ export class Sound {
   async jingle(id) {
     this._note('jingle:' + id);
     if (this.off || !this.sfx || !this.ctx) return;
-    const generation = this.musicGeneration;
+    const generation = this.musicGeneration, fanfare = ['world-fanfare','continent-fanfare'].includes(id), fanfareGeneration = this.fanfareGeneration || 0;
     try {
       const rec = await this._recording(id, {}, true);
-      if (!this.sfx || generation !== this.musicGeneration) return;
+      if (!this.sfx || generation !== this.musicGeneration || (fanfare && fanfareGeneration !== (this.fanfareGeneration || 0))) return;
       if (rec && this._graph()) {
         const source = this.ctx.createBufferSource(), out = this.ctx.createGain(); source.buffer = rec.buffer; source.connect(out); out.connect(this.sfxBus);
-        const node = { source, out, gain: rec.entry.gain }; this.jingleNodes.add(node); const reason = Symbol('jingle'); this._duck(reason, true);
+        const node = { source, out, gain: rec.entry.gain, fanfare: ['world-fanfare','continent-fanfare'].includes(id) }; this.jingleNodes.add(node); const reason = Symbol('jingle'); node.reason = reason; this._duck(reason, true);
         out.gain.value = node.gain * (this.duckReasons.has('word') ? .18 : 1);
         source.onended = () => { this.jingleNodes.delete(node); source.disconnect(); out.disconnect(); this._duck(reason, false); }; source.start(); return;
       }
     } catch {}
-    const t = await this.track(id === 'storm-caught' ? 'bat' : id);
-    if (t && this.sfx && generation === this.musicGeneration && this._graph()) { const reason = Symbol('jingle'), out = this.ctx.createGain(), node = { out, gain: 1 }; out.connect(this.sfxBus); this.jingleNodes.add(node); this._duck(reason, true); out.gain.value = this.duckReasons.has('word') ? .18 : 1; const len = this.chip.mod.playJingle(this.ctx, out, t, 1); setTimeout(() => { this.jingleNodes.delete(node); out.disconnect(); this._duck(reason, false); }, len * 1000 + 100); }
+    const t = await this.track(['world-fanfare','continent-fanfare'].includes(id) ? 'victory' : id === 'storm-caught' ? 'bat' : id);
+    if (t && this.sfx && generation === this.musicGeneration && (!fanfare || fanfareGeneration === (this.fanfareGeneration || 0)) && this._graph()) { const reason = Symbol('jingle'), out = this.ctx.createGain(), node = { out, gain: 1, fanfare: ['world-fanfare','continent-fanfare'].includes(id) }; out.connect(this.sfxBus); this.jingleNodes.add(node); node.reason = reason; this._duck(reason, true); out.gain.value = this.duckReasons.has('word') ? .18 : 1; const len = this.chip.mod.playJingle(this.ctx, out, t, 1); setTimeout(() => { this.jingleNodes.delete(node); out.disconnect(); this._duck(reason, false); }, len * 1000 + 100); }
+  }
+  cancelFanfares() {
+    this.fanfareGeneration = (this.fanfareGeneration || 0) + 1;
+    for (const node of this.jingleNodes) if (node.fanfare) { try { node.source?.stop(); node.out.disconnect(); } catch {} this.jingleNodes.delete(node); this._duck(node.reason, false); }
   }
   // Scene ids remain logical names; world variants select separate recorded assets.
   async scene(id, options = {}) {

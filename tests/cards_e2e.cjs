@@ -52,6 +52,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
 
 (async () => {
   for (let i = 0; i < 50; i++) { if (await fetch(BASE).then((r) => r.ok, () => false)) break; await sleep(100); }
+  fs.mkdirSync('/tmp/c011-screens',{recursive:true});
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
   const ctx = await browser.newContext({ viewport: { width: 1024, height: 700 }, hasTouch: true });
   let page = await open(ctx, 'today=2026-11-12&triage=off&seed=5&sound=off&fast=1');
@@ -239,7 +240,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('sprite sheet inlined (66 symbols); open tile and locked tile use stone pads', look.sheet === 66 && look.a1 === '#stone-open' && look.a2 === '#stone-locked', JSON.stringify(look));
   ok('world colours come from the world file; the map has path tiles; a stone is drawn about 64 px wide', look.ground === '#8FCB83' && look.path > 8 && look.big >= 56, JSON.stringify(look));
   ok('text on a light sky is dark', await v1.evaluate(() => document.documentElement.style.getPropertyValue('--fg') === '#233f3a'));
-  ok('music starts off, effects on', await v1.evaluate(() => !window.__cards.sound.musicOn && window.__cards.sound.sfx));
+  ok('music starts on, effects on', await v1.evaluate(() => window.__cards.sound.musicOn && window.__cards.sound.sfx));
+  await v1.click('[data-act=music]'); await v1.waitForFunction(() => !window.__cards.sound.musicOn);
   await v1.click('[data-act=music]'); await v1.waitForSelector('.tgl.on');
   await v1.waitForFunction(() => window.__cards.sound.music && window.__cards.sound.music.on, null, { timeout: 8000 });
   ok('music toggle plays the map loop and is remembered', await v1.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && JSON.parse(localStorage.getItem('cards.v0.pref')).music === true));
@@ -289,8 +291,13 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await toMap(x);
   for (const id of ['A2', 'B2']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
   await startNode(x, 'castle'); await play(x); await x.waitForSelector('.tiles');
-  ok('castle with every tile and the house done: key, crown, the closing line and a way to the next world', !!(await x.$('#keygain')) && !!(await x.$('#crowngain')) && /장미 열쇠/.test(await x.textContent('#keygain')) && /꽃마루 문이 열렸어/.test(await x.textContent('.page')) && (await x.$eval('.go', (b) => b.dataset.act + ':' + b.dataset.id)) === 'goworld:d1-02');
-  await x.click('.go'); await x.waitForSelector('#world[data-world="d1-02"]');
+  ok('castle with every tile and the house done: key, crown, the closing line and a way to the next world', !!(await x.$('#keygain')) && !!(await x.$('#crowngain')) && /장미 열쇠/.test(await x.textContent('#keygain')) && /꽃마루 문이 열렸어/.test(await x.textContent('.page')) && (await x.$eval('.go', (b) => b.dataset.act)) === 'celebration-atlas');
+  const castlePresentationRecord = JSON.stringify(await state(x,'son'));
+  await x.screenshot({path:'/tmp/c011-screens/castle-celebration.png',animations:'disabled'});
+  await x.click('.go'); await x.waitForSelector('.atlas .door-stage'); await x.waitForSelector('.door-stage[data-phase=open] .go:not([disabled])');
+  ok('C011: world celebration opens the door on atlas without changing child records', JSON.stringify(await state(x,'son')) === castlePresentationRecord && await x.$eval('#atlas-door use',(e)=>e.getAttribute('href')) === '#c011-door-open');
+  await x.screenshot({path:'/tmp/c011-screens/atlas-door.png',animations:'disabled'});
+  await x.click('.door-stage .go'); await x.waitForSelector('#world[data-world="d1-02"]');
   ok('the next world opens with its own colours and opening line', /상자 사이에/.test(await msg()) && await x.evaluate(() => document.documentElement.style.getPropertyValue('--w-ground') === '#E3B45B'));
   await x.click('[data-act=atlas]'); await x.waitForSelector('.atlas');
   const atl = await x.evaluate(() => ({ crown: !!document.querySelector('.wcard[data-id="d1-01"] use[href="#crown"]'), here: document.querySelector('.wcard.here').dataset.id, locked: document.querySelector('.wcard[data-id="d2-01"]').disabled, finale: document.querySelector('.wcard.finale[data-id="d1"]').className }));
@@ -305,14 +312,18 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const fq = await x.evaluate(() => window.__cards.run.queue.map((q) => q.role + ':' + q.form));
   ok('the big castle is a check-only run over the continent (10 cards in the demo)', fq.length === 10 && fq.every((q) => q === 'castle:check') && (await x.evaluate(() => window.__cards.node.pass)) === 0.7);
   await play(x); await x.waitForSelector('.tiles');
-  ok('passing it opens the way to the next continent', /큰 성을 깼어요/.test(await x.textContent('h1')) && /굽이굽이 바다/.test(await x.textContent('.page')) && (await x.$eval('.go', (b) => b.dataset.act + ':' + b.dataset.id)) === 'goworld:d2-01');
-  await x.click('.go'); await x.waitForSelector('#world[data-world="d2-01"]');
+  ok('passing it opens the way to the next continent', /큰 성을 깼어요/.test(await x.textContent('h1')) && /굽이굽이 바다/.test(await x.textContent('.page')) && (await x.$eval('.go', (b) => b.dataset.act)) === 'celebration-atlas');
+  const continentPresentationRecord = JSON.stringify(await state(x,'son'));
+  await x.click('.go'); await x.waitForSelector('.atlas .door-stage.continent'); await x.waitForSelector('.door-stage[data-phase=open] .go:not([disabled])');
+  ok('C011: continent celebration opens the next continent door without changing child records', JSON.stringify(await state(x,'son')) === continentPresentationRecord);
+  await x.click('.door-stage .go'); await x.waitForSelector('#world[data-world="d2-01"]');
   ok('the second continent has its own music and colours', await x.evaluate(() => window.__cards.sound.seen.has('scene:sea') && document.documentElement.style.getPropertyValue('--w-ground') === '#75B7B1'));
   await x.click('[data-act=home]'); await x.click('[data-act=parent]');
   ok('the parent view counts keys, crowns and big castles', /열쇠 2\/3/.test(await x.textContent('.parent')) && /왕관 2/.test(await x.textContent('.parent')) && /큰 성 1\/2/.test(await x.textContent('.parent')) && /복습 정답률/.test(await x.textContent('.parent')));
   // C-010: actual recorded assets, real Web Audio sources and word-file playback.
   const gmSeed = await state(x, 'son'); gmSeed.map.at = 'd1-01'; gmSeed.words = {};
   const gmctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
+  await gmctx.addInitScript(() => localStorage.setItem('cards.v0.pref', JSON.stringify({music:false,sfx:true}))); // preserve explicit toggle setup under the new default
   await gmctx.addInitScript((st) => localStorage.setItem('cards.v0.p.son', JSON.stringify(st)), gmSeed);
   await gmctx.addInitScript(() => { window.__gmStarts = []; const start = AudioBufferSourceNode.prototype.start; AudioBufferSourceNode.prototype.start = function (...args) { window.__gmStarts.push({ source: this, offset: args[1] || 0 }); return start.apply(this, args); }; });
   const gmWord = Buffer.alloc(44 + 32000); wav.copy(gmWord, 0, 0, 44); gmWord.writeUInt32LE(32036, 4); gmWord.writeUInt32LE(32000, 40);
@@ -335,6 +346,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('GM: real card word playback ducks music to 0.18 and word stop restores it', gmDucked && await gmPage.evaluate(() => !window.__cards.sound.music.ducked && Math.abs(window.__cards.sound.music.gainTarget - window.__cards.sound.music.volume) < 1e-8));
   await gmPage.close(); await gmctx.close();
   const blockedctx = await browser.newContext(); const blockedErrors = [];
+  await blockedctx.addInitScript(() => localStorage.setItem('cards.v0.pref', JSON.stringify({music:false,sfx:true}))); // explicit toggle setup
   await blockedctx.route('**/assets/postal/music-gm/*.m4a', (r) => r.abort());
   const blockedPage = await open(blockedctx, 'today=2026-11-12&seed=9&fast=1'); blockedPage.on('pageerror', (e) => blockedErrors.push(String(e)));
   await blockedPage.click('[data-act=pick][data-id=son]'); await blockedPage.click('[data-act=music]');
@@ -642,6 +654,85 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await startNode(b14, 'bat'); const batRun = await b14.evaluate(() => window.__cards.node.kind); await play(b14); await b14.waitForSelector('.tiles'); await toMap(b14); const b7b = await look14(b14);
   ok('회오리 7: bat gauge full: the bat test opens first (pressing the whirlwind says so), and after the bat test the whirlwind has not moved', b7.storm === 'C2' && batDock && /박쥐/.test(msg7) && noStorm7 && batRun === 'bat' && b7b.storm === 'C2' && b7b.saved && b7b.saved.node === 'C2', JSON.stringify({ b7, msg7, b7b }));
   await b14.close(); await bctx.close();
+
+
+  // C-011 presentation: HP and outfits never alter the learning rules or child JSON.
+  const feedbackctx = await browser.newContext({viewport:{width:1180,height:820},hasTouch:true});
+  const fb = await open(feedbackctx,'today=2026-11-12&triage=off&seed=9&sound=off&fast=1');
+  await fb.click('[data-act=pick][data-id=son]'); await fb.waitForSelector('.world');
+  await fb.evaluate(()=>{const g=window.__cards;g.st.map.stars=11;localStorage.setItem('cards.v0.p.son',JSON.stringify(g.st));});
+  await startNode(fb,'A1'); await fb.screenshot({path:'/tmp/c011-screens/monster.png',animations:'disabled'});
+  const fixedMonster = await fb.evaluate(()=>({id:window.__cards.displayBoss.id,n:window.__cards.displayBoss.N,hp:window.__cards.displayBoss.hp,svg:document.querySelector('#boss use').getAttribute('href')}));
+  const missHP = await fb.evaluate(()=>{const g=window.__cards;document.querySelector('[data-act=no]').click();return {hp:g.displayBoss.hp,down:document.querySelector('#boss').classList.contains('down'),hit:document.querySelector('#boss').classList.contains('hit')};});
+  ok('C011: one labelled original monster starts at initial cards; unknown keeps HP and has no hit/down',fixedMonster.n===10 && fixedMonster.hp===10 && fixedMonster.svg==='#'+fixedMonster.id && missHP.hp===10 && !missHP.down && !missHP.hit && /몬스터 체력/.test(await fb.textContent('.monster-panel')));
+  await fb.waitForFunction(()=>window.__cards.run.i>=1); await fb.waitForSelector(READY);
+  const hpAnswer = await fb.evaluate(()=>{const g=window.__cards;g.run.rng=()=>.99;g.run.boss.hp=1;g.run.items.flame=true;document.querySelector('[data-act=yes]').click();return {hp:g.displayBoss.hp,id:g.displayBoss.id,idx:g.run.boss.idx,floater:document.querySelector('#floater').textContent};});
+  ok('C011: correct answer removes one display HP, even with flame and internal boss rollover',hpAnswer.hp===9 && hpAnswer.id===fixedMonster.id && hpAnswer.floater==='-1' && hpAnswer.idx>=1,JSON.stringify(hpAnswer));
+  await play(fb,()=>true); await fb.waitForSelector('.tiles');
+  ok('C011: normal completion collapses the same monster to zero and crossing 12 stars announces the first gift',await fb.evaluate((id)=>window.__cards.displayBoss.hp===0&&window.__cards.displayBoss.id===id&&window.__cards.displayBoss.down&&document.querySelector('.monster-finished')?.dataset.hp==='0'&&window.__cards.st.map.stars>=12&&!!document.querySelector('#giftgain'),fixedMonster.id));
+  await toMap(fb);
+  // Replay from a fresh child state to test identity independently of day/boss index.
+  await fb.evaluate(()=>{localStorage.removeItem('cards.v0.p.son');window.__cards.boss={idx:99,hp:2,defeated:99,day:'2026-11-12',pid:'son'};});
+  await fb.click('[data-act=home]'); await fb.click('[data-act=pick][data-id=son]'); await fb.waitForSelector('.world'); await startNode(fb,'A1');
+  ok('C011: same tile has the same monster across fresh runs and internal boss indices',await fb.evaluate((id)=>window.__cards.displayBoss.id===id,fixedMonster.id));
+  await fb.evaluate(()=>{window.__cards.displayBoss.hp=1;});
+  const verifyHP = await fb.evaluate(()=>{const g=window.__cards;g.run.rng=()=>0;const before=g.displayBoss.hp;document.querySelector('[data-act=yes]').click();return {before,after:g.displayBoss.hp,verify:g.run.current.verifying,hit:document.querySelector('#boss').classList.contains('hit')};});
+  ok('C011: verification pending does no damage',verifyHP.verify && verifyHP.before===1 && verifyHP.after===1 && !verifyHP.hit);
+  const oneHP = await fb.evaluate(()=>{const g=window.__cards;const i=g.run.current.options.findIndex(o=>o.id===g.run.current.id);document.querySelector(`.opt[data-i="${i}"]`).click();return {hp:g.displayBoss.hp,left:g.run.left,down:g.displayBoss.down};});
+  ok('C011: display HP stays at one while a retried queue still has cards',oneHP.hp===1&&oneHP.left>1&&!oneHP.down);
+  await fb.waitForFunction(()=>!window.__cards.busy);
+  await fb.click('[data-act=quit]'); await fb.waitForSelector('.tiles');
+  ok('C011: quitting a run does not collapse the monster',await fb.evaluate(()=>window.__cards.displayBoss.hp>0&&!window.__cards.displayBoss.down&&!document.querySelector('.monster-finished')));
+  await toMap(fb);
+  // Seed stars only in this throwaway browser; wardrobe must not write the resulting child record.
+  await fb.evaluate(()=>{const g=window.__cards;g.st.map.stars=12;localStorage.setItem('cards.v0.p.son',JSON.stringify(g.st));});
+  await fb.click('[data-act=home]'); await fb.click('[data-act=pick][data-id=son]'); await fb.waitForSelector('.world');
+  const beforeLook = await fb.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  await fb.click('[data-act=wardrobe]'); await fb.waitForSelector('#wardrobe'); await fb.click('.look[data-id=leaf-cap]');
+  await fb.screenshot({path:'/tmp/c011-screens/wardrobe.png',animations:'disabled'});
+  const savedLookInvariant = await fb.evaluate((before)=>localStorage.getItem('cards.v0.p.son')===before&&JSON.parse(localStorage.getItem('cards.v0.look.son')).outfit==='leaf-cap'&&document.querySelector('.look[data-id="sun-bag"]').disabled&&document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle',beforeLook);
+  await fb.keyboard.press('Escape'); await fb.reload(); await fb.waitForSelector('.profiles'); await fb.click('[data-act=pick][data-id=son]'); await fb.waitForSelector('.world');
+  ok('C011: outfit persists after reload without consuming stars',await fb.evaluate(()=>window.__cards.st.map.stars===12&&document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle'));
+  await fb.click('[data-act=home]'); await fb.click('[data-act=pick][data-id=daughter]'); await fb.waitForSelector('.world');
+  ok('C011: outfit choice is separate for each child',await fb.$eval('#rider use',e=>e.getAttribute('href'))==='#courier-gold-idle');
+  await fb.click('[data-act=atlas]'); ok('C011: a locked world has a shut door and cannot be entered',await fb.$eval('.wcard[data-id="d1-02"]',e=>e.disabled&&!!e.querySelector('use[href="#c011-door-locked"]')));
+  await fb.close(); await feedbackctx.close();
+  const prefctx = await browser.newContext(); const prefPage = await open(prefctx,'today=2026-11-12&fast=1'); await prefPage.click('[data-act=pick][data-id=son]'); await prefPage.waitForSelector('.world');
+  await prefPage.click('[data-act=music]'); await prefPage.waitForFunction(()=>!window.__cards.sound.musicOn&&JSON.parse(localStorage.getItem('cards.v0.pref')).music===false); await prefPage.reload(); await prefPage.waitForSelector('.profiles'); await prefPage.click('[data-act=pick][data-id=son]'); await prefPage.waitForSelector('.world');
+  ok('C011: music starts enabled and an explicit off choice survives reload',await prefPage.evaluate(()=>!window.__cards.sound.musicOn&&JSON.parse(localStorage.getItem('cards.v0.pref')).music===false));
+  await prefPage.close(); await prefctx.close();
+
+
+  const failedctx = await browser.newContext({viewport:{width:1180,height:820}}); const failedPage = await open(failedctx,'today=2026-11-12&triage=off&seed=9&sound=off&fast=1');
+  await failedPage.evaluate(async()=>{const {newState}=await import('./js/deck.js');const g=window.__cards,s=newState('son');s.map={at:'d1-01',stars:0,items:{shield:0,flame:0},bag:null,best:0,bonusDay:null,bat:{fill:0,cap:40,met:[],last:null},worlds:{'d1-01':{tiles:{},castle:null,entered:'2026-11-12',stamps:{}}},conts:{}};for(const n of g.ix.byId['d1-01'].map.nodes)if(n.kind==='tile'){s.map.worlds['d1-01'].tiles[n.unit||n.id]='2026-11-12';for(const id of n.words||[])s.words[id]={st:'done',due:null,step:0};}localStorage.setItem('cards.v0.p.son',JSON.stringify(s));});
+  await failedPage.click('[data-act=pick][data-id=son]'); await failedPage.waitForSelector('.world'); await startNode(failedPage,'castle');
+  for(let i=0;i<30;i++){await failedPage.waitForSelector(READY);if(await failedPage.$('.tiles'))break;await answer(failedPage,'[data-act=opt][data-i="-1"]');}
+  ok('C011: failed castle keeps its remaining monster HP and never shows defeat',await failedPage.evaluate(()=>window.__cards.displayBoss.hp>0&&!window.__cards.displayBoss.down&&!document.querySelector('.monster-finished')) && /시험 결과/.test(await failedPage.textContent('h1')));
+  await failedPage.close(); await failedctx.close();
+  const fanctx = await browser.newContext(); const fanPage = await open(fanctx,'today=2026-11-12&fast=1'); await fanPage.click('[data-act=pick][data-id=son]'); await fanPage.waitForSelector('.world'); await fanPage.waitForFunction(()=>window.__cards.sound.music?.on);
+  for(const id of ['world-fanfare','continent-fanfare']) {
+    const actual = await fanPage.evaluate(async(id)=>{const s=window.__cards.sound;await s.jingle(id);const node=[...s.jingleNodes].find(n=>n.fanfare&&n.source);const snapshot={source:node?.source instanceof AudioBufferSourceNode,length:node?.source?.buffer.duration,duck:s.music.ducked};if(node){const ended=new Promise(resolve=>node.source.addEventListener('ended',resolve,{once:true}));node.source.playbackRate.value=8;await ended;}return {...snapshot,recovered:!s.music.ducked};},id);
+    ok(`C011: ${id} decodes, plays to its end and restores music duck`,actual.source&&Math.abs(actual.length-(id==='world-fanfare'?5:10))<.05&&actual.duck&&actual.recovered,JSON.stringify(actual));
+    for(const mode of ['404','decode']) {
+      await fanPage.route(`**/assets/postal/music-gm/${id}.m4a`,r=>r.fulfill({status:mode==='404'?404:200,contentType:'audio/mp4',body:mode==='404'?'missing':'invalid encoded audio'}));
+      const fallback=await fanPage.evaluate(async(id)=>{const s=window.__cards.sound;s.gmJingles.clear();let wanted=null;const old=s.track;s.track=async function(name){wanted=name;return old.call(this,name);};await s.jingle(id);s.track=old;const node=[...s.jingleNodes].find(n=>n.fanfare);const result={wanted,chip:!!node&&!node.source,duck:s.music.ducked};s.cancelFanfares();return {...result,recovered:!s.music.ducked};},id);
+      ok(`C011: ${id} ${mode} falls back to victory chip and cancels cleanly`,fallback.wanted==='victory'&&fallback.chip&&fallback.duck&&fallback.recovered,JSON.stringify(fallback));await fanPage.unroute(`**/assets/postal/music-gm/${id}.m4a`);
+    }
+  }
+
+  const quotactx=await browser.newContext({viewport:{width:1180,height:820}}),quotaPage=await open(quotactx,'today=2026-11-12&triage=off&seed=9&sound=off&fast=1');
+  await quotaPage.click('[data-act=pick][data-id=son]');await quotaPage.waitForSelector('.world');
+  const quotaBefore=await quotaPage.evaluate(()=>{const g=window.__cards;g.st.map.stars=12;g.st.map.keys=1;g.st.map.worlds['d1-01'].castle='2026-11-12';localStorage.setItem('cards.v0.p.son',JSON.stringify(g.st));const before=localStorage.getItem('cards.v0.p.son'),set=Storage.prototype.setItem;window.__quotaAttempts=[];Storage.prototype.setItem=function(k,v){if(k==='cards.v0.seen'||k.startsWith('cards.v0.look.')||k.startsWith('cards.v0.p.')){window.__quotaAttempts.push({key:k,value:v});throw new DOMException('quota fixture','QuotaExceededError');}return set.call(this,k,v);};return before;});
+  await quotaPage.click('[data-act=wardrobe]');await quotaPage.click('.look[data-id=leaf-cap]');await quotaPage.click('#wardrobe [data-act=look-close]');
+  await quotaPage.click('[data-act=atlas]');await quotaPage.click('.world-door[data-act=door][data-id="d1-02"]');await quotaPage.waitForSelector('.door-stage[data-phase=open]');
+  await quotaPage.click('[data-act=today]');await quotaPage.waitForSelector('.world');const quotaLook=await quotaPage.$eval('#rider use',e=>e.getAttribute('href'));await quotaPage.click('[data-act=atlas]');
+  ok('C011: first gift, locked outfits and saved look keep child JSON unchanged; read-only device storage retains door and gift acknowledgements and outfit in memory',savedLookInvariant&&quotaLook==='#c011-look-leaf-cap-idle'&&await quotaPage.evaluate(before=>{const a=window.__quotaAttempts,docs=a.filter(x=>x.key==='cards.v0.seen').map(x=>JSON.parse(x.value));return localStorage.getItem('cards.v0.p.son')===before&&!a.some(x=>x.key.startsWith('cards.v0.p.'))&&docs.some(x=>x.son?.gifts?.['leaf-cap']&&x.son?.doors?.['world:d1-01:d1-02'])&&!!document.querySelector('.wcard[data-id="d1-02"] .world-door use[href="#c011-door-open"]')&&!document.querySelector('.wcard[data-id="d1-02"] .world-door.unseen');},quotaBefore));
+  await quotaPage.close();await quotactx.close();
+
+  // A pending recording load must not start after leaving a celebration.
+  const cancelled=await fanPage.evaluate(async()=>{const s=window.__cards.sound,record=s._recording;let release;s._recording=()=>new Promise(r=>release=r);const p=s.jingle('world-fanfare');s.cancelFanfares();release(null);await p;s._recording=record;return ![...s.jingleNodes].some(n=>n.fanfare)&&!s.music.ducked;});
+  ok('C011: leaving a celebration cancels an awaited fanfare without a late chip fallback',cancelled);
+  await fanPage.close();await fanctx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

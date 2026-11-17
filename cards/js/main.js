@@ -76,7 +76,7 @@ async function openProfile(id) {
 const name = (id) => G.meta.names[id];
 
 const PREF = 'cards.v0.pref';                           // this device only: music on/off, effects on/off
-function loadPref() { try { return { music: false, sfx: true, ...JSON.parse(localStorage.getItem(PREF) || '{}') }; } catch { return { music: false, sfx: true }; } }
+function loadPref() { try { const p = JSON.parse(localStorage.getItem(PREF) || '{}'); return { music: typeof p?.music === 'boolean' ? p.music : true, sfx: typeof p?.sfx === 'boolean' ? p.sfx : true }; } catch { return { music: true, sfx: true }; } }
 function savePref() { try { localStorage.setItem(PREF, JSON.stringify({ music: G.sound.musicOn, sfx: G.sound.sfx })); } catch {} }
 const band = (on) => document.body.classList.toggle('band', on);
 // A world brings three colours (sky, ground, path). Lighter and darker shades for the sprites are derived here, and the
@@ -150,10 +150,11 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); await loadSprites('assets/postal/feedback/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#wardrobe')) { $('#wardrobe').remove(); $('[data-act=wardrobe]')?.focus(); } if (['Enter',' '].includes(e.key) && e.target.matches('.world-door[data-act]')) { e.preventDefault(); e.target.click(); } });
   document.addEventListener('change', (e) => { const f = e.target; if (!f.dataset?.restore || !f.files?.[0]) return; const id = f.dataset.restore; const rd = new FileReader(); rd.onload = () => restore(id, String(rd.result)); rd.onerror = () => { G.pmsg = '파일을 읽지 못했어요.'; parent(); }; rd.readAsText(f.files[0]); });
   // Another tab saved this child's record: fold it in now (save() checks again before every write). Nothing is written here,
   // so two open tabs never answer each other's saves.
@@ -164,6 +165,7 @@ async function boot() {
 
 // ---- home ----
 function home() {
+  clearPresentation();
   G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id });
   $('#app').innerHTML = `<div class="page center"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
   <div class="hero">${anim('flag-a', 'flag-b', 64)}</div>
@@ -196,6 +198,7 @@ function housePos(w, h, taken) {
   best ||= { x: Math.min(940, a.x + 90), y: Math.min(520, a.y + 90) }; taken.push(best); return best;
 }
 function today(id, msg = '', wid = null) {
+  clearPresentation();
   const rec = loadRec(id); G.view = 'today'; G.pid = id; G.st = rec.state; try { G.seen = stored(); } catch { G.seen = null; } G.readonly = rec.newer || !!G.syncStatus?.stale; G.run = null; G.lt = null; G.game = null; hideBanner(); clearTimeout(G.timer); band(false);
   if (G.readonly) banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); else if (G.notice) { banner(`<span>${esc(G.notice)}</span><button data-act="hide">확인</button>`); G.notice = ''; }
   const st = G.st; const m = ensureMap(st);
@@ -224,7 +227,7 @@ function today(id, msg = '', wid = null) {
   const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : stormHint || story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 모든 왕관을 모았어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
   const dock = (id, inner, label, status, extra = '') => `<button class="dockbtn ${status} ${extra}" data-act="node" data-id="${id}" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span></button>`;
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
-  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><span class="chip" title="열쇠">${spr('key', 24)} ${v.keys}</span><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
+  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><button class="chip gift-chip" data-act="wardrobe">${spr('c011-gift-closed', 24)} ${esc(nextGift(v.stars))}</button><button class="chip" title="열쇠" data-act="key-help">${spr('key', 24)} ${v.keys}</button><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
     <button class="tgl" data-act="atlas">세계 지도</button>
     <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}">♪ 음악 ${G.sound.musicOn ? '켜짐' : '꺼짐'}</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}">${spr('sound', 24)} 효과음 ${G.sound.sfx ? '켜짐' : '꺼짐'}</button></div>
   <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
@@ -247,7 +250,7 @@ function today(id, msg = '', wid = null) {
 // its lock or its marks. Only the whirlwind can be pressed.
 function stormLayer(w, st, storm, ev, held, at) {
   const h = w._nodes[hereOf(st, w)]; const col = G.pid === 'daughter' ? 'gold' : 'teal';
-  const rider = h ? `<div class="rider" id="rider" data-node="${esc(h.id)}" style="${at(h)}"><svg class="spr" width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${col}-${held ? 'walk1' : 'idle'}"/></svg></div>` : '';
+  const rider = h ? `<div class="rider" id="rider" data-node="${esc(h.id)}" style="${at(h)}">${courier(held ? 'walk1' : 'idle')}</div>` : '';
   let out = rider;
   if (storm) { const from = ev && ev.event === 'move' && !FAST && w._nodes[ev.from] ? w._nodes[ev.from] : w._nodes[storm.node];   // drawn where it was, then slides over
     out += `<button class="storm ${held ? 'held' : ''} ${ev?.event === 'spawn' ? 'spawn' : ''}" id="storm" data-act="storm" data-node="${esc(storm.node)}" style="${at(from)}" aria-label="회오리">${anim('fx-storm-a', 'fx-storm-b', 48, 'fast')}</button>`; }
@@ -278,14 +281,69 @@ function nodeClick(id) {
 }
 
 // ---- world list ----
-function atlas() {
-  G.view = 'atlas'; hideBanner(); band(false); const a = atlasView(G.ix, G.st);
-  const wbtn = (w) => `<button class="wcard ${w.open ? 'open' : 'locked'} ${G.world?.id === w.id ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" ${w.open ? '' : 'disabled'}>${w.crown ? spr('crown', 32) : w.castle ? spr('key', 32) : w.open ? spr('stone-open', 32) : spr('padlock', 32)}<b>${esc(w.name)}</b><i>${w.met}/${w.total}</i></button>`;
+function atlas(transition = null) {
+  clearPresentation(); G.view = 'atlas'; hideBanner(); band(false); const a = atlasView(G.ix, G.st);
+  const wbtn = (w) => { const door = doorFor(w.id); const unseen = door && !deviceSeen().doors[door.key];
+    return `<button class="wcard ${w.open ? 'open' : 'locked'} ${G.world?.id === w.id ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" ${w.open ? '' : 'disabled'}>${w.crown ? spr('crown', 32) : w.castle ? spr('key', 32) : w.open ? spr('stone-open', 32) : spr('padlock', 32)}<b>${esc(w.name)}</b><i>${w.met}/${w.total}</i><span class="world-door ${w.open && unseen ? 'unseen' : ''}" ${w.open && unseen ? `data-act="door" data-id="${esc(w.id)}" role="button" tabindex="0" aria-label="열쇠로 문 열기"` : ''}>${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', 48)}${w.open && unseen ? '<small>열쇠로 문 열기</small>' : ''}</span></button>`; };
   $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
-  ${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
+  <div id="door-stage"></div>${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
     <div class="wgrid">${c.worlds.map(wbtn).join('')}
     <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : c.finale.status === 'pending' ? '준비 중이에요' : '왕관을 모두 모으면 열려요'}</i></button></div></section>`).join('')}
   <p class="msg" id="msg"></p></div>`;
+  if (transition) showDoor(transition);
+}
+
+// Presentation preferences are deliberately separate from child records and Sync.
+const GIFTS = [{ id:'leaf-cap', stars:12, name:'잎사귀 모자' }, { id:'sun-bag', stars:40, name:'햇살 가방' }, { id:'sea-coat', stars:100, name:'물결 옷' }, { id:'night-cap', stars:240, name:'밤하늘 모자' }, { id:'letter-bag', stars:500, name:'편지 가방' }, { id:'festival-coat', stars:1000, name:'축제 옷' }];
+let presentationTimers = [], deviceMemory = {}, lookMemory = {};
+function later(fn, ms) { const id = setTimeout(fn, FAST ? Math.min(ms, 20) : ms); presentationTimers.push(id); return id; }
+function clearPresentation() { presentationTimers.forEach(clearTimeout); presentationTimers = []; G.sound?.cancelFanfares(); G.door = null; $('#wardrobe')?.remove(); }
+const motionOff = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function deviceSeen() {
+  let doc = deviceMemory; try { const raw = JSON.parse(localStorage.getItem('cards.v0.seen') || '{}'); if (raw && typeof raw === 'object' && !Array.isArray(raw)) doc = { ...raw, ...deviceMemory }; /* Retain this session's acknowledgements if storage writes fail. */ } catch {}
+  deviceMemory = doc; const old = doc[G.pid]; const item = old && typeof old === 'object' && !Array.isArray(old) ? old : {};
+  for (const key of ['doors', 'gifts']) if (!item[key] || typeof item[key] !== 'object' || Array.isArray(item[key])) item[key] = {};
+  doc[G.pid] = item; return item;
+}
+function writeDevice() { try { localStorage.setItem('cards.v0.seen', JSON.stringify(deviceMemory)); } catch {} }
+function nextGift(stars) { const g = GIFTS.find((x) => stars < x.stars); return g ? `다음 선물까지 ★ ${g.stars-stars}` : '선물을 모두 열었어요'; }
+function chosenLook() {
+  let value = lookMemory[G.pid]; if (!Object.hasOwn(lookMemory,G.pid)) { try { value = JSON.parse(localStorage.getItem('cards.v0.look.' + G.pid) || 'null')?.outfit; } catch {} }
+  return GIFTS.some((g) => g.id === value && G.st.map.stars >= g.stars) ? value : 'default';
+}
+function courier(frame = 'idle', outfit = chosenLook(), px = 48) { return outfit === 'default' ? `<svg class="spr" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${G.pid === 'daughter' ? 'gold' : 'teal'}-${frame}"/></svg>` : spr(`c011-look-${outfit}-${frame}`, px); }
+function wardrobe() {
+  $('#wardrobe')?.remove(); const stars = G.st.map.stars, selected = chosenLook(), seen = deviceSeen();
+  for (const g of GIFTS) if (stars >= g.stars) seen.gifts[g.id] = true; writeDevice();
+  const box = document.createElement('div'); box.id = 'wardrobe'; box.className = 'wardrobe-shade';
+  box.innerHTML = `<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars} · 별은 줄어들지 않아요</p><div class="looks">${[{ id:'default',stars:0,name:'기본 모습' }, ...GIFTS].map((g) => `<button class="look ${selected === g.id ? 'selected' : ''}" data-act="look" data-id="${g.id}" aria-pressed="${selected === g.id}" ${stars < g.stars ? 'disabled' : ''}>${courier('idle',g.id,64)}<b>${g.name}</b><small>${stars < g.stars ? `★ ${g.stars}에 열려요` : selected === g.id ? '입고 있어요' : '입기'}</small></button>`).join('')}</div><button class="sec" data-act="look-close">닫기</button></section>`;
+  $('#app').append(box); box.querySelector('[data-act=look-close]').focus();
+}
+function wear(id) {
+  if (id !== 'default' && !GIFTS.some((g) => g.id === id && G.st.map.stars >= g.stars)) return;
+  lookMemory[G.pid] = id; try { localStorage.setItem('cards.v0.look.' + G.pid, JSON.stringify({ outfit:id })); } catch {}
+  const rider = $('#rider'); if (rider) rider.innerHTML = courier(rider.classList.contains('held') ? 'walk1' : 'idle'); wardrobe();
+}
+function doorFor(to) {
+  const world = G.ix.byId[to]; if (!world || !worldOpen(G.ix, world, G.st)) return null;
+  const ci = G.ix.continents.findIndex((c) => c.worlds.some((w) => w.id === to)), c = G.ix.continents[ci], wi = c.worlds.findIndex((w) => w.id === to);
+  if (wi > 0) return { key:`world:${c.worlds[wi-1].id}:${to}`, from:c.worlds[wi-1].id, to, kind:'world' };
+  if (ci > 0) return { key:`continent:${G.ix.continents[ci-1].id}:${to}`, from:G.ix.continents[ci-1].worlds.at(-1).id, to, kind:'continent' };
+  return null;
+}
+function showDoor(d) {
+  if (!d?.to || !G.ix.byId[d.to] || !worldOpen(G.ix,G.ix.byId[d.to],G.st)) return;
+  G.door = d; const w = G.ix.byId[d.to];
+  $('#door-stage').innerHTML = `<section class="door-stage ${d.kind}" data-phase="path"><h2>${d.kind === 'continent' ? '바다 너머 새로운 편지길' : '열쇠로 다음 문을 열어요'}</h2><div class="door-scene">${spr(d.kind === 'continent' ? 'c011-island-wave' : 'c011-island-leaf',96)}<span class="door-path"></span><span class="flying-key">${spr('key',48)}</span><span id="atlas-door">${spr('c011-door-locked',96)}</span></div><p>${esc(w.name)}</p><button class="sec" data-act="door-skip">바로 문 열기</button><button class="go" data-act="goworld" data-id="${esc(w.id)}" disabled>${esc(w.name)}로 가기</button></section>`;
+  if (motionOff()) return openDoor();
+  later(() => { if (G.door === d && G.view === 'atlas') $('.door-stage')?.setAttribute('data-phase','key'); },450);
+  later(() => { if (G.door === d && G.view === 'atlas') openDoor(); },d.kind === 'continent' ? 2000 : 1500);
+}
+function openDoor() {
+  const d = G.door; if (!d || G.view !== 'atlas' || !worldOpen(G.ix,G.ix.byId[d.to],G.st)) return;
+  $('.door-stage')?.setAttribute('data-phase','open'); $('#atlas-door').innerHTML = spr('c011-door-open',96); $('.door-stage .go').disabled = false;
+  $('.door-stage [data-act=door-skip]').hidden = true; deviceSeen().doors[d.key] = true; writeDevice();
+  const badge = $(`.wcard[data-id="${d.to}"] .world-door`); if (badge) { badge.classList.remove('unseen'); badge.removeAttribute('data-act'); badge.innerHTML = spr('c011-door-open',48); }
 }
 
 // ---- run ----
@@ -321,18 +379,28 @@ function begin(node, rng) {
   const items = takeBag(G.st); G.node = node; startTile(G.st, node, todayISO()); if (!save() && G.readonly) return;   // the mark is saved before any word is
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
-  G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study', node.kind === 'finale' ? { variant: 'continent-castle' } : {});
+  clearPresentation(); G.displayBoss = displayMonster(node, G.run.queue.length); G.ending = false; G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study', node.kind === 'finale' ? { variant: 'continent-castle' } : {});
   $('#app').innerHTML = `<div class="run">
   <header class="hud"><button class="x" data-act="quit" aria-label="그만하기">✕</button>
-    <div class="boss"><span class="boss-emoji" id="boss"></span><div class="hpbar"><i id="hp"></i></div><span class="floater" id="floater"></span></div>
+    <div class="boss monster-panel ${['castle','finale'].includes(node.kind) ? 'guardian' : ''}"><span class="boss-emoji" id="boss"></span><div class="monster-health"><b>몬스터 체력</b><div class="hpbar" role="progressbar" aria-label="몬스터 체력"><i id="hp"></i></div><span id="hp-count"></span><small id="monster-hint"></small></div><span class="floater" id="floater"></span></div>
     <div class="combo" id="combo"></div><div class="left" id="left"></div></header>
   <section class="stage"><div class="card" id="card"></div></section>
   <footer class="actions" id="actions"></footer></div>`;
   paintHud(); showCard();
+  if (G.view === 'card') { $('#monster-hint').textContent = '이 길의 몬스터가 나타났어요!'; later(() => { if (G.view === 'card') paintHud(); },900); }
+}
+function displayMonster(node,N) {
+  const w = node.kind === 'finale' ? G.ix.continents.find((c) => c.id === node.cid)?.worlds.at(-1) || G.world : G.world;
+  let hash = 7; for (const ch of `${w.id}:${node.unit || node.tag || node.kind}`) hash = (hash*31+ch.charCodeAt(0))>>>0;
+  let id = node.kind === 'bat' ? 'bat-a' : ['castle','finale'].includes(node.kind) ? w.castle?.spriteId : w.bossSprites?.[hash % w.bossSprites.length];
+  if (!id || !document.getElementById(id)) id = 'c011-monster'; return { id,N,hp:N,down:false };
 }
 function paintHud() {
-  const b = G.run.boss; const be = bossPic(G.world, b.idx);
-  if ($('#boss').dataset.e !== be.key) { $('#boss').dataset.e = be.key; $('#boss').innerHTML = be.html(56); } $('#hp').style.width = `${Math.max(0, b.hp) / CFG.bossHp * 100}%`;
+  const b = G.displayBoss; if (!b || !$('#boss')) return;
+  if ($('#boss').dataset.e !== b.id) { $('#boss').dataset.e = b.id; $('#boss').innerHTML = spr(b.id, ['castle','finale'].includes(G.node?.kind) ? 128 : 96); }
+  $('#hp').style.width = `${b.N ? b.hp/b.N*100 : 0}%`; $('#hp-count').textContent = `${b.hp}/${b.N}`;
+  const bar = $('.monster-health .hpbar'); bar.setAttribute('aria-valuemin','0'); bar.setAttribute('aria-valuemax',b.N); bar.setAttribute('aria-valuenow',b.hp);
+  $('#monster-hint').textContent = b.hp === 1 && G.run.left > 1 ? '마지막까지 힘내요' : '';
   $('#combo').innerHTML = (G.run.items.shield ? spr(ITEM_SPR.shield, 24) : '') + (G.run.items.flame ? spr(ITEM_SPR.flame, 24) : '') + (G.run.combo >= 2 ? `연속 ${G.run.combo}` : ''); $('#combo').classList.toggle('hot', G.run.combo >= 5);
   $('#left').textContent = `남은 카드 ${G.run.left}`;
 }
@@ -373,7 +441,7 @@ function showCard() {
 function onJudge(know) {
   if (G.busy || G.view !== 'card') return; G.sound.sfxPlay('flip'); const it = G.run.current;
   const res = G.run.judge(know);
-  if (res.next === 'verify') { front(it, G.byId[it.id]); optionButtons(it); G.sound.blip('hit'); return; }
+  if (res.next === 'verify') { front(it, G.byId[it.id]); optionButtons(it); return; }
   reveal(res);
 }
 function onPick(i) {
@@ -389,12 +457,12 @@ function reveal(res) {
     card.className = `card back g${gradeOf(G.st.words[w.id])} ${res.ok ? 'ok' : 'learn'} ${up ? 'up' : ''}`;
     card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${sight ? `<div class="word">${esc(w.form)}</div>` : `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>`}${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
   }, FAST ? 0 : 90);
-  if (res.dmg) { const f = $('#floater'); f.textContent = `-${res.dmg}`; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
-    $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.blip(res.defeated ? 'boss' : res.verified || (G.run.items.flame && res.dmg >= 2) ? 'big' : 'hit');
+  if (res.ok) { G.displayBoss.hp = Math.max(1,G.displayBoss.hp-1); const f = $('#floater'); f.textContent = '-1'; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+    $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.blip('hit');
     if (G.run.items.flame) setTimeout(() => G.sound.sfxPlay('flame'), 120); if (res.combo === 5) setTimeout(() => G.sound.sfxPlay('combo'), 160); }
   else G.sound.blip(res.said === 'wrong' && !shielded ? 'miss' : shielded ? 'shield' : 'retry');
   if (up) setTimeout(() => G.sound.jingle('grade'), 250);
-  if (res.defeated) { $('#boss').classList.add('down'); setTimeout(() => { $('#boss').classList.remove('down'); paintHud(); }, FAST ? 0 : 450); } else paintHud();
+  paintHud();
   if (res.ok) { $('#actions').innerHTML = ''; G.timer = setTimeout(next, FAST ? 30 : up ? 1300 : 900); }
   else {                                                 // a word to learn: hear it again, then move on (tap to go sooner)
     $('#actions').innerHTML = `<button class="act goon" data-act="next" id="goon">다음 ▶</button>`;
@@ -405,10 +473,13 @@ function reveal(res) {
 function next() { clearTimeout(G.timer); if (G.view !== 'card' || !G.busy) return; G.run.advance(); showCard(); }   // busy guards a tap racing the timer
 
 function endRun(reason) {
+  if (!G.run || G.ending) return; G.ending = true;
   clearTimeout(G.timer); G.sound.stop(); const run = G.run; const node = G.node; const rec = run.finish(reason); G.boss = { ...run.boss, day: todayISO(), pid: G.pid };
   const was = stormOf(G.st, G.ix); const heldBefore = !!node.wid && stormBlocks(G.st, node.wid, G.ix);
   const rw = settleRun(G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); const ww = settleWorld(G.ix, G.st, node, rec, todayISO());
   stormAfter(node, rec, was, heldBefore); save(); G.sync?.flush().catch(() => {});
+  const defeated = reason === 'done' && (!['castle','finale'].includes(node.kind) || (ww.castle || ww.finale)?.pass);
+  if (defeated) { G.displayBoss.hp = 0; G.displayBoss.down = true; paintHud(); $('#boss')?.classList.add('down'); }
   G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from); const w = G.world; const pc = (x) => Math.round(x * 100);
   const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
   const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : '성 시험 결과',
@@ -425,16 +496,20 @@ function endRun(reason) {
   if (batNow && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
   if (batNow && node.kind === 'bat') lines.push('<p class="mut">미뤄 둔 복습이 아직 많아요. 박쥐가 한 번 더 와요.</p>');
   const exam = ww.castle || ww.finale; if (exam && !exam.pass) lines.push(`<p class="mut">${exam.ok}/${exam.total}장 맞혔어요. ${pc(exam.need)}% 이상이면 통과예요. 틀린 카드는 내일 다시 나와요.</p>`);
-  const go = batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ro(ww.nextWorld.name)}`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ro(ww.nextContinent.name)}`] : ['today', '▶ 지도로'];
+  const celebration = !!(ww.key || (ww.finale?.pass && ww.cleared));
+  const target = ww.key ? ww.nextWorld : ww.finale?.pass ? ww.nextContinent?.worlds[0] : null;
+  G.celebrationDoor = target ? { key:ww.key ? `world:${w.id}:${target.id}` : `continent:${node.cid}:${target.id}`, from:w.id, to:target.id, kind:ww.key ? 'world' : 'continent' } : null;
+  const gifts = GIFTS.filter((g) => G.st.map.stars >= g.stars && !deviceSeen().gifts[g.id]);
+  const go = celebration ? ['celebration-atlas','세계 지도 보기'] : batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ro(ww.nextWorld.name)}`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ro(ww.nextContinent.name)}`] : ['today', '▶ 지도로'];
   const goId = ww.key && ww.nextWorld ? ww.nextWorld.id : ww.finale?.pass && ww.nextContinent ? ww.nextContinent.worlds[0].id : '';
-  $('#app').innerHTML = `<div class="page center"><h1 class="title">${title}</h1>${lines.join('')}
-  <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>${rec.bosses}</b><span>잡은 보스</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
+  $('#app').innerHTML = `<div class="page center ${celebration ? 'celebration' : ''}"><h1 class="title">${title}</h1>${celebration ? `<div class="celebration-art">${spr(ww.key ? 'c011-castle-world' : 'c011-castle-continent',128)}<span class="celebration-key">${spr('key',48)}</span></div>` : defeated ? `<div class="monster-finished" data-hp="0" data-sprite="${G.displayBoss.id}">${spr(G.displayBoss.id,64)}<span>몬스터 체력 0/${G.displayBoss.N}</span></div>` : ''}${lines.join('')}${gifts.length ? `<div id="giftgain">${spr('c011-gift-open',48)} 새 선물이 열렸어요 <button class="sec" data-act="wardrobe">배달부 꾸미기</button></div>` : ''}
+  <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>1</b><span>몬스터와 한 판</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
   <button class="go" data-act="${go[0]}" data-id="${esc(goId)}">${esc(go[1])}</button>${go[0] !== 'today' ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
   G.run = null; G.node = null;
   G.sound.scene(musicOf(w), { worldId: w.id });
-  const jg = batNow ? 'bat' : ww.key || ww.finale?.pass ? 'victory' : ww.cleared || rw.monster || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) setTimeout(() => G.sound.jingle(jg), 150);
-  if (ww.key) setTimeout(() => G.sound.jingle('key'), 1800); else if (ww.cleared) G.sound.sfxPlay('stamp');
+  const jg = celebration ? (ww.key ? 'world-fanfare' : 'continent-fanfare') : batNow ? 'bat' : ww.key || ww.finale?.pass ? 'victory' : ww.cleared || rw.monster || rw.bat?.done ? 'clear' : rw.item ? 'item' : null; if (jg) later(() => G.sound.jingle(jg), 150);
+  if (ww.cleared) G.sound.sfxPlay('stamp');
 }
 
 // ---- the whirlwind (storm.js): one step per finished run, then a storm run of word forms when it reaches the rider ----
@@ -623,6 +698,13 @@ async function onClick(e) {
   switch (a) {
     case 'music': await G.sound.unlock(); G.sound.setMusic(!G.sound.musicOn); savePref(); return today(G.pid);
     case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
+    case 'key-help': return banner('성을 깨면 열쇠를 얻고, 열쇠로 다음 세계 문을 열어요 <button data-act=hide>확인</button>');
+    case 'wardrobe': return wardrobe();
+    case 'look': return wear(b.dataset.id);
+    case 'look-close': $('#wardrobe')?.remove(); return;
+    case 'celebration-atlas': return atlas(G.celebrationDoor);
+    case 'door': return showDoor(doorFor(b.dataset.id));
+    case 'door-skip': return openDoor();
     case 'home': return home();
     case 'reload': return location.reload();
     case 'hide': return hideBanner();
@@ -631,7 +713,7 @@ async function onClick(e) {
     case 'pick': await G.sound.unlock(); return openProfile(b.dataset.id);
     case 'today': return today(G.pid);
     case 'atlas': return atlas();
-    case 'goworld': return today(G.pid, '', b.dataset.id);
+    case 'goworld': if (G.ix.byId[b.dataset.id] && worldOpen(G.ix,G.ix.byId[b.dataset.id],G.st)) return today(G.pid, '', b.dataset.id); return;
     case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
       $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}). 왕관은 그 세계의 모든 칸과 집, 성을 깨면 받아요.`; return; }
     case 'node': return nodeClick(b.dataset.id);

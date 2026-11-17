@@ -39,15 +39,27 @@ const wav = (samples, sr) => { const b = Buffer.alloc(44 + samples.length * 2); 
   const gmDir = path.join(ROOT, 'cards/assets/postal/music-gm');
   const gm = JSON.parse(fs.readFileSync(path.join(gmDir, 'manifest.json')));
   const assert = require('node:assert/strict'), { execFileSync } = require('child_process'), crypto = require('crypto');
-  const expected = [...Array.from({length:8},(_,i)=>`p1-${String(i+1).padStart(2,'0')}`), ...Array.from({length:15},(_,i)=>`p2-${String(i+1).padStart(2,'0')}`), ...Array.from({length:7},(_,i)=>`p3-${String(i+1).padStart(2,'0')}`), 'study','castle','continent-castle','play','storm','clear','victory','key','item','grade','bat','storm-caught'];
+  const expected = [...Array.from({length:8},(_,i)=>`p1-${String(i+1).padStart(2,'0')}`), ...Array.from({length:15},(_,i)=>`p2-${String(i+1).padStart(2,'0')}`), ...Array.from({length:7},(_,i)=>`p3-${String(i+1).padStart(2,'0')}`), 'study','castle','continent-castle','play','storm','clear','victory','key','item','grade','bat','storm-caught','world-fanfare','continent-fanfare'];
   assert.deepEqual(Object.keys(gm.tracks).sort(), expected.sort());
-  assert.equal(fs.readdirSync(gmDir).filter(f=>f.endsWith('.m4a')).length,42);assert.equal(gm.rendering.bitrate,96000);assert.deepEqual(gm.aliases,{meadow:'p1-01',sea:'p2-01',sky:'p3-01','d1-01':'p1-01','d1-02':'p1-02','d2-01':'p2-01'});
+  assert.equal(fs.readdirSync(gmDir).filter(f=>f.endsWith('.m4a')).length,44);assert.equal(gm.rendering.bitrate,96000);assert.deepEqual(gm.aliases,{meadow:'p1-01',sea:'p2-01',sky:'p3-01','d1-01':'p1-01','d1-02':'p1-02','d2-01':'p2-01'});
+  // Preserve the measured C-010 entries and their referenced MIDI/AAC hashes exactly.
+  const canonical = x => x && typeof x === 'object' ? Array.isArray(x) ? x.map(canonical) : Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])])) : x;
+  const legacy = Object.fromEntries(Object.entries(gm.tracks).filter(([id])=>!['world-fanfare','continent-fanfare'].includes(id)));
+  assert.equal(crypto.createHash('sha256').update(JSON.stringify(canonical(legacy))).digest('hex'), 'f8079b504d2eb180d73cae6dc25155bd8eeb7babbb680f4dfd11c252ec656f48', '42 original measured entries unchanged');
   for(const scene of ['meadow','sea','sky']) { const variants=Object.values(gm.tracks).filter(e=>e.scene===scene);assert.equal(new Set(variants.map(e=>JSON.stringify([e.leadProgram,e.accompaniment,e.transpose,e.tempoUs,e.drums]))).size,variants.length); }
   for (const [alias,target] of Object.entries(gm.aliases)) { assert(gm.tracks[target], `alias ${alias}`); }
   let bytes = 0; const summaries = [];
   for (const [id,e] of Object.entries(gm.tracks)) {
     assert.equal(e.rendered,true); assert(/^[a-z0-9-]+\.m4a$/.test(e.file)); const media = path.join(gmDir,e.file); const mediaBytes = fs.statSync(media).size; bytes += mediaBytes; assert.equal(mediaBytes,e.bytes); assert.equal(crypto.createHash('sha256').update(fs.readFileSync(media)).digest('hex'),e.audioSha256,`${id} audio hash`);
     const info = JSON.parse(execFileSync(process.env.FFPROBE || 'ffprobe',['-v','error','-show_streams','-show_format','-of','json',media],{encoding:'utf8'})); const audio = info.streams[0];
+    if (id==='world-fanfare' || id==='continent-fanfare') {
+      const continent=id==='continent-fanfare';
+      assert.equal(e.kind,'jingle');assert.equal(e.bpm,120);assert.equal(e.preRollSamples,0);
+      assert.equal(e.loopSamples,continent?352800:176400);assert.equal(e.tailSamples,continent?88200:44100);
+      assert.equal(e.frames,continent?441000:220500);assert.equal(Number(audio.duration_ts),e.frames);
+      assert.equal(e.loopStart,0);assert.equal(e.loopEnd,null);assert.equal(e.startOffset,0);
+      assert.deepEqual(e.programs,continent?[60,48,43,61]:[60,48,42,11]);assert.deepEqual(e.channels,[1,2,3,4]);
+    }
     assert.equal(audio.codec_name,'aac'); assert.equal(audio.profile,'LC'); assert.equal(Number(audio.sample_rate),44100); assert.equal(audio.channels,2); assert(Math.abs(Number(audio.bit_rate)-96000)<16000);
     const midi = fs.readFileSync(path.join(ROOT,'assets/post-office/v3/midi',id+'.mid'));
     assert.equal(crypto.createHash('sha256').update(midi).digest('hex'),e.sourceMidiSha256, `${id} source hash`);
@@ -89,7 +101,7 @@ const wav = (samples, sr) => { const b = Buffer.alloc(44 + samples.length * 2); 
     assert(e.truePeakDb<=-6,`${id} true peak`);assert(Number.isInteger(e.encodedDelaySamples));assert(Number.isInteger(e.decodedOffsetSamples));
     summaries.push(st);console.log(`GM ${id}: ${st.duration.toFixed(3)}s peak ${st.peakDb.toFixed(2)} RMS ${st.rmsDb.toFixed(2)} seam ${JSON.stringify(st.seam)}`);
   }
-  assert(bytes<=40*1024*1024,'GM media exceeds 40MB');console.log(`42 GM recordings validated, ${bytes} bytes`);
+  assert(bytes<=40*1024*1024,'GM media exceeds 40MB');console.log(`44 GM recordings validated, ${bytes} bytes`);
 
   await browser.close(); server.kill();
   const f = (x) => (Math.round(x * 10) / 10).toString().padStart(6);
