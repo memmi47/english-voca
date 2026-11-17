@@ -117,3 +117,18 @@ docs/ORCHESTRATION.md 와 docs/DATA_SAFETY.md 를 읽은 뒤 docs/tasks/C-012.md
 끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 확인하지 못한 것(실제 macOS 실행 포함).
 ```
 
+## C-013 (2026-11-17, Astra에게. C-011 병합 뒤)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다. C-011 PR이 병합된 뒤 시작한다.
+docs/ORCHESTRATION.md, docs/DATA_SAFETY.md 4절, docs/WORLD_SCHEMA.md 를 읽은 뒤 docs/tasks/C-013.md 를 수행한다.
+- Astra가 먼저 K(세계 성 최소 마을 수)와 R(대륙 성 마을 비율)의 값, 세계마다 우표 두 장의 배치 규칙을 정해 PR 설명에 올리고, 그다음 Sol이 생성기·규칙(cards/js/world.js)·화면을 구현한다.
+- 이 카드에 한해 cards/js/world.js 를 고친다. 다른 규칙 파일(deck.js, map.js, store.js, sync.js, storm.js)과 저장 형식, 카드·세계·칸 id, 카드 배정은 바꾸지 않는다. 우표는 저장하지 않고 칸이 깨졌는지로 계산한다.
+- 지도는 갈래가 있는 세계 지도로 둔다. 다른 게임의 이름·캐릭터·그림·음악·지도 모양을 흉내 내지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 새 단위 검사 여섯 개와 브라우저 검사를 넣는다. 기존 검사는 지우거나 약하게 하지 않는다(대륙 성의 왕관 조건 검사만 이유를 적고 새 규칙에 맞게 바꾼다). node tools/check_sim_baseline.mjs 가 바뀌면 --update 하지 말고 멈춘다.
+- 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 브랜치 codex/world-gates 로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다.
+- 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, K·R 값과 근거, 대륙별 최소로 만나는 단어 수와 비율, 각 명령의 통과 수, 확인하지 못한 것.
+```
+
