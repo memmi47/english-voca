@@ -1,0 +1,3094 @@
+{
+  "schemaVersion": 1,
+  "sampleRate": 44100,
+  "soundfont": {
+    "name": "GeneralUser GS",
+    "version": "2.0.3",
+    "sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+    "source": "https://www.schristiancollins.com/generaluser",
+    "license": "GeneralUser GS License v2.0"
+  },
+  "aliases": {
+    "meadow": "p1-01",
+    "sea": "p2-01",
+    "sky": "p3-01",
+    "d1-01": "p1-01",
+    "d1-02": "p1-02",
+    "d2-01": "p2-01"
+  },
+  "tracks": {
+    "p1-01": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 555556,
+      "bpm": 107.99991360006912,
+      "transpose": 0,
+      "leadProgram": 12,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        12,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-01.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3136003,
+      "preRollSamples": 98000,
+      "sourceMidiSha256": "f6498e6f1ba38edb2fab86b944c6c6a7caa0fb88a5d6b090dcf3bce3317f0b83",
+      "tailSamples": 195559,
+      "frames": 3430003,
+      "duration": 77.77784580498866,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3430400,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.996517,
+        0.999457,
+        0.999879
+      ],
+      "loopStart": 2.232222222222222,
+      "loopEnd": 73.34340136054422,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.2222222222222223,
+      "rendered": true,
+      "audioSha256": "4ff9278dd1e543434d06929e83ffcb60ac4a485f2f72395d9bc064a97c2306df",
+      "bytes": 966475,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -9.9,
+      "rmsDb": -25.975228,
+      "samplePeakDb": -9.861609,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.089084481414734,
+          5.129192423238109
+        ],
+        "sampleJump": [
+          0.010198190808296204,
+          0.012750998139381409
+        ],
+        "jumpLimit": [
+          0.031048491597175598,
+          0.03139212727546692
+        ]
+      }
+    },
+    "p1-02": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 578704,
+      "bpm": 103.67994691586718,
+      "transpose": 1,
+      "leadProgram": 73,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        73,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-02.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3266668,
+      "preRollSamples": 102083,
+      "sourceMidiSha256": "f1c93ac5a13b603321618c5cf62ab16c7773e3828f7e195c8b100aa2979f55ef",
+      "tailSamples": 202843,
+      "frames": 3572917,
+      "duration": 81.0185260770975,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3573760,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999756,
+        0.999161,
+        0.999963
+      ],
+      "loopStart": 2.3448072562358275,
+      "loopEnd": 76.41891156462584,
+      "loopPhaseSamples": 1323,
+      "startOffset": 2.3148072562358277,
+      "rendered": true,
+      "audioSha256": "bacbae6f3beb0efc4f7a197954d4e1a2662ad481f582046b6e8a7c6b469c1a0a",
+      "bytes": 992290,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -12.7,
+      "rmsDb": -26.571133,
+      "samplePeakDb": -12.729046,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.4061985684451699,
+          0.9555466316523393
+        ],
+        "sampleJump": [
+          0.0011032149195671082,
+          0.00019866228103637695
+        ],
+        "jumpLimit": [
+          0.01627403497695923,
+          0.0141410231590271
+        ]
+      }
+    },
+    "p1-03": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 534188,
+      "bpm": 112.32000718848046,
+      "transpose": -1,
+      "leadProgram": 24,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        24,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-03.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3015384,
+      "preRollSamples": 94231,
+      "sourceMidiSha256": "12f454c0141338f7b5e2fde7064bc1e17c37aee464ee60c16f987294f87a6ee4",
+      "tailSamples": 187580,
+      "frames": 3298077,
+      "duration": 74.78632653061224,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3298304,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.988852,
+        0.999537,
+        0.999675
+      ],
+      "loopStart": 2.1567573696145126,
+      "loopEnd": 70.53281179138322,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.1367573696145126,
+      "rendered": true,
+      "audioSha256": "443f2c8de820684e36240acd8728df3900d70cae03af689e94e83e1450040824",
+      "bytes": 929484,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -7.7,
+      "rmsDb": -25.934825,
+      "samplePeakDb": -7.662587,
+      "seam": {
+        "rmsDifferenceDb": [
+          1.9390792738445768,
+          1.9272976637968924
+        ],
+        "sampleJump": [
+          0.027286194264888763,
+          0.027158990502357483
+        ],
+        "jumpLimit": [
+          0.04042669013142586,
+          0.03806101530790329
+        ]
+      }
+    },
+    "p1-04": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 566893,
+      "bpm": 105.84007916837922,
+      "transpose": 2,
+      "leadProgram": 45,
+      "accompaniment": "P1",
+      "drums": true,
+      "programs": [
+        45,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-04.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3199998,
+      "preRollSamples": 100000,
+      "sourceMidiSha256": "46d12f9801e40cab3a3693160e7962c0ac4a006b4689054f168eea520d4cdf55",
+      "tailSamples": 199118,
+      "frames": 3499998,
+      "duration": 79.36503401360544,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3500032,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.990179,
+        0.998587,
+        0.997363
+      ],
+      "loopStart": 2.2875736961451247,
+      "loopEnd": 74.84988662131519,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.2675736961451247,
+      "rendered": true,
+      "audioSha256": "c2a9139f2f51ec3f1f705943081f70a08ac6feb1f9797bec77c4518a9a6dcefd",
+      "bytes": 989998,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -7.5,
+      "rmsDb": -26.023012,
+      "samplePeakDb": -7.536409,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.2484084008842906,
+          3.4533126823181526
+        ],
+        "sampleJump": [
+          0.0011999309062957764,
+          0.00103025883436203
+        ],
+        "jumpLimit": [
+          0.038375500589609146,
+          0.03747861459851265
+        ]
+      }
+    },
+    "p1-05": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 544662,
+      "bpm": 110.16006257091554,
+      "transpose": -2,
+      "leadProgram": 12,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        12,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-05.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3074508,
+      "preRollSamples": 96078,
+      "sourceMidiSha256": "74febf248be7a819b2cb9bd15daa2c803c8ab6890fe612929acb0018ab374f24",
+      "tailSamples": 191274,
+      "frames": 3362742,
+      "duration": 76.25265306122449,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3362816,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999389,
+        0.999231,
+        0.999459
+      ],
+      "loopStart": 2.198639455782313,
+      "loopEnd": 71.91537414965987,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.1786394557823128,
+      "rendered": true,
+      "audioSha256": "4ef873ce3afc25f9bc240337060829b658629b1d50968f9d3cd3ae93a99f3ae5",
+      "bytes": 936592,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -8.6,
+      "rmsDb": -25.920443,
+      "samplePeakDb": -8.591299,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.0516935593068126,
+          1.6818204047170084
+        ],
+        "sampleJump": [
+          0.00952201522886753,
+          0.007156580686569214
+        ],
+        "jumpLimit": [
+          0.02688363566994667,
+          0.02897574007511139
+        ]
+      }
+    },
+    "p1-06": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 555556,
+      "bpm": 107.99991360006912,
+      "transpose": 0,
+      "leadProgram": 73,
+      "accompaniment": "P1",
+      "drums": true,
+      "programs": [
+        73,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-06.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3136003,
+      "preRollSamples": 98000,
+      "sourceMidiSha256": "2f34c7ec5d14ca0b791c984cc44979aaca952c3b9f4aeb9659662cc590062e1e",
+      "tailSamples": 195559,
+      "frames": 3430003,
+      "duration": 77.77784580498866,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3430400,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.995035,
+        0.999657,
+        0.999977
+      ],
+      "loopStart": 2.232222222222222,
+      "loopEnd": 73.34340136054422,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.2222222222222223,
+      "rendered": true,
+      "audioSha256": "b4458d8b7524f1c2cd363340ae2c7d8a0a14df0bb286ff9cf5b14eb58c05fdd3",
+      "bytes": 959216,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -13.4,
+      "rmsDb": -26.439788,
+      "samplePeakDb": -13.445354,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.590873287134141,
+          5.686093048450147
+        ],
+        "sampleJump": [
+          0.0015269368886947632,
+          0.0003360435366630554
+        ],
+        "jumpLimit": [
+          0.01,
+          0.01
+        ]
+      }
+    },
+    "p1-07": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 578704,
+      "bpm": 103.67994691586718,
+      "transpose": 1,
+      "leadProgram": 24,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        24,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-07.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3266668,
+      "preRollSamples": 102083,
+      "sourceMidiSha256": "e63be7f26a63497e5a3922cc15caa737d8c73ce38f0a46796570074ceed484c9",
+      "tailSamples": 203284,
+      "frames": 3572917,
+      "duration": 81.0185260770975,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3573760,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.990533,
+        0.9997,
+        0.999791
+      ],
+      "loopStart": 2.3348072562358277,
+      "loopEnd": 76.40891156462585,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.3148072562358277,
+      "rendered": true,
+      "audioSha256": "2b11a88e7a59da7c84138de414f535c99d4e5be7d9fc43e1a991056589ea2fa7",
+      "bytes": 1008320,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -7.4,
+      "rmsDb": -25.959276,
+      "samplePeakDb": -7.439704,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.7936100971089637,
+          0.7679431598628277
+        ],
+        "sampleJump": [
+          0.006804026663303375,
+          0.006204754114151001
+        ],
+        "jumpLimit": [
+          0.02911326289176941,
+          0.02819111943244934
+        ]
+      }
+    },
+    "p1-08": {
+      "scene": "meadow",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 534188,
+      "bpm": 112.32000718848046,
+      "transpose": -1,
+      "leadProgram": 45,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        45,
+        24,
+        32,
+        45,
+        73
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "풀잎 우편길",
+      "file": "p1-08.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3015384,
+      "preRollSamples": 94231,
+      "sourceMidiSha256": "2f47fac9ab9982a916cc90ce8c67e5290f055898ef685a5661b99436e0af8efb",
+      "tailSamples": 187580,
+      "frames": 3298077,
+      "duration": 74.78632653061224,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3298304,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.998624,
+        0.999228,
+        0.998692
+      ],
+      "loopStart": 2.1567573696145126,
+      "loopEnd": 70.53281179138322,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.1367573696145126,
+      "rendered": true,
+      "audioSha256": "fd714dfa4ffbd15acb1c0bd9ee3f57cf2dbafe7f7480287403e59a56861176dc",
+      "bytes": 923143,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -8.2,
+      "rmsDb": -25.854309,
+      "samplePeakDb": -8.220718,
+      "seam": {
+        "rmsDifferenceDb": [
+          3.1309590534739087,
+          3.383469844007493
+        ],
+        "sampleJump": [
+          0.0036917030811309814,
+          0.008137330412864685
+        ],
+        "jumpLimit": [
+          0.027278464287519455,
+          0.026398301124572754
+        ]
+      }
+    },
+    "p2-01": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 625000,
+      "bpm": 96.0,
+      "transpose": 0,
+      "leadProgram": 114,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        114,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-01.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3528000,
+      "preRollSamples": 110250,
+      "sourceMidiSha256": "43e226b3c823240720e988b02d0ac31b338478d94231e0cd5f48c01ae4cf46dc",
+      "tailSamples": 220059,
+      "frames": 3858750,
+      "duration": 87.5,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3859456,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.992703,
+        0.99853,
+        0.998646
+      ],
+      "loopStart": 2.51,
+      "loopEnd": 82.51,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.5,
+      "rendered": true,
+      "audioSha256": "7a41c869aa513be7d5dd933c77a698b17db174d9aff6eb4ecc1ce9423e6c0f88",
+      "bytes": 1077151,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -9.5,
+      "rmsDb": -26.714324,
+      "samplePeakDb": -9.510432,
+      "seam": {
+        "rmsDifferenceDb": [
+          1.8436968795712936,
+          1.6819658588892636
+        ],
+        "sampleJump": [
+          0.005555093288421631,
+          0.008446738123893738
+        ],
+        "jumpLimit": [
+          0.04289558157324791,
+          0.04085770435631275
+        ]
+      }
+    },
+    "p2-02": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 651042,
+      "bpm": 92.15995281410416,
+      "transpose": 1,
+      "leadProgram": 11,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        11,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-02.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3675002,
+      "preRollSamples": 114844,
+      "sourceMidiSha256": "810702ac90b30e9bade6e4646a232eb348eedcd25869d84b7e7121ccc3865a01",
+      "tailSamples": 228806,
+      "frames": 4019534,
+      "duration": 91.14589569160998,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4020224,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.998967,
+        0.999056,
+        0.998639
+      ],
+      "loopStart": 2.6241723356009072,
+      "loopEnd": 85.95755102040816,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.604172335600907,
+      "rendered": true,
+      "audioSha256": "0712b1b822288a9b96becf6f5cbdfe3672f1aad59e42108112f9256eaeb724d7",
+      "bytes": 1115620,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -11.2,
+      "rmsDb": -26.62741,
+      "samplePeakDb": -11.249065,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.6322083260563005,
+          0.012589300506707701
+        ],
+        "sampleJump": [
+          0.0014524012804031372,
+          0.0032496191561222076
+        ],
+        "jumpLimit": [
+          0.03533728141337633,
+          0.030871473252773285
+        ]
+      }
+    },
+    "p2-03": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 600962,
+      "bpm": 99.83992332293889,
+      "transpose": -1,
+      "leadProgram": 73,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        73,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-03.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3392310,
+      "preRollSamples": 106010,
+      "sourceMidiSha256": "5139a76880f91c98dc3664cee80872567104ffc0ff3b5cba945e0507ce9047ff",
+      "tailSamples": 211579,
+      "frames": 3710340,
+      "duration": 84.13469387755102,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3710976,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.995288,
+        0.9996,
+        0.998967
+      ],
+      "loopStart": 2.4138548752834468,
+      "loopEnd": 79.33698412698412,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.4038548752834465,
+      "rendered": true,
+      "audioSha256": "00d24db1457d06bc675565ec879d53f4b11d559a389975bac406669fd0221b25",
+      "bytes": 1034940,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -13.6,
+      "rmsDb": -26.549312,
+      "samplePeakDb": -13.599027,
+      "seam": {
+        "rmsDifferenceDb": [
+          4.289248762750546,
+          4.02359522077224
+        ],
+        "sampleJump": [
+          0.003375798463821411,
+          0.0016539767384529114
+        ],
+        "jumpLimit": [
+          0.01,
+          0.01
+        ]
+      }
+    },
+    "p2-04": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 637755,
+      "bpm": 94.08001505280241,
+      "transpose": 2,
+      "leadProgram": 24,
+      "accompaniment": "P1",
+      "drums": true,
+      "programs": [
+        24,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-04.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3599999,
+      "preRollSamples": 112500,
+      "sourceMidiSha256": "414e4c1e120752fcf747034e940ab709e19f84040cfbea18646840799a6f6db6",
+      "tailSamples": 224118,
+      "frames": 3937499,
+      "duration": 89.28569160997732,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3938304,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.993303,
+        0.99916,
+        0.995959
+      ],
+      "loopStart": 2.5710204081632653,
+      "loopEnd": 84.2036507936508,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.5510204081632653,
+      "rendered": true,
+      "audioSha256": "dcb71acc8ea13fbbd1385b1f0f75e2190811d3b484ee3ae8a605bddce812d3fa",
+      "bytes": 1099236,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -9.5,
+      "rmsDb": -26.538126,
+      "samplePeakDb": -9.519661,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.34447864240173587,
+          0.26149228586747597
+        ],
+        "sampleJump": [
+          0.001344434916973114,
+          0.006007559597492218
+        ],
+        "jumpLimit": [
+          0.04805659968405962,
+          0.04652986954897642
+        ]
+      }
+    },
+    "p2-05": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 612745,
+      "bpm": 97.9200156672025,
+      "transpose": -2,
+      "leadProgram": 114,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        114,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-05.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3458823,
+      "preRollSamples": 108088,
+      "sourceMidiSha256": "7f50f0ff34ad9e9f5a845e982f414db4eb95c5460002110728662072ac167146",
+      "tailSamples": 215294,
+      "frames": 3783087,
+      "duration": 85.78428571428572,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3783680,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.99668,
+        0.998718,
+        0.997606
+      ],
+      "loopStart": 2.4709750566893423,
+      "loopEnd": 80.90233560090702,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.4509750566893422,
+      "rendered": true,
+      "audioSha256": "8f43532c4ca01fe4a99d37eb8e4f88445ef654d58f9d56978356ae739e33ac72",
+      "bytes": 1050016,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -11.1,
+      "rmsDb": -26.736365,
+      "samplePeakDb": -11.065873,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.02203851345897334,
+          0.383636329118044
+        ],
+        "sampleJump": [
+          0.00451931357383728,
+          0.0009677708148956299
+        ],
+        "jumpLimit": [
+          0.03821180760860443,
+          0.03578891232609749
+        ]
+      }
+    },
+    "p2-06": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 625000,
+      "bpm": 96.0,
+      "transpose": 0,
+      "leadProgram": 11,
+      "accompaniment": "P1",
+      "drums": true,
+      "programs": [
+        11,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-06.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3528000,
+      "preRollSamples": 110250,
+      "sourceMidiSha256": "8a32ce9c307bcf1ac1a90ba45e54be6fa10679df7e4d26826c6cdecb37f4dcc2",
+      "tailSamples": 220059,
+      "frames": 3858750,
+      "duration": 87.5,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3859456,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.997068,
+        0.999142,
+        0.998875
+      ],
+      "loopStart": 2.51,
+      "loopEnd": 82.51,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.5,
+      "rendered": true,
+      "audioSha256": "ca83757c512beff3fc71d12eb35345f2a352795f6f890a16bfac3490adf26c6d",
+      "bytes": 1076733,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -10.3,
+      "rmsDb": -26.589358,
+      "samplePeakDb": -10.349542,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.8376560700157647,
+          2.4117167018016055
+        ],
+        "sampleJump": [
+          0.009387411177158356,
+          0.008750999346375465
+        ],
+        "jumpLimit": [
+          0.029588770121335983,
+          0.026058897376060486
+        ]
+      }
+    },
+    "p2-07": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 651042,
+      "bpm": 92.15995281410416,
+      "transpose": 1,
+      "leadProgram": 73,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        73,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-07.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3675002,
+      "preRollSamples": 114844,
+      "sourceMidiSha256": "76f2c334af1b48775f780ab2a615d491f673b9cc99aa16575702ed285bc436ec",
+      "tailSamples": 229247,
+      "frames": 4019534,
+      "duration": 91.14589569160998,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4020224,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.995789,
+        0.999271,
+        0.999085
+      ],
+      "loopStart": 2.614172335600907,
+      "loopEnd": 85.94755102040817,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.604172335600907,
+      "rendered": true,
+      "audioSha256": "111dfb2db2b19aab92609c58e6b1f42fd75cfba54f9302ee552f817d9b110443",
+      "bytes": 1120435,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -13.5,
+      "rmsDb": -26.600517,
+      "samplePeakDb": -13.484663,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.7856132986221027,
+          2.4264648475515713
+        ],
+        "sampleJump": [
+          0.001101817935705185,
+          0.0011937730014324188
+        ],
+        "jumpLimit": [
+          0.010380569845438004,
+          0.01
+        ]
+      }
+    },
+    "p2-08": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 600962,
+      "bpm": 99.83992332293889,
+      "transpose": -1,
+      "leadProgram": 24,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        24,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-08.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3392310,
+      "preRollSamples": 106010,
+      "sourceMidiSha256": "5ee5677febed259e666ec58b46e49db2153afd50a09e564c854d4686c3d10a90",
+      "tailSamples": 212020,
+      "frames": 3710340,
+      "duration": 84.13469387755102,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3710976,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.997435,
+        0.999457,
+        0.997965
+      ],
+      "loopStart": 2.4038548752834465,
+      "loopEnd": 79.32698412698413,
+      "loopPhaseSamples": 0,
+      "startOffset": 2.4038548752834465,
+      "rendered": true,
+      "audioSha256": "6ccc48396fa4011d614e9a79caa4e13f3063e33ea8db74bb51d1f6bfd373229f",
+      "bytes": 1030977,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -9.8,
+      "rmsDb": -26.42573,
+      "samplePeakDb": -9.849558,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.3005355527899454,
+          2.8747381102241505
+        ],
+        "sampleJump": [
+          0.00025647180154919624,
+          0.002538562286645174
+        ],
+        "jumpLimit": [
+          0.016668894328176975,
+          0.011627946980297565
+        ]
+      }
+    },
+    "p2-09": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 637755,
+      "bpm": 94.08001505280241,
+      "transpose": 2,
+      "leadProgram": 114,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        114,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-09.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3599999,
+      "preRollSamples": 112500,
+      "sourceMidiSha256": "543284372641dfb3f7d84ea4b2706b6db83d954747fe8232b4eff3c12423f188",
+      "tailSamples": 224559,
+      "frames": 3937499,
+      "duration": 89.28569160997732,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3938304,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.992994,
+        0.998908,
+        0.997144
+      ],
+      "loopStart": 2.5610204081632655,
+      "loopEnd": 84.19365079365079,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.5510204081632653,
+      "rendered": true,
+      "audioSha256": "9561dcd1a7464f1aaba3bf7d6b86f5a4fb78eeed1861dd29df964d4fc2845228",
+      "bytes": 1098738,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -9.5,
+      "rmsDb": -26.836955,
+      "samplePeakDb": -9.507938,
+      "seam": {
+        "rmsDifferenceDb": [
+          4.330410460264638,
+          4.172237828861881
+        ],
+        "sampleJump": [
+          0.0021265223622322083,
+          0.0004857480525970459
+        ],
+        "jumpLimit": [
+          0.04850718379020691,
+          0.04608318209648132
+        ]
+      }
+    },
+    "p2-10": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 612745,
+      "bpm": 97.9200156672025,
+      "transpose": -2,
+      "leadProgram": 11,
+      "accompaniment": "P1",
+      "drums": true,
+      "programs": [
+        11,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-10.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3458823,
+      "preRollSamples": 108088,
+      "sourceMidiSha256": "3e16c2936281ee0b44764b242bd7741db203ff06f4e4a3f271747899348fd7e8",
+      "tailSamples": 215735,
+      "frames": 3783087,
+      "duration": 85.78428571428572,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3783680,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.99724,
+        0.999034,
+        0.998888
+      ],
+      "loopStart": 2.4609750566893425,
+      "loopEnd": 80.89233560090703,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.4509750566893422,
+      "rendered": true,
+      "audioSha256": "b8b4138d31890896ab630fe6d9dbc14c012302730023d6484d00a818a0df501a",
+      "bytes": 1055092,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -10.7,
+      "rmsDb": -26.451808,
+      "samplePeakDb": -10.657344,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.4784096784974565,
+          5.176984462198732
+        ],
+        "sampleJump": [
+          0.013225935399532318,
+          0.012669235467910767
+        ],
+        "jumpLimit": [
+          0.03373345732688904,
+          0.029996780212968588
+        ]
+      }
+    },
+    "p2-11": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 625000,
+      "bpm": 96.0,
+      "transpose": 0,
+      "leadProgram": 73,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        73,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-11.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3528000,
+      "preRollSamples": 110250,
+      "sourceMidiSha256": "30ac31577a93eaa91aaf0ef3bffe1a3415e1122cf99fb53007575e1486aedd11",
+      "tailSamples": 219618,
+      "frames": 3858750,
+      "duration": 87.5,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3859456,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.998774,
+        0.999435,
+        0.999539
+      ],
+      "loopStart": 2.52,
+      "loopEnd": 82.52,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.5,
+      "rendered": true,
+      "audioSha256": "ca9e53bbc26cd87a22e4fe22a99d7993246778fbc3def73c75bb2b672c681713",
+      "bytes": 1070837,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -13.1,
+      "rmsDb": -26.591092,
+      "samplePeakDb": -13.103269,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.799285171271201,
+          1.7051050468979518
+        ],
+        "sampleJump": [
+          0.0014365967363119125,
+          0.00239013135433197
+        ],
+        "jumpLimit": [
+          0.013775058090686798,
+          0.013109872583299875
+        ]
+      }
+    },
+    "p2-12": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 651042,
+      "bpm": 92.15995281410416,
+      "transpose": 1,
+      "leadProgram": 24,
+      "accompaniment": "P1",
+      "drums": true,
+      "programs": [
+        24,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-12.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3675002,
+      "preRollSamples": 114844,
+      "sourceMidiSha256": "b9fcdad2044a1f7236c71f5f95e217f4bd3aeb3fabfeb92b315c09a4b1842c9f",
+      "tailSamples": 229247,
+      "frames": 4019534,
+      "duration": 91.14589569160998,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4020224,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.99309,
+        0.999348,
+        0.997073
+      ],
+      "loopStart": 2.614172335600907,
+      "loopEnd": 85.94755102040817,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.604172335600907,
+      "rendered": true,
+      "audioSha256": "90c7887d3b6e5bb96b8eb2be6fde7ced1051f953e34cd8c63c1e2f09b398afaf",
+      "bytes": 1123448,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -9.1,
+      "rmsDb": -26.497566,
+      "samplePeakDb": -9.121115,
+      "seam": {
+        "rmsDifferenceDb": [
+          4.88568229261643,
+          4.297164642470836
+        ],
+        "sampleJump": [
+          0.0017046481370925903,
+          0.0031748712062835693
+        ],
+        "jumpLimit": [
+          0.026276305317878723,
+          0.028300464153289795
+        ]
+      }
+    },
+    "p2-13": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 600962,
+      "bpm": 99.83992332293889,
+      "transpose": -1,
+      "leadProgram": 114,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        114,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-13.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3392310,
+      "preRollSamples": 106010,
+      "sourceMidiSha256": "b974a922481f160b4730d71ddd1db863416c2b781b902463cb5d897db17150d9",
+      "tailSamples": 211579,
+      "frames": 3710340,
+      "duration": 84.13469387755102,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3710976,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.989793,
+        0.998932,
+        0.99826
+      ],
+      "loopStart": 2.4138548752834468,
+      "loopEnd": 79.33698412698412,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.4038548752834465,
+      "rendered": true,
+      "audioSha256": "3e8a6880fed5d6087bf0248069166a791bcf34eb705552b001deaf3de5a3ae34",
+      "bytes": 1038209,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -10.0,
+      "rmsDb": -26.719011,
+      "samplePeakDb": -10.046186,
+      "seam": {
+        "rmsDifferenceDb": [
+          3.622807130763025,
+          3.4236319923870084
+        ],
+        "sampleJump": [
+          0.0052967071533203125,
+          0.0040931254625320435
+        ],
+        "jumpLimit": [
+          0.03983643278479576,
+          0.04000958986580372
+        ]
+      }
+    },
+    "p2-14": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 637755,
+      "bpm": 94.08001505280241,
+      "transpose": 2,
+      "leadProgram": 11,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        11,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-14.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3599999,
+      "preRollSamples": 112500,
+      "sourceMidiSha256": "d28e03e18fd953c5403a7b379cdb724c4f18b5ac8a3ed0dcbe1b7c185dfcef0f",
+      "tailSamples": 224118,
+      "frames": 3937499,
+      "duration": 89.28569160997732,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3938304,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.998819,
+        0.998975,
+        0.997579
+      ],
+      "loopStart": 2.5710204081632653,
+      "loopEnd": 84.2036507936508,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.5510204081632653,
+      "rendered": true,
+      "audioSha256": "b7567403cca6b8d9efb56b040bc7cfeb049bf88f847409ac1758c5794ee1938b",
+      "bytes": 1093410,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -11.0,
+      "rmsDb": -26.639028,
+      "samplePeakDb": -11.043873,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.8245747699198844,
+          0.5638321006348122
+        ],
+        "sampleJump": [
+          0.018166080117225647,
+          0.013911552727222443
+        ],
+        "jumpLimit": [
+          0.03858177363872528,
+          0.032287776470184326
+        ]
+      }
+    },
+    "p2-15": {
+      "scene": "sea",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 612745,
+      "bpm": 97.9200156672025,
+      "transpose": -2,
+      "leadProgram": 73,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        73,
+        11,
+        33,
+        48,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "물결 사이 편지",
+      "file": "p2-15.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3458823,
+      "preRollSamples": 108088,
+      "sourceMidiSha256": "19ee77dd02c81bf28da3e190b17f5348365204483e69206df4d64c8d25237eee",
+      "tailSamples": 215294,
+      "frames": 3783087,
+      "duration": 85.78428571428572,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 3783680,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.995812,
+        0.999576,
+        0.999009
+      ],
+      "loopStart": 2.4709750566893423,
+      "loopEnd": 80.90233560090702,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.4509750566893422,
+      "rendered": true,
+      "audioSha256": "e54f2ef599fbd23755d1dcee078bbedc9b1410c94033856c7f16a5b99413c3d6",
+      "bytes": 1054161,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -13.3,
+      "rmsDb": -26.549393,
+      "samplePeakDb": -13.333195,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.6119387655579125,
+          0.43730572821875313
+        ],
+        "sampleJump": [
+          0.0018301978707313538,
+          0.00028374046087265015
+        ],
+        "jumpLimit": [
+          0.015129272360354662,
+          0.012693673372268677
+        ]
+      }
+    },
+    "p3-01": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 681818,
+      "bpm": 88.00002346667293,
+      "transpose": 0,
+      "leadProgram": 8,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        8,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-01.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3848726,
+      "preRollSamples": 120273,
+      "sourceMidiSha256": "fb38ac515bbcf4e96f9a23cdd98fed98205624a4fa21ac881c7634bd643d2cc9",
+      "tailSamples": 239664,
+      "frames": 4209545,
+      "duration": 95.45453514739229,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4209664,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999614,
+        0.999792,
+        0.999328
+      ],
+      "loopStart": 2.7472789115646257,
+      "loopEnd": 90.01997732426304,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.7272789115646257,
+      "rendered": true,
+      "audioSha256": "c41d5d36b5528072365ebb45c0b27b779577b26160da084de471ec000402ccd7",
+      "bytes": 1168289,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -9.4,
+      "rmsDb": -26.016831,
+      "samplePeakDb": -9.416158,
+      "seam": {
+        "rmsDifferenceDb": [
+          0.8295122122944782,
+          0.2126608904820806
+        ],
+        "sampleJump": [
+          0.013049356639385223,
+          0.014110321179032326
+        ],
+        "jumpLimit": [
+          0.02952982485294342,
+          0.02838173508644104
+        ]
+      }
+    },
+    "p3-02": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 710227,
+      "bpm": 84.48003244033245,
+      "transpose": 1,
+      "leadProgram": 10,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        10,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-02.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 4009089,
+      "preRollSamples": 125284,
+      "sourceMidiSha256": "81d0926c3a2690369d604f6b49ddc3a572f9583f4732cf8cb1fc85cca287f05f",
+      "tailSamples": 249686,
+      "frames": 4384941,
+      "duration": 99.43176870748299,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4385792,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999284,
+        0.999771,
+        0.998713
+      ],
+      "loopStart": 2.860907029478458,
+      "loopEnd": 93.76995464852608,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.840907029478458,
+      "rendered": true,
+      "audioSha256": "c15acb5c06bff97e100423f02dad294a3b003f756b1e5248eefabafc0e62a25b",
+      "bytes": 1215567,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -8.1,
+      "rmsDb": -25.885149,
+      "samplePeakDb": -8.064597,
+      "seam": {
+        "rmsDifferenceDb": [
+          4.084405501577077,
+          2.9524444725686756
+        ],
+        "sampleJump": [
+          0.0017579607665538788,
+          0.003625117242336273
+        ],
+        "jumpLimit": [
+          0.024417027831077576,
+          0.01922769844532013
+        ]
+      }
+    },
+    "p3-03": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 655594,
+      "bpm": 91.52005662040837,
+      "transpose": -1,
+      "leadProgram": 11,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        11,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-03.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3700697,
+      "preRollSamples": 115647,
+      "sourceMidiSha256": "dc455ea1be2851e2330390ca9950561b20e6130e8ea4442443e06d2f6c9e54af",
+      "tailSamples": 230853,
+      "frames": 4047638,
+      "duration": 91.7831746031746,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4047872,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999594,
+        0.999692,
+        0.999707
+      ],
+      "loopStart": 2.6323809523809523,
+      "loopEnd": 86.5484126984127,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.6223809523809525,
+      "rendered": true,
+      "audioSha256": "2ba318ac3e13641901673d2175bf6d1bb9f6a8cecc61bf76734a1f7790db967e",
+      "bytes": 1130505,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -10.9,
+      "rmsDb": -26.478542,
+      "samplePeakDb": -10.932865,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.593632778262343,
+          5.47339761836426
+        ],
+        "sampleJump": [
+          0.011631390079855919,
+          0.010738346725702286
+        ],
+        "jumpLimit": [
+          0.026783164590597153,
+          0.02650848962366581
+        ]
+      }
+    },
+    "p3-04": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 695733,
+      "bpm": 86.23997999232463,
+      "transpose": 2,
+      "leadProgram": 73,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        73,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-04.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3927274,
+      "preRollSamples": 122727,
+      "sourceMidiSha256": "c1732ff30dfe8f82e91943c3b50c5b3931f5963567b028c1745a61d635847539",
+      "tailSamples": 245454,
+      "frames": 4295455,
+      "duration": 97.40260770975057,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4295680,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999684,
+        0.999585,
+        0.9999
+      ],
+      "loopStart": 2.7829251700680273,
+      "loopEnd": 91.83675736961452,
+      "loopPhaseSamples": 0,
+      "startOffset": 2.7829251700680273,
+      "rendered": true,
+      "audioSha256": "87dc90cb84abbddcf17f619fc2ca0060348870e02141f8bef1bdaccc7de39bf2",
+      "bytes": 1194570,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -13.2,
+      "rmsDb": -26.783273,
+      "samplePeakDb": -13.161535,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.382782793065708,
+          0.7085857924287922
+        ],
+        "sampleJump": [
+          0.0002776891924440861,
+          8.383800741285086e-05
+        ],
+        "jumpLimit": [
+          0.01,
+          0.01
+        ]
+      }
+    },
+    "p3-05": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 668449,
+      "bpm": 89.76002656896786,
+      "transpose": -2,
+      "leadProgram": 8,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        8,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-05.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3773261,
+      "preRollSamples": 117914,
+      "sourceMidiSha256": "a8ab51c8792ade9acba6f51a68f551563d9a59403815c2ef9e3d11f218aa8ed6",
+      "tailSamples": 234946,
+      "frames": 4127003,
+      "duration": 93.58283446712018,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4127744,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.99929,
+        0.999827,
+        0.999642
+      ],
+      "loopStart": 2.693786848072562,
+      "loopEnd": 88.25526077097506,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.673786848072562,
+      "rendered": true,
+      "audioSha256": "e5508025b0d0e84176a45dd5e61775a909ccc1371ef6da6b868ae60c90c8b0e9",
+      "bytes": 1145944,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -9.2,
+      "rmsDb": -25.802667,
+      "samplePeakDb": -9.195294,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.613021226136521,
+          2.4131228252842796
+        ],
+        "sampleJump": [
+          0.0013573747128248215,
+          0.00037421099841594696
+        ],
+        "jumpLimit": [
+          0.026113420724868774,
+          0.02574436366558075
+        ]
+      }
+    },
+    "p3-06": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 681818,
+      "bpm": 88.00002346667293,
+      "transpose": 0,
+      "leadProgram": 10,
+      "accompaniment": "P1",
+      "drums": false,
+      "programs": [
+        10,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-06.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 3848726,
+      "preRollSamples": 120273,
+      "sourceMidiSha256": "5097b9b805a849507f426c45d2411649e4f11901804c82296a72ba2e78cc563a",
+      "tailSamples": 239664,
+      "frames": 4209545,
+      "duration": 95.45453514739229,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4209664,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999403,
+        0.999789,
+        0.998984
+      ],
+      "loopStart": 2.7472789115646257,
+      "loopEnd": 90.01997732426304,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.7272789115646257,
+      "rendered": true,
+      "audioSha256": "67b8e809c6874aaa1a4133334b948bcfbc3a9a519d2561b91fdbf64cae5b880a",
+      "bytes": 1166812,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -9.8,
+      "rmsDb": -25.821675,
+      "samplePeakDb": -9.76035,
+      "seam": {
+        "rmsDifferenceDb": [
+          3.7467331496288487,
+          2.411659283403992
+        ],
+        "sampleJump": [
+          0.006645672023296356,
+          0.00334542291238904
+        ],
+        "jumpLimit": [
+          0.023262888193130493,
+          0.019568592309951782
+        ]
+      }
+    },
+    "p3-07": {
+      "scene": "sky",
+      "kind": "loop",
+      "bars": 32,
+      "beatsPerBar": 4,
+      "tempoUs": 710227,
+      "bpm": 84.48003244033245,
+      "transpose": 1,
+      "leadProgram": 11,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        11,
+        10,
+        32,
+        89,
+        52
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "title": "별가루 보관함",
+      "file": "p3-07.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 4009089,
+      "preRollSamples": 125284,
+      "sourceMidiSha256": "5a49857b5de695e0f69a4d4a6b8ee8baa50978f6d480d6c6a37162dfae3f916d",
+      "tailSamples": 249686,
+      "frames": 4384941,
+      "duration": 99.43176870748299,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 4385792,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999948,
+        0.999871,
+        0.999652
+      ],
+      "loopStart": 2.860907029478458,
+      "loopEnd": 93.76995464852608,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.840907029478458,
+      "rendered": true,
+      "audioSha256": "0301d2ef1407da9f5c92993bf74353998e72510569b13e85483e6e3faa510d85",
+      "bytes": 1223134,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -9.7,
+      "rmsDb": -26.436275,
+      "samplePeakDb": -9.69789,
+      "seam": {
+        "rmsDifferenceDb": [
+          2.7091278305053166,
+          2.4136148443603815
+        ],
+        "sampleJump": [
+          0.0004962049424648285,
+          0.008486352860927582
+        ],
+        "jumpLimit": [
+          0.04018844664096832,
+          0.040053918957710266
+        ]
+      }
+    },
+    "study": {
+      "scene": "study",
+      "kind": "loop",
+      "bars": 16,
+      "beatsPerBar": 4,
+      "tempoUs": 789474,
+      "bpm": 75.99996960001216,
+      "transpose": 0,
+      "leadProgram": 4,
+      "accompaniment": "P0",
+      "drums": false,
+      "programs": [
+        4,
+        24,
+        32,
+        45
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "title": "책상 위 작은 길",
+      "file": "study.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 2228211,
+      "preRollSamples": 139263,
+      "sourceMidiSha256": "2e8f343979b0b7d94526ab6c657c552c493220fe86e51d964ae1d06d4de7aa53",
+      "tailSamples": 278085,
+      "frames": 2646000,
+      "duration": 60.0,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 2646016,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999596,
+        0.999598,
+        0.999504
+      ],
+      "loopStart": 3.167891156462585,
+      "loopEnd": 53.69421768707483,
+      "loopPhaseSamples": 441,
+      "startOffset": 3.157891156462585,
+      "rendered": true,
+      "audioSha256": "324d463c0e0615ec6904e5a4526389ccb3bc736d68728315157a0d265c56f56e",
+      "bytes": 735826,
+      "normalizationTarget": -27.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -27.1,
+      "truePeakDb": -12.8,
+      "rmsDb": -29.580423,
+      "samplePeakDb": -12.800561,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.468888543828868,
+          5.450652011089186
+        ],
+        "sampleJump": [
+          0.00147981196641922,
+          0.0012754425406455994
+        ],
+        "jumpLimit": [
+          0.013431072235107422,
+          0.013737738132476807
+        ]
+      }
+    },
+    "castle": {
+      "scene": "castle",
+      "kind": "loop",
+      "bars": 16,
+      "beatsPerBar": 4,
+      "tempoUs": 535714,
+      "bpm": 112.00005973336519,
+      "transpose": 0,
+      "leadProgram": 71,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        71,
+        45,
+        42,
+        60
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        10
+      ],
+      "title": "돌문 앞의 약속",
+      "file": "castle.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 1511999,
+      "preRollSamples": 94500,
+      "sourceMidiSha256": "b6d5478ca64f4b0e6b17857846219d3b4557bdf30f7228e713ecaaf6937c838a",
+      "tailSamples": 188118,
+      "frames": 1795499,
+      "duration": 40.71426303854875,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 1796096,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.996726,
+        0.998841,
+        0.998588
+      ],
+      "loopStart": 2.162857142857143,
+      "loopEnd": 36.44854875283447,
+      "loopPhaseSamples": 882,
+      "startOffset": 2.142857142857143,
+      "rendered": true,
+      "audioSha256": "8b99f66b08103e74f41b2f9c47aaea900e84374909eb0430aef60576813d62e3",
+      "bytes": 501171,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.0,
+      "truePeakDb": -13.2,
+      "rmsDb": -26.781126,
+      "samplePeakDb": -13.186112,
+      "seam": {
+        "rmsDifferenceDb": [
+          3.455039743563251,
+          3.1988664282142167
+        ],
+        "sampleJump": [
+          0.001957617700099945,
+          0.0027039237320423126
+        ],
+        "jumpLimit": [
+          0.01,
+          0.01
+        ]
+      }
+    },
+    "continent-castle": {
+      "scene": "continent-castle",
+      "kind": "loop",
+      "bars": 16,
+      "beatsPerBar": 4,
+      "tempoUs": 576923,
+      "bpm": 104.00001386666851,
+      "transpose": 0,
+      "leadProgram": 60,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        60,
+        48,
+        43,
+        61,
+        47
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        10
+      ],
+      "title": "큰 문을 여는 날",
+      "file": "continent-castle.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 1628307,
+      "preRollSamples": 101769,
+      "sourceMidiSha256": "45986c00e2dc0d9a8beac6b61f2533d4cb3b4e14d5093eb1b4a4fa6e8734c990",
+      "tailSamples": 203097,
+      "frames": 1933614,
+      "duration": 43.84612244897959,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 1934336,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.991732,
+        0.999149,
+        0.997504
+      ],
+      "loopStart": 2.317687074829932,
+      "loopEnd": 39.240748299319726,
+      "loopPhaseSamples": 441,
+      "startOffset": 2.307687074829932,
+      "rendered": true,
+      "audioSha256": "f00543f02738d29d50d58cd6f6d4e0277708c0267171e5a97ca21abdba19ad41",
+      "bytes": 538316,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -14.1,
+      "rmsDb": -26.631353,
+      "samplePeakDb": -14.111956,
+      "seam": {
+        "rmsDifferenceDb": [
+          5.4213486247467095,
+          5.75604744911314
+        ],
+        "sampleJump": [
+          0.003721846267580986,
+          0.0017385799437761307
+        ],
+        "jumpLimit": [
+          0.011801764369010925,
+          0.01
+        ]
+      }
+    },
+    "play": {
+      "scene": "play",
+      "kind": "loop",
+      "bars": 16,
+      "beatsPerBar": 4,
+      "tempoUs": 454545,
+      "bpm": 132.000132000132,
+      "transpose": 0,
+      "leadProgram": 13,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        13,
+        0,
+        33,
+        7
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        10
+      ],
+      "title": "주머니 속 놀이",
+      "file": "play.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 1282908,
+      "preRollSamples": 80182,
+      "sourceMidiSha256": "286d367509e87ec1c03a15e974d8eff93fffd1b999fc30d97bcb28f01a0c9120",
+      "tailSamples": 159482,
+      "frames": 1523454,
+      "duration": 34.54544217687075,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 1523712,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.996931,
+        0.997687,
+        0.998711
+      ],
+      "loopStart": 1.8381859410430839,
+      "loopEnd": 30.92907029478458,
+      "loopPhaseSamples": 882,
+      "startOffset": 1.8181859410430838,
+      "rendered": true,
+      "audioSha256": "4ef8eecb581cc5e3898ef95bd639393771b794d7f0220bc012ef01c4112a63b1",
+      "bytes": 430577,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -8.4,
+      "rmsDb": -26.093585,
+      "samplePeakDb": -8.431719,
+      "seam": {
+        "rmsDifferenceDb": [
+          1.425162032320035,
+          1.2793727245144488
+        ],
+        "sampleJump": [
+          0.008145338855683804,
+          0.01913998182862997
+        ],
+        "jumpLimit": [
+          0.049237221479415894,
+          0.05525043606758118
+        ]
+      }
+    },
+    "storm": {
+      "scene": "storm",
+      "kind": "loop",
+      "bars": 16,
+      "beatsPerBar": 4,
+      "tempoUs": 483871,
+      "bpm": 123.99999173333389,
+      "transpose": 0,
+      "leadProgram": 73,
+      "accompaniment": "P0",
+      "drums": true,
+      "programs": [
+        73,
+        12,
+        34,
+        45
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4,
+        10
+      ],
+      "title": "빙글 도는 배달길",
+      "file": "storm.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 1365678,
+      "preRollSamples": 85355,
+      "sourceMidiSha256": "788f266070ee5fe0672c005549169d0d89583d1a57ad7b9808aae9605aea3425",
+      "tailSamples": 169828,
+      "frames": 1621743,
+      "duration": 36.77421768707483,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 1622016,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.998511,
+        0.999041,
+        0.999665
+      ],
+      "loopStart": 1.955487528344671,
+      "loopEnd": 32.92324263038549,
+      "loopPhaseSamples": 882,
+      "startOffset": 1.9354875283446713,
+      "rendered": true,
+      "audioSha256": "85539d28945e4971b0b7a1480d9cd28d58980199e51967a67d52aa30c141f60c",
+      "bytes": 459807,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "loudnessLufs",
+      "loudnessLufs": -24.1,
+      "truePeakDb": -14.3,
+      "rmsDb": -26.637558,
+      "samplePeakDb": -14.285943,
+      "seam": {
+        "rmsDifferenceDb": [
+          1.7458972859984456,
+          2.320198539486409
+        ],
+        "sampleJump": [
+          0.011150294099934399,
+          0.012985508161364123
+        ],
+        "jumpLimit": [
+          0.0208677276968956,
+          0.024642113596200943
+        ]
+      }
+    },
+    "clear": {
+      "scene": "clear",
+      "kind": "jingle",
+      "bars": 0.75,
+      "beatsPerBar": 4,
+      "tempoUs": 416667,
+      "bpm": 144,
+      "programs": [
+        12,
+        24,
+        32,
+        45
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "clear.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 55125,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "9434cc4a3cc9c25ead9bf5e2bd5949be88deca7ec91aaeb156de13c5115e43b0",
+      "tailSamples": 73500,
+      "frames": 128625,
+      "duration": 2.9166666666666665,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 129024,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999845,
+        0.999828,
+        0.999305
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "72e1f30e254adaecdd2ba0c45f913ca2d6dc8355d044cc6f8993e4048f3ba55d",
+      "bytes": 36872,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.7,
+      "truePeakDb": -8.1,
+      "rmsDb": -23.992165,
+      "samplePeakDb": -8.086719
+    },
+    "victory": {
+      "scene": "victory",
+      "kind": "jingle",
+      "bars": 1.5,
+      "beatsPerBar": 4,
+      "tempoUs": 500000,
+      "bpm": 120,
+      "programs": [
+        60,
+        48,
+        43,
+        61
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "victory.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 132300,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "c9c0d91cdacca3aa7620e2b79139fcc516aee3e1ab3639cc32d9d43e07d75fc5",
+      "tailSamples": 88200,
+      "frames": 220500,
+      "duration": 5.0,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 221184,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999714,
+        0.999593,
+        0.998559
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "6b98a9bdfdfd196c35f209473a1d8442a32dc052110c1a3056af201219385c40",
+      "bytes": 57804,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.2,
+      "truePeakDb": -12.4,
+      "rmsDb": -24.009506,
+      "samplePeakDb": -12.36706
+    },
+    "key": {
+      "scene": "key",
+      "kind": "jingle",
+      "bars": 0.5,
+      "beatsPerBar": 4,
+      "tempoUs": 416667,
+      "bpm": 144,
+      "programs": [
+        8,
+        10,
+        32,
+        11
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "key.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 36750,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "d1384ad6f81a80faf38c6d87f581456f7364164fb2cfc9fd869e28292837d8d4",
+      "tailSamples": 73500,
+      "frames": 110250,
+      "duration": 2.5,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 110592,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999818,
+        0.999724,
+        0.999799
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "0eb8fd64d7dcca63381b3a6a6641eca80ad9b7acfce2c9f89451c74006cf374a",
+      "bytes": 31450,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.1,
+      "truePeakDb": -11.1,
+      "rmsDb": -24.013823,
+      "samplePeakDb": -11.075464
+    },
+    "item": {
+      "scene": "item",
+      "kind": "jingle",
+      "bars": 0.5,
+      "beatsPerBar": 4,
+      "tempoUs": 394737,
+      "bpm": 152,
+      "programs": [
+        11,
+        12,
+        33,
+        24
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "item.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 34816,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "3fcf75caaddee018da8d7c3f5fea9642d7938f7baeb245f857ed0746df63e2be",
+      "tailSamples": 69632,
+      "frames": 104448,
+      "duration": 2.36843537414966,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 104448,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999861,
+        0.99969,
+        0.999902
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "d00404bc41b12081899b329e1e26ecce8ec4930077d7f6b6e1fd3950f796910c",
+      "bytes": 29822,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.3,
+      "truePeakDb": -12.1,
+      "rmsDb": -24.014801,
+      "samplePeakDb": -12.120013
+    },
+    "grade": {
+      "scene": "grade",
+      "kind": "jingle",
+      "bars": 0.5,
+      "beatsPerBar": 4,
+      "tempoUs": 400000,
+      "bpm": 150,
+      "programs": [
+        73,
+        45,
+        32,
+        12
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "grade.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 35280,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "1226b8df689e02dc2ebeaefd6fe10094f763f8cdba6899ce4356d3a3c8985c1f",
+      "tailSamples": 70560,
+      "frames": 105840,
+      "duration": 2.4,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 106496,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.996816,
+        0.999755,
+        0.999843
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "76c0cc9083fd78e612b772045e704598739b00dda7c8e9087afaf193847ebd23",
+      "bytes": 30050,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.0,
+      "truePeakDb": -12.5,
+      "rmsDb": -24.039881,
+      "samplePeakDb": -12.509017
+    },
+    "bat": {
+      "scene": "bat",
+      "kind": "jingle",
+      "bars": 0.625,
+      "beatsPerBar": 4,
+      "tempoUs": 517241,
+      "bpm": 116,
+      "programs": [
+        71,
+        45,
+        42,
+        12
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "bat.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 57026,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "95852062dc8846e4061dc3757f3ab6ee7fc304d4d38425dd9609561c14a44bde",
+      "tailSamples": 91241,
+      "frames": 148267,
+      "duration": 3.362063492063492,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 148480,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.998727,
+        0.999841,
+        0.999875
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "4298b680567eb896993f0226980b5b0db4ad2f2cdab9f53bb38dbfb518a78ada",
+      "bytes": 41744,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -22.0,
+      "truePeakDb": -12.1,
+      "rmsDb": -23.989669,
+      "samplePeakDb": -12.139094
+    },
+    "storm-caught": {
+      "scene": "storm-caught",
+      "kind": "jingle",
+      "bars": 0.75,
+      "beatsPerBar": 4,
+      "tempoUs": 454545,
+      "bpm": 132,
+      "programs": [
+        73,
+        12,
+        34,
+        45
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "file": "storm-caught.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 60136,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "27cee1cec35a23cded5e583eceeb771dd154406a97efad20f8caa1ebe2f6764f",
+      "tailSamples": 80182,
+      "frames": 140318,
+      "duration": 3.181814058956916,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 141312,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.999807,
+        0.999812,
+        0.999878
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "597918f4f74ad0cc4aab741e0d2b9e37f22d036914df682ae7ef0fdb823175be",
+      "bytes": 39759,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.5,
+      "truePeakDb": -12.2,
+      "rmsDb": -24.014,
+      "samplePeakDb": -12.217295
+    }
+  },
+  "rendering": {
+    "fluidSynth": "2.4.4",
+    "sampleRate": 44100,
+    "movieTimescale": 44100,
+    "channels": 2,
+    "codec": "AAC-LC",
+    "bitrate": 96000,
+    "chorus": false,
+    "reverb": {
+      "roomSize": 0.2,
+      "damp": 0.4,
+      "width": 0.5,
+      "level": 0.15
+    },
+    "sf2Sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+    "decodedOffsetMethod": "three-window normalized PCM cross-correlation; no raw-priming assumption"
+  }
+}

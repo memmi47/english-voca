@@ -21,7 +21,7 @@ LIMIT=300 bash tools/cards_say_audio.sh      # (Mac에서) say 음성으로 첫 
 - 기능어(the, and 등 121개)는 뜻 대신 "소리를 듣고 글자 고르기" 카드로 나온다.
 - 기록 공유: 기록은 그 기기의 브라우저와 Mac의 `state-cards/` 폴더(서버 사본) 양쪽에 저장된다. 맥미니와 iPad가 같은 서버에 접속하면 같은 기록을 본다. 서버에 닿지 않으면 그 기기에만 저장하고 첫 화면에 표시하며, 닿으면 밀린 기록을 올린다. `state-cards/`와 `state-cards/backup/`(직전 30개 버전)을 보관하면 브라우저 기록이 지워져도 복원된다. 한 기기에서 "기록 지우기"를 해도 서버 사본은 남아 다시 불러온다. 인증이 없으므로 집 Wi-Fi에서만 쓴다.
 - 첫 화면의 "부모 기록"에 열쇠·왕관, 판별 카드 수, 분당 카드, "알아요" 확인 정답률, 복습 정답률, 밀린 복습, 박쥐 게이지가 있다.
-- 소리: 음악은 기본 꺼짐, 효과음은 켜짐. 지도 위쪽에서 바꾼다. 음악과 효과음은 파일 없이 프로그램이 합성한다.
+- 소리: 음악은 기본 꺼짐, 효과음은 켜짐. 지도 위쪽에서 바꾼다. 음악은 새로 작곡한 General MIDI 곡을 AAC로 녹음해 재생하며, 불러오지 못하면 기존 칩튠으로 돌아간다. 효과음은 프로그램이 합성한다.
 - 글꼴: 화면 틀은 Galmuri11(OFL, `cards/fonts/`), 영어 단어는 둥근 글꼴.
 - 날짜 시험용 쿼리: `?today=2026-11-13`. 음성을 바꾸려면 기존 `.m4a`를 옮긴 뒤 `VOICE="Ava (Premium)" bash tools/cards_say_audio.sh`.
 
@@ -40,7 +40,13 @@ node tools/sim_learning.mjs --set chosen     # 학습 부하 시뮬레이션 (�
 python3 -I tools/make_cards_data.py          # 전체 카드 목록, 음원 목록 (cards/data/catalog.json, cards/audio/words.tsv, forms.tsv)
 python3 -I tools/make_cards_demo.py          # 체험·시험용 작은 자료 (cards/data/demo/)
 python3 -I tools/build_postal_assets_v2.py   # 스프라이트 시트
-python3 -I tools/build_postal_music.py       # 음악·효과음 음표 자료와 MIDI
+python3 -I tools/build_postal_music.py       # 새 GM MIDI와 음악 목록 (기존 칩튠 자료 보존)
 ```
 
 원본 `reference/`는 읽기 전용이다. 원본 `index.html`(초기 버전)은 그대로 두었다. 이전 프로토타입(`game/`)은 삭제했다. 복구 방법은 `docs/WORKLOG.md`.
+
+### 음악 녹음
+
+세계 30판, 화면 5곡, 징글 7개는 모두 새로 쓴 General MIDI 음악이다. [GeneralUser GS 2.0.3](https://www.schristiancollins.com/generaluser)의 녹음 배포 허용 라이선스를 확인해 사용했으며 사운드폰트 자체는 포함하지 않는다. FluidSynth와 FFmpeg/FFprobe를 설치한 뒤 `bash tools/render_music.sh /path/to/GeneralUser-GS.sf2`로 AAC-LC 44.1kHz stereo 96kbps를 다시 만든다. 도구 경로는 `FLUIDSYNTH`, `FFMPEG`, `FFPROBE`로 지정할 수 있다.
+
+반복 구간은 `cards/assets/postal/music-gm/manifest.json`에 기록하고 Web Audio로 재생한다. 단어 음성이 나올 때 음악과 징글을 줄이며, 음악은 기본 꺼짐이다. 음원·라이선스·편곡·검증 상세는 [음악 설계와 결과](docs/research/music_gm.md)를 참고한다. iPad에서의 음색과 반복 청취는 사용자 확인 목록으로 남는다.
