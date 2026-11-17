@@ -16,6 +16,7 @@ export const CFG = {
   retryPerRun: 4,      // words still to learn that belong to other tiles: this many come back per run
   dueOrder: 'recent',  // which due cards a run takes first: 'recent' (latest due date; the bat test takes the oldest) | 'oldest' | 'mixed' (alternating)
   logCap: 5000,
+  posOption: true,     // meaning cards: fill remaining wrong answers from the exact part of speech (pool size 5+); false = T-006
   themeOption: true,   // meaning cards: one wrong answer comes from the same theme and part of speech (when 5+ such cards exist); false = as before
 };
 
@@ -97,7 +98,7 @@ const INDEX = new WeakMap();
 const themeKey = (w) => (!isSight(w) && w.theme && w.pos && !/기타|보완/.test(w.theme) ? `${w.theme}|${w.pos}` : null);
 function indexOf(words) {
   let ix = INDEX.get(words);
-  if (!ix) { ix = { byId: Object.fromEntries(words.map((w) => [w.id, w])), byType: new Map(), byTheme: new Map() }; for (const w of words) { const k = groupOf(w); let a = ix.byType.get(k); if (!a) ix.byType.set(k, (a = [])); a.push(w); const t = themeKey(w); if (t) { let b = ix.byTheme.get(t); if (!b) ix.byTheme.set(t, (b = [])); b.push(w); } } INDEX.set(words, ix); }
+  if (!ix) { ix = { byId: Object.fromEntries(words.map((w) => [w.id, w])), byType: new Map(), byTheme: new Map(), byPos: new Map() }; for (const w of words) { const k = groupOf(w); let a = ix.byType.get(k); if (!a) ix.byType.set(k, (a = [])); a.push(w); const t = themeKey(w); if (t) { let b = ix.byTheme.get(t); if (!b) ix.byTheme.set(t, (b = [])); b.push(w); } if (!isSight(w) && w.pos) { let p = ix.byPos.get(w.pos); if (!p) ix.byPos.set(w.pos, (p = [])); p.push(w); } } INDEX.set(words, ix); }
   return ix;
 }
 
@@ -170,6 +171,7 @@ export class Run {
     const draw = (pool) => { for (let k = 0; k < 30 && out.length < 3 && pool.length; k++) take(pool[Math.floor(this.rng() * pool.length)]); };
     const tk = this.cfg.themeOption !== false ? themeKey(w) : null;
     if (tk) { const cand = this.ix.byTheme.get(tk).filter((x) => x.id !== id && fits(x) && label(x) !== label(w)); if (cand.length >= 5) take(cand[Math.floor(this.rng() * cand.length)]); }   // one wrong answer from the same theme and part of speech
+    if (this.cfg.posOption !== false && !sight && w.pos) { const pool = this.ix.byPos.get(w.pos) || []; if (pool.length >= 5) draw(pool); }
     const same = this.ix.byType.get(groupOf(w)) || [];
     draw(same); if (out.length < 3) for (const x of same) take(x);          // a small group: fall back to scanning it
     draw(this.words); if (out.length < 3) for (const x of this.words) take(x);
