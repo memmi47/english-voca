@@ -59,6 +59,35 @@ function ok(name,value){assert.ok(value,name);checks.push(name);console.log('PAS
   const offline=await context.newPage();let http=0;offline.on('request',r=>{if(/^https?:/.test(r.url()))http++;});offline.on('pageerror',e=>errors.push(String(e)));
   await offline.setContent(fs.readFileSync(path.join(OUT,'world-pixel-review.html'),'utf8'));await offline.waitForSelector('body[data-ready=true]');
   ok('standalone HTML renders with no HTTP requests (setContent)',http===0&&await offline.locator('.boss').count()===180);
+  const crypto=require('node:crypto');
+  const immutable={
+    'cards/data/world-art.json':'467ee015d138646bb4b0162c0d0386143d2f07a1b179d0924d6fcb2e1a12499c',
+    'assets/post-office/world-pixels/pixels.json':'3664f0f4b751485e05d4d264a36291cbe85d20cb86f85a7337c31fad40268609',
+    'cards/assets/postal/world-pixels/manifest.json':'30f124f7cfc4efae501af4b693a4bf1c75cba2245a0f7e238888910378828978',
+    'cards/assets/postal/world-pixels/sprites.svg':'5d7d5655324ebc806c99e0734e5ddcd927d2ac2b84dc582c4d42f58522330832'
+  };
+  ok('original world catalogue, drawings and mappings remain byte-for-byte unchanged',Object.entries(immutable).every(([f,h])=>crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,f))).digest('hex')===h));
+  const feedback=JSON.parse(fs.readFileSync(path.join(ROOT,'cards/assets/postal/feedback/manifest.json'),'utf8'));
+  const gifts=['leaf-cap','sun-bag','sea-coat','night-cap','letter-bag','festival-coat'];
+  const expectedFeedback=['c011-monster','c011-door-locked','c011-door-open','c011-gift-closed','c011-gift-open','c011-castle-world','c011-castle-continent','c011-island-leaf','c011-island-wave','c011-island-star',...gifts.flatMap(g=>['idle','walk1'].map(f=>`c011-look-${g}-${f}`))].sort();
+  assert.deepEqual(Object.keys(feedback.symbols).sort(),expectedFeedback);
+  ok('22 feedback symbols have valid nonempty authored 16px source rows',feedback.grid===16&&Object.values(feedback.symbols).every(s=>s.size===16&&s.pixels.length===16&&s.pixels.every(r=>r.length===16&&[...r].every(c=>c==='.'||feedback.palette[c]))&&s.pixels.some(r=>/[^.]/.test(r))));
+  ok('six outfits each provide matching idle and walking frame references',gifts.every(g=>['idle','walk1'].every(f=>JSON.stringify(feedback.symbols[`c011-look-${g}-${f}`].frames)===JSON.stringify([`c011-look-${g}-idle`,`c011-look-${g}-walk1`]))));
+  const feedbackPainted=await page.evaluate(async expected=>{
+    const xml=await(await fetch('/cards/assets/postal/feedback/sprites.svg')).text();
+    const doc=new DOMParser().parseFromString(xml,'image/svg+xml');if(doc.querySelector('parsererror'))throw Error('invalid feedback SVG');
+    const symbols=[...doc.querySelectorAll('symbol')];const ids=symbols.map(s=>s.id);
+    if(new Set(ids).size!==ids.length||ids.some(id=>document.getElementById(id)))throw Error('duplicate feedback symbol');
+    if(JSON.stringify(ids.sort())!==JSON.stringify(expected))throw Error('missing feedback symbols');
+    const hashes=new Set();let count=0;
+    for(const symbol of symbols){
+      const image=new Image();image.src='data:image/svg+xml;base64,'+btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">${symbol.innerHTML}</svg>`);await image.decode();
+      const canvas=document.createElement('canvas');canvas.width=canvas.height=16;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const data=ctx.getImageData(0,0,16,16).data;let opaque=0;for(let i=3;i<data.length;i+=4)if(data[i])opaque++;
+      if(opaque<20)throw Error('empty '+symbol.id);hashes.add(canvas.toDataURL());count++;
+    }
+    return {count,distinct:hashes.size};
+  },expectedFeedback);
+  ok('22 feedback SVG references resolve to distinct rasterized drawings without ID collisions',feedbackPainted.count===22&&feedbackPainted.distinct===22);
   ok('no browser page errors',errors.length===0);
   fs.writeFileSync(path.join(OUT,'verification.json'),JSON.stringify({checks,renderer:'Linux Chromium; no actual iPad verification',errors},null,2));
   console.log(`${checks.length}/${checks.length} passed`);

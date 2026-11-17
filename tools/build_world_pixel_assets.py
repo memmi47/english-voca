@@ -117,9 +117,62 @@ def validate(catalogue,source,manifest):
         assert 'map' not in w # do not disguise an unallocated map as a playable world
     for alias,target in manifest['decorations'].items():assert source['sprites'][alias]['pixels']==source['sprites'][target]['pixels']
 
+def feedback_assets():
+    """Original C-011 drawings, independent of the immutable world/boss catalogue."""
+    sprites={}
+    def store(sid,label,p,role='effect',frames=None):
+        rows=p.finish()
+        assert len(rows)==16 and all(len(row)==16 for row in rows)
+        sprites[sid]=dict(role=role,label=label,pixels=rows,size=16,grid=16,frames=frames or [sid])
+    p=art.Pixels();p.rect(4,3,8,9,'u');p.rect(2,6,12,5,'u');p.rect(4,2,2,2,'v');p.rect(10,2,2,2,'v');p.rect(4,12,3,2,'v');p.rect(9,12,3,2,'v');p.rect(5,6,2,2,'w');p.rect(9,6,2,2,'w');p.dot(6,7,'k');p.dot(9,7,'k');p.rect(7,10,2,1,'k');store('c011-monster','편지길 몬스터',p,'boss')
+    for opened in (False,True):
+        p=art.Pixels();p.rect(3,2,10,12,'b');p.rect(4,3,8,10,'g');p.rect(5,4,6,9,'k');p.rect(5,13,7,1,'y')
+        if opened:
+            p.poly([(5,4),(9,5),(9,11),(5,13)],'t');p.rect(7,7,1,2,'y')
+        else:
+            p.rect(5,4,6,9,'t');p.rect(7,6,3,4,'g');p.rect(8,5,1,2,'y');p.dot(8,8,'k')
+        store('c011-door-'+('open' if opened else 'locked'),'열린 문' if opened else '자물쇠 문',p,'door')
+    for opened in (False,True):
+        p=art.Pixels();p.rect(3,7,10,7,'r');p.rect(7,7,2,7,'y');p.rect(2,6,12,2,'g')
+        if opened:
+            p.rect(2,2,12,2,'g');p.rect(7,2,2,2,'y');p.rect(5,4,6,3,'w');p.dot(3,4,'y');p.dot(12,4,'y')
+        else:
+            p.rect(5,3,2,3,'y');p.rect(9,3,2,3,'y');p.rect(7,4,2,2,'g')
+        store('c011-gift-'+('open' if opened else 'closed'),'열린 선물' if opened else '배달부 선물',p,'gift')
+    for large in (False,True):
+        p=art.Pixels();p.rect(3,5,10,9,'n');p.rect(2,3,3,11,'l');p.rect(11,3,3,11,'l');p.rect(6,3 if large else 5,4,11 if large else 9,'e');p.rect(7,10,2,4,'t');p.rect(3,6,1,2,'k');p.rect(12,6,1,2,'k')
+        for x in (2,4,6,9,11,13):p.rect(x,2 if large else 3,1,2,'g')
+        if large:p.rect(7,0,1,3,'b');p.rect(8,0,3,2,'r')
+        store('c011-castle-'+('continent' if large else 'world'),'대륙의 큰 성' if large else '편지길 성',p,'castle')
+    for kind,label in [('leaf','새싹 대륙'),('wave','물결 대륙'),('star','별빛 대륙')]:
+        p=art.Pixels();p.poly([(2,9),(4,6),(11,5),(14,9),(11,13),(4,13)],'b');p.poly([(2,8),(5,4),(10,4),(14,8),(11,11),(5,11)],'l' if kind=='leaf' else 'a' if kind=='wave' else 'u')
+        if kind=='leaf':p.rect(7,4,1,5,'t');p.rect(5,4,2,2,'y');p.rect(8,2,2,3,'g')
+        if kind=='wave':p.line(4,7,7,7,'w');p.line(7,6,10,6,'w');p.line(6,9,10,9,'e')
+        if kind=='star':p.rect(7,3,2,6,'y');p.rect(5,5,6,2,'y');p.dot(4,4,'w');p.dot(12,8,'w')
+        store('c011-island-'+kind,label,p,'continent')
+    outfits=[('leaf-cap','잎사귀 모자','t','b'),('sun-bag','햇살 가방','t','g'),('sea-coat','물결 옷','a','b'),('night-cap','밤하늘 모자','u','b'),('letter-bag','편지 가방','t','u'),('festival-coat','축제 옷','p','g')]
+    for name,label,coat,bag in outfits:
+        ids=[f'c011-look-{name}-{frame}' for frame in ('idle','walk1')]
+        for frame,sid in zip(('idle','walk1'),ids):
+            p=art.Pixels();p.rect(5,2,6,4,'y');p.rect(4,1,8,2,'u' if name=='night-cap' else 't');p.rect(3,3,9,1,'u' if name=='night-cap' else 't');p.dot(9,4,'k');p.rect(5,7,6,5,coat);p.rect(4,7,2,4,'y');p.rect(9,8,4,4,bag);p.line(6,7,10,10,'g');p.rect(6,12,2,2,'b');p.rect(9,12,2,2,'b')
+            if frame=='walk1':p.rect(5,13,3,1,'k');p.rect(10,12,2,2,'k');p.dot(12,9,'g')
+            else:p.rect(6,14,2,1,'k');p.rect(9,14,2,1,'k')
+            if name=='leaf-cap':p.rect(6,0,2,1,'l');p.rect(8,0,1,2,'l')
+            if name=='sun-bag':p.rect(10,9,2,2,'y');p.dot(9,10,'w');p.dot(12,10,'w')
+            if name=='sea-coat':p.line(6,8,8,8,'w');p.line(6,10,8,10,'w')
+            if name=='night-cap':p.rect(6,1,3,1,'y');p.dot(7,0,'y');p.dot(7,2,'y')
+            if name=='letter-bag':p.rect(10,9,2,2,'w');p.dot(11,9,'r')
+            if name=='festival-coat':p.dot(7,8,'g');p.dot(7,10,'g');p.rect(5,11,5,1,'u')
+            store(sid,label+(' · 걷기' if frame=='walk1' else ' · 서기'),p,'courier',ids)
+    assert len(sprites)==22
+    manifest=dict(version='postal-feedback-1',license='Original project pixel artwork; no external artwork or emoji rasterization.',sheet='sprites.svg',grid=16,palette=art.PAL,symbols=sprites)
+    symbols=''.join(f'<symbol id="{sid}" viewBox="0 0 16 16">{runs(s["pixels"])}</symbol>\n' for sid,s in sprites.items())
+    sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>\n'+symbols+'</defs></svg>\n'
+    return {Path('cards/assets/postal/feedback/manifest.json'):json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',Path('cards/assets/postal/feedback/sprites.svg'):sheet}
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build()
+    files=build() | feedback_assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:
