@@ -132,17 +132,17 @@ async function boot() {
   G.volatile = !storage; G.syncStatus = { available: false, pending: [] };
   try {
     const json = (r) => { if (!r.ok) throw new Error(`${r.url.split('/').slice(-2).join('/')} 파일을 읽지 못했어요 (${r.status})`); return r.json(); };
-    // The real world file (from the world generator) wins; until it exists the stand-in file is used.
-    let doc = await fetch(DATA + 'worlds.json').then((r) => (r.ok ? r.json() : null), () => null); G.standIn = !doc;
-    if (!doc) doc = await fetch(DATA + 'worlds.fixture.json').then(json);
-    const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // a world file may name its own card list
+    // The world file (from the world generator) is the only source of the maps and word assignment. If it cannot be read the
+    // "열 수 없어요" screen says why; there is no stand-in file, so a child's record never lands on a guessed assignment.
+    const doc = await fetch(DATA + 'worlds.json').then(json, () => { throw new Error('worlds.json 파일을 읽지 못했어요 (연결 없음)'); });
+    const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // the real file names catalogue.json; the small demo file names none and uses its own catalog.json
     // Card fields this game reads: track ("sight" = hear-and-pick card) and groups (confusion groups, never offered as wrong answers).
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
     if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
     if (qs.get('theme') === 'off') CFG.themeOption = false;            // test-only: wrong answers as before the same-theme choice
     G.ix = indexWorlds(doc); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
-    G.dataNote = G.standIn ? '세계 파일: 시험용(단어 배정 임시)' : doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
+    G.dataNote = doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
   } catch (e) { $('#app').innerHTML = `<div class="page center"><h1 class="title">열 수 없어요</h1><p class="note" id="fatal">${esc(e.message)}</p></div>`; return; }
   await loadForms();
