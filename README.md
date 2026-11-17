@@ -24,6 +24,7 @@ LIMIT=300 bash tools/cards_say_audio.sh      # (Mac에서) say 음성으로 첫 
 - 소리: 음악은 기본 꺼짐, 효과음은 켜짐. 지도 위쪽에서 바꾼다. 음악은 새로 작곡한 General MIDI 곡을 AAC로 녹음해 재생하며, 불러오지 못하면 기존 칩튠으로 돌아간다. 효과음은 프로그램이 합성한다.
 - 글꼴: 화면 틀은 Galmuri11(OFL, `cards/fonts/`), 영어 단어는 둥근 글꼴.
 - 날짜 시험용 쿼리: `?today=2026-11-13`. 음성을 바꾸려면 기존 `.m4a`를 옮긴 뒤 `VOICE="Ava (Premium)" bash tools/cards_say_audio.sh`.
+- Mac 상시 서버 설치·업데이트·제거와 iPad 접속은 [Mac 설치 안내](docs/SETUP_MAC.md)를 따른다.
 
 ## 테스트
 
