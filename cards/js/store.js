@@ -20,6 +20,7 @@ const STEPS = [
     return s;
   },
   (s) => { s.bunches ||= {}; return s; },              // 1 -> 2: tile triage keeps one record per tile bunch (passed words carry `bunch`); word records untouched
+  (s) => { s.forms ||= {}; return s; },                // 2 -> 3: word-form cards keep one record per form (storm.js); nothing else changes
 ];
 // -> { state, from, newer }. `newer`: the record was saved by a later program than this one; it must not be changed.
 export function migrate(raw, id = null) {
@@ -40,13 +41,16 @@ export function compact(state, today) {
   let n = 0; while (n < runs.length - RUNS_KEEP && String(runs[n].day) < edge) n++;
   if (!n) return false; const old = runs.slice(0, n);
   const past = (state.past ||= { n: 0, until: '', days: 0 }); const days = new Set(old.map((r) => r.day));
-  for (const r of old) { past.n++; for (const k of SUMS) past[k] = (past[k] || 0) + (r[k] || 0); if (String(r.endedAt) > past.until) past.until = String(r.endedAt); }
+  for (const r of old) { past.n++; for (const k of SUMS) past[k] = (past[k] || 0) + counted(r, k); if (String(r.endedAt) > past.until) past.until = String(r.endedAt); }
   past.days += days.size; state.runs = runs.slice(n); return true;
 }
 // Sum over every run ever played: the folded totals plus the records still kept.
+// A storm run (storm.js, kind 'storm') adds its cards, time and stars, never new words, reviews or checks.
+const STORM_SUMS = new Set(['cards', 'wall', 'stars']);
+const counted = (r, k) => (r.kind === 'storm' && !STORM_SUMS.has(k) ? 0 : r[k] || 0);
 export function totals(state) {
   const t = Object.fromEntries(SUMS.map((k) => [k, state.past?.[k] || 0])); t.n = state.past?.n || 0;
-  for (const r of state.runs || []) { t.n++; for (const k of SUMS) t[k] += r[k] || 0; }
+  for (const r of state.runs || []) { t.n++; for (const k of SUMS) t[k] += counted(r, k); }
   return t;
 }
 
