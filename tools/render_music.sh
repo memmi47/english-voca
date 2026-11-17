@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Render the original C-010 MIDI with the separately obtained, verified GeneralUser GS font.
 # macOS: brew install fluidsynth ffmpeg; bash tools/render_music.sh /path/to/GeneralUser-GS.sf2
+# Add only new recordings without re-encoding existing files:
+# GM_TRACKS=world-fanfare,continent-fanfare bash tools/render_music.sh /path/to/GeneralUser-GS.sf2
 set -euo pipefail
 GM_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GM_SF="${1:-${SOUNDFONT:-}}"
@@ -18,7 +20,11 @@ if not SF.is_file(): raise SystemExit('SoundFont not found: '+str(SF))
 m = json.loads((OUT/'manifest.json').read_text())
 if hashlib.sha256(SF.read_bytes()).hexdigest() != m['soundfont']['sha256']:
     raise SystemExit('SoundFont hash differs from the licensed/pinned GeneralUser GS 2.0.3. See docs/research/music_gm.md.')
-if len(m['tracks']) != 42: raise SystemExit('Expected 42 recordings')
+if len(m['tracks']) != 44: raise SystemExit('Expected 44 recordings (42 existing + 2 fanfares)')
+requested = os.environ.get('GM_TRACKS', '').strip()
+selected = set(requested.split(',')) if requested else set(m['tracks'])
+if not selected or selected - set(m['tracks']):
+    raise SystemExit('Unknown or empty GM_TRACKS selection: '+requested)
 try:
     import numpy as np
 except ImportError:
@@ -109,6 +115,12 @@ with tempfile.TemporaryDirectory(prefix='postal-gm-render-') as temp:
     for tid,t in rendered['tracks'].items():
         source=ROOT/'assets/post-office/v3/midi'/f'{tid}.mid'
         if hashlib.sha256(source.read_bytes()).hexdigest()!=t['sourceMidiSha256']:raise RuntimeError('Stale MIDI: '+tid)
+        if tid not in selected:
+            if not t.get('rendered') or not (OUT/t['file']).is_file():
+                raise RuntimeError('Unselected recording is missing: '+tid)
+            if hashlib.sha256((OUT/t['file']).read_bytes()).hexdigest()!=t['audioSha256']:
+                raise RuntimeError('Unselected recording hash differs: '+tid)
+            continue
         wav=work/'current.wav'
         run([FLUID,'-ni','-q','-a','file','-r',SR,'-R','1','-C','0','-g','0.35','-o','synth.cpu-cores=1',
              '-o','synth.reverb.room-size=0.2','-o','synth.reverb.damp=0.4','-o','synth.reverb.width=0.5','-o','synth.reverb.level=0.15',
@@ -178,10 +190,15 @@ with tempfile.TemporaryDirectory(prefix='postal-gm-render-') as temp:
         'reverb':{'roomSize':.2,'damp':.4,'width':.5,'level':.15},'sf2Sha256':rendered['soundfont']['sha256'],
         'decodedOffsetMethod':'three-window normalized PCM cross-correlation; no raw-priming assumption'}
     manifest=json.dumps(rendered,ensure_ascii=False,indent=2)+'\n'
-    size=sum(p.stat().st_size for p in stage.iterdir())+len(manifest.encode())
+    staged={p.name:p for p in stage.iterdir()}
+    size=sum(p.stat().st_size for p in staged.values())+len(manifest.encode())
+    # Count existing, unselected files as well: a partial render must obey the
+    # same complete-folder release limit as a full render.
+    size+=sum(p.stat().st_size for p in OUT.iterdir()
+              if p.is_file() and p.name not in staged and p.name!='manifest.json')
     if size>LIMIT:raise RuntimeError(f'Music exceeds 40MB: {size} bytes; no release files installed')
     # Publish only once every song passed. Existing source/fallback files are never touched.
     for path in stage.iterdir():os.replace(path,OUT/path.name)
     mf=OUT/'manifest.json.next';mf.write_text(manifest);os.replace(mf,OUT/'manifest.json')
-    print(f'RENDERED 42/42; music-gm total {size} bytes (<40,000,000); SoundFont remains outside repository',flush=True)
+    print(f'RENDERED {len(selected)}/{len(m["tracks"])}; music-gm total {size} bytes (<40,000,000); SoundFont remains outside repository',flush=True)
 PY

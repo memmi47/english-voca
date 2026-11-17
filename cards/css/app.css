@@ -178,3 +178,22 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .stline{font-family:var(--word);font-size:clamp(34px,7vw,64px);font-weight:800;line-height:1.2}.stline span{font-family:var(--pix);display:block;font-size:clamp(28px,5.5vw,48px);font-weight:700}
 .storm-run .opts{flex:1 1 100%}
 .storm-run .act.opt.right,.storm-run .act.opt.wrong{opacity:1}
+
+/* C-011: a single opponent, visible doors, and device-only outfits. */
+.monster-panel{border:4px solid var(--ink);background:var(--paper);padding:4px 10px;gap:12px;max-width:570px;min-height:112px}
+.monster-panel .boss-emoji .spr{width:96px;height:96px}.monster-panel.guardian .boss-emoji .spr{width:128px;height:128px}
+.monster-health{flex:1;min-width:110px;display:grid;gap:4px}.monster-health .hpbar{width:100%;flex:none;background:#e1d6ee}.monster-health .hpbar i{background:#795498;transition:width .18s steps(4)}
+.monster-health b{font-size:16px}.monster-health small{font-size:12px;min-height:16px}.monster-panel .floater{left:58px;top:0;color:#fff5db;text-shadow:3px 3px #543663}.monster-panel .boss-emoji.hit{animation:shake .18s steps(4)}
+.monster-finished{display:flex;align-items:center;justify-content:center;gap:12px}.monster-finished .spr{animation:down .45s steps(6) forwards}
+.gift-chip{font-size:13px;min-height:44px}.maphud button.chip{min-height:44px}.world-door{display:flex;align-items:center;gap:4px;min-height:48px}.world-door small{font-size:11px}.world-door.unseen{animation:glow 1s steps(4) infinite}
+.celebration-art{position:relative;display:flex;justify-content:center;margin:16px auto;width:240px}.celebration-key{position:absolute;right:10px;top:22px;animation:key-arrives .7s steps(7)}
+@keyframes key-arrives{from{transform:translate(-160px,-40px);opacity:0}to{transform:none;opacity:1}}
+#giftgain{display:flex;align-items:center;justify-content:center;gap:10px;margin:15px auto;flex-wrap:wrap;background:var(--paper);padding:10px;border:4px solid var(--ink)}
+.door-stage{background:var(--paper);border:4px solid var(--ink);padding:12px;margin:18px auto;text-align:center;max-width:650px}.door-stage h2{font-size:21px}.door-stage .go{font-size:22px;min-height:60px;min-width:250px;margin:14px auto}.door-stage .sec{min-height:44px;font-size:16px}
+.door-scene{position:relative;display:flex;align-items:center;justify-content:space-between;max-width:440px;margin:0 auto;height:110px}.door-path{position:absolute;left:70px;right:62px;top:58px;border-top:12px dashed var(--gold);transform-origin:left;animation:door-path .45s steps(6)}
+@keyframes door-path{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.flying-key{position:absolute;left:16%;top:2px;z-index:2;transition:left .7s steps(7)}.door-stage[data-phase=key] .flying-key,.door-stage[data-phase=open] .flying-key{left:80%}.door-stage[data-phase=open] .flying-key{opacity:0}#atlas-door{z-index:1}
+.wardrobe-shade{position:fixed;inset:0;z-index:12;background:#233f3acc;display:flex;align-items:center;justify-content:center;padding:20px}.wardrobe{position:relative;background:var(--paper);border:5px solid var(--ink);box-shadow:7px 7px var(--ink);padding:30px 22px;max-width:800px;max-height:94vh;overflow:auto;text-align:center}.wardrobe h2{margin:0 40px 16px}.wardrobe .back{width:44px;height:44px;left:auto;right:10px;top:10px;font-size:22px}.looks{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:12px;margin:18px 0}.look{display:flex;flex-direction:column;align-items:center;gap:8px;border:4px solid var(--ink);background:#e6eee0;padding:10px;min-height:150px}.look b{font-size:15px}.look small{font-size:12px}.look.selected{outline:4px solid #eab65c;outline-offset:1px;background:#fff0bf}.look:disabled{opacity:.6}.wardrobe .sec{min-height:44px}
+button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outline-offset:4px}
+@media(max-width:680px){.hud{gap:6px;padding:6px}.monster-panel{gap:4px;padding:4px;min-height:90px}.monster-panel .boss-emoji .spr{width:72px;height:72px}.monster-panel.guardian .boss-emoji .spr{width:88px;height:88px}.monster-health{min-width:80px}.monster-health b{font-size:12px}.monster-health small{font-size:10px}.combo{min-width:35px;font-size:12px}.left{font-size:11px}.looks{grid-template-columns:repeat(2,minmax(100px,1fr))}.wardrobe{padding:28px 14px}.maphud{margin-left:40px;margin-right:20px}}
+@media(prefers-reduced-motion:reduce){.monster-panel *, .celebration-art *, .door-stage *, .world-door,.monster-finished .spr{animation:none!important;transition:none!important}}

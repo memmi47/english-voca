@@ -13,6 +13,29 @@ PROGRAMS = {'meadow':[12,24,32,45,73], 'sea':[114,11,33,48,24], 'sky':[8,10,32,8
 BPM = dict(zip(PROGRAMS,[108,96,88,76,112,104,132,124]))
 TITLES = dict(zip(PROGRAMS,['풀잎 우편길','물결 사이 편지','별가루 보관함','책상 위 작은 길','돌문 앞의 약속','큰 문을 여는 날','주머니 속 놀이','빙글 도는 배달길']))
 JINGLES = {'clear':(144,[12,24,32,45],'C','G4:.5 C5:.5 D5:.5 E5:.5 C5:1'), 'victory':(120,[60,48,43,61],'D','A4:.5 D5:1 F#5:.5 E5:.5 A5:.5 F#5:1 D5:2'), 'key':(144,[8,10,32,11],'G','B4:.25 D5:.25 A5:.5 G5:1'), 'item':(152,[11,12,33,24],'F','C5:.25 A4:.25 D5:.5 F5:1'), 'grade':(150,[73,45,32,12],'C','G4:.25 D5:.25 E5:.5 C5:1'), 'bat':(116,[71,45,42,12],'Dm','A4:.5 F4:.5 E4:.25 F4:.25 D4:1'), 'storm-caught':(132,[73,12,34,45],'Am','E5:.25 A5:.25 G5:.25 E5:.25 C5:.5 B4:.5 A4:1')}
+# C-011: two newly authored celebrations. Tail lengths are explicit rather than a full bar.
+FANFARES = {
+ 'world-fanfare': dict(title='작은 문에 닿은 편지', programs=[60,48,42,11], tail=44100,
+  line='D5:.5 F#5:.5 E5:1 A5:.5 G5:.5 F#5:1 E5:.5 B4:.5 C#5:1 D5:2', chords=[('D',4),('A',2),('D',2)]),
+ 'continent-fanfare': dict(title='바다 너머 배달 깃발', programs=[60,48,43,61], tail=88200,
+  line='G4:1 D5:.5 E5:.5 B4:1 D5:1 E5:1 A5:.5 G5:.5 F#5:1 D5:1 B4:.5 D5:.5 G5:1 E5:1 A5:1 F#5:1 D5:1 G5:2', chords=[('G',4),('C',4),('D',4),('G',4)])
+}
+
+def compose_fanfare(id, score):
+ lead,beats=parse(score['line']); parts=[[],[],[],[]]
+ assert beats==sum(length for _,length in score['chords'])
+ for t,d,n in lead:add(parts[0],t,d,n,72,.94)
+ t=0
+ for chord,length in score['chords']:
+  a,c,f=triad(chord,4); root=triad(chord,3)[0]
+  for n in (a,c,f):add(parts[1],t,length,n,45,.96)
+  for k in range(0,length,2):add(parts[2],t+k,min(1.7,length-k),root,61,.94)
+  for k in range(length):add(parts[3],t+k,.65,[a,c,f,c][k%4]+12,43,.9)
+  t+=length
+ meta=dict(scene=id,kind='jingle',title=score['title'],bars=beats/4,beatsPerBar=4,
+  tempoUs=500000,bpm=120,programs=score['programs'],channels=[1,2,3,4],tailSamples=score['tail'])
+ return meta,parts,[0,1,2,3]
+
 def pitch(s):
  m=re.fullmatch(r'([A-G])([#b]?)(-?\d)',s); return (int(m[3])+1)*12+{'C':0,'D':2,'E':4,'F':5,'G':7,'A':9,'B':11}[m[1]]+{'':0,'#':1,'b':-1}[m[2]]
 def parse(s):
@@ -116,11 +139,12 @@ def main():
   for n in [c,f]:add(parts[1],0,.3,n,50);add(parts[1],last[0],last[1],n,50)
   add(parts[2],0,.5,r,62);add(parts[2],max(0,beats-1),min(1,beats),r,62);add(parts[3],last[0],last[1],a+12,44)
   scores[id]=({'scene':id,'kind':'jingle','bars':beats/4,'beatsPerBar':4,'tempoUs':round(60000000/bpm),'bpm':bpm,'programs':programs,'channels':[1,2,3,4]},parts,[0,1,2,3])
+ for id,score in FANFARES.items():scores[id]=compose_fanfare(id,score)
  for id,(meta,tracks,channels) in scores.items():
   if not args.render_dir:write_midi(MID/(id+'.mid'),meta,tracks,channels)
   if args.render_dir:write_midi(args.render_dir/(id+'.mid'),meta,tracks,channels,3 if meta['kind']=='loop' else 1)
   entry={**meta,'file':id+'.m4a','gain':1,'sampleRate':44100,'loopSamples':round(meta['bars']*4*meta['tempoUs']*44100/1000000),'preRollSamples':round(4*meta['tempoUs']*44100/1000000) if meta['kind']=='loop' else 0, 'sourceMidiSha256':hashlib.sha256((MID/(id+'.mid')).read_bytes()).hexdigest()}
-  entry['tailSamples']=round(4*meta['tempoUs']*44100/1000000)
+  entry['tailSamples']=meta.get('tailSamples',round(4*meta['tempoUs']*44100/1000000))
   entries[id]=entry
  aliases={'meadow':'p1-01','sea':'p2-01','sky':'p3-01','d1-01':'p1-01','d1-02':'p1-02','d2-01':'p2-01'}
  manifest={'schemaVersion':1,'sampleRate':44100,'soundfont':{'name':'GeneralUser GS','version':'2.0.3','sha256':'9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe','source':'https://www.schristiancollins.com/generaluser','license':'GeneralUser GS License v2.0'},'aliases':aliases,'tracks':entries}

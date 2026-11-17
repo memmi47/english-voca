@@ -3072,6 +3072,118 @@
       "truePeakDb": -12.2,
       "rmsDb": -24.014,
       "samplePeakDb": -12.217295
+    },
+    "world-fanfare": {
+      "scene": "world-fanfare",
+      "kind": "jingle",
+      "title": "작은 문에 닿은 편지",
+      "bars": 2.0,
+      "beatsPerBar": 4,
+      "tempoUs": 500000,
+      "bpm": 120,
+      "programs": [
+        60,
+        48,
+        42,
+        11
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "tailSamples": 44100,
+      "file": "world-fanfare.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 176400,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "a6743fdaa1760782c188af9cd6757c3665c1d0a22dece566c63143d1197af808",
+      "frames": 220500,
+      "duration": 5.0,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 221184,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.99906,
+        0.999517,
+        0.999349
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "f51f263cacc4e00d608029cc7660b20f64a164eaec4d1c6c0620d5e7048f8983",
+      "bytes": 61850,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.4,
+      "truePeakDb": -12.6,
+      "rmsDb": -24.040876,
+      "samplePeakDb": -12.586385
+    },
+    "continent-fanfare": {
+      "scene": "continent-fanfare",
+      "kind": "jingle",
+      "title": "바다 너머 배달 깃발",
+      "bars": 4.0,
+      "beatsPerBar": 4,
+      "tempoUs": 500000,
+      "bpm": 120,
+      "programs": [
+        60,
+        48,
+        43,
+        61
+      ],
+      "channels": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "tailSamples": 88200,
+      "file": "continent-fanfare.m4a",
+      "gain": 1,
+      "sampleRate": 44100,
+      "loopSamples": 352800,
+      "preRollSamples": 0,
+      "sourceMidiSha256": "7cae0756dafb8f00f8afc53d6e52a3df116e450d397466cf928bd11af0a5d916",
+      "frames": 441000,
+      "duration": 10.0,
+      "encodedDelaySamples": 1024,
+      "decodedOffsetSamples": 0,
+      "ffmpegDecodedFrames": 441344,
+      "offsetWindowLags": [
+        0,
+        0,
+        0
+      ],
+      "offsetCorrelations": [
+        0.99887,
+        0.997276,
+        0.999069
+      ],
+      "loopStart": 0,
+      "loopEnd": null,
+      "loopPhaseSamples": 0,
+      "startOffset": 0,
+      "rendered": true,
+      "audioSha256": "f3a71604942ca22457b5d09144c245a83fbc6944de08b0db83ffbbc49f4e4239",
+      "bytes": 119928,
+      "normalizationTarget": -24.0,
+      "normalizationMetric": "rmsDb",
+      "loudnessLufs": -21.3,
+      "truePeakDb": -11.6,
+      "rmsDb": -24.05838,
+      "samplePeakDb": -11.616209
     }
   },
   "rendering": {
