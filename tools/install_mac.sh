@@ -79,10 +79,16 @@ def copy_into(source, target):
 print('설치 계획')
 print('  게임:', root)
 print('  기존 기록을 복사:', old, '→', data)
+print('  기존 기록:', '새 폴더로 복사' if old.exists() else '없음 — 빈 기록 폴더로 시작')
+print('  필요한 폴더 생성:', data, agents, logs)
 print('  서버 자동 시작:', server_plist)
 print('  Python:', python)
 print('  서버 로그:', logs / 'english-voca-server.log')
 print('  매일 21:07 백업:', str(backup) if backup else '선택하지 않음')
+if backup:
+    print('  백업 자동 시작 설정:', backup_plist)
+    print('  백업 로그:', logs / 'english-voca-backup.log')
+print('  자동 시작 등록 뒤 집 안 접속 주소와 0.0.0.0:8090 서버의 /api/ping 응답을 확인합니다.')
 print('  원본 기록·백업 파일은 삭제하거나 덮어쓰지 않습니다. sudo·시스템 설정 변경은 없습니다.')
 check()
 if args.dry_run:

@@ -90,6 +90,7 @@ test('MAC1: dry-run and declining confirmation create no files or agents', () =>
   const f = fixture(), before = tree(f.root);
   const r = call(f, 'install_mac.sh', ['--data', f.data, '--backup-repo', f.backup, '--dry-run']);
   assert.equal(r.status, 0, r.out); assert.match(r.out, /설치 계획/); assert.match(r.out, /21:07/);
+  assert(r.out.includes(plistPath(f, backupLabel))); assert(r.out.includes(path.join(f.home, 'Library/Logs/english-voca-backup.log')));
   assert.deepEqual(tree(f.root), before); assert(!fs.existsSync(f.home)); assert.equal(calls(f).length, 0);
   const declined = spawnSync('bash', [path.join(f.game, 'tools/install_mac.sh'), '--data', f.data], { env: f.env, input: 'n\n', encoding: 'utf8' });
   assert.equal(declined.status, 0, declined.stderr); assert.deepEqual(tree(f.root), before);
