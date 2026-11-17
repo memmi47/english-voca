@@ -35,3 +35,18 @@ docs/ORCHESTRATION.md 와 docs/DATA_SAFETY.md 4절을 읽은 뒤 docs/tasks/C-00
 카드의 "고칠 수 있는 파일" 밖은 고치지 않는다. 카드에 없는 결정이 필요하면 멈추고 카드에 질문을 적는다.
 완료 기준의 명령을 실행해 통과 수를 카드의 "결과"에 적고, 카드에 적힌 브랜치로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다.
 ```
+
+## C-006 (2026-11-17, Sol에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk.
+docs/ORCHESTRATION.md 와 docs/tasks/T-006.md(앞선 작업과 그 검토)를 읽은 뒤 docs/tasks/C-006.md 를 수행한다.
+- 이 카드에 한해 cards/js/deck.js 와 tests/cards.test.mjs 를 고친다. 카드의 "고칠 수 있는 파일" 밖은 고치지 않는다.
+- 규칙은 카드의 "규칙" 1~6 그대로다. 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 완료 기준의 세 명령을 실제로 실행하고 통과 수를 카드의 "결과"에 적는다. node tools/check_sim_baseline.mjs 가 실패하면 --update 로 기준 파일을 고치지 말고 달라진 줄을 적고 멈춘다.
+- 새 검사 O5~O8 을 추가하고, O8 에서 센 두 수치를 결과에 적는다. 기존 검사는 지우거나 약하게 하지 않는다.
+- 브랜치 codex/pos-option 으로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드의 상태와 docs/tasks/BOARD.md 의 표를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다.
+- 유료 크레딧 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 세 명령의 통과 수, O8 의 두 수치, 바꾼 기존 검사와 이유, 확인하지 못한 것.
+```
+
