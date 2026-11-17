@@ -1,13 +1,11 @@
 """Build the data files the cards game loads, from the reference vocabulary DB (read-only).
 
   cards/data/catalog.json          every study card (4,610): id, form, Korean gloss, picture type, band, track, emoji
-  cards/data/worlds.fixture.json   a stand-in world file in the schemaVersion 3 shape (docs/WORLD_SCHEMA.md)
   cards/audio/words.tsv, forms.tsv the audio lists for tools/cards_say_audio.sh (cards, and word forms from cards/data/forms.json)
 
-The fixture exists so the game can be built and tested before the real world generator (Astra's lane) delivers
-cards/data/worlds.json. Its maps come from tools/preview_world_maps.py (the approved map sketches); its word assignment
-is provisional: band, then a simple frequency order, with none of the separation rules (same gloss, homophones,
-confusable pairs) applied. The game loads worlds.json when it exists and falls back to the fixture.
+The game reads only the real world file cards/data/worlds.json (docs/WORLD_SCHEMA.md); this script no longer writes a
+stand-in world file. The provisional assignment below is still computed in memory, because the order of cards/audio/words.tsv
+(and so the audio file numbers' order) comes from it; its maps come from tools/preview_world_maps.py.
 
 Usage: python3 -I tools/make_cards_data.py
 """
@@ -44,7 +42,7 @@ cat = {'note': '학습 카드 전체. 원본 DB의 대표 카드(kind=기본, se
        'words': [{k: v for k, v in w.items() if k != '_f'} for w in words]}
 (out / 'catalog.json').write_text(json.dumps(cat, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
 
-# ---- stand-in worlds: Astra's map sketches + a provisional assignment ----
+# ---- provisional worlds (kept in memory only, not written): Astra's map sketches + a provisional assignment; fixes the order of words.tsv ----
 with tempfile.TemporaryDirectory() as tmp:
     subprocess.run([sys.executable, '-I', str(ROOT / 'tools/preview_world_maps.py'), '--output', tmp], check=True, stdout=subprocess.DEVNULL)
     atlas = json.loads((Path(tmp) / 'atlas-data.json').read_text(encoding='utf-8'))
@@ -84,11 +82,6 @@ for cid, band, cname, cstory in CONT:
                        'nextWorldId': ws[i + 1]['id'] if i + 1 < len(ws) else None, 'status': 'draft'})
     continents.append({'id': cid, 'band': band, 'name': cname, 'story': cstory, 'worlds': worlds, 'finale': {'cards': 40, 'passRate': 0.75}})
 assert len(used) == 4610 and not sight and not any(pool.values())
-fx = {'schemaVersion': 3, 'contentVersion': 'fixture-1', 'status': 'draft',
-      'note': '시험용 세계 파일. 지도는 승인된 시안(tools/preview_world_maps.py), 단어 배정은 임시(대역 → 단순 빈도 순, 분리 규칙 미적용). 세계 생성기의 worlds.json이 오면 그 파일을 쓴다.',
-      'source': {'path': 'reference/weekly-tool/vocabulary.json', 'sha256': sha, 'selection': 'track in {vocab,sight} and old_priority in {P1,P2,P3}; kind=기본, sense_order=1', 'overrideVersion': None},
-      'counts': {'lemmas': 4610, 'cards': 4610, 'continents': 3, 'worlds': 30, 'byBand': {'P1': 1215, 'P2': 2310, 'P3': 1085}}, 'continents': continents}
-(out / 'worlds.fixture.json').write_text(json.dumps(fx, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
 
 # ---- audio list for tools/cards_say_audio.sh: every card in the order the worlds meet them (number, card id, text) ----
 # Numbers follow the catalog (DB order), so a file keeps its name when the world assignment changes.
@@ -103,4 +96,4 @@ forms = json.loads((out / 'forms.json').read_text(encoding='utf-8'))['forms']
 askable = [(k + 1, f) for k, f in enumerate(forms) if f.get('id') and f.get('base') and f.get('baseForm') and f.get('form') and not f.get('clash')]
 (aud / 'forms.tsv').write_text(''.join(f"f{k:03d}\t{f['id']}\t{f['form']}\n" for k, f in askable), encoding='utf-8')
 print('forms:', len(askable), 'word forms in cards/audio/forms.tsv.', end='  ')
-print('catalog:', len(words), 'cards;', sum(1 for w in words if 'emoji' in w), 'with a picture.  fixture: 30 worlds,', sum(1 for c in continents for w in c['worlds'] for n in w['map']['nodes'] if n['kind'] == 'tile'), 'tiles')
+print('catalog:', len(words), 'cards;', sum(1 for w in words if 'emoji' in w), 'with a picture.  provisional order: 30 worlds,', sum(1 for c in continents for w in c['worlds'] for n in w['map']['nodes'] if n['kind'] == 'tile'), 'tiles')

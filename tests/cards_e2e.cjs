@@ -316,9 +316,9 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const fullctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const fp = await fullctx.newPage(); fp.on('pageerror', (e) => errs.push(String(e)));
   const t0 = Date.now(); await fp.goto(BASE + '?today=2026-12-21&triage=off&seed=2&sound=off&fast=1&nosync=1&storm=off'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
-  const full = await fp.evaluate(() => ({ words: window.__cards.words.length, worlds: window.__cards.ix.worlds.length, world: document.querySelector('#world').dataset.world, open: document.querySelectorAll('.node.open').length, nodes: document.querySelectorAll('.world .node').length, standIn: window.__cards.standIn, wide: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
+  const full = await fp.evaluate(() => ({ words: window.__cards.words.length, worlds: window.__cards.ix.worlds.length, world: document.querySelector('#world').dataset.world, open: document.querySelectorAll('.node.open').length, nodes: document.querySelectorAll('.world .node').length, wide: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
   ok('full deck: 4,610 cards, 30 worlds, the first world\'s map with open tiles, fits the screen width', full.words === 4610 && full.worlds === 30 && full.world === 'p1-01' && full.open >= 2 && full.nodes >= 15 && full.wide, JSON.stringify(full) + ' load ' + loadMs + ' ms');
-  ok('the stand-in world file is named as such', full.standIn ? /시험용/.test(await fp.textContent('#src')) : true);
+  ok('the full deck opens from the real world file, with no stand-in note', !/세계 파일: 시험용/.test(await fp.textContent('#src')));
   const openId = await fp.$eval('.world .node.open', (b) => b.dataset.id); await fp.click(`[data-act=node][data-id="${openId}"]`); await fp.waitForSelector(READY);
   const fullRun = await fp.evaluate(() => ({ n: window.__cards.run.queue.length, word: document.querySelector('#word').textContent }));
   ok('a tile of the full deck starts a run of its 10 new words', fullRun.n === 10 && fullRun.word.length > 0, JSON.stringify(fullRun));
@@ -328,6 +328,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await bad.goto(BASE + '?today=2026-12-21&sound=off&nosync=1&storm=off'); await bad.waitForSelector('#fatal');
   ok('a world file of an unknown version is refused with a plain message', /버전/.test(await bad.textContent('#fatal')));
   await bad.close(); await fullctx.close();
+  // 10d-2. worlds.json cannot be read (404): the "열 수 없어요" screen gives the reason; no stand-in world is asked for or opened; nothing is written to storage
+  const nwctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true }); const nw = await nwctx.newPage(); const nwReq = []; nw.on('request', (r) => nwReq.push(r.url()));
+  await nw.route('**/data/worlds.json', (r) => r.fulfill({ status: 404, contentType: 'text/plain', body: 'nope' }));
+  await nw.goto(BASE + '?today=2026-12-21&sound=off&nosync=1&storm=off'); await nw.waitForSelector('#fatal');
+  const nwState = await nw.evaluate(() => ({ title: document.querySelector('h1').textContent, keys: localStorage.length, world: !!document.querySelector('#world'), profiles: !!document.querySelector('.profiles') }));
+  ok('worlds.json blocked (404): the "열 수 없어요" screen names the file, the stand-in world is not opened, nothing is written to localStorage',
+    nwState.title === '열 수 없어요' && /worlds\.json/.test(await nw.textContent('#fatal')) && !nwState.world && !nwState.profiles && nwState.keys === 0 && !nwReq.some((u) => /fixture/.test(u)), JSON.stringify({ nwState, fatal: await nw.textContent('#fatal') }));
+  await nw.close(); await nwctx.close();
 
   // 10e. updates never reset progress: an old-format record opens, a damaged one is set aside and restored from a file,
   //      a record from a newer program is left alone
