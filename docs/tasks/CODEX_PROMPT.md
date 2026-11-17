@@ -132,3 +132,19 @@ docs/ORCHESTRATION.md, docs/DATA_SAFETY.md 4절, docs/WORLD_SCHEMA.md 를 읽은
 끝난 뒤 보고: PR 번호, K·R 값과 근거, 대륙별 최소로 만나는 단어 수와 비율, 각 명령의 통과 수, 확인하지 못한 것.
 ```
 
+## C-014 (2026-11-17, Astra에게. C-011 위에 쌓거나 병합 뒤)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-014.md 를 수행한다. C-011이 아직 병합 전이면 codex/play-feedback-1 브랜치에서 갈라 codex/motion-and-home 을 만들고, PR 설명 첫 줄에 "C-011(PR #번호) 위에 쌓은 브랜치"라고 적는다. C-013 브랜치와 같은 파일을 고치므로 C-013보다 먼저 끝났다면 C-013 쪽에서 merge 로 반영한다(rebase·force push 금지).
+- Astra가 먼저 움직임 목록(새로 그릴 그림과 CSS로만 움직일 것의 구분)과 첫 화면 성과 배치, 협동 목표 값을 정해 PR 설명에 올리고, 그다음 Sol이 구현한다.
+- 이 카드에 한해 cards/js/main.js, cards/css/app.css, 그림 생성기와 그 출력, tests/cards_e2e.cjs 를 고친다. 규칙 코드, 저장 형식, 아이 기록의 저장 키는 바꾸지 않는다. 첫 화면 성과는 기록에서 계산만 하고 쓰지 않는다.
+- 어떤 움직임도 입력이나 다음 카드를 막지 않는다. 순위 표시("1등", 왕관)는 넣지 않는다.
+- 새 그림은 모두 새로 그린다. 다른 게임의 캐릭터·그림·동작을 흉내 내지 않는다. 이모지를 그림으로 쓰지 않는다. mushroom·fire-flower 그림은 id를 두고 그림만 바꾼다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 새 브라우저 검사 다섯 개와 화면 캡처 경로, 카드 한 장 평균 시간(도입 전후)을 적는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 브랜치 codex/motion-and-home 으로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다.
+- 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 새 그림 목록, 각 명령의 통과 수, 카드 한 장 평균 시간 전후, 화면 캡처 경로, 확인하지 못한 것.
+```
+
