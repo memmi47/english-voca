@@ -9,13 +9,15 @@ const LOG_CAP = 5000;
 export const DOCS = ['meta', 'p.son', 'p.daughter'];
 const localKey = (name) => 'cards.v0.' + name;
 
-// How far a word has got. When both records carry the time of their last change (`at`, deck.Run._set), the later change
-// wins, so a miss later on the same day is kept. Otherwise a later lastDay wins; on the same day the more advanced state wins.
+// How far a word has got: done > review (by step) > likely (by step) > learn.
 const rank = (r) => (r.st === 'done' ? 100 : r.st === 'review' ? 10 + (r.step || 0) : r.st === 'likely' ? 5 + (r.lstep || 0) : 1);
 const evidence = (r) => [r.lastDay || '', r.firstDay || '', String(rank(r)).padStart(3, '0')];
 const stamped = (r) => Number.isFinite(r.at);
-const newer = (x, y) => { if (stamped(x) && stamped(y) && x.at !== y.at) return y.at > x.at ? y : x;
-  const a = evidence(x), b = evidence(y); for (let i = 0; i < a.length; i++) { if (a[i] === b[i]) continue; return b[i] > a[i] ? y : x; } return x; };
+// Two devices disagree on one word: the more advanced state wins (user decision 2026-11-17: a merge or an update keeps the
+// most learning on record). Same state: the later change (`at` when both have it, else the later day) wins.
+const newer = (x, y) => { const a = rank(x), b = rank(y); if (a !== b) return b > a ? y : x;
+  if (stamped(x) && stamped(y) && x.at !== y.at) return y.at > x.at ? y : x;
+  const e = evidence(x), f = evidence(y); for (let i = 0; i < e.length; i++) { if (e[i] === f[i]) continue; return f[i] > e[i] ? y : x; } return x; };
 const uniq = (arr, key) => { const seen = new Set(); return arr.filter((e) => { const k = key(e); if (seen.has(k)) return false; seen.add(k); return true; }); };
 const last = (runs) => (runs || []).reduce((m, r) => (String(r.endedAt || '') > m ? String(r.endedAt || '') : m), '');
 const maxStr = (x, y) => (x == null ? y : y == null ? x : String(x) >= String(y) ? x : y);

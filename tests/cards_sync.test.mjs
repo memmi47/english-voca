@@ -141,14 +141,16 @@ test('S11: tile bunches: a finished check wins (both finished: the earlier day),
   assert.deepEqual(ab.words, ba.words); assert.deepEqual(ab.bunches, ba.bunches);
 });
 
-test('F9: a miss later on the same day beats an earlier gold in either merge order (`at`, the time of the change); records without `at` keep the old rule', () => {
+test('F9: two devices disagree on a word: the more advanced state wins in either merge order, also over a later miss (user decision 2026-11-17: keep the learning); records without `at` the same', () => {
   const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const id = WORDS[0].id; const D = '2026-11-16';
   const base = () => ({ ...newState('son'), words: { [id]: { st: 'likely', lstep: 1, due: D, firstDay: '2026-10-01', lastDay: '2026-10-17', lapses: 0 } } });
   const a = base(); const ra = new Run({ state: a, words: WORDS, today: D, rng: mulberry32(1), now: () => 1000, scope: { noNew: true } });   // device A, morning: the last check -> gold
   let it = ra.show(); ra.pick(it.options.findIndex((o) => o.id === id)); assert.deepEqual([a.words[id].st, a.words[id].at], ['done', 1000]);
   const b = base(); const rb = new Run({ state: b, words: WORDS, today: D, rng: mulberry32(1), now: () => 5000, scope: { castle: [id] } });   // device B, later: a castle card missed
   it = rb.show(); rb.pick((it.options.findIndex((o) => o.id === id) + 1) % 3); assert.deepEqual([b.words[id].st, b.words[id].due, b.words[id].at], ['learn', addDays(D, 1), 5000]);
-  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual([m.words[id].st, m.words[id].due], ['learn', addDays(D, 1)]);
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual([m.words[id].st, m.words[id].due, m.words[id].at], ['done', null, 1000]);
+  const c = base(); c.words[id] = { ...c.words[id], st: 'review', step: 1, due: '2026-11-20', at: 3000 }; const d = base(); d.words[id] = { ...d.words[id], st: 'review', step: 1, due: '2026-11-19', at: 4000 };
+  for (const m of [mergeCards(c, d), mergeCards(d, c)]) assert.equal(m.words[id].due, '2026-11-19', 'same state: the later change wins');
   const old = (o) => word({ firstDay: D, lastDay: D, ...o });                                    // saved before `at` existed: same day, the more advanced state wins
   for (const [x, y] of [[old({ st: 'done', due: null }), old({ st: 'learn' })], [old({ st: 'done', due: null, at: 1 }), old({ st: 'learn' })]]) {
     for (const m of [mergeCards(state({ words: { w: x } }), state({ words: { w: y } })), mergeCards(state({ words: { w: y } }), state({ words: { w: x } }))]) assert.equal(m.words.w.st, 'done');
