@@ -116,6 +116,9 @@ export class Run {
   // scope.triage = { bunch, passed, tapped, spot, due }: the tile's word list was looked over (map.triageScope). Passed words
   // that are not spot-checked are recorded right here; spot cards go first; tapped words are taught, not asked.
   // scope.audit = { split, picks: [{ id, bunch }] }: sample checks of bunches that came due (map.auditPick), mixed in.
+  // scope.teach: every word not met yet is taught (the world's post office already sorted it, map.TRIAGE.sort).
+  // scope.checks = [ids]: passed words of the world mixed in as spot checks (map.checkPick). Right: `ck` = today, nothing else
+  // changes; wrong: a learning word, as a failed spot check.
   constructor({ state, words, today, rng, now = () => Date.now(), cfg = CFG, boss = null, scope = {}, items = {}, tag = null }) {
     this.s = state; this.words = words; this.ix = indexOf(words); this.byId = this.ix.byId;
     this.today = today; this.rng = rng; this.now = now; this.cfg = cfg;
@@ -133,7 +136,7 @@ export class Run {
       return { id, role: r.st === 'likely' ? 'likely' : 'review', form: r.st === 'likely' || r.step >= 2 || isSight(this.byId[id]) ? 'check' : 'judge' }; };
     // A word that was not learned on an earlier day comes back as a check card (role 'retry'), never as self-judgement.
     // A tapped word was already called unknown: it is taught (front, then "뜻 보기" = judge(false)), never asked "know?" again.
-    for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : taught.has(id) ? { id, role: 'new', form: 'judge', taught: true } : { id, role: 'new', form: isSight(this.byId[id]) ? 'check' : 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
+    for (const id of plan.news) { q.push(state.words[id] ? { id, role: 'retry', form: 'check' } : taught.has(id) || scope.teach ? { id, role: 'new', form: 'judge', taught: true } : { id, role: 'new', form: isSight(this.byId[id]) ? 'check' : 'judge' }); for (let k = 0; k < 2 && due.length; k++) q.push(dueItem(due.shift())); }
     while (due.length) q.push(dueItem(due.shift()));
     for (const id of plan.retries) q.push({ id, role: 'retry', form: 'check' });       // stranded learning words, as check cards
     // bat test (scope.bat = { due, fresh }): overdue reviews as check cards first (normal scheduling), then words met since the last test
@@ -145,6 +148,7 @@ export class Run {
     this.audits = {};
     for (const p of scope.audit ? scope.audit.picks : []) { if (!bunchLeft(state, p.bunch).includes(p.id)) continue; const a = (this.audits[p.bunch] || (this.audits[p.bunch] = { left: 0, miss: false, closed: false })); a.left++;
       q.splice(Math.floor(rng() * (q.length + 1)), 0, { id: p.id, role: 'audit', form: 'check', bunch: p.bunch }); }
+    for (const id of scope.checks || []) { const r = state.words[id]; if (!r || r.st !== 'likely' || r.due != null) continue; q.splice(Math.floor(rng() * (q.length + 1)), 0, { id, role: 'spot', form: 'check', kept: true }); }
     this.queue = (tri ? tri.spot.filter((id) => !state.words[id]).map((id) => ({ id, role: 'spot', form: 'check', bunch: tri.bunch })) : []).concat(q);
   }
   get current() { return this.ended ? null : this.queue[this.i] || null; }
@@ -224,7 +228,7 @@ export class Run {
     else if (it.role === 'review') { this.stats.reviews++; this.stats.reviewOk++;
       g = r.step >= INTERVALS.length - 1 ? this._set(it.id, { st: 'done', due: null }) : this._set(it.id, { step: r.step + 1, due: addDays(t, INTERVALS[r.step + 1]) }); }
     else if ((it.role === 'relearn' && it.final) || it.role === 'retry') { this.stats.learned++; g = this._set(it.id, { st: 'review', step: 0, due: addDays(t, INTERVALS[0]) }); }
-    else if (it.role === 'spot') { this.stats.spots++; this.stats.spotOk++; this._verify(true); g = this._pass(it.id, this.scope.triage); }   // passed after all
+    else if (it.role === 'spot') { this.stats.spots++; this.stats.spotOk++; this._verify(true); g = it.kept ? this._set(it.id, { ck: t }) : this._pass(it.id, this.scope.triage); }   // passed after all
     else if (it.role === 'audit') this._audit(it, true);                                  // not a review: rec.reviews leaves it out
     if (it.role === 'castle') this.stats.castleOk++;
     if (this.scope.bat && (it.role === 'review' || it.role === 'likely' || it.role === 'castle' || it.role === 'retry')) this.stats.testOk++;

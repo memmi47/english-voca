@@ -16,7 +16,24 @@ export const RULES = { tileDue: 8, tileDueMax: 20, tileDueShare: 0.5, monsterPer
 // Tile triage (docs/LEARNING_VALUE_SPEC.md 2.3, 2.4; card T-003). on: false = every new word is asked one card at a time, as before.
 //   spotFrom: this many passed words get two spot checks (fewer: one)   sample: cards per bunch check   auditDays: when a bunch is checked
 //   splitDays: a bunch with a miss: the other words get their first check this many days later   auditsPerRun: bunches checked in one run
-export const TRIAGE = { on: true, spotFrom: 4, spots: 3, sample: 3, auditDays: 30, splitDays: 7, auditsPerRun: 2 };
+export const TRIAGE = { on: true, spotFrom: 4, spots: 3, sample: 3, auditDays: 30, splitDays: 7, auditsPerRun: 2, sort: true, page: 10, checks: 2 };
+// World sorting (user request 2026-11-18; sort: false = the tile word list above, as before). At a world's post office the
+// child sees the world's words `page` at a time and taps the ones they can read; every word is seen once before any tile
+// run of the world starts. Words tapped are recorded as passed (passWord), the rest are taught in the tile runs. Each tile
+// run then mixes in `checks` passed words of the world, the hardest first (checkPick).
+let HARD = null;                                                              // id -> number, higher = harder (cards/data/difficulty.json)
+export const setHardness = (fn) => { HARD = fn; };
+// A word the child said they can read: silver with no date in its tile's bunch, as a passed word of the tile word list
+// (deck.Run._pass). A bunch already checked: the word gets its own 7- and 30-day checks. `at` orders merges (sync.newer).
+export function passWord(state, id, bunch, today, at) {
+  const b = (state.bunches || (state.bunches = {})); const done = !!b[bunch]?.done; if (!done) b[bunch] || (b[bunch] = { due: addDays(today, TRIAGE.auditDays), done: null });
+  state.words[id] = { firstDay: today, lapses: 0, ...state.words[id], st: 'likely', lstep: 0, due: done ? addDays(today, 7) : null, ...(done ? {} : { bunch }), lastDay: today, at };
+}
+// Passed words among `ids` not checked yet (no `ck`), the hardest first; among equals (or without a table) at random.
+export function checkPick(state, ids, rng, n = TRIAGE.checks) {
+  const left = [...new Set(ids)].filter((id) => { const r = state.words[id]; return r && r.st === 'likely' && r.due == null && r.bunch != null && !r.ck; });
+  const order = shuffle(left, rng); if (HARD) order.sort((a, b) => (HARD(b) || 0) - (HARD(a) || 0)); return order.slice(0, n);
+}
 // What the child's choice on the word list means: tapped = unknown, the rest passed, some of those checked now:
 // 1 when 1-3 were passed, TRIAGE.spots (3) when 4 or more. hardness(id) -> number (higher = harder, cards/data/difficulty.json):
 // the hardest passed words are checked; without it, or among equals, the pick is random (user request 2026-11-18).

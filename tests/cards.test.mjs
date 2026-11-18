@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS, bunchLeft } from '../cards/js/deck.js';
-import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES, TRIAGE, triagePlan, triageScope, auditPick } from '../cards/js/map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds, startTile } from '../cards/js/world.js';
+import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES, TRIAGE, triagePlan, triageScope, auditPick, setHardness, checkPick } from '../cards/js/map.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds, startTile, sortView, sortPage } from '../cards/js/world.js';
 
 // The demo set: 86 cards (80 with a Korean gloss, 6 function words), two continents, three worlds (tools/make_cards_demo.py).
 const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const DOC = JSON.parse(fs.readFileSync('cards/data/demo/worlds.json', 'utf8'));
@@ -469,6 +469,8 @@ test('W13: by default the function-word house is off the learning path: not on t
 });
 
 // ---- tile triage and bunch checks (card T-003; TRIAGE on, the default) ----
+// The tile word list (TRIAGE.sort = false): the rules of a tile's passed words, spot checks and bunches. World sorting reuses them.
+const tileTest = (name, fn) => test(name, () => { TRIAGE.sort = false; try { return fn(); } finally { TRIAGE.sort = true; } });
 // The child looks over a tile's new words and taps `unknown`. -> { node, run }; making the run records the passed words.
 function triageRun(state, id, unknown = [], today = D1, seed = 1) {
   const node = nodeRun(IX, view(state, today), id, state, WORDS, mulberry32(seed)); assert.ok(node && node.triage, 'word list for ' + id);
@@ -489,7 +491,7 @@ function playT(run, knows = () => true) {
 const finishT = (state, t, today = D1, reason = 'done') => { const rec = t.run.finish(reason); return { rec, out: settle(state, t.node, t.run, rec, today) }; };
 const D30 = addDays(D1, 30);
 
-test('T1: passed words are recorded as silver with no date in the tile\'s bunch; the bunch is due in 30 days; the gauge does not rise; the tile clears', () => {
+tileTest('T1: passed words are recorded as silver with no date in the tile\'s bunch; the bunch is due in 30 days; the gauge does not rise; the tile clears', () => {
   const s = newState('son'); const t = triageRun(s, 'A1'); const words = W1._nodes.A1.words; const spot = t.node.scope.triage.spot;
   assert.equal(spot.length, 3); assert.deepEqual(t.run.queue.map((q) => q.role), ['spot', 'spot', 'spot']);   // 3 checks since 2026-11-18 (was 2)
   for (const id of words.filter((x) => !spot.includes(x))) { const { at, ...r } = s.words[id]; assert.deepEqual(r, { firstDay: D1, lapses: 0, st: 'likely', lstep: 0, due: null, bunch: 'A1', lastDay: D1 }); assert.ok(Number.isFinite(at)); }   // `at`: time of the change (F9)
@@ -502,7 +504,7 @@ test('T1: passed words are recorded as silver with no date in the tile\'s bunch;
   const none = newState('son'); const tn = triageRun(none, 'C1', W1._nodes.C1.words); assert.deepEqual(none.bunches, {}); assert.equal(tn.run.queue.filter((q) => q.role === 'spot').length, 0);   // nothing passed: no bunch
 });
 
-test('T2: spot checks: 0 / 1 / 3 cards for 0 / 1-3 / 4+ passed words, first in the run; right = passed, wrong = learning word that comes back; state.verify keeps both', () => {
+tileTest('T2: spot checks: 0 / 1 / 3 cards for 0 / 1-3 / 4+ passed words, first in the run; right = passed, wrong = learning word that comes back; state.verify keeps both', () => {
   const ids = W1._nodes.A1.words;
   for (let n = 0; n <= 10; n++) { const p = triagePlan(ids, ids.slice(n), mulberry32(n)); assert.equal(p.passed.length, n); assert.equal(p.spot.length, n === 0 ? 0 : n < 4 ? 1 : 3, 'passed ' + n); assert.ok(p.spot.every((x) => p.passed.includes(x))); }
   const s = newState('son'); const t = triageRun(s, 'A1', ids.slice(0, 2)); const [a, b] = t.node.scope.triage.spot;
@@ -519,7 +521,7 @@ test('T2: spot checks: 0 / 1 / 3 cards for 0 / 1-3 / 4+ passed words, first in t
   assert.deepEqual([d.words[only.id].st, d.verify], ['learn', [false]]);
 });
 
-test('T3: tapped words are taught: front, then one button that acts as "몰라요" (judge(false)); they end on the 1-day review', () => {
+tileTest('T3: tapped words are taught: front, then one button that acts as "몰라요" (judge(false)); they end on the 1-day review', () => {
   const s = newState('son'); const ids = W1._nodes.B1.words; const tapped = ids.slice(0, 4); const t = triageRun(s, 'B1', tapped);
   const news = t.run.queue.filter((q) => q.role === 'new'); assert.deepEqual(news.map((q) => q.id).sort(), tapped.slice().sort());
   assert.ok(news.every((q) => q.taught && q.form === 'judge')); assert.ok(t.run.queue.filter((q) => q.role === 'spot').every((q) => !tapped.includes(q.id)));
@@ -530,7 +532,7 @@ test('T3: tapped words are taught: front, then one button that acts as "몰라�
   assert.deepEqual([rec.unknown, rec.learned, rec.fresh], [4, 4, 4]);
 });
 
-test('T4: leaving early: words not answered get no record and the tile stays open; next time the list holds only those; the bunch keeps its first date', () => {
+tileTest('T4: leaving early: words not answered get no record and the tile stays open; next time the list holds only those; the bunch keeps its first date', () => {
   const s = newState('son'); const ids = W1._nodes.A1.words; const t = triageRun(s, 'A1', ids.slice(0, 3)); const [a, ...rest] = t.node.scope.triage.spot;
   const it = t.run.show(); t.run.pick(it.options.findIndex((o) => o.id === a)); t.run.advance(); const r = finishT(s, t, D1, 'left');
   assert.equal(r.out.cleared, false); assert.ok(rest.every((b) => s.words[b] === undefined)); assert.ok(ids.slice(0, 3).every((id) => !s.words[id])); assert.equal(status(view(s), 'A1'), 'open');
@@ -541,7 +543,7 @@ test('T4: leaving early: words not answered get no record and the tile stays ope
 
 // Three tiles looked over on three days, everything known: bunches A1, B1, C1 due on D1+30, +31, +32.
 function bunches3() { const s = newState('son'); ['A1', 'B1', 'C1'].forEach((id, i) => { const d = addDays(D1, i); const t = triageRun(s, id, [], d); playT(t.run); finishT(s, t, d); }); return s; }
-test('T5: bunch checks: none before the date; then 3 cards per bunch in tile and monster runs, 2 bunches at most, the oldest first; never in bat or castle tests', () => {
+tileTest('T5: bunch checks: none before the date; then 3 cards per bunch in tile and monster runs, 2 bunches at most, the oldest first; never in bat or castle tests', () => {
   const s = bunches3(); assert.deepEqual(Object.values(s.bunches).map((b) => b.due), [D30, addDays(D1, 31), addDays(D1, 32)]);
   assert.equal(nodeRun(IX, view(s, addDays(D1, 29)), 'A2', s, WORDS, mulberry32(1)).scope.audit, undefined);
   const one = nodeRun(IX, view(s, D30), 'A2', s, WORDS, mulberry32(1)).scope.audit; assert.deepEqual(one.picks.map((p) => p.bunch), ['A1', 'A1', 'A1']);
@@ -557,7 +559,7 @@ test('T5: bunch checks: none before the date; then 3 cards per bunch in tile and
   const bat = nodeRun(IX, view(c, D30), 'bat', c, WORDS, mulberry32(1)); assert.ok(bat && !bat.scope.audit); assert.ok(mkRun(c, bat, D30).queue.every((q) => q.role !== 'audit'));
 });
 
-test('T6: all samples right: every word left in the bunch is gold, bunch "ok"; one wrong: it is learning (tomorrow), the rest get the 7-day check, bunch "split"; leaving early', () => {
+tileTest('T6: all samples right: every word left in the bunch is gold, bunch "ok"; one wrong: it is learning (tomorrow), the rest get the 7-day check, bunch "split"; leaving early', () => {
   const auditRun = (s, d, seed = 3) => new Run({ state: s, words: WORDS, today: d, rng: mulberry32(seed), scope: { noNew: true, audit: auditPick(s, d, mulberry32(seed)) } });
   const ok = bunches3(); const r = auditRun(ok, D30); assert.equal(r.queue.length, 3); playT(r); const rec = r.finish();
   assert.ok(W1._nodes.A1.words.every((id) => ok.words[id].st === 'done' && ok.words[id].due === null)); assert.deepEqual(ok.bunches.A1, { due: D30, done: D30, result: 'ok' });
@@ -573,14 +575,14 @@ test('T6: all samples right: every word left in the bunch is gold, bunch "ok"; o
   assert.equal(auditPick(lo, addDays(D30, 1), mulberry32(9)).picks.filter((p) => p.bunch === 'A1').length, 3);   // drawn again next time
 });
 
-test('T7: a passed word missed in a castle test becomes a learning word and is no longer sampled from its bunch', () => {
+tileTest('T7: a passed word missed in a castle test becomes a learning word and is no longer sampled from its bunch', () => {
   const s = newState('son'); for (const id of ['A1', 'A2', 'B1', 'C1']) { const t = triageRun(s, id); playT(t.run); finishT(s, t); }
   const node = nodeRun(IX, view(s), 'castle', s, WORDS, () => .999); const x = node.scope.castle.find((id) => bunchLeft(s, 'A1').includes(id)); assert.ok(x);
   exam(s, node, D1, (id) => id !== x); assert.deepEqual([s.words[x].st, s.words[x].due, s.words[x].bunch], ['learn', addDays(D1, 1), 'A1']);
   assert.ok(!bunchLeft(s, 'A1').includes(x)); for (let k = 0; k < 30; k++) assert.ok(auditPick(s, D30, mulberry32(k)).picks.every((p) => p.id !== x));
 });
 
-test('T8: with TRIAGE.on = false the tile and monster runs are as before: no word list, no spot or bunch cards', () => {
+tileTest('T8: with TRIAGE.on = false the tile and monster runs are as before: no word list, no spot or bunch cards', () => {
   const s = bunches3(); const d = addDays(D1, 40); for (const w of W1._nodes.A2.words.slice(0, 8)) s.words[w] = { st: 'review', step: 1, due: d, firstDay: D1, lastDay: D1, lapses: 0 };
   TRIAGE.on = false; try {
     const v = view(s, d); const tile = nodeRun(IX, v, 'B2', s, WORDS, mulberry32(1)); const mon = nodeRun(IX, v, 'monster', s, WORDS, mulberry32(1));
@@ -590,7 +592,7 @@ test('T8: with TRIAGE.on = false the tile and monster runs are as before: no wor
   } finally { TRIAGE.on = true; }
 });
 
-test('T10: passed words and bunch checks never change the schedule of any other word', () => {
+tileTest('T10: passed words and bunch checks never change the schedule of any other word', () => {
   const s = newState('son'); const other = worldWords(W2); other.forEach((id, i) => { s.words[id] = { st: i % 3 ? 'review' : 'done', step: i % 5, due: i % 3 ? addDays(D1, 60 + i) : null, firstDay: '2026-11-01', lastDay: '2026-11-01', lapses: 0 }; });
   const before = JSON.stringify(other.map((id) => s.words[id]));
   const ids = W1._nodes.A1.words; const t = triageRun(s, 'A1', ids.slice(0, 2)); const miss = t.node.scope.triage.spot[0]; playT(t.run, (id) => id !== miss); finishT(s, t);
@@ -602,7 +604,7 @@ test('T10: passed words and bunch checks never change the schedule of any other 
   assert.ok(Object.keys(s.words).every((id) => other.includes(id) || ids.includes(id) || W1._nodes.B1.words.includes(id)));
 });
 
-test('T11: a word passed into a bunch that was already checked gets its own 7-day check; a due bunch with no passed word left is closed', () => {
+tileTest('T11: a word passed into a bunch that was already checked gets its own 7-day check; a due bunch with no passed word left is closed', () => {
   const s = newState('son'); const A1 = W1._nodes.A1.words; s.bunches = { A1: { due: D1, done: D1, result: 'ok' } };
   const run = new Run({ state: s, words: WORDS, today: D1, rng: mulberry32(1), scope: { newIds: A1, newPerRun: 10, duePerRun: 0, triage: { bunch: 'A1', passed: A1.slice(0, 3), tapped: [], spot: [], due: addDays(D1, 30) } } });
   for (const id of A1.slice(0, 3)) assert.deepEqual([s.words[id].st, s.words[id].due, s.words[id].bunch], ['likely', addDays(D1, 7), undefined]);
@@ -852,7 +854,7 @@ test('W20: malformed explicit exploration rules are data errors; absent or reach
   }
 });
 
-test('P1: a cleared tile can be played again as practice: check cards of its met words; the schedule, grades, bunches and bat gauge stay; a miss is kept on the word', () => {
+tileTest('P1: a cleared tile can be played again as practice: check cards of its met words; the schedule, grades, bunches and bat gauge stay; a miss is kept on the word', () => {
   const s = newState('son'); clear(s, 'A1'); const v = view(s); assert.equal(status(v, 'A1'), 'cleared');
   const node = nodeRun(IX, v, 'A1', s, WORDS, mulberry32(3)); assert.equal(node.kind, 'practice'); assert.ok(node.scope.practice.length > 0);
   const tile = W1.map.nodes.find((n) => n.id === 'A1'); assert.ok(node.scope.practice.every((id) => tile.words.includes(id) && s.words[id]));
@@ -867,9 +869,56 @@ test('P1: a cleared tile can be played again as practice: check cards of its met
   assert.equal(status(view(s), 'A1'), 'cleared', 'still cleared');
 });
 
-test('T12: with a difficulty table the spot checks are the hardest passed words; all known on a 10-word tile gives 3 checks', () => {
+tileTest('T12: with a difficulty table the spot checks are the hardest passed words; all known on a 10-word tile gives 3 checks', () => {
   const ids = W1._nodes.A1.words; const hard = Object.fromEntries(ids.map((id, i) => [id, i * 10]));
   const p = triagePlan(ids, [], mulberry32(4), (id) => hard[id]); assert.equal(p.spot.length, 3);
   assert.deepEqual([...p.spot].sort(), [...ids].slice(-3).sort());
   const q = triagePlan(ids, ids.slice(-2), mulberry32(4), (id) => hard[id]); assert.deepEqual([...q.spot].sort(), ids.slice(-5, -2).sort(), 'tapped words are not checked');
+});
+
+// ---- world sorting at the post office (TRIAGE.sort, the default; user request 2026-11-18) ----
+// Sorts every page of W1; known(id) decides what the child taps. -> pages sorted
+function sortAll(state, known = () => false, today = D1) { let n = 0; for (let v = sortView(W1, state); v.left && n < 50; v = sortView(W1, state), n++) sortPage(state, W1, v.page.filter(known), today, 1); return n; }
+
+test('S1: the post office shows the world\'s words 10 at a time in world order; no tile run starts before every word was looked at', () => {
+  const s = newState('son'); const all = [...new Set(worldWords(W1))]; const v = sortView(W1, s);
+  assert.deepEqual([v.total, v.left, v.page], [all.length, all.length, all.slice(0, 10)]);
+  assert.deepEqual(nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)), { kind: 'sort', wid: W1.id });
+  const known = v.page.slice(0, 3); assert.equal(sortPage(s, W1, known, D1, 5), 10);
+  for (const id of known) { const { at, ...r } = s.words[id]; assert.deepEqual(r, { firstDay: D1, lapses: 0, st: 'likely', lstep: 0, due: null, bunch: W1.map.nodes.find((n) => n.words?.includes(id)).id, lastDay: D1 }); }
+  assert.ok(v.page.slice(3).every((id) => !s.words[id])); assert.equal(ensureMap(s).bat.fill, 0);
+  const v2 = sortView(W1, s); assert.deepEqual([v2.left, v2.page], [all.length - 10, all.slice(10, 20)]);   // words not tapped are not shown again
+  assert.equal(nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)).kind, 'sort');
+  sortAll(s); assert.equal(sortView(W1, s).left, 0); const node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1));
+  assert.deepEqual([node.kind, node.scope.teach, node.triage], ['tile', true, undefined]);
+});
+
+test('S2: a tile run teaches its new words (no "know?") and mixes in 2 passed words of the world, the hardest first; right = `ck`, wrong = learning word', () => {
+  const s = newState('son'); const all = [...new Set(worldWords(W1))]; const hard = Object.fromEntries(all.map((id, i) => [id, i]));
+  sortAll(s, (id) => !W1._nodes.A1.words.includes(id)); setHardness((id) => hard[id]);
+  let node; try { node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)); } finally { setHardness(null); }
+  const passed = all.filter((id) => s.words[id]); const hardest = passed.slice().sort((a, b) => hard[b] - hard[a]).slice(0, 2);
+  assert.deepEqual(node.scope.checks, hardest);
+  const run = mkRun(s, node); const news = run.queue.filter((q) => q.role === 'new'); const spots = run.queue.filter((q) => q.role === 'spot');
+  assert.deepEqual(news.map((q) => q.id).sort(), W1._nodes.A1.words.slice().sort()); assert.ok(news.every((q) => q.taught && q.form === 'judge'));
+  assert.deepEqual(spots.map((q) => [q.id, q.form, q.kept]).sort(), hardest.map((id) => [id, 'check', true]).sort());
+  const [good, bad] = hardest; const before = { ...s.words[good] }; let g = 0;
+  while (run.current && g++ < 300) { const it = run.show(); const right = it.options ? it.options.findIndex((o) => o.id === it.id) : -1;
+    if (it.form === 'judge') run.judge(it.taught ? false : true); else run.pick(it.id === bad && it.role === 'spot' ? (right + 1) % 3 : right); run.advance(); }
+  const rec = run.finish(); assert.deepEqual([rec.spots, rec.spotOk, rec.claims], [2, 1, 0]);
+  const { ck, lastDay, at, ...rest } = s.words[good]; const { lastDay: l0, at: a0, ...rest0 } = before; assert.deepEqual([ck, rest], [D1, rest0]);   // only the check day is added
+  assert.equal(s.words[bad].misses, 1); assert.ok(['learn', 'review'].includes(s.words[bad].st)); assert.equal(s.words[bad].due, addDays(D1, 1));
+  assert.ok(!checkPick(s, all, mulberry32(9)).includes(good), 'a word checked once is not picked again');
+});
+
+test('S3: a tile whose every word was called known still needs one run (open mark); the run is its checks and reviews, then it clears', () => {
+  const s = newState('son'); sortAll(s, () => true); const ws = ensureMap(s).worlds[W1.id];
+  assert.ok(W1.map.nodes.filter((n) => n.kind === 'tile').every((n) => ws.open[n.id] === D1)); assert.equal(status(view(s), 'A1'), 'open'); assert.equal(view(s).unitsDone, 0);
+  const node = nodeRun(IX, view(s), 'A1', s, WORDS, mulberry32(1)); startTile(s, node, D1); const run = mkRun(s, node);
+  assert.ok(run.queue.length >= 1 && run.queue.every((q) => q.role === 'spot')); play(run, () => true); const r = settle(s, node, run, run.finish(), D1);
+  assert.equal(r.cleared, true); assert.equal(status(view(s), 'A1'), 'cleared');
+});
+
+test('S4: with TRIAGE.on = false there is no post office: tiles start at once and new words are asked one card at a time', () => {
+  TRIAGE.on = false; try { const s = newState('son'); const v = view(s); assert.equal(v.sort, null); const node = nodeRun(IX, v, 'A1', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.scope.teach, node.triage], ['tile', undefined, undefined]); } finally { TRIAGE.on = true; }
 });

@@ -242,3 +242,10 @@ test('U3: every "not known" is kept on the word (miss day, misses); merging keep
   for (const m of [mergeCards(plain, plain)]) assert.equal('miss' in m.words.w, false, 'records without misses keep their shape');
 });
 
+
+test('S5: the post office pointer of a world only grows when two records are merged', () => {
+  const a = { v: 3, id: 'son', words: {}, runs: [], log: [], verify: [], bunches: {}, forms: {}, map: { worlds: { w: { castle: null, seen: '2026-11-12', cleared: {}, stamps: {}, sorted: 30 } } } };
+  const b = structuredClone(a); b.map.worlds.w.sorted = 20; delete a.map.worlds.w.sorted; a.map.worlds.w.sorted = 40;
+  assert.equal(mergeCards(a, b).map.worlds.w.sorted, 40); assert.equal(mergeCards(b, a).map.worlds.w.sorted, 40);
+  const c = structuredClone(b); delete c.map.worlds.w.sorted; assert.equal(mergeCards(c, b).map.worlds.w.sorted, 20); assert.equal('sorted' in mergeCards(c, c).map.worlds.w, false);
+});

@@ -248,7 +248,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
 
   // 10b. look and music: sprite sheet, per-world colours, music toggle that survives a reload (sound on, headless audio)
   const vctx = await browser.newContext({ viewport: { width: 1024, height: 768 }, hasTouch: true });
-  const v1 = await open(vctx, 'today=2026-11-12&seed=9&fast=1&nosync=1');
+  const v1 = await open(vctx, 'triage=tile&today=2026-11-12&seed=9&fast=1&nosync=1');
   await v1.click('[data-act=pick][data-id=son]'); await v1.waitForSelector('.world');
   const look = await v1.evaluate(() => ({ sheet: document.querySelectorAll('#sheet symbol').length, a1: document.querySelector('[data-id=A1] use')?.getAttribute('href'), a2: document.querySelector('[data-id=A2] use')?.getAttribute('href'),
     ground: document.documentElement.style.getPropertyValue('--w-ground'), path: document.querySelectorAll('.terrain use[href="#t-path"]').length, big: document.querySelector('[data-id=A1] .big').getBoundingClientRect().width }));
@@ -261,7 +261,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await v1.waitForFunction(() => window.__cards.sound.music && window.__cards.sound.music.on, null, { timeout: 8000 });
   ok('music toggle plays the map loop and is remembered', await v1.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && JSON.parse(localStorage.getItem('cards.v0.pref')).music === true));
   await v1.evaluate(() => window.__cards.sound.sfxPlay('hit')); ok('effects can play through the real synth without errors', await v1.evaluate(() => window.__cards.sound.ctx.state !== 'closed'));
-  await v1.goto(BASE + '?set=demo&today=2026-11-12&seed=9&fast=1&nosync=1&storm=off'); await v1.waitForSelector('.profiles');
+  await v1.goto(BASE + '?set=demo&triage=tile&today=2026-11-12&seed=9&fast=1&nosync=1&storm=off'); await v1.waitForSelector('.profiles');
   await v1.click('[data-act=pick][data-id=son]'); await v1.waitForSelector('.world');
   ok('the music choice persists after a reload', await v1.evaluate(() => window.__cards.sound.musicOn));
   await v1.close(); await vctx.close();
@@ -363,7 +363,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const blockedctx = await browser.newContext(); const blockedErrors = [];
   await blockedctx.addInitScript(() => localStorage.setItem('cards.v0.pref', JSON.stringify({music:false,sfx:true}))); // explicit toggle setup
   await blockedctx.route('**/assets/postal/music-gm/*.m4a', (r) => r.abort());
-  const blockedPage = await open(blockedctx, 'today=2026-11-12&seed=9&fast=1'); blockedPage.on('pageerror', (e) => blockedErrors.push(String(e)));
+  const blockedPage = await open(blockedctx, 'triage=tile&today=2026-11-12&seed=9&fast=1'); blockedPage.on('pageerror', (e) => blockedErrors.push(String(e)));
   await blockedPage.click('[data-act=pick][data-id=son]'); await blockedPage.click('[data-act=music]');
   await blockedPage.waitForFunction(() => window.__cards.sound.music?.backend === 'chip' && window.__cards.sound.music.on);
   ok('GM: blocked recordings fall back to the original chip loop without an error screen', await blockedPage.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && window.__cards.sound.fails === 0 && !!document.querySelector('.world')) && blockedErrors.length === 0);
@@ -481,14 +481,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // a plain static host (no state API): the home screen says device-only
   const sctx = await browser.newContext({ viewport: { width: 1024, height: 700 } });
   await sctx.route('**/api/**', (r) => r.fulfill({ status: 404, body: 'nope' }));
-  const s1 = await open(sctx, 'today=2026-12-14&sound=off', true);
+  const s1 = await open(sctx, 'triage=tile&today=2026-12-14&sound=off', true);
   ok('without a state API the home screen says device-only', /이 기기만/.test(await s1.textContent('#syncline')), await s1.textContent('#syncline'));
   await s1.close(); await sctx.close();
 
   // 12. tile triage (on by default): the tile's new words as a list, the unknown ones tapped and taught, a spot check or two
   //     of the rest, and 30 days later a sample check of each bunch mixed into another run
   const tctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
-  const t = await open(tctx, 'today=2026-11-12&seed=31&sound=off&fast=1'); await t.click('[data-act=pick][data-id=son]'); await t.waitForSelector('.world');
+  const t = await open(tctx, 'triage=tile&today=2026-11-12&seed=31&sound=off&fast=1'); await t.click('[data-act=pick][data-id=son]'); await t.waitForSelector('.world');
   const curT = (p) => p.evaluate(() => { const r = window.__cards.run; const it = r && r.current; return it ? { id: it.id, form: it.form, role: it.role, taught: !!it.taught, verifying: !!it.verifying, ans: it.options ? it.options.findIndex((o) => o.id === it.id) : -1 } : null; });
   async function playTri(p, knows = () => true) {                                   // a taught card has only "뜻 보기"; every check is answered by knows(id)
     const seen = [];
@@ -532,7 +532,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const qB = await t.evaluate(() => window.__cards.run.queue.map((x) => x.role)); const seenB = await playTri(t); tson = await state(t, 'son');
   ok('triage: a tile where every word is known asks only the three spot checks (the hardest words) and is cleared', qB.join() === 'spot,spot,spot' && seenB.length === 3 && /칸 클리어/.test(await t.textContent('h1')) && TILE('B1').every((id) => tson.words[id].st === 'likely' && tson.words[id].bunch === 'B1'), qB.join());
   await t.close();
-  const t30 = await open(tctx, 'today=2026-12-12&seed=32&sound=off&fast=1'); await t30.click('[data-act=pick][data-id=son]'); await t30.waitForSelector('.world');
+  const t30 = await open(tctx, 'triage=tile&today=2026-12-12&seed=32&sound=off&fast=1'); await t30.click('[data-act=pick][data-id=son]'); await t30.waitForSelector('.world');
   await t30.click('[data-act=node][data-id=C1]'); await t30.waitForSelector('.twords'); await t30.click('#tgo'); await t30.waitForSelector(READY);
   const q30 = await t30.evaluate(() => window.__cards.run.queue.map((x) => x.role + ':' + (x.bunch || ''))); const seen30 = await playTri(t30); const s30 = await state(t30, 'son');
   const audits = q30.filter((x) => x.startsWith('audit:'));
@@ -714,7 +714,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C011: outfit choice is separate for each child',await fb.$eval('#rider use',e=>e.getAttribute('href'))==='#courier-gold-idle');
   await fb.click('[data-act=atlas]'); ok('C011: a locked world has a shut door and cannot be entered',await fb.$eval('.wcard[data-id="d1-02"]',e=>e.disabled&&!!e.querySelector('use[href="#c011-door-locked"]')));
   await fb.close(); await feedbackctx.close();
-  const prefctx = await browser.newContext(); const prefPage = await open(prefctx,'today=2026-11-12&fast=1'); await prefPage.click('[data-act=pick][data-id=son]'); await prefPage.waitForSelector('.world');
+  const prefctx = await browser.newContext(); const prefPage = await open(prefctx,'triage=tile&today=2026-11-12&fast=1'); await prefPage.click('[data-act=pick][data-id=son]'); await prefPage.waitForSelector('.world');
   await prefPage.click('[data-act=music]'); await prefPage.waitForFunction(()=>!window.__cards.sound.musicOn&&JSON.parse(localStorage.getItem('cards.v0.pref')).music===false); await prefPage.reload(); await prefPage.waitForSelector('.profiles'); await prefPage.click('[data-act=pick][data-id=son]'); await prefPage.waitForSelector('.world');
   ok('C011: music starts enabled and an explicit off choice survives reload',await prefPage.evaluate(()=>!window.__cards.sound.musicOn&&JSON.parse(localStorage.getItem('cards.v0.pref')).music===false));
   await prefPage.close(); await prefctx.close();
@@ -726,7 +726,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   for(let i=0;i<30;i++){await failedPage.waitForSelector(READY);if(await failedPage.$('.tiles'))break;await answer(failedPage,'[data-act=opt][data-i="-1"]');}
   ok('C011: failed castle keeps its remaining monster HP and never shows defeat',await failedPage.evaluate(()=>window.__cards.displayBoss.hp>0&&!window.__cards.displayBoss.down&&!document.querySelector('.monster-finished')) && /시험 결과/.test(await failedPage.textContent('h1')));
   await failedPage.close(); await failedctx.close();
-  const fanctx = await browser.newContext(); const fanPage = await open(fanctx,'today=2026-11-12&fast=1'); await fanPage.click('[data-act=pick][data-id=son]'); await fanPage.waitForSelector('.world'); await fanPage.waitForFunction(()=>window.__cards.sound.music?.on);
+  const fanctx = await browser.newContext(); const fanPage = await open(fanctx,'triage=tile&today=2026-11-12&fast=1'); await fanPage.click('[data-act=pick][data-id=son]'); await fanPage.waitForSelector('.world'); await fanPage.waitForFunction(()=>window.__cards.sound.music?.on);
   for(const id of ['world-fanfare','continent-fanfare']) {
     const actual = await fanPage.evaluate(async(id)=>{const s=window.__cards.sound;await s.jingle(id);const node=[...s.jingleNodes].find(n=>n.fanfare&&n.source);const snapshot={source:node?.source instanceof AudioBufferSourceNode,length:node?.source?.buffer.duration,duck:s.music.ducked};if(node){const ended=new Promise(resolve=>node.source.addEventListener('ended',resolve,{once:true}));node.source.playbackRate.value=8;await ended;}return {...snapshot,recovered:!s.music.ducked};},id);
     ok(`C011: ${id} decodes, plays to its end and restores music duck`,actual.source&&Math.abs(actual.length-(id==='world-fanfare'?5:10))<.05&&actual.duck&&actual.recovered,JSON.stringify(actual));
@@ -1198,7 +1198,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const polish=await browser.newContext({viewport:{width:1180,height:820},hasTouch:true});
   const polishPage=await polish.newPage();
   polishPage.on('pageerror',e=>errs.push(String(e)));
-  await polishPage.goto(BASE+'?today=2026-11-18&fast=1&nosync=1&sound=off&storm=off');
+  await polishPage.goto(BASE+'?triage=tile&today=2026-11-18&fast=1&nosync=1&sound=off&storm=off');
   await polishPage.waitForSelector('.profiles');
   await polishPage.evaluate(async()=>{
     const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
@@ -1299,7 +1299,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const tierGear=id=>tierPage.locator(`[data-act=gear][data-id=${id}]`);
   const leaveTiers=()=>tierPage.click('#wardrobe .sec[data-act=look-close]');
   async function tierProfile({pid='son',day=cutoff,at='p1-01',castles={},conts={},slots={},stars=0}) {
-    await tierPage.goto(BASE+`?today=${day}&nosync=1&sound=off&storm=off`);
+    await tierPage.goto(BASE+`?triage=tile&today=${day}&nosync=1&sound=off&storm=off`);
     await tierPage.waitForSelector('.profiles');
     await tierPage.evaluate(async({pid,at,castles,conts,slots,stars,day})=>{
       const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
@@ -1431,7 +1431,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await firstPlayCtx.close();
 
   const hintCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true, reducedMotion:'reduce' });
-  const hintPage = await open(hintCtx, 'today=2026-11-18&sound=off&seed=31');
+  const hintPage = await open(hintCtx, 'triage=tile&today=2026-11-18&sound=off&seed=31');
   const firstHint = hintPage.getByText('봉투 하나를 골라 눌러 봐!', { exact:true });
   await hintPage.tap('[data-act=pick][data-id=son]');
   await firstHint.waitFor();
@@ -1467,7 +1467,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const giftCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true, reducedMotion:'reduce' });
   const giftPage = await giftCtx.newPage();
   giftPage.on('pageerror', e => errs.push(String(e)));
-  await giftPage.goto(BASE+'?today=2026-11-20&sound=off&storm=off&nosync=1&seed=5');
+  await giftPage.goto(BASE+'?triage=tile&today=2026-11-20&sound=off&storm=off&nosync=1&seed=5');
   await giftPage.waitForSelector('.profiles');
   await giftPage.evaluate(async () => {
     const {newState} = await import('./js/deck.js'), {ensureMap} = await import('./js/map.js');
@@ -1510,7 +1510,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await giftCtx.close();
 
   const earlyCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true });
-  const early = await open(earlyCtx, 'today=2026-11-18&sound=off');
+  const early = await open(earlyCtx, 'triage=tile&today=2026-11-18&sound=off');
   const firstRecords = await early.evaluate(() => {
     const g = window.__cards;
     const son = Object.fromEntries(g.words.slice(0,20).map(({id},i) => [id, {
@@ -1563,6 +1563,28 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await fbp.click('[data-act=node][data-id=G2]'); await fbp.waitForSelector('#mailmover');
   ok('FB5: the mail game shows its mailbox (the sprite is drawn, not an empty box)', await fbp.evaluate(() => { const r = document.querySelector('#mailmover svg').getBoundingClientRect(); const use = document.querySelector('#mailmover use'); return r.width > 40 && document.querySelectorAll('[id=mailbox]').length === 1 && document.getElementById('mailbox').tagName.toLowerCase() === 'symbol' && !!use; }));
   await fbpCtx.close();
+
+  // PO. the world's post office (user request 2026-11-18): the world's words 10 at a time before any tile run; tapped = can read
+  const poCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const po = await open(poCtx, 'today=2026-12-01&seed=7&sound=off&fast=1'); await po.click('[data-act=pick][data-id=son]'); await po.waitForSelector('.letters');
+  const page1 = await po.$$eval('.letter', (bs) => bs.map((b) => b.dataset.id)); const fitsPO = (p) => p.evaluate(() => document.scrollingElement.scrollHeight <= innerHeight + 1 && document.querySelector('#sortgo').getBoundingClientRect().bottom <= innerHeight);
+  const landPO = await fitsPO(po); await po.setViewportSize({ width: 768, height: 950 }); const portPO = await fitsPO(po); await po.setViewportSize({ width: 1180, height: 820 });
+  ok('PO1: a new world opens at its post office: 10 envelopes with spellings only, no run; it fits in landscape and portrait', page1.length === 10 && !(await po.$('.run, #app img.px, #app .emoji')) && /우체국/.test(await po.textContent('.post-head')) && landPO && portPO, `${page1.length} ${landPO} ${portPO}`);
+  await po.click(`.letter[data-id="${page1[0]}"]`); await po.click(`.letter[data-id="${page1[1]}"]`); await po.click(`.letter[data-id="${page1[1]}"]`);
+  ok('PO2: tapping an envelope marks it "can read" and tapping again unmarks it; the two counts follow', await po.textContent('#bin-k') === '1' && await po.textContent('#bin-l') === '9' && await po.$eval(`.letter[data-id="${page1[0]}"]`, (b) => b.getAttribute('aria-pressed') === 'true'));
+  await po.click('[data-act=today]'); await po.waitForSelector('.world');
+  const dockPO = await po.textContent('.dockbtn.post'); await po.click('[data-act=node][data-id=A1]'); await po.waitForSelector('.letters');
+  ok('PO3: back on the map nothing was saved; the dock shows the letters left, and a tile leads back to the post office', /우체국 편지 \d+/.test(dockPO) && !(await state(po, 'son'))?.words?.[page1[0]], dockPO);
+  const knownPO = []; let guardPO = 0;
+  while (await po.$('[data-act=sortgo]') && guardPO++ < 30) { const ids = await po.$$eval('.letter', (bs) => bs.map((b) => b.dataset.id)); for (const id of ids.slice(0, 4)) { await po.click(`.letter[data-id="${id}"]`); knownPO.push(id); } await po.click('[data-act=sortgo]'); await po.waitForSelector('.letters, .world'); }
+  const stPO = await state(po, 'son'); const wsPO = Object.values(stPO.map.worlds).find((w) => w.sorted);
+  ok('PO4: after the last page the map says so; tapped words are passed (silver, no date, a tile bunch), the others have no record', await po.$('.world') && /모두 나눴어요/.test(await po.textContent('#msg')) && knownPO.every((id) => stPO.words[id]?.st === 'likely' && stPO.words[id].due === null && !!stPO.words[id].bunch) && Object.keys(stPO.words).length === knownPO.length && !(await po.$('.dockbtn.post')), `${knownPO.length} pages ${guardPO} sorted ${wsPO && wsPO.sorted}`);
+  await po.click('[data-act=node][data-id=A1]'); await po.waitForSelector(READY);
+  const qPO = await po.evaluate(() => window.__cards.run.queue.map((q) => ({ role: q.role, taught: !!q.taught, kept: !!q.kept })));
+  ok('PO5: a tile run teaches its new words (no "know?") and mixes in two checks of passed words', qPO.some((q) => q.role === 'new') && qPO.filter((q) => q.role === 'new').every((q) => q.taught) && qPO.filter((q) => q.role === 'spot' && q.kept).length === 2, JSON.stringify(qPO.map((q) => q.role + (q.taught ? '*' : '') + (q.kept ? '+' : ''))));
+  await play(po); await po.waitForSelector('.tiles'); await toMap(po);
+  ok('PO6: the tile is cleared and no post office comes back for the world', (await nodeStatus(po, 'A1')) === 'cleared' && !(await po.$('.letters')));
+  await poCtx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

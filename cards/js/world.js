@@ -3,7 +3,7 @@
 // unfinished (startTile marks it, settleWorld clears the mark when a run reaches its end). Nothing here writes to a word's
 // schedule or grade.
 import { shuffle } from './deck.js';
-import { ensureMap, dueCount, waitingCount, batState, batPool, tileDue, MONSTER_AT, RULES, LIGHTNING_MIN, ripeCount, TRIAGE, auditPick } from './map.js';
+import { ensureMap, dueCount, waitingCount, batState, batPool, tileDue, MONSTER_AT, RULES, LIGHTNING_MIN, ripeCount, TRIAGE, auditPick, passWord, checkPick } from './map.js';
 import { stormBlocks } from './storm.js';
 
 export const FREE = new Set(['start', 'junction', 'plaza']);          // nodes anyone can walk through
@@ -57,6 +57,24 @@ const wstate = (state, wid) => { const m = ensureMap(state); return (m.worlds[wi
 // record on the way. Called by the screen before the run is made (a triage run records passed words when it is made).
 export function startTile(state, node, today) { if (node.kind !== 'tile') return; const ws = wstate(state, node.wid); (ws.open || (ws.open = {}))[node.unit] = today; }
 const cstate = (state, cid) => { const m = ensureMap(state); return (m.conts[cid] || (m.conts[cid] = { castle: null })); };
+
+// The world's post office (map.TRIAGE.sort): every word of the world is looked at once, a page at a time, in the world's
+// order, before any tile run of the world starts. `ws.sorted` counts the words of worldWords(w) already looked at; the words
+// tapped as known have a record (map.passWord), the others have none until a tile run teaches them. A word met before (a
+// record of its own) is never shown. -> { total, left, page: [ids] }
+const sortOn = () => TRIAGE.on && TRIAGE.sort;
+function sortList(w, state) { const all = worldWords(w); const from = ensureMap(state).worlds[w.id]?.sorted || 0; const seen = new Set(); const out = [];
+  for (let i = from; i < all.length; i++) { const id = all[i]; if (!state.words[id] && !seen.has(id)) { seen.add(id); out.push([i, id]); } } return out; }
+export function sortView(w, state) { const list = sortList(w, state); return { total: new Set(worldWords(w)).size, left: list.length, page: list.slice(0, TRIAGE.page).map(([, id]) => id) }; }
+// One page sorted: `known` (ids of the page) are passed into their tile's bunch, the pointer moves past the page. A tile whose
+// every word now has a record still waits for one run of its own (the `open` mark), so its checks and reviews are played.
+export function sortPage(state, w, known, today, at) {
+  const list = sortList(w, state).slice(0, TRIAGE.page); if (!list.length) return 0; const page = new Set(list.map(([, id]) => id)); const ws = wstate(state, w.id);
+  const units = unitsIn(w); const mark = new Set();
+  for (const id of known) { if (!page.has(id) || state.words[id]) continue; const u = units.find((x) => x.words.includes(id)); passWord(state, id, u.id, today, at); mark.add(u); }
+  for (const u of mark) if (u.words.every((x) => state.words[x]) && !ws.cleared[u.id]) (ws.open || (ws.open = {}))[u.id] = ws.open?.[u.id] || today;
+  ws.sorted = list[list.length - 1][0] + 1; return list.length;
+}
 
 // Walk from the start through free nodes and finished tiles. An unfinished tile next to that set is "open".
 export function reach(w, state) {
@@ -146,7 +164,7 @@ export function worldView(ix, w, state, today) {
   return { today, world: w, nodes, houses, gate: exploration, castle: nodes.find((n) => n.kind === 'castle'), crown: castleDone && unitsDone === units, units, unitsDone,
     monster: { present: monster, count: due }, review: { present: !monster && wait > 0, count: wait }, bat: { fill: bat.fill, cap: bat.cap, full: bat.full, overdue: bat.overdue, limit: bat.limit, byDebt: bat.byDebt },
     bonus: { status: m.bonusDay === today ? 'used' : ripe < LIGHTNING_MIN ? 'locked' : 'open', ripe }, stars: m.stars, items: { ...m.items }, bag: m.bag, keys: m.keys, best: m.best,
-    next: w.nextWorldId ? ix.byId[w.nextWorldId] : null, continent: continentView(ix, c, state), firstVisit: !ws.seen };
+    next: w.nextWorldId ? ix.byId[w.nextWorldId] : null, continent: continentView(ix, c, state), firstVisit: !ws.seen, sort: sortOn() ? sortView(w, state) : null };
 }
 
 // The run a node starts. -> { kind, wid, tag, scope, ... } or null when it is not available.
@@ -163,7 +181,10 @@ export function nodeRun(ix, view, id, state, words, rng) {
   if (id === 'monster') return view.monster.present ? { kind: 'monster', wid: w.id, tag: 'monster', scope: audit({ noNew: true, duePerRun: 14 }) } : null;
   // A few cards waiting and no monster (also after every world and castle is done): the same cards as a monster run, no item.
   if (id === 'review') return view.review.present ? { kind: 'review', wid: w.id, tag: 'review', scope: audit({ noNew: true, duePerRun: 14 }) } : null;
-  const unitRun = (u, bonus) => { const node = { kind: 'tile', wid: w.id, tag: u.id, unit: u.id, bonus, scope: audit({ newIds: u.words, newPerRun: u.words.length, duePerRun: tileDue(view.monster.count) }) };
+  // With world sorting on, a tile waits until the post office is done; then its new words are taught and passed words checked.
+  const unitRun = (u, bonus) => { if (sortOn() && view.sort?.left) return { kind: 'sort', wid: w.id };
+    const node = { kind: 'tile', wid: w.id, tag: u.id, unit: u.id, bonus, scope: audit({ newIds: u.words, newPerRun: u.words.length, duePerRun: tileDue(view.monster.count) }) };
+    if (sortOn()) { node.scope.teach = true; const ck = checkPick(state, worldWords(w), rng); if (ck.length) node.scope.checks = ck; return node; }
     const unseen = u.words.filter((x) => !state.words[x]); if (TRIAGE.on && unseen.length) node.triage = unseen; return node; };
   // A tile (or house) already cleared can be played again as practice: its met words as check cards. Practice changes no
   // schedule, grade or gauge (deck.Run, scope.practice); only what the child did not know is kept on the word.

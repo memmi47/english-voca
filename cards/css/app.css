@@ -161,6 +161,22 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tw{min-height:80px;padding:8px 10px;background:var(--paper);border:5px solid var(--ink);box-shadow:0 6px 0 var(--ink);font-family:var(--word);font-size:34px;font-weight:800;color:var(--ink);word-break:break-word}
 .tw.on{background:#ffe9a8;outline:5px solid var(--go);outline-offset:-10px}.tw.on:after{content:" ?";color:var(--go)}
 .tw:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+/* the world's post office: 10 envelopes; a tapped one (can read) gets the mailbox mark */
+.page.post{max-width:1080px;padding-top:14px}
+.post-head{display:flex;align-items:center;gap:14px;margin:4px 60px 10px}.post-head b{font-size:26px;white-space:nowrap}
+.post-bar{flex:1;height:18px;border:4px solid var(--ink);background:var(--paper)}.post-bar i{display:block;height:100%;background:var(--go)}
+.post-intro,.post-say{max-width:1000px;margin:0 auto 10px;padding:8px 14px;background:var(--paper);border:4px solid var(--ink);font-size:20px;line-height:1.4}
+.post-intro{border-style:dashed;font-size:17px}
+.letters{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:740px;margin:0 auto}
+@media (min-width:1000px){.letters{grid-template-columns:repeat(5,1fr);max-width:1040px}}
+.letter{position:relative;min-height:84px;padding:20px 6px 8px;background:#fffdf5;border:5px solid var(--ink);box-shadow:0 6px 0 var(--ink);font-family:var(--word);font-size:30px;font-weight:800;color:var(--ink);word-break:break-word;overflow:hidden}
+.letter:before{content:"";position:absolute;left:0;right:0;top:0;height:22px;background:#ecdcb8;-webkit-clip-path:polygon(0 0,100% 0,50% 100%);clip-path:polygon(0 0,100% 0,50% 100%)}
+.letter-mark{position:absolute;right:4px;bottom:2px;display:none}
+.letter.on{background:#ffe9a8;outline:5px solid var(--go);outline-offset:-11px}.letter.on .letter-mark{display:block}
+.letter:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.post-bins{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin:16px auto 0;max-width:1040px}
+.post-bins .bin{display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--paper);border:4px solid var(--ink);font-size:20px}
+.post-bins .bin b{font-size:24px}.post-bins .go{margin:0}
 .triage-note{margin:8px auto 0;color:var(--fg);text-shadow:1px 1px var(--fg-sh);font-size:15px}
 .act.see{max-width:520px}
 /* the delivery rider and the whirlwind (card T-008): both sit on the upper part of their tile, the rider to the left, the

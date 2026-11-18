@@ -1,8 +1,8 @@
 // Flashcard game: screens. Rules live in deck.js (cards), map.js (review load, items), world.js (worlds, castles); audio in sound.js.
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG, firmCount } from './deck.js';
 import { Sound } from './sound.js';
-import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope } from './map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, setLeftOutKinds, startTile } from './world.js';
+import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope, setHardness } from './map.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
 import { STORM, indexForms, formDone, hereOf, stormOf, stormBlocks, stormRelease, stormTick, StormRun, settleStorm } from './storm.js';
@@ -173,6 +173,7 @@ async function boot() {
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
     if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
+    if (qs.get('triage') === 'tile') TRIAGE.sort = false;              // test-only: the tile word list instead of the world's post office
     if (qs.get('theme') === 'off') CFG.themeOption = false;            // test-only: wrong answers as before the same-theme choice
     G.ix = indexWorlds(doc); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
     G.dataNote = doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
@@ -184,6 +185,7 @@ async function boot() {
     await G.sync.init();
   }
   try { const r = await fetch('data/difficulty.json'); if (r.ok) G.hard = (await r.json()).score; } catch { /* no table: random checks */ }
+  if (G.hard) setHardness((id) => G.hard[id]);                       // the world's checks take the hardest passed words
   await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   if (ITEM_TIERS_FROM) await loadSprites('assets/postal/item-tiers/sprites.svg');
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
@@ -308,6 +310,7 @@ function today(id, msg = '', wid = null) {
   const ev = G.stormEv && G.stormEv.pid === id && G.stormEv.wid === w.id ? G.stormEv : null; G.stormEv = null;   // what the last run did to the whirlwind, shown once
   const sw = STORM.on ? stormOf(st, G.ix) : null; const storm = sw && sw.wid === w.id ? sw : null; const held = stormBlocks(st, w.id, G.ix);
   if (ev && ev.event === 'caught' && held && !v.bat.full) return caught();
+  const postKey = id + '|' + w.id; if (v.sort?.left && !G.readonly && !v.bat.full && !held && !msg && !(G.postShown || (G.postShown = new Set())).has(postKey)) { G.postShown.add(postKey); return postOffice(); }
   const near = localFrontier(w, st, v);
   const at = (n) => `left:${n.x / 10}%;top:${n.y / 6}%`;
   const place = (n, inner, label, status, extra = '') => `<button class="node ${status} ${extra}" data-act="node" data-id="${esc(n.id)}" style="${at(n)}" aria-label="${esc(label)}">${inner}${label ? `<span class="lbl">${esc(label)}</span>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`;
@@ -344,7 +347,7 @@ function today(id, msg = '', wid = null) {
   ${firstTileHint ? '<p class="first-tile-hint">봉투 하나를 골라 눌러 봐!</p>' : ''}
   <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${!FAST && v.bat.full ? anim('bat-a','bat-b',48,'flying-bats') : ''}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
   <p class="msg" id="msg">${esc(hint)}</p>
-  <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
+  <div class="dock">${v.sort?.left ? dock('post', big('post-office'), `우체국 편지 ${v.sort.left}`, v.bat.full ? 'blocked' : 'open', 'post') : ''}${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
     ${v.review.present ? dock('review', spr('envelope', 48), `복습 ${v.review.count}장`, v.bat.full ? 'blocked' : 'open') : ''}
     ${dock('bonus', `<svg class="spr" width="48" height="48" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`, '번개 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}</div>
@@ -376,6 +379,7 @@ function nodeClick(id) {
   const st = G.st; const v = worldView(G.ix, G.world, st, todayISO()); const out = (t) => { const e = $('#msg'); if (e) e.textContent = t; };
   if (id === 'bat') return v.bat.full ? start('bat') : out('박쥐 게이지가 아직 안 찼어요');
   if (v.bat.full) return out(MSG.blocked);                  // a full gauge: the test comes first
+  if (id === 'post') return v.sort?.left ? postOffice() : out('편지를 모두 나눴어요');
   if (id === 'bonus') { if (v.bonus.status === 'open') return startLightning(); return out(v.bonus.status === 'used' ? MSG.used : MSG.bonusLocked); }
   // Caught by the whirlwind: the tiles, houses, monster and review of this world lead to the storm run (castles do not wait).
   const held = stormBlocks(st, G.world.id, G.ix);
@@ -847,8 +851,36 @@ async function start(nodeId) {
     const seen = deviceSeen();
     if (!seen.tileStarted) { seen.tileStarted = true; writeDevice(); }
   }
+  if (node.kind === 'sort') return postOffice();          // the world's words are not all looked at yet: the post office first
   if (node.triage) return triage(node, rng);               // new words on this tile: the child first marks the unknown ones
   return begin(node, rng);
+}
+// The world's post office (world.sortView, map.TRIAGE.sort): the world's words 10 at a time, as envelopes. The child taps the
+// ones they can read (they go to the mailbox: passed, checked now and then in tile runs); the others go in the courier's bag
+// and are taught in the tile runs. Spellings only, with the sound on a tap. Every word is looked at before any tile starts.
+function postOffice() {
+  const w = G.world, sv = sortView(w, G.st); if (!sv.left) return today(G.pid);
+  G.view = 'sort'; G.sorting = { wid: w.id, page: sv.page, known: new Set() }; band(false); hideBanner(); clearPresentation();
+  const seen = sv.total - sv.left, last = sv.left <= sv.page.length;
+  const say = seen ? `남은 편지 ${sv.left}통. 읽을 수 있는 주소만 눌러 우체통에 넣어요.` : `${w.name}로 갈 편지가 도착했어요! 주소(영어 단어)를 읽을 수 있으면 눌러서 우체통에 넣어요. 처음 보는 단어는 그대로 두면 배달 가방에 들어가고, 마을에서 같이 배워요.`;
+  $('#app').innerHTML = `<div class="page post"><button class="back" data-act="today" aria-label="지도로">‹</button>
+  <div class="post-head"><b>${esc(w.name)} 우체국</b><div class="post-bar" role="progressbar" aria-label="나눈 편지" aria-valuemin="0" aria-valuemax="${sv.total}" aria-valuenow="${seen}"><i style="width:${Math.round(seen / sv.total * 100)}%"></i></div><b id="post-count">${seen}/${sv.total}</b></div>
+  ${!seen && w.intro ? `<p class="post-intro">${esc(w.intro)}</p>` : ''}<p class="post-say" id="post-say">${esc(say)}</p>
+  <div class="letters">${sv.page.map((id) => `<button class="letter" data-act="sortk" data-id="${esc(id)}" aria-pressed="false"><span class="letter-word">${esc(G.byId[id].form)}</span><span class="letter-mark">${spr('c014-mailbox', 24)}</span></button>`).join('')}</div>
+  <div class="post-bins"><span class="bin known">${spr('c014-mailbox', 48)}<span>읽을 수 있어요 <b id="bin-k">0</b></span></span><span class="bin learn">${courier('idle', 48)}<span>같이 배울래요 <b id="bin-l">${sv.page.length}</b></span></span>
+  <button class="go" data-act="sortgo" id="sortgo">${last ? '다 나눴어요! 출발' : '다음 편지 10통'}</button></div></div>`;
+}
+function sortMark(b) {
+  const t = G.sorting; if (!t || G.view !== 'sort') return; const id = b.dataset.id; const on = !t.known.has(id);
+  if (on) t.known.add(id); else t.known.delete(id); b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+  $('#bin-k').textContent = t.known.size; $('#bin-l').textContent = t.page.length - t.known.size;
+  const w = G.byId[id]; G.sound.unlock().then(() => G.sound.play(w.id, w.form)).catch(() => {});   // the sound is a help only
+}
+function sortGo() {
+  const t = G.sorting; if (!t || G.view !== 'sort' || G.world.id !== t.wid) return; G.sorting = null;
+  if (G.readonly) return today(G.pid);
+  sortPage(G.st, G.world, [...t.known], todayISO(), Date.now()); save(); G.sound.sfxPlay('step');
+  return sortView(G.world, G.st).left ? postOffice() : today(G.pid, '편지를 모두 나눴어요! 마을로 배달을 떠나요');
 }
 // The tile's new words as spellings only (no meaning, no picture: nothing is answered before it is asked). Tapped = unknown.
 function triage(node, rng) {
@@ -1272,6 +1304,8 @@ async function onClick(e) {
     case 'no': return onJudge(false);
     case 'opt': return onPick(Number(b.dataset.i));
     case 'next': return next();
+    case 'sortk': return sortMark(b);
+    case 'sortgo': return sortGo();
     case 'tmark': return triageMark(b);
     case 'tgo': return triageGo();
     case 'hear': await G.sound.unlock(); return speak(true);
