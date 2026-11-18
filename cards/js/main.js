@@ -22,8 +22,31 @@ const BAND_MUSIC = { P1: 'meadow', P2: 'sea', P3: 'sky' };
 // A sprite from the inlined sheet (16-grid sprites at an integer scale: px = 16 x n).
 const spr = (id, px = 64, cls = '') => `<svg class="spr ${cls}" width="${px}" height="${px}" viewBox="0 0 16 16" aria-hidden="true"><use href="#${id}"/></svg>`;
 const anim = (a, b, px = 64, cls = '') => `<span class="anim2 ${cls}">${spr(a, px)}${spr(b, px)}</span>`;
+// Pixel sprites are drawn as many small rects. iPad Safari repaints each one, so every symbol made only of plain rects is
+// painted once in order onto a pixel grid and rebuilt as one path per colour: the same picture with far fewer elements.
+const SVGNS = 'http://www.w3.org/2000/svg';
+function flattenSymbol(sym) {
+  const kids = [...sym.children]; if (kids.length < 6) return;
+  const rows = new Map();                                                                  // y -> Map(x -> fill), painted in document order
+  for (const r of kids) {
+    if (r.tagName.toLowerCase() !== 'rect' || r.attributes.length !== 5) return;          // anything else (paths, opacity, transforms): keep as drawn
+    const x = +r.getAttribute('x'), y = +r.getAttribute('y'), w = +r.getAttribute('width'), h = +r.getAttribute('height'), fill = r.getAttribute('fill');
+    if (![x, y, w, h].every(Number.isInteger) || !fill || w < 0 || h < 0 || w * h > 40000) return;
+    for (let j = y; j < y + h; j++) { let row = rows.get(j); if (!row) rows.set(j, (row = new Map())); for (let k = x; k < x + w; k++) row.set(k, fill); }
+  }
+  const paths = new Map();
+  for (const [y, row] of rows) {
+    const xs = [...row.keys()].sort((a, b) => a - b); let i = 0;
+    while (i < xs.length) { const x0 = xs[i], fill = row.get(x0); let n = 1; while (i + n < xs.length && xs[i + n] === x0 + n && row.get(xs[i + n]) === fill) n++;
+      paths.set(fill, (paths.get(fill) || '') + `M${x0} ${y}h${n}v1h-${n}z`); i += n; }
+  }
+  sym.textContent = '';
+  for (const [fill, d] of paths) { const p = document.createElementNS(SVGNS, 'path'); p.setAttribute('fill', fill); p.setAttribute('d', d); sym.appendChild(p); }
+}
 async function loadSprites(url = 'assets/postal/sprites.svg') {
-  try { const r = await fetch(url); if (!r.ok) return; const t = await r.text(); const d = document.createElement('div'); d.className = 'sheet'; if (url === 'assets/postal/sprites.svg') d.id = 'sheet'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; d.innerHTML = t; document.body.prepend(d); }
+  try { const r = await fetch(url); if (!r.ok) return; const t = await r.text(); const d = document.createElement('div'); d.className = 'sheet'; if (url === 'assets/postal/sprites.svg') d.id = 'sheet'; d.setAttribute('aria-hidden', 'true'); d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden'; d.innerHTML = t;
+    if (qs.get('flat') !== '0') for (const sym of d.querySelectorAll('symbol')) { try { flattenSymbol(sym); } catch { /* keep the original drawing */ } }
+    document.body.prepend(d); }
   catch { /* the game still works with plain boxes if the sheet is missing */ }
 }
 const LT_SECONDS = FAST ? 3 : 60;

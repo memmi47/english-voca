@@ -19,7 +19,7 @@
 Standard library only. Family LAN use; no authentication.
 (Code carried over from the earlier game's tools/serve.py, which was removed; last version in commit 8acc013.)
 """
-import argparse, datetime, json, os, re, threading, time
+import argparse, datetime, gzip, io, json, os, re, threading, time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from functools import partial
 
@@ -119,8 +119,26 @@ class H(SimpleHTTPRequestHandler):
         return self._json(200, {'rev': rev + 1})
 
     # ---- static files with Range ----
+    # Text files (the 2 MB card list, sprite sheets, scripts) are sent gzip-compressed when the browser accepts it: on an iPad
+    # over Wi-Fi this is most of the start-up time. Compressed bytes are kept in memory per file version; ETag revalidation
+    # (Cache-Control: no-cache) answers 304 when nothing changed, so an update is still seen at once.
+    GZIP_TYPES = ('.json', '.svg', '.js', '.css', '.html', '.tsv', '.txt')
+    _gz = {}
+    def _send_gzip(self, path):
+        st = os.stat(path); tag = f'"{st.st_mtime_ns:x}-{st.st_size:x}-gz"'
+        if self.headers.get('If-None-Match') == tag:
+            self.send_response(304); self.send_header('ETag', tag); self.send_header('Vary', 'Accept-Encoding'); self.end_headers(); return None
+        key = (path, st.st_mtime_ns, st.st_size); body = H._gz.get(key)
+        if body is None:
+            with open(path, 'rb') as f: body = gzip.compress(f.read(), 6)
+            H._gz = {k: v for k, v in H._gz.items() if k[0] != path}; H._gz[key] = body
+        self.send_response(200); self.send_header('Content-Type', self.guess_type(path)); self.send_header('Content-Encoding', 'gzip')
+        self.send_header('Content-Length', str(len(body))); self.send_header('ETag', tag); self.send_header('Vary', 'Accept-Encoding')
+        self.end_headers(); return io.BytesIO(body)
     def send_head(self):
         rng = self.headers.get('Range'); path = self.translate_path(self.path)
+        if not rng and os.path.isfile(path) and path.endswith(H.GZIP_TYPES) and 'gzip' in (self.headers.get('Accept-Encoding') or ''):
+            return self._send_gzip(path)
         if not rng or not os.path.isfile(path):
             return super().send_head()
         m = re.match(r'bytes=(\d*)-(\d*)$', rng.strip())
