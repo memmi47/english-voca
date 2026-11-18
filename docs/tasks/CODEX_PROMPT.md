@@ -236,3 +236,16 @@ docs/ORCHESTRATION.md, docs/reviews/ASTRA-6.2.md, docs/DATA_SAFETY.md 2절의 "�
 끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 협동 목표 값과 근거, 화면 캡처 경로, 확인하지 못한 것.
 ```
 
+## C-021 (2026-11-18, Astra에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-021.md 를 수행한다.
+- Astra가 먼저 모자·가방·옷의 모양 안과 시안 한 장(칸별 아이템을 아들·딸에게 입힌 카드 크기·지도 크기 그림, 모자 실루엣 한 줄)을 만들어 PR 설명과 카드 결과에 올리고 "사용자 확인 대기"로 멈춘 뒤, 이 채팅에서 사용자에게 시안 경로를 알리고 확인을 받는다. 확인을 받은 뒤에만 구현한다.
+- 그림 생성기와 그 출력, 그림 검사 도구, tests/cards_e2e.cjs 만 고친다. 규칙 코드, 화면 동작, 저장 형식, 저장 키, 아이템 id·이름·여는 조건은 바꾸지 않는다.
+- 같은 칸의 모자는 서로 다른 모양 종류에 하나씩만 속한다. 새 그림은 모두 새로 그리고 다른 게임을 흉내 내지 않는다. 이모지를 그림으로 쓰지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 브랜치 codex/item-shapes 로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 반드시 push 하고 PR을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다. 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 모자별 모양 종류·높이·폭 표, 가장 비슷한 쌍의 수치(전후), 각 명령의 통과 수, 시안·캡처 경로, 확인하지 못한 것.
+```
+
