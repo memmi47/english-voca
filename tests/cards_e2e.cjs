@@ -107,12 +107,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('verification results are kept for the parent view', son.runs[1].verifies >= 1 && son.verify.includes(false));
   ok('a caught false claim still lets the tile clear once every word was met', /칸 클리어/.test(await page.textContent('h1')));
 
-  // 4. the other child is untouched; parent view lists the runs; no sibling comparison
+  // 4. the other child is untouched; parent view lists the runs; home privacy mode hides all progress numbers
   ok('sibling record untouched', (await state(page, 'daughter')) === null);
   await toMap(page); await page.click('[data-act=home]'); await page.click('[data-act=parent]');
   ok('parent view shows runs, tile names, the check accuracy and stars', (await page.$$('.parent table tr')).length >= 3 && /확인 정답률/.test(await page.textContent('.parent')) && /별 \d+/.test(await page.textContent('.parent')) && /A1/.test(await page.textContent('.parent table')));
+  await page.click('[data-act=home-progress]');
   await page.click('[data-act=home]');
-  ok('home screen shows no numbers (no sibling comparison)', !/\d/.test(await page.textContent('.profiles')));
+  ok('home screen shows no numbers when the parent hides progress', !/\d/.test(await page.textContent('.profiles')));
+  await page.click('[data-act=parent]'); await page.click('[data-act=home-progress]');
 
   // 5. day 2: the reviews of two tiles pile up into an optional monster; it does not block the roads
   const d2 = await open(ctx, 'today=2026-11-13&triage=off&seed=6&sound=off&fast=1');
@@ -749,6 +751,91 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await gp.screenshot({path:'/tmp/c013-screens/continent-gates.png',animations:'disabled'});
   await gp.close();await gatectx.close();
 
+  // C-014 checks with real motion enabled and isolated presentation preferences.
+  const homeCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const hm = await open(homeCtx, 'today=2026-11-18&triage=off&sound=off&seed=9');
+  const expectedHome = await hm.evaluate(() => {
+    const expected = {};
+    for (const [i,id] of ['son','daughter'].entries()) {
+      const ids = window.__cards.words.slice(0,4+i).map(w => w.id);
+      const words = Object.fromEntries(ids.map((word,j) => [word, { st: j === 1 ? 'review' : 'done', step: j === 1 ? 0 : 2, firstDay: j === 0 ? '2026-11-15' : '2026-11-16', lastDay:'2026-11-18' }]));
+      const record = JSON.stringify({ v:3,id,words,runs:[{day:'2026-11-16',reason:'done'},{day:'2026-11-17',reason:'left'}] });
+      localStorage.setItem('cards.v0.p.'+id,record);
+      expected[id] = record;
+    }
+    return expected;
+  });
+  await hm.reload(); await hm.waitForSelector('.profiles'); await hm.evaluate(() => document.fonts.ready);
+  fs.mkdirSync('/tmp/c014-screens',{recursive:true});
+  await hm.screenshot({path:'/tmp/c014-screens/home.png'});
+  await hm.click('[data-act=parent]'); await hm.click('[data-act=home]');
+  ok('C014: current silver words and Monday-first activity match each child record; home is read-only', await hm.evaluate(expected => {
+    return ['son','daughter'].every((id,i) => {
+      const panel = document.querySelector(`.profile[data-id=${id}]`);
+      return panel.querySelector('.home-count b').textContent === String(3+i) &&
+        panel.querySelector('.home-week').textContent === '이번 주 +' + (2+i) &&
+        [...panel.querySelectorAll('.week-dots span')].map(x=>x.dataset.played).join(',') === 'true,false,false,false,false,false,false' &&
+        expected[id] === localStorage.getItem('cards.v0.p.'+id);
+    }) && document.querySelector('.home-goal').textContent.includes('+5 / 목표 14') &&
+      !/1등|왕관|이겼다/.test(document.querySelector('.home-postal').textContent);
+  },expectedHome));
+  await hm.click('[data-act=parent]'); await hm.click('[data-act=home-progress]'); await hm.click('[data-act=home]');
+  ok('C014: parent can hide home scores for both children', await hm.locator('.home-count,.home-week,.home-goal,.week-dots').count()===0);
+  await hm.click('[data-act=parent]'); await hm.click('[data-act=reduce-motion]'); await hm.click('[data-act=home]');
+  ok('C014: reduced motion stops the home courier pulse', await hm.locator('.home-courier').first().evaluate(el=>getComputedStyle(el).animationName==='none'));
+  await hm.close(); await homeCtx.close();
+
+  const motionCtx = await browser.newContext({ viewport:{width:1180,height:820}, hasTouch:true });
+  const motion = await open(motionCtx,'today=2026-11-18&triage=off&sound=off&seed=9');
+  await motion.click('[data-act=pick][data-id=son]');
+  await motion.waitForSelector('.world');
+  await motion.evaluate(()=>document.fonts.ready);
+  await motion.screenshot({path:'/tmp/c014-screens/world.png'});
+  const skipped = await motion.evaluate(() => {
+    const choice = document.querySelector('[data-act=node][data-id=A1]');
+    choice.click();
+    const move = document.querySelector('#rider').getAnimations().find(a=>a.playState==='running');
+    choice.click();
+    return !!move && move.playState==='idle';
+  });
+  await motion.waitForSelector(READY);
+  ok('C014: a tile tap walks the route and a second tap skips the travel', skipped && await motion.evaluate(()=>window.__cards.node?.unit==='A1'));
+  const throwResponse = await motion.evaluate(async () => {
+    const g=window.__cards;
+    g.run.rng=()=>.99;
+    const i=g.run.i;
+    const started=performance.now();
+    document.querySelector('.act.yes').click();
+    const fx=!!document.querySelector('.mail-flight');
+    return new Promise(resolve=>{
+      const frame=()=>{
+        const enabled=document.querySelector('.act.yes:not([disabled]),.opt:not([disabled])');
+        if (enabled && g.run.i===i+1) resolve({fx,t:performance.now()-started});
+        else if (performance.now()-started>=100) resolve({fx,t:-1});
+        else requestAnimationFrame(frame);
+      };
+      frame();
+    });
+  });
+  ok('C014: mail flies while the next card is accepting input within 100ms', throwResponse.fx && throwResponse.t>=0 && throwResponse.t<100, JSON.stringify(throwResponse));
+  await motion.screenshot({path:'/tmp/c014-screens/throw.png'});
+  await motion.close(); await motionCtx.close();
+  const castleMotionCtx = await browser.newContext({viewport:{width:1180,height:820}});
+  const castleMotion = await open(castleMotionCtx,'today=2026-11-18&triage=off&sound=off&seed=9');
+  await castleMotion.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'); const {ensureMap}=await import('./js/map.js');
+    const st=newState('son'), m=ensureMap(st); m.at='d1-01';
+    const w=window.__cards.ix.byId['d1-01'];
+    for (const n of w.map.nodes.filter(n=>n.kind==='tile')) for (const id of n.words) st.words[id]={st:'done'};
+    localStorage.setItem('cards.v0.p.son',JSON.stringify(st));
+  });
+  await castleMotion.click('[data-act=pick][data-id=son]'); await startNode(castleMotion,'castle');
+  await castleMotion.waitForSelector('.guardian-entry'); await castleMotion.screenshot({path:'/tmp/c014-screens/castle.png'});
+  const skipEntry = castleMotion.getByRole('button',{name:'등장 장면 건너뛰기'});
+  await skipEntry.evaluate(b=>b.click());
+  ok('C014: a castle entrance can be skipped while choices remain enabled', await castleMotion.locator('.guardian-entry').count()===0 && await castleMotion.locator('.opt:not([disabled])').count()>0);
+  await castleMotion.close();await castleMotionCtx.close();
+
   // C-015. Real atlas geometry, the gate outside the map, shared courier size and option typography.
   const visual = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const vp = await visual.newPage();
@@ -864,6 +951,101 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   }
   ok('C015: the catalogue’s longest glosses wrap and all three options have equal height', longChoicesFit);
   await visual.close();
+
+  // C-016 wardrobe: each slot is earned from a different kind of progress.
+  const gearCtx=await browser.newContext({viewport:{width:1180,height:820}});
+  const gearPage=await gearCtx.newPage();
+  gearPage.on('pageerror',e=>errs.push(String(e)));
+  await gearPage.goto(BASE+'/?today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+  await gearPage.waitForSelector('.profiles');
+  await gearPage.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+    const g=window.__cards,s=newState('son'),m=ensureMap(s);
+    m.at='p1-01';m.stars=12;
+    m.worlds['p1-01']={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
+    m.conts.c1={castle:'2026-11-17'};
+    for(const w of g.words.slice(0,500))s.words[w.id]={st:'done'};
+    localStorage.setItem('cards.v0.p.son',JSON.stringify(s));
+    localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'leaf-cap'}));
+  });
+  await gearPage.click('[data-act=pick][data-id=son]');
+  await gearPage.waitForSelector('#world[data-world=p1-01]');
+  const out016='/tmp/c016-screens';
+  fs.mkdirSync(out016,{recursive:true});
+  await gearPage.screenshot({path:out016+'/stamps.png',animations:'disabled'});
+  const beforeGear=await gearPage.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  ok('C016: revised first-world stamps and the earned legacy outfit are rendered',await gearPage.evaluate(()=>{
+    const stamps=[...document.querySelectorAll('#world .gate-stamp')].map(e=>e.closest('[data-id]').dataset.id);
+    return stamps.includes('p1-01-detour-2-3')&&stamps.includes('p1-01-detour-3-3')&&
+      document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle';
+  }));
+  await gearPage.click('[data-act=wardrobe]');
+  await gearPage.click('[data-act=gear-tab][data-slot=hat]');
+  const hatLocked=await gearPage.locator('[data-act=gear][data-id=p1-04]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=p1-01]');
+  const colorLocked=await gearPage.locator('[data-act=gear-color][data-color="2"]').isDisabled();
+  await gearPage.click('[data-act=gear-color][data-color="1"]');
+  ok('C016: a world castle opens its hat only, star thresholds select color, and the legacy coat stays equipped',
+    hatLocked&&colorLocked&&await gearPage.evaluate(()=>{
+      const look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+      return look.slots.hat.id==='p1-01'&&look.slots.hat.color===1&&look.outfit==='leaf-cap'&&
+        !!document.querySelector('#rider use[href="#c016-coat-legacy-leaf-cap-0"]');
+    }));
+  await gearPage.screenshot({path:out016+'/wardrobe.png',animations:'disabled'});
+  await gearPage.click('[data-act=gear-tab][data-slot=ride]');
+  const rideLocked=await gearPage.locator('[data-act=gear][data-id=c2]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=c1]');
+  await gearPage.click('[data-act=gear-tab][data-slot=pet]');
+  const petLocked=await gearPage.locator('[data-act=gear][data-id=lizard]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=snail]');
+  await gearPage.click('#wardrobe .sec[data-act=look-close]');
+  ok('C016: ride and pet use separate slots, 4 rider frames and 2 pet frames, without writing child progress',
+    rideLocked&&petLocked&&await gearPage.evaluate(before=>{
+      const rider=document.querySelector('#rider');
+      return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
+        rider.querySelector('.rider-body').dataset.frames==='4'&&rider.querySelector('.rider-pet').dataset.frames==='2'&&
+        !!rider.querySelector('use[href="#c016-ride-c1-idle"]')&&getComputedStyle(rider).pointerEvents==='none';
+    },beforeGear));
+  await gearPage.screenshot({path:out016+'/rider-ride-pet.png',animations:'disabled'});
+  await gearPage.evaluate(()=>{
+    const key='cards.v0.p.son',s=JSON.parse(localStorage.getItem(key));
+    s.words[Object.keys(s.words)[0]].st='learn';
+    localStorage.setItem(key,JSON.stringify(s));
+  });
+  await gearPage.reload();
+  await gearPage.waitForSelector('.profiles');
+  await gearPage.click('[data-act=pick][data-id=son]');
+  await gearPage.waitForSelector('#rider');
+  await gearPage.click('[data-act=wardrobe]');
+  await gearPage.click('[data-act=gear-tab][data-slot=pet]');
+  ok('C016: the earned pet stays unlocked after the known-word count drops and the page reloads',
+    await gearPage.locator('[data-act=gear][data-id=snail]').isEnabled()&&
+    await gearPage.$eval('#rider use[href="#c016-pet-snail-0"]',e=>!!e));
+  await gearPage.click('#wardrobe .sec[data-act=look-close]');
+  const mounted = await gearPage.evaluate(() => {
+    const choice = document.querySelector('#world .node.open.nearby');
+    const rider = document.querySelector('#rider');
+    choice.click();
+    const move = rider.getAnimations()[0];
+    const pet = rider.querySelector('.rider-pet').getAnimations()[0];
+    if (!move || !pet) return null;
+    for (const animation of [move, pet]) {
+      animation.pause();
+      animation.currentTime = animation.effect.getTiming().duration * .6;
+    }
+    const follows = pet.effect.getKeyframes().some(frame => frame.transform !== 'translate(0px, 0px)');
+    const mountedArt = !!rider.querySelector('use[href="#c016-ride-c1-move"]') &&
+      !!rider.querySelector('use[href="#c016-body-teal-walk3"]') && rider.classList.contains('mounted');
+    return { id: choice.dataset.id, follows, mountedArt };
+  });
+  if (mounted) {
+    await gearPage.screenshot({path:out016+'/mounted-pet.png'});
+    await gearPage.locator(`[data-act=node][data-id="${mounted.id}"]`).evaluate(button => button.click());
+    await gearPage.waitForSelector(READY);
+  }
+  ok('C016: the courier rides while moving, the pet follows the previous stop, and a second tap still opens the tile',
+    mounted?.follows && mounted.mountedArt && await gearPage.evaluate(id=>window.__cards.node?.unit===id,mounted.id));
+  await gearCtx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
