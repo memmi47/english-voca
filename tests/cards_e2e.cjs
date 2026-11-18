@@ -28,11 +28,19 @@ async function open(ctx, q, sync = false) {
 const state = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('cards.v0.p.' + i)), id);
 const cur = (page) => page.evaluate(() => { const r = window.__cards.run; const it = r && r.current; return it ? { id: it.id, form: it.form, role: it.role, verifying: !!it.verifying, ans: it.options ? it.options.findIndex((o) => o.id === it.id) : -1 } : null; });
 const nodeStatus = (page, id) => page.$eval(`[data-act=node][data-id=${id}]`, (b) => [...b.classList].filter(c=>['open','cleared','locked','blocked','used','done'].includes(c)).join(' '));
+const nextCard = page => page.locator('[data-act=next]');
+async function acknowledgeMeaning(page) {
+  if (await nextCard(page).isVisible()) {
+    await page.locator('#card.back.learn').waitFor();
+    await nextCard(page).click();
+  }
+}
 // A node is pressed on its picture, like a finger would.
 async function startNode(page, id) { await page.click(`[data-act=node][data-id=${id}]`); await page.waitForSelector(READY, { timeout: 8000 }); }
 async function answer(page, sel) {
   const i0 = await page.evaluate(() => window.__cards.run.i);
   await page.click(sel);
+  await acknowledgeMeaning(page);
   await page.waitForFunction((n) => { const r = window.__cards.run; return !r || r.i > n || (r.current && r.current.verifying && document.querySelector('.opt:not([disabled])')); }, i0, { timeout: 8000 });
 }
 // Plays the current run to the end screen. claim(id) = what the child says; real knowledge decides the checks.
@@ -74,6 +82,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const sel0 = KNOWN.has(c0.id) ? '.act.yes' : '.act.no';
   const shown = await page.evaluate((sel) => { document.querySelector(sel).click(); return new Promise((res) => setTimeout(() => res(document.querySelector('#card').textContent), 5)); }, sel0);
   ok('meaning appears only after the child answered', shown.includes(w0.ko), shown);
+  await acknowledgeMeaning(page);
   await page.waitForFunction(() => window.__cards.run.i >= 1);
   const seen = await play(page); await page.waitForSelector('.tiles');
   let son = await state(page, 'son'); const a1 = TILE('A1').map((id) => WORDS.find((w) => w.id === id));
@@ -82,7 +91,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('unknown words were learned: 1-day review', a1.filter((w) => !KNOWN.has(w.id)).every((w) => son.words[w.id].st === 'review' && son.words[w.id].step === 0 && son.words[w.id].due === '2026-11-13'));
   ok('unknown words came back in the same run, last time as a check', seen.some((x) => x.role === 'relearn' && x.form === 'check'), 'cards=' + seen.length);
   ok('run record has timing, counts and the tile', son.runs.length === 1 && son.runs[0].tag === 'A1' && son.runs[0].fresh === 10 && son.runs[0].wall > 0 && son.runs[0].stars > 0);
-  ok('end screen: tile cleared, stars, cards', /칸 클리어/.test(await page.textContent('h1')) && /\+\d+/.test(await page.textContent('.gain')) && /넘긴 카드/.test(await page.textContent('.tiles')));
+  ok('end screen: tile cleared, stars, cards', /칸 클리어/.test(await page.textContent('h1')) && /\+\d+/.test(await page.textContent('.gain')) &&
+    await page.textContent('.result-cards span') === '푼 카드' && Number(await page.textContent('.result-cards b')) === son.runs[0].cards);
   await toMap(page);
   ok('cleared tile gets a flag; the next tile on the road opens; stars are shown', /\bcleared\b/.test(await nodeStatus(page, 'A1')) && /\bopen\b/.test(await nodeStatus(page, 'A2')) && /[1-9]/.test(await page.textContent('.maphud .chip:nth-of-type(1)')));
   ok('sound events fired during the run (step, study music, flip, jingle, stamp)', await page.waitForFunction(() => { const l = window.__cards.sound.seen; return ['step', 'scene:study', 'flip', 'jingle:clear', 'stamp', 'scene:meadow'].every((k) => l.has(k)); }, null, { timeout: 3000 }).then(() => true, () => false));
@@ -102,6 +112,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const snap = await page.evaluate((i) => { const r = window.__cards.run; const id = r.current.id; document.querySelector('.opt[data-i="' + i + '"]').click();
     return { combo: r.combo, goon: !!document.querySelector('#goon'), st: window.__cards.st.words[id].st }; }, (a + 1) % 3);
   ok('wrong check: word goes to learning, combo resets, "next" is offered', snap.st === 'learn' && comboBefore >= 1 && snap.combo === 0 && snap.goon, JSON.stringify(snap));
+  await nextCard(page).click();
   await play(page, () => true); await page.waitForSelector('.tiles');
   son = await state(page, 'son');
   ok('verification results are kept for the parent view', son.runs[1].verifies >= 1 && son.verify.includes(false));
@@ -669,6 +680,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const fixedMonster = await fb.evaluate(()=>({id:window.__cards.displayBoss.id,n:window.__cards.displayBoss.N,hp:window.__cards.displayBoss.hp,svg:document.querySelector('#boss use').getAttribute('href')}));
   const missHP = await fb.evaluate(()=>{const g=window.__cards;document.querySelector('[data-act=no]').click();return {hp:g.displayBoss.hp,down:document.querySelector('#boss').classList.contains('down'),hit:document.querySelector('#boss').classList.contains('hit')};});
   ok('C011: one labelled original monster starts at initial cards; unknown keeps HP and has no hit/down',fixedMonster.n===10 && fixedMonster.hp===10 && fixedMonster.svg==='#'+fixedMonster.id && missHP.hp===10 && !missHP.down && !missHP.hit && /몬스터 체력/.test(await fb.textContent('.monster-panel')));
+  await nextCard(fb).click();
   await fb.waitForFunction(()=>window.__cards.run.i>=1); await fb.waitForSelector(READY);
   const hpAnswer = await fb.evaluate(()=>{const g=window.__cards;g.run.rng=()=>.99;g.run.boss.hp=1;g.run.items.flame=true;document.querySelector('[data-act=yes]').click();return {hp:g.displayBoss.hp,id:g.displayBoss.id,idx:g.run.boss.idx,floater:document.querySelector('#floater').textContent};});
   ok('C011: correct answer removes one display HP, even with flame and internal boss rollover',hpAnswer.hp===9 && hpAnswer.id===fixedMonster.id && hpAnswer.floater==='-1' && hpAnswer.idx>=1,JSON.stringify(hpAnswer));
@@ -774,14 +786,15 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     return ['son','daughter'].every((id,i) => {
       const panel = document.querySelector(`.profile[data-id=${id}]`);
       return panel.querySelector('.home-count b').textContent === String(3+i) &&
-        panel.querySelector('.home-week').textContent === '이번 주 +' + (2+i) &&
+        panel.querySelector('.home-met').textContent === '만난 단어 ' + (4+i) &&
+        panel.querySelector('.home-week').textContent === `이번 주 새 단어 +${3+i} · 익힌 +${2+i}` &&
         [...panel.querySelectorAll('.week-dots span')].map(x=>x.dataset.played).join(',') === 'true,false,false,false,false,false,false' &&
         expected[id] === localStorage.getItem('cards.v0.p.'+id);
-    }) && document.querySelector('.home-goal').textContent.includes('+5 / 목표 14') &&
+    }) && document.querySelector('.home-goal').textContent.includes('새 단어 +7 / 목표 42') &&
       !/1등|왕관|이겼다/.test(document.querySelector('.home-postal').textContent);
   },expectedHome));
   await hm.click('[data-act=parent]'); await hm.click('[data-act=home-progress]'); await hm.click('[data-act=home]');
-  ok('C014: parent can hide home scores for both children', await hm.locator('.home-count,.home-week,.home-goal,.week-dots').count()===0);
+  ok('C014: parent can hide home scores for both children', await hm.locator('.home-count,.home-met,.home-week,.home-goal,.week-dots').count()===0);
   await hm.click('[data-act=parent]'); await hm.click('[data-act=reduce-motion]'); await hm.click('[data-act=home]');
   ok('C014: reduced motion stops the home courier pulse', await hm.locator('.home-courier').first().evaluate(el=>getComputedStyle(el).animationName==='none'));
   await hm.close(); await homeCtx.close();
@@ -1379,6 +1392,152 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     couldMove.count===6&&couldMove.active===6&&noEarlySpark&&sonIdentity&&daughterIdentity&&
     mediaQuiet.count===6&&mediaQuiet.active===0&&deviceQuiet.count===6&&deviceQuiet.active===0);
   await rewards.close();
+
+  // C-020: exercise the real pacing and first-use screens at an iPad landscape size.
+  const firstPlayOut = '/tmp/c020-screens';
+  fs.mkdirSync(firstPlayOut, { recursive:true });
+  const captureFirstPlay = (page, name) => page.screenshot({ path:path.join(firstPlayOut, name+'.png'), animations:'disabled' });
+  const firstPlayCtx = await browser.newContext({ viewport:{ width:1024, height:768 }, hasTouch:true, reducedMotion:'reduce' });
+  const pacing = await open(firstPlayCtx, 'today=2026-11-18&triage=off&sound=off&seed=5');
+  await pacing.tap('[data-act=pick][data-id=son]');
+  await startNode(pacing, 'A1');
+  const holdMeaning = async (page, input, name) => {
+    const position = () => page.evaluate(() => window.__cards.run?.i);
+    const before = await position(), {id} = await cur(page);
+    const {form,ko} = WORDS.find(word => word.id === id);
+    await page.tap(input);
+    await page.waitForSelector('#card.back.learn');
+    await sleep(5100);
+    const kept = await position() === before && await page.locator('#card.back .ko').textContent() === ko &&
+      await page.locator('#card.back .word').textContent() === form && await nextCard(page).isVisible();
+    if (name) await captureFirstPlay(page, name);
+    await nextCard(page).tap();
+    await page.waitForSelector(READY);
+    return kept && await position() === before+1;
+  };
+  const unknownId = (await cur(pacing)).id;
+  const unknownHeld = await holdMeaning(pacing, '.act.no', 'unknown-meaning');
+  await pacing.evaluate(() => { window.__cards.run.rng = () => 0; });
+  await pacing.tap('.act.yes');
+  await pacing.waitForSelector('.opt:not([disabled])');
+  const wrongHeld = await holdMeaning(pacing, `.opt[data-i="${((await cur(pacing)).ans+1)%3}"]`);
+  await pacing.tap('.act.yes');
+  await pacing.waitForSelector('.opt:not([disabled])');
+  const correctAt = await pacing.evaluate(() => window.__cards.run.i);
+  await pacing.tap(`.opt[data-i="${(await cur(pacing)).ans}"]`);
+  await pacing.waitForFunction(i => window.__cards.run.i === i+1, correctAt);
+  const correctAdvanced = !await nextCard(pacing).count();
+  const unknownRecord = (await state(pacing,'son')).words[unknownId];
+  await firstPlayCtx.close();
+
+  const hintCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true, reducedMotion:'reduce' });
+  const hintPage = await open(hintCtx, 'today=2026-11-18&sound=off&seed=31');
+  const firstHint = hintPage.getByText('봉투 하나를 골라 눌러 봐!', { exact:true });
+  await hintPage.tap('[data-act=pick][data-id=son]');
+  await firstHint.waitFor();
+  const hintAboveMap = await firstHint.evaluate(el => {
+    const box = el.getBoundingClientRect();
+    return box.top >= 0 && box.bottom <= innerHeight && box.bottom <= document.querySelector('#world').getBoundingClientRect().top;
+  });
+  const choices = await hintPage.locator('#world button.node.open').count();
+  await captureFirstPlay(hintPage, 'first-map-hint');
+  await hintPage.tap('[data-act=node][data-id=A1]');
+  await hintPage.waitForSelector('.twords');
+  for (const word of await hintPage.locator('.tw').all()) await word.tap();
+  const listNote = await hintPage.locator('#triage-note').evaluate(el => !el.hidden &&
+    el.textContent === '고른 단어를 배우고, 아는 단어도 몇 개 확인해요' &&
+    el.getBoundingClientRect().top >= document.querySelector('#tgo').getBoundingClientRect().bottom);
+  await hintPage.tap('#tgo');
+  await hintPage.waitForSelector('.act.see:not([disabled])');
+  const taughtHeld = await holdMeaning(hintPage, '.act.see');
+  ok('C020: unknown, wrong and first-taught meanings wait 5 seconds and require Next; a correct answer advances by itself',
+    unknownHeld && wrongHeld && taughtHeld && correctAdvanced &&
+    unknownRecord.st === 'learn' && unknownRecord.miss === '2026-11-18' && unknownRecord.misses === 1 && unknownRecord.lapses === 0);
+  await hintPage.reload();
+  await hintPage.tap('[data-act=pick][data-id=son]');
+  await hintPage.waitForSelector('#world');
+  const goneForSon = !await firstHint.count();
+  await hintPage.tap('[data-act=home]');
+  await hintPage.tap('[data-act=pick][data-id=daughter]');
+  await firstHint.waitFor();
+  ok('C020: all three envelopes are offered, the list explains its spot checks, and the hint persists only for the unstarted child',
+    hintAboveMap && choices === 3 && listNote && goneForSon && await firstHint.isVisible());
+  await hintCtx.close();
+
+  const giftCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true, reducedMotion:'reduce' });
+  const giftPage = await giftCtx.newPage();
+  giftPage.on('pageerror', e => errs.push(String(e)));
+  await giftPage.goto(BASE+'?today=2026-11-20&sound=off&storm=off&nosync=1&seed=5');
+  await giftPage.waitForSelector('.profiles');
+  await giftPage.evaluate(async () => {
+    const {newState} = await import('./js/deck.js'), {ensureMap} = await import('./js/map.js');
+    const s = newState('son'), map = ensureMap(s);
+    map.at = 'p1-05';
+    map.stars = 40;
+    for (const id of ['p1-01','p1-02','p1-03','p1-04']) map.worlds[id] = { castle:'2026-11-19', cleared:{}, stamps:{}, seen:'2026-11-19' };
+    for (const tile of window.__cards.ix.byId[map.at].map.nodes) for (const id of tile.words || []) s.words[id] = { st:'done', due:null };
+    localStorage.setItem('cards.v0.p.son', JSON.stringify(s));
+  });
+  await giftPage.tap('[data-act=pick][data-id=son]');
+  await giftPage.waitForSelector('#world[data-world=p1-05]');
+  await giftPage.tap('#world .node.castle.open');
+  await giftPage.waitForSelector(READY);
+  const examCount = await giftPage.evaluate(() => window.__cards.run.queue.length);
+  for (let i = 0; i < examCount; i++) {
+    await giftPage.waitForSelector('.opt:not([disabled])');
+    await answer(giftPage,`.opt[data-i="${(await cur(giftPage)).ans}"]`);
+  }
+  ok('C020: answering all 12 castle cards shows the exact correct/total and no skipped-card copy',
+    examCount === 12 && await giftPage.locator('h1').textContent() === '성을 깼어요!' &&
+    await giftPage.locator('.result-cards span').textContent() === '뜻을 맞힌 단어' &&
+    await giftPage.locator('.result-cards b').textContent() === '12개 / 12' &&
+    !/넘긴/.test(await giftPage.locator('.tiles').textContent()));
+  await captureFirstPlay(giftPage, 'castle-result');
+  const giftLink = giftPage.getByRole('button', { name:'도토리 허리주머니', exact:true });
+  const realPreview = await giftLink.locator('use').evaluate(use => !!document.querySelector(use.getAttribute('href')));
+  await giftLink.tap();
+  const bagTab = giftPage.locator('[data-act=gear-tab][data-slot=bag]');
+  const giftCard = giftPage.locator('.gear[data-id=c019-b-acorn]');
+  const rightPlace = await bagTab.getAttribute('aria-pressed') === 'true' && await bagTab.getByText('새로').isVisible() &&
+    await giftCard.evaluate(el => document.activeElement === el && !el.disabled && el.classList.contains('gift-target')) &&
+    await giftCard.getByText('새로').isVisible();
+  await captureFirstPlay(giftPage, 'new-gift');
+  await giftPage.waitForFunction(() => JSON.parse(localStorage.getItem('cards.v0.seen'))?.son?.viewedGifts?.['c019-b-acorn']);
+  await giftPage.getByRole('button',{name:'닫기',exact:true}).last().tap();
+  await giftLink.tap();
+  ok('C020: a castle links a named gift with matching art to its highlighted wardrobe slot; seen badges clear on revisit',
+    realPreview && rightPlace && !await giftCard.getByText('새로').count() && !await bagTab.getByText('새로').count());
+  await giftCtx.close();
+
+  const earlyCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true });
+  const early = await open(earlyCtx, 'today=2026-11-18&sound=off');
+  const firstRecords = await early.evaluate(() => {
+    const g = window.__cards;
+    const son = Object.fromEntries(g.words.slice(0,20).map(({id},i) => [id, {
+      st:i === 0 ? 'learn' : 'likely', firstDay:i < 10 ? '2026-11-16' : '2026-11-18',
+      ...(i === 0 ? { miss:'2026-11-16', misses:2, lapses:1 } : {})
+    }]));
+    const daughter = Object.fromEntries(g.words.slice(20,24).map(({id},i) => [id, {
+      st:'review', step:0, firstDay:['2026-11-15','2026-11-16','2026-11-18','2026-11-19'][i]
+    }]));
+    return Object.entries({son,daughter}).map(([id,words]) => {
+      const record = JSON.stringify({v:3,id,words,runs:[{day:'2026-11-18',reason:'done'}]});
+      localStorage.setItem('cards.v0.p.'+id,record);
+      return [id,record];
+    });
+  });
+  await early.reload();
+  await early.waitForSelector('.home-goal');
+  const sonPanel = early.locator('.profile[data-id=son]');
+  ok('C020: first week shows 0 firm, 20 met and +20 new, and the joint target sums only words first seen this week to date',
+    await sonPanel.locator('.home-count').textContent() === '익힌 단어 0' &&
+    await sonPanel.locator('.home-met').textContent() === '만난 단어 20' &&
+    await sonPanel.locator('.home-week').textContent() === '이번 주 새 단어 +20 · 익힌 +0' &&
+    await early.locator('.home-goal').textContent() === '이번 주 둘이 함께 새 단어 +22 / 목표 42' &&
+    await early.locator('.office-post use').count() === 2 &&
+    await early.evaluate(records => records.every(([id,record]) => localStorage.getItem('cards.v0.p.'+id) === record), firstRecords));
+  await captureFirstPlay(early, 'first-week-home');
+  await earlyCtx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
