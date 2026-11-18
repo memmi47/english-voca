@@ -1047,6 +1047,129 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     mounted?.follows && mounted.mountedArt && await gearPage.evaluate(id=>window.__cards.node?.unit===id,mounted.id));
   await gearCtx.close();
 
+  // C-017 identity overlays and measured idle movement.
+  const kidsOut='/tmp/c017-screens';
+  fs.mkdirSync(kidsOut,{recursive:true});
+  const kids=await browser.newContext({viewport:{width:1180,height:820}});
+  const mapKids=[];
+  for (const [child,world] of [['son','p1-03'],['daughter','p1-01']]) {
+    const page=await kids.newPage();
+    page.on('pageerror',e=>errs.push(String(e)));
+    await page.goto(BASE+'?today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+    await page.waitForSelector('.profiles');
+    await page.evaluate(async({child,world})=>{
+      const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+      const st=newState(child), map=ensureMap(st);
+      map.at=world;
+      map.worlds[world]={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
+      localStorage.setItem('cards.v0.p.'+child,JSON.stringify(st));
+    },{child,world});
+    await page.click(`[data-act=pick][data-id=${child}]`);
+    await page.waitForSelector('#rider .rider-body');
+    mapKids.push(page);
+  }
+  const signature=(page,sel)=>page.locator(sel).evaluate(el=>
+    [...el.querySelectorAll('use[data-layer=hair],use[data-layer=identity]')].map(use=>use.getAttribute('href')));
+  const sonSignature=['#c017-hair-son','#c017-scarf-son'];
+  const daughterSignature=['#c017-hair-daughter','#c017-heart-daughter'];
+  const [sonMap,daughterMap]=mapKids;
+  const mapSignatures=await Promise.all(mapKids.map(page=>signature(page,'#rider .rider-body')));
+  ok('C017: every map frame carries only its own child’s hair and marker',
+    JSON.stringify(mapSignatures)===JSON.stringify([Array(4).fill(sonSignature).flat(),Array(4).fill(daughterSignature).flat()]),
+    JSON.stringify(mapSignatures));
+
+  const motionSample=(page)=>page.locator('#rider .rider-body').evaluate(el=>{
+    const animation=el.getAnimations()[0];
+    if (!animation) return null;
+    animation.pause();
+    const duration=animation.effect.getTiming().duration;
+    el.style.animation='none';
+    const origin=el.getBoundingClientRect();
+    el.style.animation='';
+    const paused=el.getAnimations()[0];
+    paused.pause();
+    const points=Array.from({length:16},(_,i)=>{
+      paused.currentTime=duration*i/16;
+      const bounds=el.getBoundingClientRect();
+      return [bounds.left-origin.left,bounds.top-origin.top];
+    });
+    paused.play();
+    return {duration,quarters:[0,4,8,12].map(i=>points[i]),max:Math.max(...points.map(([x,y])=>Math.hypot(x,y)))};
+  });
+  const [sonMotion,daughterMotion]=await Promise.all(mapKids.map(motionSample));
+  const near=(value,expected)=>Math.abs(value-expected)<.001;
+  ok('C017: the map idle curves are 1.4-second sway and 0.8-second hop, at most 3 CSS px apart by no more than 1 px',
+    sonMotion?.duration===1400&&daughterMotion?.duration===800&&near(sonMotion.max,2)&&near(daughterMotion.max,3)&&
+    daughterMotion.max-sonMotion.max<=1&&JSON.stringify(sonMotion.quarters)===JSON.stringify([[-2,0],[0,1],[2,0],[0,1]])&&
+    JSON.stringify(daughterMotion.quarters)===JSON.stringify([[0,0],[0,-2],[0,-3],[0,-2]]),
+    JSON.stringify({son:sonMotion,daughter:daughterMotion}));
+
+  async function pairCapture(name, images) {
+    const comparison=await kids.newPage();
+    await comparison.setViewportSize({width:Math.min(1880,images.length*780),height:820});
+    await comparison.setContent(`<main style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:#f8efd6;color:#233f3a;font:20px system-ui">${images.map((img,i)=>`<figure style="margin:0;text-align:center"><figcaption>${i===0?'아들':'딸'}</figcaption><img alt="" style="width:100%;max-height:740px;object-fit:contain;image-rendering:pixelated" src="data:image/png;base64,${img.toString('base64')}"></figure>`).join('')}</main>`);
+    await comparison.locator('main').screenshot({path:`${kidsOut}/${name}.png`});
+    await comparison.close();
+  }
+  await pairCapture('map-couriers',await Promise.all(mapKids.map(page=>page.locator('#world').screenshot({animations:'disabled'}))));
+  for (const [page,slot,item,badge,file] of [
+    [sonMap,'coat','p1-03',sonSignature[1],'son-coat'],
+    [daughterMap,'hat','p1-01',daughterSignature[1],'daughter-hat']
+  ]) {
+    await page.click('[data-act=wardrobe]');
+    await page.click(`[data-act=gear-tab][data-slot=${slot}]`);
+    await page.click(`[data-act=gear][data-id=${item}]`);
+    const visible=await page.locator('.gear-preview').evaluate((el,{slot,item,badge})=>{
+      const gear=el.querySelector(`use[data-layer=${slot}][href="#c016-${slot}-${item}-0"]`);
+      const mark=el.querySelector(`use[data-layer=identity][href="${badge}"]`);
+      return !!gear&&!!mark&&!!mark.getBBox().width&&!!(gear.compareDocumentPosition(mark)&Node.DOCUMENT_POSITION_FOLLOWING);
+    },{slot,item,badge});
+    ok(`C017: ${file} keeps the original marker on top of the selected layer`,visible);
+    await page.locator('.wardrobe').screenshot({path:`${kidsOut}/${file}.png`,animations:'disabled'});
+    await page.click('#wardrobe .sec[data-act=look-close]');
+  }
+  await Promise.all(mapKids.map(page=>page.emulateMedia({reducedMotion:'reduce'})));
+  const mediaPaused=await Promise.all(mapKids.map(motionSample));
+  await Promise.all(mapKids.map(page=>page.emulateMedia({reducedMotion:'no-preference'})));
+  await sonMap.click('[data-act=home]');
+  const homeMotion=page=>page.locator('.home-courier').evaluateAll(el=>el.map(face=>getComputedStyle(face).animationName));
+  const homePlaying=await homeMotion(sonMap);
+  await sonMap.click('[data-act=parent]');
+  await sonMap.click('[data-act=reduce-motion]');
+  await Promise.all(mapKids.map(page=>page.reload()));
+  await Promise.all(mapKids.map(async(page,i)=>{
+    const child=i===0?'son':'daughter';
+    await page.click(`[data-act=pick][data-id=${child}]`);
+    await page.waitForSelector('#rider .rider-body');
+  }));
+  const prefPaused=await Promise.all(mapKids.map(motionSample));
+  await sonMap.click('[data-act=home]');
+  const homePaused=await homeMotion(sonMap);
+  ok('C017: the browser preference and the parent switch both stop either child’s idle movement',
+    [...mediaPaused,...prefPaused].every(value=>value===null)&&
+    JSON.stringify(homePlaying)===JSON.stringify(['courier-son-idle','courier-daughter-idle'])&&
+    JSON.stringify(homePaused)===JSON.stringify(['none','none']));
+
+  const throwImages=[];
+  for (const [id,expected] of [['son',sonSignature],['daughter',daughterSignature]]) {
+    const throwCtx=await browser.newContext({viewport:{width:1180,height:820}});
+    const throwPage=await open(throwCtx,'today=2026-11-18&triage=off&sound=off&seed=9');
+    await throwPage.click(`[data-act=pick][data-id=${id}]`);
+    await startNode(throwPage,'A1');
+    await throwPage.addStyleTag({content:'.thrower { animation:none !important; }'});
+    await throwPage.evaluate(()=>{
+      window.__cards.run.rng=()=>.99;
+      document.querySelector('.act.yes').click();
+    });
+    await throwPage.waitForSelector('.thrower svg');
+    const layers=await signature(throwPage,'.thrower');
+    ok(`C017: ${id} keeps identity in the active throwing frame`,JSON.stringify(layers)===JSON.stringify(expected));
+    throwImages.push(await throwPage.locator('#app').screenshot({animations:'disabled'}));
+    await throwCtx.close();
+  }
+  await pairCapture('card-couriers',throwImages);
+  await kids.close();
+
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
   const fails = results.filter((r) => r[0] === 'FAIL').length;

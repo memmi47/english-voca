@@ -363,9 +363,81 @@ def motion_assets():
     return {Path('cards/assets/postal/motion/sprites.svg'):sheet}
 
 
+def kid_identity_assets():
+    """Original 48-unit identity layers to composite with the C-016 courier.
+
+    Hair is drawn after the face and before the hat. The scarf is drawn over the
+    coat and bag, and the heart after the hat. Coordinates use the shared
+    courier origin and remain fixed in the idle and walking pose families.
+    For the raised happy/throw frame, translate the hair and heart up one unit.
+    """
+    from pathlib import Path
+
+    def rect(x, y, width, height, color):
+        return f'<rect x="{x}" y="{y}" width="{width}" height="{height}" fill="{color}"/>'
+
+    def body(rectangles):
+        return ''.join(rect(*r) for r in rectangles)
+
+    ink = '#233F3A'
+    hair = '#49352F'
+    hair_light = '#795044'
+    red = '#B63839'
+    red_light = '#E56B59'
+    pink_dark = '#9C315B'
+    pink = '#E976A1'
+    pink_light = '#FFE3ED'
+
+    # Short irregular locks under the brim; a small lock sticks out behind.
+    son_hair = body([
+        (12, 12, 3, 4, hair), (15, 12, 4, 2, hair),
+        (20, 12, 3, 1, hair), (25, 12, 4, 2, hair),
+        (30, 12, 3, 4, hair), (32, 12, 4, 3, hair),
+        (34, 13, 3, 2, hair_light), (14, 12, 2, 2, hair_light),
+    ])
+    # Neck wrap and two-part tail, extending towards the right rear.
+    son_scarf = body([
+        (12, 21, 18, 5, ink), (13, 21, 16, 3, red),
+        (22, 24, 7, 4, red), (28, 22, 6, 4, red),
+        (33, 20, 6, 4, ink), (34, 20, 5, 3, red),
+        (38, 19, 4, 3, ink), (38, 19, 3, 2, red_light),
+        (15, 22, 7, 1, red_light),
+    ])
+    # Shoulder-length pigtails with separate pink ties.
+    daughter_hair = body([
+        (10, 12, 4, 7, hair), (8, 17, 5, 11, hair),
+        (7, 23, 5, 8, hair), (8, 28, 4, 2, hair_light),
+        (31, 12, 4, 7, hair), (34, 17, 5, 11, hair),
+        (35, 23, 5, 8, hair), (35, 28, 4, 2, hair_light),
+        (8, 17, 5, 3, pink), (34, 17, 5, 3, pink),
+        (9, 17, 2, 1, pink_light), (35, 17, 2, 1, pink_light),
+    ])
+    # A centered approximately 9×8 heart, with dark stepped outline and shine.
+    daughter_heart = body([
+        (20, 3, 3, 1, pink_dark), (25, 3, 3, 1, pink_dark),
+        (19, 4, 10, 2, pink_dark), (20, 6, 8, 1, pink_dark),
+        (21, 7, 6, 1, pink_dark), (22, 8, 4, 1, pink_dark),
+        (23, 9, 2, 1, pink_dark),
+        (20, 4, 3, 1, pink), (25, 4, 3, 1, pink),
+        (20, 5, 8, 1, pink), (21, 6, 6, 1, pink),
+        (22, 7, 4, 1, pink), (23, 8, 2, 1, pink),
+        (20, 4, 2, 1, pink_light),
+    ])
+    symbols = {
+        'c017-hair-son': son_hair,
+        'c017-scarf-son': son_scarf,
+        'c017-hair-daughter': daughter_hair,
+        'c017-heart-daughter': daughter_heart,
+    }
+    sheet = '<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>'
+    sheet += ''.join(f'<symbol id="{sid}" viewBox="0 0 48 48">{value}</symbol>' for sid, value in symbols.items())
+    sheet += '</defs></svg>\n'
+    return {Path('cards/assets/postal/kids/sprites.svg'): sheet}
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets() | motion_assets()
+    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets() | motion_assets() | kid_identity_assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:

@@ -160,7 +160,7 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.reduceMotion = pref.reduceMotion; G.homeProgress = pref.homeProgress; document.body.classList.toggle('motion-quiet', FAST || G.reduceMotion); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -220,7 +220,7 @@ function home() {
     const x = summaries[i];
     const stale = x?.lastDay && G.sync && !G.syncStatus?.available;
     return `<button class="profile" data-act="pick" data-id="${id}">
-      <span class="home-courier">${courier('idle', undefined, 80, id, records[i])}</span><strong>${esc(name(id))}</strong>
+      <span class="home-courier kid-idle ${id}">${courierFrame('idle', lookSelection(id, records[i]), 80, id)}</span><strong>${esc(name(id))}</strong>
       ${x ? `<span class="profile-world">${spr('flag-a',19)} ${esc(x.world.name)}</span>` : ''}
       ${G.homeProgress ? x ? `<span class="home-count">아는 단어 <b>${x.known}</b></span><span class="home-week">이번 주 +${x.week}</span>
         <span class="week-dots" aria-label="이번 주 공부한 날">${dayNames.map((d, j) => `<span data-played="${x.played[j]}" aria-label="${d} ${x.played[j] ? '공부함' : '기록 없음'}">${d}</span>`).join('')}</span>
@@ -549,24 +549,36 @@ function layerId(item, slot, color) {
   if (!item) return `c016-${slot}-default-${color}`;
   return `c016-${slot}-${item.legacy?'legacy-':''}${item.id}-${item.color}`;
 }
-function courierFrame(frame, selection, px, pid, index=0) {
-  const color=pid==='daughter'?'gold':'teal';
-  const movement=frame.startsWith('walk') ? 'walk' : 'idle';
-  const {coat,bag,hat}=selection;
+function courierFrame(frame, selection, px, pid, index=0, idleMotion=false) {
+  const child = pid === 'daughter' ? 'daughter' : 'son';
+  const color = child === 'daughter' ? 'gold' : 'teal';
+  const hair = 'c017-hair-' + child;
+  const badge = child === 'daughter' ? 'c017-heart-daughter' : 'c017-scarf-son';
+  const raised = ['happy','throw'].includes(frame);
+  const motion = idleMotion ? ' kid-idle ' + child : '';
+  const use = (layer, id, lift=false) => `<use data-layer="${layer}" href="#${id}"${lift?' transform="translate(0 -1)"':''}/>`;
+  const {coat,bag,hat} = selection;
+  const action = frame === 'run' || frame.startsWith('walk') ? 'walk' : 'idle';
+  const pose = ['run','throw'].includes(frame) ? `c014-courier-${color}-${frame}` : `courier-${color}-${frame}`;
+  let layers;
   if (!hat && !bag && !coat && index===0) {
-    const special=['run','throw'].includes(frame);
-    const legacy=special ? `c014-courier-${color}-${frame}` : `courier-${color}-${frame}`;
-    return wardrobeArt(document.getElementById(legacy)?legacy:`courier-${color}-idle`,px);
+    const body = document.getElementById(pose) ? pose : `courier-${color}-idle`;
+    layers = use('body',body) + use('hair',hair,raised) + use('identity',badge,raised && child==='daughter');
+  } else if (!hat && !bag && coat?.legacy && !coat.color && index===0 && ['idle','walk1','walk2'].includes(frame)) {
+    layers = use('body',`c011-look-${coat.id}-${action==='walk'?'walk1':'idle'}`) + use('hair',hair) + use('identity',badge);
+  } else {
+    const hasPose = ['throw','happy','wave'].includes(frame) && document.getElementById(pose);
+    const body = hasPose ? pose : `c016-body-${color}-${action}${index}`;
+    layers = use('body',body) + use('coat',layerId(coat,'coat',color)) + use('bag',layerId(bag,'bag',color)) +
+      use('head',`c016-head-${color}-${action}${index}`,raised) + use('hair',hair,raised) +
+      use('hat',layerId(hat,'hat',color),raised) + use('identity',badge,raised && child==='daughter');
   }
-  if (!hat && !bag && coat?.legacy && !coat.color && index===0 && !['run','throw'].includes(frame)) return spr(`c011-look-${coat.id}-${movement==='walk'?'walk1':'idle'}`,px);
-  const body = ['run','throw'].includes(frame) && document.getElementById(`c014-courier-${color}-${frame}`) ? `c014-courier-${color}-${frame}` : `c016-body-${color}-${movement}${index}`;
-  const layers=[body,layerId(coat,'coat',color),layerId(bag,'bag',color),`c016-head-${color}-${movement}${index}`,layerId(hat,'hat',color)];
-  return `<svg class="spr" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${layers.map((id,i)=>`<use data-layer="${['body','coat','bag','head','hat'][i]}" href="#${id}"/>`).join('')}</svg>`;
+  return `<svg class="spr${motion}" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${layers}</svg>`;
 }
 function courier(frame='idle', outfit, px=48, pid=G.pid, st=G.st) {
-  if (outfit==='default') return wardrobeArt(`courier-${pid==='daughter'?'gold':'teal'}-idle`,px);
-  if (outfit && GIFTS.some(g=>g.id===outfit)) return spr(`c011-look-${outfit}-idle`,px);
-  return courierFrame(frame, lookSelection(pid,st), px, pid);
+  const legacy = GIFTS.find(g=>g.id===outfit);
+  const selection = legacy ? {coat:{...legacy,legacy:true,color:0}} : outfit==='default' ? {} : lookSelection(pid,st);
+  return courierFrame(frame, selection, px, pid, 0, frame==='idle');
 }
 function riderLook(moving=false) {
   const selection=lookSelection(G.pid,G.st);
@@ -575,7 +587,7 @@ function riderLook(moving=false) {
   const ride=selection.ride;
   const pet=selection.pet;
   return `<span class="rider-shadow"></span>${ride ? wardrobeArt(`c016-ride-${ride.id}-${moving?'move':'idle'}`,64,`rider-ride ${moving?'mounted':'parked'} color-${ride.color}`):''}
-    ${stack(frames,'rider-body')}${pet ? stack([0,1].map(i=>wardrobeArt(`c016-pet-${pet.id}-${i}`,34,`color-${pet.color}`)),'rider-pet'):''}`;
+    ${stack(frames, moving ? 'rider-body' : `rider-body kid-idle ${G.pid}`)}${pet ? stack([0,1].map(i=>wardrobeArt(`c016-pet-${pet.id}-${i}`,34,`color-${pet.color}`)),'rider-pet'):''}`;
 }
 function renderRider(moving=false) {
   const rider=$('#rider');
