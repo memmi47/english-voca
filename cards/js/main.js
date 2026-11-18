@@ -106,7 +106,6 @@ function px(emoji, n = 56) {
   return (PXC[k] = o.toDataURL());
 }
 const pimg = (e, n = 56, cls = '') => `<img class="px ${cls}" src="${px(e, n)}" width="${n}" height="${n}" alt="">`;
-const usedMs = (st) => st.runs.filter((r) => r.day === todayISO()).reduce((a, r) => a + r.wall, 0);
 
 // Word forms for the whirlwind (storm.js, card T-008). No file, an unreadable one or ?storm=off: no whirlwind (STORM.on false),
 // and the game opens as before. The demo set keeps only the forms whose base word is one of its cards.
@@ -150,7 +149,7 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -207,7 +206,7 @@ function today(id, msg = '', wid = null) {
   const released = !G.readonly && stormRelease(st, G.ix, G.fx, todayISO());   // a whirlwind with nothing left to ask never holds the rider
   if (first || wid || released) save();
   applyTheme(w); G.sound.scene(musicOf(w), { worldId: w.id });
-  const v = worldView(G.ix, w, st, todayISO()); const c = gradeCounts(st, G.words); const used = usedMs(st);   // shown to the parent; there is no daily time cap (user decision 2026-11-12)
+  const v = worldView(G.ix, w, st, todayISO()); const c = gradeCounts(st, G.words);
   const ev = G.stormEv && G.stormEv.pid === id && G.stormEv.wid === w.id ? G.stormEv : null; G.stormEv = null;   // what the last run did to the whirlwind, shown once
   const sw = STORM.on ? stormOf(st, G.ix) : null; const storm = sw && sw.wid === w.id ? sw : null; const held = stormBlocks(st, w.id, G.ix);
   if (ev && ev.event === 'caught' && held && !v.bat.full) return caught();
@@ -216,7 +215,7 @@ function today(id, msg = '', wid = null) {
   const place = (n, inner, label, status, extra = '') => `<button class="node ${status} ${extra}" data-act="node" data-id="${esc(n.id)}" style="${at(n)}" aria-label="${esc(label)}">${inner}${label ? `<span class="lbl">${esc(label)}</span>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`;
   const nodes = v.nodes.map((n) => {
     if (n.kind === 'tile') { const stamp = v.gate?.stamps.find((x) => x.nodeId === n.id); return place(n, spr(STONE[n.status] || 'stone-open', 64, 'big') + (stamp ? `<span class="gate-stamp ${stamp.collected ? 'collected' : ''}" data-stamp="${stamp.id}" data-collected="${stamp.collected}" aria-label="우표 ${stamp.id} ${stamp.collected ? '모음' : '모으기'}">${stampPic(stamp)}${stamp.collected ? '<b>✓</b>' : ''}</span>` : ''), '', n.status, `${n.bonus ? 'bonus' : ''} ${n.status === 'open' ? near.has(n.id) ? 'nearby' : 'distant' : ''}`); }
-    if (n.kind === 'castle') return place(n, `${v.crown ? `<i class="crown">${spr('crown', 32)}</i>` : ''}${v.castle.status !== 'cleared' && v.gate?.ready ? spr('c011-door-open',64,'big') : big('gate')}`, v.crown ? '왕관!' : w.castle?.name || '성', n.status, 'castle');
+    if (n.kind === 'castle') return place(n, `${v.crown ? `<i class="crown">${spr('crown', 32)}</i>` : ''}${v.castle.status !== 'cleared' && v.gate?.ready ? spr('c011-door-open',64,'big') : big('gate')}${v.gate && !v.crown ? `<span class="castle-pin" aria-hidden="true">${v.gate.tilesDone}/${v.gate.minTiles} ${v.gate.stamps.map((stamp) => stamp.id + (stamp.collected ? '✓' : '·')).join(' ')}</span>` : ''}`, v.crown ? '왕관!' : w.castle?.name || '성', n.status, 'castle');
     if (n.kind === 'minigame') return place(n, `${big('playhouse')}${n.status === 'cleared' ? `<i class="crown">${spr('stamp', 32)}</i>` : ''}`, '놀이집', n.status === 'cleared' ? 'open done' : n.status, 'game');
     if (n.kind === 'start') return `<div class="node start" style="${at(n)}">${anim('flag-a', 'flag-b', 64)}<span class="lbl">출발</span></div>`;
     return `<div class="node free" style="${at(n)}">${big('sign')}</div>`;
@@ -228,13 +227,14 @@ function today(id, msg = '', wid = null) {
   const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : stormHint || story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 세계 성과 마을 조건을 채웠어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
   const dock = (id, inner, label, status, extra = '') => `<button class="dockbtn ${status} ${extra}" data-act="node" data-id="${id}" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span></button>`;
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
-  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><button class="chip gift-chip" data-act="wardrobe">${spr('c011-gift-closed', 24)} ${esc(nextGift(v.stars))}</button><button class="chip" title="열쇠" data-act="key-help">${spr('key', 24)} ${v.keys}</button><span class="chip mut">오늘 ${Math.floor(used / 6e4)}분</span>
+  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><button class="chip gift-chip" data-act="wardrobe">${spr('c011-gift-closed', 24)} ${esc(nextGift(v.stars))}</button><button class="chip" title="열쇠" data-act="key-help">${spr('key', 24)} ${v.keys}</button>
     <button class="tgl" data-act="atlas">세계 지도</button>
-    <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}">♪ 음악 ${G.sound.musicOn ? '켜짐' : '꺼짐'}</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}">${spr('sound', 24)} 효과음 ${G.sound.sfx ? '켜짐' : '꺼짐'}</button></div>
+    <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}" aria-label="음악" title="음악">♪</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}" aria-label="효과음" title="효과음">${spr('sound', 24)}</button></div>
   <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
   <div class="gate-toolbar"><div id="world-stamps" class="world-stamps" aria-label="모은 관문 우표">${(v.gate?.stamps || []).map((x) => `<span class="stamp-chip ${x.collected ? 'collected' : 'missing'}" data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</div>
   <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div></div>
-  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}${castleGate(w,v.gate,v.castle.status === 'cleared')}</div>
+  ${castleGate(v.gate,v.castle.status === 'cleared')}
+  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
   <p class="msg" id="msg">${esc(hint)}</p>
   <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
@@ -295,20 +295,52 @@ function localFrontier(w, st, view) {
 const stampPic = (x, size=32) => spr(`c013-stamp-${x.id.toLowerCase()}`,size);
 const gateMessage = (g) => `마을 ${g.tilesDone}/${g.minTiles} · 우표 A ${g.stamps.find(x=>x.id==='A')?.collected ? '✓' : '·'} · 우표 B ${g.stamps.find(x=>x.id==='B')?.collected ? '✓' : '·'}${g.reachable ? '' : ' · 성까지 길을 이어요'}`;
 const continentGateText = (g) => `세계 성 ${g.worldsPassed}/${g.totalWorlds} · 마을 ${g.tilesDone}/${g.minTiles} (${Math.round(g.minTileRate*100)}%)`;
-function castleGate(w,g,cleared=false) {
-  if(!g) return ''; const n=w._nodes[w.map.castleNodeId];
-  return `<aside class="castle-gate ${g.ready ? 'ready' : ''}" id="castle-gate" data-ready="${g.ready}" data-cleared="${cleared}" style="left:clamp(8px,${n.x/10-21}%,calc(100% - 222px));${n.y < 280 ? 'top' : 'bottom'}:${n.y < 280 ? n.y/6+14 : (600-n.y)/6+12}%"><b>${cleared ? '성 통과 완료' : '성에 들어가려면'}</b><span class="gate-villages">마을 ${g.tilesDone}/${g.minTiles}</span><span class="gate-stamps">${g.stamps.map(x=>`<span data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x,24)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</span><small>${cleared ? '남은 마을은 선택해요' : g.ready ? '문이 열렸어요' : g.reachable ? '마을과 우표를 모아요' : '성까지 길을 이어요'}</small></aside>`;
+function castleGate(g,cleared=false) {
+  if (!g) return '';
+  return `<aside class="castle-gate ${g.ready ? 'ready' : ''}" id="castle-gate" data-ready="${g.ready}" data-cleared="${cleared}"><b>${cleared ? '성 통과 완료' : '성에 들어가려면'}</b><span class="gate-villages">마을 ${g.tilesDone}/${g.minTiles}</span><span class="gate-stamps">${g.stamps.map(x=>`<span data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x,24)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</span><small>${cleared ? '남은 마을은 선택해요' : g.ready ? '문이 열렸어요' : g.reachable ? '마을과 우표를 모아요' : '성까지 길을 이어요'}</small></aside>`;
 }
 
-// ---- world list ----
-function atlas(transition = null) {
-  clearPresentation(); G.view = 'atlas'; hideBanner(); band(false); const a = atlasView(G.ix, G.st);
-  const wbtn = (w) => { const door = doorFor(w.id); const unseen = door && !deviceSeen().doors[door.key];
-    return `<button class="wcard ${w.open ? 'open' : 'locked'} ${G.world?.id === w.id ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" ${w.open ? '' : 'disabled'}>${w.crown ? spr('crown', 32) : w.castle ? spr('key', 32) : w.open ? spr('stone-open', 32) : spr('padlock', 32)}<b>${esc(w.name)}</b><i>${w.met}/${w.total}</i><span class="world-door ${w.open && unseen ? 'unseen' : ''}" ${w.open && unseen ? `data-act="door" data-id="${esc(w.id)}" role="button" tabindex="0" aria-label="열쇠로 문 열기"` : ''}>${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', 48)}${w.open && unseen ? '<small>열쇠로 문 열기</small>' : ''}</span></button>`; };
+// ---- illustrated continent maps ----
+const ATLAS_POINTS = {
+  P1: [[9,59],[20,36],[35,26],[48,39],[39,66],[55,77],[69,61],[78,37],[91,23]],
+  P2: [[8,20],[24,27],[39,17],[54,28],[70,17],[86,25],[89,47],[72,53],[55,46],[37,55],[20,46],[10,70],[29,80],[47,72],[66,81],[88,77]],
+  P3: [[9,73],[26,63],[36,38],[53,23],[68,37],[57,63],[75,76],[91,54]],
+};
+function atlasWorld(w, illustrated) {
+  const door = doorFor(w.id);
+  const unseen = door && !deviceSeen().doors[door.key];
+  const here = G.world?.id === w.id;
+  const badge = w.crown ? spr('crown', 24) : w.castle ? spr('key', 24) : '';
+  const status = w.open ? (here ? '현재 위치' : '열림') : '잠김';
+  const picture = illustrated ? spr('c015-village', 54) : '';
+  return `<button class="wcard ${w.open ? 'open' : 'locked'} ${here ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" aria-label="${esc(w.name)} · ${status}" ${w.open ? '' : 'disabled'}>
+    <span class="atlas-picture">${picture}${here && illustrated ? `<span class="atlas-courier">${courier('idle', undefined, 42)}</span>` : ''}<span class="atlas-badge">${badge}</span><span class="world-door">${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', illustrated ? 27 : 48)}</span></span>
+    <b>${esc(w.name)}</b><i>${w.met}/${w.total}</i></button>
+    ${unseen ? `<button class="world-door atlas-door-trigger unseen" data-act="door" data-id="${esc(w.id)}" aria-label="${esc(w.name)} 열쇠로 문 열기" title="열쇠로 문 열기">${spr('key', 24)}</button>` : ''}`;
+}
+function atlasFinale(c) {
+  const status = c.finale.status;
+  const label = status === 'cleared' ? '통과!' : status === 'open' ? `${c.finale.cards}장 시험` : status === 'pending' ? '준비 중이에요' : '세계 성과 마을 조건을 채워요';
+  return `<button class="wcard finale ${status}" data-act="finale" data-id="${esc(c.id)}">${status === 'open' ? spr('c011-door-open',64,'big') : big('gate')}<b>${esc(c.finale.name)}</b><i>${label}</i>${c.gate ? `<span class="continent-gate" data-ready="${c.gate.ready}">${esc(continentGateText(c.gate))}</span>` : ''}</button>`;
+}
+function drawContinent(c) {
+  const bandName = G.ix.continents.find((entry) => entry.id === c.id).band;
+  const layout = ATLAS_POINTS[bandName] || ATLAS_POINTS.P1;
+  const points = c.worlds.map((_, i) => layout[Math.round(i * (layout.length - 2) / Math.max(1, c.worlds.length - 1))]);
+  points.push(layout.at(-1));
+  const path = points.map((point) => point.join(',')).join(' ');
+  const position = ([x,y]) => `left:${x}%;top:${y}%`;
+  return `<div class="atlas-scroll" tabindex="0" aria-label="${esc(c.name)} 그림 지도"><div class="atlas-land ${c.worlds.length > 9 ? 'many-worlds' : ''}">
+    <svg class="atlas-geography" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><use href="#c015-atlas-${(ATLAS_POINTS[bandName] ? bandName : 'P1').toLowerCase()}" width="100" height="100"/><polyline points="${path}" fill="none" stroke="#325d56" stroke-dasharray="3 6" stroke-linecap="round" stroke-width="4" vector-effect="non-scaling-stroke"/></svg>
+    ${c.worlds.map((w,i) => `<div class="atlas-stop" style="${position(points[i])}">${atlasWorld(w,true)}</div>`).join('')}
+    <div class="atlas-stop atlas-end" style="${position(points.at(-1))}">${atlasFinale(c)}</div></div></div>`;
+}
+function atlas(transition = null, list = false) {
+  clearPresentation(); G.view = 'atlas'; hideBanner(); band(false); const continents = atlasView(G.ix, G.st);
   $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
-  <div id="door-stage"></div>${a.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
-    <div class="wgrid">${c.worlds.map(wbtn).join('')}
-    <button class="wcard finale ${c.finale.status}" data-act="finale" data-id="${esc(c.id)}">${c.finale.status === 'open' ? spr('c011-door-open',64,'big') : big('gate')}<b>${esc(c.finale.name)}</b><i>${c.finale.status === 'cleared' ? '통과!' : c.finale.status === 'open' ? `${c.finale.cards}장 시험` : c.finale.status === 'pending' ? '준비 중이에요' : '세계 성과 마을 조건을 채워요'}</i>${c.gate ? `<span class="continent-gate" data-ready="${c.gate.ready}">${esc(continentGateText(c.gate))}</span>` : ''}</button></div></section>`).join('')}
+  <button class="tgl atlas-mode" data-act="${list ? 'atlas' : 'atlas-list'}">${list ? '그림 지도로 보기' : '목록으로 보기'}</button>
+  <div id="door-stage"></div>${continents.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
+    ${list ? `<div class="wgrid">${c.worlds.map((w) => `<div class="atlas-list-stop">${atlasWorld(w,false)}</div>`).join('')}${atlasFinale(c)}</div>` : drawContinent(c)}</section>`).join('')}
   <p class="msg" id="msg"></p></div>`;
   if (transition) showDoor(transition);
 }
@@ -363,7 +395,8 @@ function openDoor() {
   const d = G.door; if (!d || G.view !== 'atlas' || !worldOpen(G.ix,G.ix.byId[d.to],G.st)) return;
   $('.door-stage')?.setAttribute('data-phase','open'); $('#atlas-door').innerHTML = spr('c011-door-open',96); $('.door-stage .go').disabled = false;
   $('.door-stage [data-act=door-skip]').hidden = true; deviceSeen().doors[d.key] = true; writeDevice();
-  const badge = $(`.wcard[data-id="${d.to}"] .world-door`); if (badge) { badge.classList.remove('unseen'); badge.removeAttribute('data-act'); badge.innerHTML = spr('c011-door-open',48); }
+  const badge = $(`.wcard[data-id="${d.to}"] .world-door use`); if (badge) badge.setAttribute('href', '#c011-door-open');
+  $(`.atlas-door-trigger[data-id="${d.to}"]`)?.remove();
 }
 
 // ---- run ----
@@ -440,7 +473,7 @@ function front(it, w) {
 function judgeButtons(it) { $('#actions').innerHTML = it?.taught ? `<button class="act yes see" data-act="no">뜻 보기</button>` : `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
 function optionButtons(it) {
   const en = isSight(G.byId[it.id]) ? 'en' : '';
-  $('#actions').innerHTML = `<div class="opts">${it.options.map((o, i) => `<button class="act opt ${en}" data-act="opt" data-i="${i}">${esc(o.ko)}</button>`).join('')}</div>
+  $('#actions').innerHTML = `<div class="opts">${it.options.map((o, i) => `<button class="act opt ${en}${o.ko.length >= 15 ? ' long-option' : ''}" data-act="opt" data-i="${i}">${esc(o.ko)}</button>`).join('')}</div>
     <button class="link" data-act="opt" data-i="-1">몰라요</button>`;
 }
 const lock = (on) => document.querySelectorAll('.act').forEach((b) => { b.disabled = on; });
@@ -671,7 +704,7 @@ function parent() {
   G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
     const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk, sp: T.spots, spok: T.spotOk, bd: T.bunchDone, bok: T.bunchOk };
-    return `<h2>${esc(name(id))}</h2><p class="small">별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv}), 넘긴 단어 확인 정답률 ${pct(tot.spok, tot.sp)} (${tot.spok}/${tot.sp}), 묶음 확인 ${tot.bok}/${tot.bd}</p>
+    return `<h2>${esc(name(id))}</h2><p class="small">오늘 ${Math.floor(R.filter((run) => run.day === todayISO()).reduce((sum, run) => sum + run.wall, 0) / 6e4)}분 · 별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv}), 넘긴 단어 확인 정답률 ${pct(tot.spok, tot.sp)} (${tot.spok}/${tot.sp}), 묶음 확인 ${tot.bok}/${tot.bd}</p>
     ${formsLine(st)}
     <table><tr><th>날짜</th><th>판</th><th>칸</th><th>카드</th><th>시간</th><th>분당</th><th>카드당</th><th>알아요</th><th>확인</th><th>새 카드 앎/모름</th><th>배움</th><th>복습</th><th>보스</th></tr>
     ${R.slice(-60).map((r) => `<tr><td>${r.day}</td><td>${r.n}</td><td>${esc(r.tag || '-')}</td><td>${r.cards}</td><td>${Math.round(r.wall / 1000)}초</td><td>${r.wall ? (r.cards / (r.wall / 6e4)).toFixed(1) : '-'}</td><td>${r.cards ? (r.wall / r.cards / 1000).toFixed(1) : '-'}초</td>
@@ -733,6 +766,7 @@ async function onClick(e) {
     case 'pick': await G.sound.unlock(); return openProfile(b.dataset.id);
     case 'today': return today(G.pid);
     case 'atlas': return atlas();
+    case 'atlas-list': return atlas(null, true);
     case 'goworld': if (G.ix.byId[b.dataset.id] && worldOpen(G.ix,G.ix.byId[b.dataset.id],G.st)) return today(G.pid, '', b.dataset.id); return;
     case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
       $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : c.gate ? `${c.name}: ${continentGateText(c.gate)}. 세계 성을 모두 깨고 마을을 더 돌아봐요. 왕관은 선택해서 모아요.` : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}).`; return; }

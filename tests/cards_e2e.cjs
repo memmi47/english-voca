@@ -749,6 +749,122 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await gp.screenshot({path:'/tmp/c013-screens/continent-gates.png',animations:'disabled'});
   await gp.close();await gatectx.close();
 
+  // C-015. Real atlas geometry, the gate outside the map, shared courier size and option typography.
+  const visual = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const vp = await visual.newPage();
+  vp.on('pageerror', (e) => errs.push(String(e)));
+  await vp.goto(BASE + '?today=2026-11-18&fast=1&sound=off&nosync=1&triage=off&storm=off');
+  await vp.waitForSelector('.profiles');
+  await vp.evaluate(async () => {
+    const { newState } = await import('./js/deck.js');
+    const { ensureMap } = await import('./js/map.js');
+    const s = newState('son'), m = ensureMap(s);
+    m.stars = 1000;
+    m.at = 'p1-01';
+    m.worlds['p1-01'] = { castle: '2026-11-17', cleared: {}, stamps: {}, seen: '2026-11-17' };
+    localStorage.setItem('cards.v0.p.son', JSON.stringify(s));
+  });
+  fs.mkdirSync('/tmp/c015-screens', { recursive: true });
+  await vp.click('[data-act=pick][data-id=son]');
+  await vp.waitForSelector('#world[data-world=p1-01]');
+  await vp.evaluate(() => document.fonts.ready);
+  await vp.screenshot({ path: '/tmp/c015-screens/world.png', animations: 'disabled' });
+  ok('C015: a 1000-star HUD fits in one row with both labelled sound toggles', await vp.evaluate(() => {
+    const row = document.querySelector('.maphud'), items = [...row.children].map((item) => item.getBoundingClientRect());
+    const centres = items.map((r) => (r.top + r.bottom) / 2);
+    const box = row.getBoundingClientRect();
+    return row.textContent.includes('1000') && Math.max(...centres) - Math.min(...centres) < 2 &&
+      items.every((r) => r.left >= box.left && r.right <= box.right + 1) &&
+      ['music','sfx'].every((id) => row.querySelector(`[data-act=${id}]`).hasAttribute('aria-label'));
+  }));
+  ok('C015: the visible castle requirements panel never overlaps map tiles, castle or stamp markers', await vp.evaluate(() => {
+    const gate = document.querySelector('#castle-gate');
+    const a = gate.getBoundingClientRect();
+    return a.height > 0 && document.querySelector('.castle-pin') && [...document.querySelectorAll('#world .node, #world .gate-stamp')].every((n) => {
+      const b = n.getBoundingClientRect();
+      return a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom;
+    });
+  }));
+  await vp.click('[data-act=wardrobe]');
+  await vp.screenshot({ path: '/tmp/c015-screens/wardrobe.png', animations: 'disabled' });
+  ok('C015: six outfits share the default courier display size and similar painted bounds', await vp.evaluate(() => {
+    const drawings = [...document.querySelectorAll('.look svg')];
+    const boxes = drawings.map((drawing) => {
+      const box = drawing.getBoundingClientRect();
+      const art = drawing.querySelector('use').getBBox();
+      const view = drawing.viewBox.baseVal;
+      return [box.width, box.height, art.width / view.width, art.height / view.height];
+    });
+    return boxes.length === 7 && boxes.every(([w,h,aw,ah]) => w === boxes[0][0] && h === boxes[0][1] &&
+      Math.abs(aw - boxes[0][2]) <= .07 && Math.abs(ah - boxes[0][3]) <= .07);
+  }));
+  await vp.click('#wardrobe [data-act=look-close]');
+  await vp.click('[data-act=atlas]');
+  await vp.screenshot({ path: '/tmp/c015-screens/atlas-p1.png', animations: 'disabled' });
+  const drawn = await vp.evaluate(() => {
+    const sections = [...document.querySelectorAll('.cont')];
+    return sections.map((c) => ({
+      count: c.querySelectorAll('.atlas-stop [data-act=goworld]').length,
+      drawing: !!document.querySelector(c.querySelector('.atlas-geography use')?.getAttribute('href') || '#absent'),
+      finale: !!c.querySelector('.atlas-stop .finale'),
+    }));
+  });
+  const lockedWorld = vp.locator('.wcard[data-id=p1-03]');
+  const locked = await lockedWorld.isDisabled();
+  await lockedWorld.evaluate((button) => button.click());
+  ok('C015: drawn maps cover every world, lock closed villages and allow an open world to be entered',
+    JSON.stringify(drawn.map((x) => x.count)) === '[8,15,7]' && drawn.every((x) => x.drawing && x.finale) &&
+    locked && await vp.locator('.atlas').count() === 1 &&
+    await vp.click('.wcard[data-id=p1-02]').then(() => vp.waitForSelector('#world[data-world=p1-02]')).then(() => true), JSON.stringify(drawn));
+  await vp.click('[data-act=atlas]');
+  await vp.setViewportSize({ width: 390, height: 844 });
+  const mobile = await vp.evaluate(() => document.documentElement.scrollWidth <= innerWidth &&
+    [...document.querySelectorAll('.atlas-scroll')].every((el) => el.scrollWidth > el.clientWidth));
+  await vp.click('[data-act=atlas-list]');
+  const listCount = await vp.locator('.wgrid .wcard[data-act=goworld]').count();
+  ok('C015: narrow atlases scroll within their map and provide a complete list on request', mobile && listCount === 30);
+
+  // A real castle screen with a controlled, catalogue-derived typography fixture.
+  await vp.setViewportSize({ width: 1180, height: 820 });
+  await vp.evaluate(async () => {
+    const { newState } = await import('./js/deck.js');
+    const { ensureMap } = await import('./js/map.js');
+    const g = window.__cards, s = newState('son'), m = ensureMap(s);
+    const w = g.ix.byId['p1-01'];
+    m.at = w.id;
+    for (const n of w.map.nodes) for (const id of n.words || []) s.words[id] = { st: 'done' };
+    localStorage.setItem('cards.v0.p.son', JSON.stringify(s));
+  });
+  await vp.reload();
+  await vp.waitForSelector('.profiles');
+  await vp.click('[data-act=pick][data-id=son]');
+  await vp.click('.node.castle');
+  await vp.waitForSelector('.opt:not(:disabled)');
+  await vp.evaluate(() => {
+    const g = window.__cards;
+    const longest = [...g.words].filter((w) => w.track !== 'sight' && typeof w.ko === 'string').sort((a,b) => b.ko.length - a.ko.length).slice(0, 9);
+    // Route the fixture's long catalogue glosses through the real castle option renderer.
+    for (let i = 1; i <= 3; i++) g.run.queue[i].id = longest[(i - 1) * 3].id;
+    g.run._options = () => longest.slice((g.run.i - 1) * 3, g.run.i * 3).map(({id,ko}) => ({ id, ko }));
+  });
+  let longChoicesFit = true;
+  for (let i = 0; i < 3; i++) {
+    await answer(vp, '.opt[data-i="0"]');
+    await vp.waitForSelector('.opt.long-option:not(:disabled)');
+    longChoicesFit &&= await vp.evaluate(() => {
+      const opts = [...document.querySelectorAll('.opt')];
+      return opts.length === 3 && opts.every((b) => {
+        const text = document.createRange(); text.selectNodeContents(b);
+        const box = b.getBoundingClientRect();
+        return b.offsetHeight === opts[0].offsetHeight && getComputedStyle(b).wordBreak === 'keep-all' &&
+          [...text.getClientRects()].every((r) => r.left >= box.left && r.right <= box.right && r.top >= box.top && r.bottom <= box.bottom);
+      });
+    });
+    if (i === 0) await vp.screenshot({ path: '/tmp/c015-screens/long-options.png', animations: 'disabled' });
+  }
+  ok('C015: the catalogue’s longest glosses wrap and all three options have equal height', longChoicesFit);
+  await visual.close();
+
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
   const fails = results.filter((r) => r[0] === 'FAIL').length;

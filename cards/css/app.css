@@ -206,3 +206,42 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 @media(max-width:680px){.castle-gate{width:168px;font-size:10px;box-shadow:2px 2px var(--ink);padding:3px 5px}.castle-gate>b{font-size:12px}.gate-stamps{gap:2px}.gate-stamps>span{font-size:9px}.gate-stamps .spr{width:18px;height:18px}.castle-gate small{font-size:9px}.world-stamps{margin-top:0}.stamp-chip{font-size:12px}}
 
 .gate-toolbar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 auto 12px}.gate-toolbar .world-stamps{margin:0;min-height:0}.gate-toolbar .batgauge{margin:0;width:min(100%,420px)}
+
+/* C-015: the gate panel stays outside the illustrated play area. */
+.map .castle-gate{position:static;width:fit-content;max-width:100%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 12px;text-align:center}
+.maphud>[data-act=music],.maphud>[data-act=sfx]{width:44px;height:44px;justify-content:center;padding:0;font-size:24px;flex-shrink:0}
+.maphud>[data-act=music]:not(.on),.maphud>[data-act=sfx]:not(.on){opacity:.72}
+@media(min-width:760px){.maphud{flex-wrap:nowrap;gap:8px}.maphud .who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.maphud .chip,.maphud .tgl{white-space:nowrap}}
+.opts{grid-auto-rows:1fr}
+.act.opt{min-width:0;word-break:keep-all;overflow-wrap:anywhere;padding:6px 12px;line-height:1.28}
+.act.opt.long-option{font-size:22px}
+@media(min-width:760px){.opts{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Atlas stop positions are drawn over one backdrop per continent. */
+.atlas-mode{display:flex;margin:0 auto 18px}
+.atlas-scroll{overflow-x:auto;max-width:100%;border:4px solid var(--ink);box-shadow:4px 4px var(--ink);background:var(--paper)}
+.atlas-land{position:relative;min-width:720px;width:100%;height:450px;isolation:isolate}
+.atlas-land.many-worlds{min-width:950px;height:510px}
+.atlas-geography{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.atlas-stop{position:absolute;width:126px;transform:translate(-50%,-40%);display:flex;justify-content:center}
+.atlas-stop .wcard{background:transparent;border:0;box-shadow:none;min-height:0;width:100%;gap:2px;padding:3px;opacity:1;display:flex;flex-direction:column;align-items:center}
+.atlas-stop .wcard:hover:not(:disabled) b,.atlas-stop .wcard:focus-visible b,.atlas-stop .wcard.here b{background:#ffeac0}
+.atlas-stop .wcard b{background:var(--paper);box-shadow:2px 2px var(--ink);border:2px solid var(--ink);padding:2px 4px;font-size:13px;line-height:1.2;word-break:keep-all}
+.atlas-stop .wcard i,.atlas-stop .continent-gate{background:var(--paper);padding:0 3px;font-size:10px;text-shadow:none}
+.atlas-picture{position:relative;display:inline-flex;align-items:center;justify-content:center}
+.atlas-picture .world-door{position:absolute;left:38px;bottom:0;min-height:0}
+.atlas-list-stop .atlas-picture .world-door{position:static}
+.atlas-badge,.atlas-courier{position:absolute;pointer-events:none}
+.atlas-badge{left:-4px;top:-7px}
+.atlas-courier{left:-22px;bottom:0;z-index:1}
+.atlas-stop .locked .atlas-picture>.spr{opacity:.72}
+.atlas-list-stop{position:relative}
+.atlas-list-stop>.wcard{width:100%;height:100%}
+.atlas-door-trigger{position:absolute;z-index:2;right:4px;top:0;min-width:44px;min-height:44px;justify-content:center;padding:0;background:#fff0ca;border:2px solid var(--ink);box-shadow:2px 2px var(--ink)}
+.atlas-stop>.atlas-door-trigger{right:-3px;top:-10px}
+.atlas.page{max-width:1140px}
+.castle-pin{position:absolute;left:50%;top:0;transform:translate(-50%,-85%);font-size:10px;white-space:nowrap;background:var(--paper);border:2px solid var(--ink);padding:0 3px;pointer-events:none}
+.atlas-stop .wcard.here{outline:none}
+@media(min-width:1000px) and (min-height:760px){
+  .map .world{width:min(100%,calc((100dvh - 250px) * 1.6667));margin-inline:auto}
+}

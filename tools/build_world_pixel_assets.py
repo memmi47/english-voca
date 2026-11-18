@@ -3,7 +3,7 @@ No vocabulary allocation, runtime code, state or audio is read/written.
 python3 -I tools/build_world_pixel_assets.py [--check]
 """
 from pathlib import Path
-import argparse, hashlib, importlib.util, json, re, sys
+import argparse, hashlib, importlib.util, json, re, sys, xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('postal_pixel_recipes', Path(__file__).with_name('postal_pixel_recipes.py'))
 art = importlib.util.module_from_spec(spec); spec.loader.exec_module(art)
@@ -151,22 +151,46 @@ def feedback_assets():
         if kind=='star':p.rect(7,3,2,6,'y');p.rect(5,5,6,2,'y');p.dot(4,4,'w');p.dot(12,8,'w')
         store('c011-island-'+kind,label,p,'continent')
     outfits=[('leaf-cap','잎사귀 모자','t','b'),('sun-bag','햇살 가방','t','g'),('sea-coat','물결 옷','a','b'),('night-cap','밤하늘 모자','u','b'),('letter-bag','편지 가방','t','u'),('festival-coat','축제 옷','p','g')]
+    # The outfit colours and insignia are new, applied to the original courier
+    # outline and poses. All frames keep its 48-unit geometry and foot position.
+    master=ET.parse(ROOT/'assets/post-office/v1/sprites.svg')
+    original={node.get('id'):node for node in master.iter() if node.get('id')}
+    outfit_bodies={}
     for name,label,coat,bag in outfits:
         ids=[f'c011-look-{name}-{frame}' for frame in ('idle','walk1')]
         for frame,sid in zip(('idle','walk1'),ids):
-            p=art.Pixels();p.rect(5,2,6,4,'y');p.rect(4,1,8,2,'u' if name=='night-cap' else 't');p.rect(3,3,9,1,'u' if name=='night-cap' else 't');p.dot(9,4,'k');p.rect(5,7,6,5,coat);p.rect(4,7,2,4,'y');p.rect(9,8,4,4,bag);p.line(6,7,10,10,'g');p.rect(6,12,2,2,'b');p.rect(9,12,2,2,'b')
-            if frame=='walk1':p.rect(5,13,3,1,'k');p.rect(10,12,2,2,'k');p.dot(12,9,'g')
-            else:p.rect(6,14,2,1,'k');p.rect(9,14,2,1,'k')
-            if name=='leaf-cap':p.rect(6,0,2,1,'l');p.rect(8,0,1,2,'l')
-            if name=='sun-bag':p.rect(10,9,2,2,'y');p.dot(9,10,'w');p.dot(12,10,'w')
-            if name=='sea-coat':p.line(6,8,8,8,'w');p.line(6,10,8,10,'w')
-            if name=='night-cap':p.rect(6,1,3,1,'y');p.dot(7,0,'y');p.dot(7,2,'y')
-            if name=='letter-bag':p.rect(10,9,2,2,'w');p.dot(11,9,'r')
-            if name=='festival-coat':p.dot(7,8,'g');p.dot(7,10,'g');p.rect(5,11,5,1,'u')
-            store(sid,label+(' · 걷기' if frame=='walk1' else ' · 서기'),p,'courier',ids)
+            rects=[]
+            for rect in original['courier-teal-'+frame]:
+                x,y,w,h=(int(rect.get(k)) for k in ('x','y','width','height'))
+                color=rect.get('fill')
+                if color=='#387D74':color=art.PAL[coat]
+                if x==29 and y==27:color=art.PAL[bag]
+                rects.append((x,y,w,h,color))
+            badge={
+                'leaf-cap':[(21,5,4,2,'l'),(23,4,2,2,'l')],
+                'sun-bag':[(31,28,4,4,'y'),(32,27,2,6,'y')],
+                'sea-coat':[(13,23,5,2,'a'),(13,27,5,2,'a')],
+                'night-cap':[(22,5,2,4,'y'),(21,6,4,2,'y')],
+                'letter-bag':[(30,29,6,4,'w'),(32,30,2,1,'r')],
+                'festival-coat':[(13,23,2,2,'y'),(13,27,2,2,'y')]
+            }[name]
+            rects.extend((x,y,w,h,art.PAL[c]) for x,y,w,h,c in badge)
+            # Store matching 16-pixel previews alongside higher-resolution bodies.
+            palette=art.PAL | {'s':'#E8B78B','h':'#D8D7BA'}
+            codes={c:k for k,c in palette.items()}
+            grid=[['.']*16 for _ in range(16)]
+            for x,y,w,h,color in rects:
+                for py in range(16):
+                    for px in range(16):
+                        if x<=3*px+1<x+w and y<=3*py+1<y+h:
+                            grid[py][px]=codes[color]
+            sprites[sid]=dict(role='courier',label=label+(' · 걷기' if frame=='walk1' else ' · 서기'),
+                pixels=[''.join(row) for row in grid],size=16,grid=16,frames=ids)
+            outfit_bodies[sid]='<g transform="scale(0.3333333333)">' + ''.join(
+                f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{c}"/>' for x,y,w,h,c in rects) + '</g>'
     assert len(sprites)==22
-    manifest=dict(version='postal-feedback-1',license='Original project pixel artwork; no external artwork or emoji rasterization.',sheet='sprites.svg',grid=16,palette=art.PAL,symbols=sprites)
-    symbols=''.join(f'<symbol id="{sid}" viewBox="0 0 16 16">{runs(s["pixels"])}</symbol>\n' for sid,s in sprites.items())
+    manifest=dict(version='postal-feedback-1',license='Original project pixel artwork; no external artwork or emoji rasterization.',sheet='sprites.svg',grid=16,palette=palette,symbols=sprites)
+    symbols=''.join(f'<symbol id="{sid}" viewBox="0 0 16 16">'+(outfit_bodies[sid] if sid in outfit_bodies else runs(s["pixels"]))+'</symbol>\n' for sid,s in sprites.items())
     sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>\n'+symbols+'</defs></svg>\n'
     return {Path('cards/assets/postal/feedback/manifest.json'):json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',Path('cards/assets/postal/feedback/sprites.svg'):sheet}
 
@@ -185,9 +209,44 @@ def stamp_assets():
     sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>\n'+''.join(f'<symbol id="{sid}" viewBox="0 0 16 16">{runs(s["pixels"])}</symbol>\n' for sid,s in symbols.items())+'</defs></svg>\n'
     return {Path('cards/assets/postal/stamps/manifest.json'):json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',Path('cards/assets/postal/stamps/sprites.svg'):sheet}
 
+def atlas_assets():
+    """Original three hand-composed continental postage maps."""
+    fields = {
+        'p1': ('#acd6ce', '#83b89c', '#c8dfa4', [
+            '5,26 15,26 15,15 33,15 33,11 44,11 44,22 61,22 61,33 72,33 72,50 60,50 60,59 43,59 43,67 12,67 12,58 5,58',
+            '29,61 45,61 45,53 62,53 62,47 75,47 75,30 84,30 84,12 97,12 97,44 89,44 89,63 78,63 78,80 62,80 62,90 37,90 37,82 29,82']),
+        'p2': ('#9bc9d1', '#659ba2', '#b7d4af', [
+            '3,8 26,8 26,13 47,13 47,8 77,8 77,13 95,13 95,33 78,33 78,39 58,39 58,32 40,32 40,38 22,38 22,32 3,32',
+            '6,40 28,40 28,44 48,44 48,37 68,37 68,43 96,43 96,58 78,58 78,65 52,65 52,60 32,60 32,64 17,64 17,76 4,76 4,57 6,57',
+            '16,67 35,67 35,62 61,62 61,69 95,69 95,90 75,90 75,95 53,95 53,88 32,88 32,93 16,93']),
+        'p3': ('#d0cce7', '#a995bc', '#e4cc9d', [
+            '4,59 16,59 16,51 28,51 28,26 42,26 42,14 64,14 64,22 77,22 77,31 86,31 86,40 97,40 97,63 92,63 92,79 84,79 84,89 58,89 58,81 47,81 47,74 35,74 35,85 12,85 12,91 4,91']),
+    }
+    parts = []
+    for band, (water, shore, ground, shapes) in fields.items():
+        body = f'<rect width="100" height="100" fill="{water}"/>'
+        for y in (6, 21, 38, 55, 73, 91):
+            for x in (2, 19, 37, 58, 80, 95):
+                body += f'<path d="M{x} {y}h3m-2 2h4" stroke="#fff6dc" opacity=".55" stroke-width=".35"/>'
+        for points in shapes:
+            body += f'<polygon points="{points}" fill="{shore}" transform="translate(0 2)"/>'
+            body += f'<polygon points="{points}" fill="{ground}" stroke="{shore}" stroke-width=".65"/>'
+            body += f'<polygon points="{points}" fill="url(#atlas-grain)"/>'
+        parts.append(f'<symbol id="c015-atlas-{band}" viewBox="0 0 100 100" preserveAspectRatio="none">{body}</symbol>')
+    p=art.Pixels()
+    p.rect(1,12,14,2,'b'); p.rect(4,7,8,6,'k'); p.rect(5,8,6,4,'c')
+    p.poly([(2,7),(5,4),(8,2),(11,4),(14,7)],'k')
+    p.poly([(4,7),(7,4),(9,4),(12,7)],'r')
+    p.rect(7,9,2,3,'t'); p.rect(11,8,3,2,'r'); p.dot(12,8,'y')
+    parts.append(f'<symbol id="c015-village" viewBox="0 0 16 16">{runs(p.finish())}</symbol>')
+    sheet = ('<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>'
+             '<pattern id="atlas-grain" width="4" height="5" patternUnits="userSpaceOnUse"><path d="M1 1h.45v.5H1Z M3 4h.3v.35H3Z" fill="#233F3A" opacity=".15"/></pattern>'
+             + ''.join(parts) + '</defs></svg>\n')
+    return {Path('cards/assets/postal/atlas/sprites.svg'):sheet}
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build() | feedback_assets() | stamp_assets()
+    files=build() | feedback_assets() | stamp_assets() | atlas_assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:
