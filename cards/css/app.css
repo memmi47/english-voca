@@ -40,6 +40,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tgl{background:var(--paper);border:4px solid var(--ink);box-shadow:0 4px 0 var(--ink);padding:3px 10px;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:6px;min-height:40px}.tgl.on{background:var(--teal-l)}.tgl .spr{width:24px;height:24px}
 .page.map{max-width:1080px}
 .world{position:relative;width:100%;aspect-ratio:1000/600;background:var(--w-ground,#86b682);border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink);overflow:hidden}
+.first-tile-hint{width:fit-content;margin:6px auto 10px;padding:6px 12px;border:3px solid var(--ink);background:#ffefc7;font-weight:700;text-align:center}
 .terrain{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;shape-rendering:crispEdges;image-rendering:pixelated}
 .node{position:absolute;z-index:1;transform:translate(-50%,-50%);width:9%;min-width:56px;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0;color:var(--ink)}
 .node .spr,.node .anim2{filter:drop-shadow(3px 3px 0 rgba(35,63,58,.45))}
@@ -160,6 +161,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tw{min-height:80px;padding:8px 10px;background:var(--paper);border:5px solid var(--ink);box-shadow:0 6px 0 var(--ink);font-family:var(--word);font-size:34px;font-weight:800;color:var(--ink);word-break:break-word}
 .tw.on{background:#ffe9a8;outline:5px solid var(--go);outline-offset:-10px}.tw.on:after{content:" ?";color:var(--go)}
 .tw:active{transform:translateY(4px);box-shadow:0 2px 0 var(--ink)}
+.triage-note{margin:8px auto 0;color:var(--fg);text-shadow:1px 1px var(--fg-sh);font-size:15px}
 .act.see{max-width:520px}
 /* the delivery rider and the whirlwind (card T-008): both sit on the upper part of their tile, the rider to the left, the
    whirlwind to the right, so the stone, its lock and its marks stay visible. Only the whirlwind takes a tap. */
@@ -188,7 +190,10 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .gift-chip{font-size:13px;min-height:44px}.maphud button.chip{min-height:44px}.world-door{display:flex;align-items:center;gap:4px;min-height:48px}.world-door small{font-size:11px}.world-door.unseen{animation:glow 1s steps(4) infinite}
 .celebration-art{position:relative;display:flex;justify-content:center;margin:16px auto;width:240px}.celebration-key{position:absolute;right:10px;top:22px;animation:key-arrives .7s steps(7)}
 @keyframes key-arrives{from{transform:translate(-160px,-40px);opacity:0}to{transform:none;opacity:1}}
-#giftgain{display:flex;align-items:center;justify-content:center;gap:10px;margin:15px auto;flex-wrap:wrap;background:var(--paper);padding:10px;border:4px solid var(--ink)}
+#giftgain{display:grid;gap:8px;margin:15px auto;background:var(--paper);padding:10px;border:4px solid var(--ink)}
+.gift-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.gift-links .sec{display:inline-flex;align-items:center;gap:6px;min-height:44px}
+.result-cards b{white-space:nowrap;font-size:clamp(22px,4vw,44px)}
 .door-stage{background:var(--paper);border:4px solid var(--ink);padding:12px;margin:18px auto;text-align:center;max-width:650px}.door-stage h2{font-size:21px}.door-stage .go{font-size:22px;min-height:60px;min-width:250px;margin:14px auto}.door-stage .sec{min-height:44px;font-size:16px}
 .door-scene{position:relative;display:flex;align-items:center;justify-content:space-between;max-width:440px;margin:0 auto;height:110px}.door-path{position:absolute;left:70px;right:62px;top:58px;border-top:12px dashed var(--gold);transform-origin:left;animation:door-path .45s steps(6)}
 @keyframes door-path{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -257,9 +262,10 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .postal-bird { position: absolute; inset: 0 auto auto -50px; animation: postal-bird 150s steps(45) infinite; }
 .office-post { display: inline-flex; position: absolute; left: calc(50% - 148px); bottom: 12px; }
 .home-courier { display: inline-grid; transform-origin: bottom; }
-.profile-world, .home-count, .home-week, .home-goal { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; }
+.profile-world, .home-count, .home-met, .home-week, .home-goal { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; }
 .home-count b { font-size: 24px; }
-.home-week { color: #25594f; }
+.home-met { color: var(--mut); font-size: 13px; }
+.home-week { color: #25594f; font-size: clamp(12px, 2.3vw, 15px); }
 .week-dots { display: flex; justify-content: center; gap: 3px; }
 .week-dots span { display: inline-grid; place-content: center; font-size: 10px; width: 18px; height: 18px; border: 1px solid #426251; background: #dce7d6; }
 .week-dots span[data-played=true] { background: #387d74; color: white; }
@@ -339,6 +345,9 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .gear-tabs,.gear-colors{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:8px 0}
 .gear-tabs .sec,.gear-colors .sec{font-size:13px;min-height:44px;padding:4px 8px}
 .gear-tabs [aria-pressed=true],.gear-colors [aria-pressed=true]{background:#ffe9a8}
+.gear-new{display:inline-block;padding:2px 4px;border:2px solid var(--ink);background:#ffe9a8;color:var(--ink);font-size:11px;font-weight:700}
+.gear-tabs .gear-new{margin-inline-start:4px}
+.gear.gift-target{outline:3px solid var(--teal);outline-offset:2px}
 .gear{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;border:4px solid var(--ink);background:#e6eee0;padding:8px;min-height:112px}
 .gear[aria-pressed=true]{background:#fff0bf;outline:3px solid #eab65c}
 .gear b{font-size:14px}.gear small{font-size:11px}
