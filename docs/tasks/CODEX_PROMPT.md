@@ -223,3 +223,16 @@ docs/ORCHESTRATION.md 를 읽은 뒤 순서대로 한다.
 끝난 뒤 보고(카드별): PR 번호, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것. C-019는 아이템 표, 가장 비슷한 아이템 쌍의 차이 수치, 예전 아이템 → 새 아이템 대응표.
 ```
 
+## C-020 (2026-11-18, Terra에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md, docs/reviews/ASTRA-6.2.md, docs/DATA_SAFETY.md 2절의 "나중에 다시 배울 단어의 정보"를 읽은 뒤 docs/tasks/C-020.md 를 수행한다.
+- 화면 파일(cards/js/main.js, cards/css/app.css)과 tests/cards_e2e.cjs 만 고친다. 규칙 코드, 저장 형식, 아이 기록의 저장 키, id 는 바꾸지 않는다. 아이가 몰랐던 단어의 정보(miss, misses, lapses, 배우는 중인 단어)를 지우거나 줄이지 않는다.
+- 첫 화면 지표는 카드 6절 표대로 한다. 익힌 단어와 반려동물 해금은 firmCount 그대로다. 협동 목표 값 T는 근거와 함께 정한다. 순위 표시는 넣지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 새 브라우저 검사 다섯 개와 화면 캡처 경로를 적는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 브랜치 codex/first-play-fixes 로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다. 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 협동 목표 값과 근거, 화면 캡처 경로, 확인하지 못한 것.
+```
+
