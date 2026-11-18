@@ -332,9 +332,40 @@ def atlas_assets():
              + ''.join(parts) + '</defs></svg>\n')
     return {Path('cards/assets/postal/atlas/sprites.svg'):sheet}
 
+def motion_assets():
+    """Original postal motion props and courier poses."""
+    import xml.etree.ElementTree as ET
+    master=ET.parse(ROOT/'assets/post-office/v1/sprites.svg')
+    originals={n.get('id'):n for n in master.iter() if n.get('id')}
+    parts=[]
+    for color in ('teal','gold'):
+        for pose,frame in [('run','walk2'),('throw','happy')]:
+            body=''.join(ET.tostring(x,encoding='unicode').replace('ns0:','').replace(':ns0','') for x in originals['courier-'+color+'-'+frame])
+            parts.append(f'<symbol id="c014-courier-{color}-{pose}" viewBox="0 0 48 48">{body}</symbol>')
+    patterns={
+      'cloud':[(2,7,12,5,'w'),(4,4,7,5,'w'),(7,3,5,4,'w')],
+      'bird':[(1,6,4,2,'k'),(4,4,5,4,'b'),(9,6,4,2,'k'),(7,5,1,1,'w'),(10,8,4,3,'w')],
+      'mail':[(2,4,12,8,'k'),(3,5,10,6,'w'),(4,5,2,1,'r'),(6,6,4,1,'r'),(10,5,2,1,'r')],
+      'smoke':[(2,7,4,4,'n'),(5,4,6,7,'w'),(10,7,4,4,'n'),(6,10,4,3,'w')],
+      'star':[(7,1,2,14,'g'),(1,7,14,2,'g'),(5,5,6,6,'y')],
+      'sleep':[(1,2,5,1,'u'),(4,3,1,1,'u'),(2,4,3,1,'u'),(8,7,6,1,'u'),(11,8,1,1,'u'),(9,9,4,1,'u')],
+      'torch':[(6,7,4,7,'b'),(5,5,6,3,'k'),(6,2,3,4,'r'),(8,0,2,6,'y')],
+      'mailbox':[(3,4,10,8,'k'),(4,5,8,6,'r'),(6,7,4,1,'w'),(7,12,2,3,'b'),(12,2,1,5,'g'),(13,2,2,2,'g')],
+      'leaf':[(3,3,8,8,'l'),(5,2,6,10,'t'),(3,12,10,1,'b')],
+      'taunt':[(3,4,3,2,'k'),(10,4,3,2,'k'),(5,9,6,2,'k'),(7,10,3,3,'r')],
+      'post-office':[(2,6,12,9,'k'),(3,7,10,7,'w'),(1,5,14,2,'r'),(4,3,8,2,'r'),(6,9,4,6,'t'),(11,1,1,4,'b'),(12,1,3,2,'g')]
+    }
+    for name,rects in patterns.items():
+        p=art.Pixels()
+        for x,y,w,h,c in rects:p.rect(x,y,w,h,c)
+        parts.append(f'<symbol id="c014-{name}" viewBox="0 0 16 16">{runs(p.finish())}</symbol>')
+    sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>'+''.join(parts)+'</defs></svg>\n'
+    return {Path('cards/assets/postal/motion/sprites.svg'):sheet}
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets()
+    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets() | motion_assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:

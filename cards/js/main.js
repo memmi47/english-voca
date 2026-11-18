@@ -2,7 +2,7 @@
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG } from './deck.js';
 import { Sound } from './sound.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope } from './map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, setLeftOutKinds, startTile } from './world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, setLeftOutKinds, startTile } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
 import { STORM, indexForms, formDone, hereOf, stormOf, stormBlocks, stormRelease, stormTick, StormRun, settleStorm } from './storm.js';
@@ -57,7 +57,10 @@ function save() {
 function loadMeta() { try { return { names: { son: '아들', daughter: '딸' }, ...JSON.parse(localStorage.getItem('cards.v0.meta') || '{}') }; } catch { return { names: { son: '아들', daughter: '딸' } }; } }
 // Another device saved newer data: fold it into what this page holds in memory.
 function onMerged(nm, data) {
-  if (nm === 'meta') { G.meta = loadMeta(); return; }
+  if (nm === 'meta') G.meta = loadMeta();
+  if (G.view === 'home' && $('.home-postal') && !G.pickingProfile &&
+      (nm === 'meta' || PROFILES.some(id => nm === 'p.' + id))) return home();
+  if (nm === 'meta') return;
   if (G.st && nm === 'p.' + G.pid && data) { fold(data); try { G.seen = stored(); } catch {} }
 }
 function syncLine() {
@@ -76,8 +79,16 @@ async function openProfile(id) {
 const name = (id) => G.meta.names[id];
 
 const PREF = 'cards.v0.pref';                           // this device only: music on/off, effects on/off
-function loadPref() { try { const p = JSON.parse(localStorage.getItem(PREF) || '{}'); return { music: typeof p?.music === 'boolean' ? p.music : true, sfx: typeof p?.sfx === 'boolean' ? p.sfx : true }; } catch { return { music: true, sfx: true }; } }
-function savePref() { try { localStorage.setItem(PREF, JSON.stringify({ music: G.sound.musicOn, sfx: G.sound.sfx })); } catch {} }
+function loadPref() {
+  const defaults = { music: true, sfx: true, homeProgress: true, reduceMotion: false };
+  try {
+    const saved = JSON.parse(localStorage.getItem(PREF) || '{}');
+    return Object.fromEntries(Object.entries(defaults).map(([k, v]) => [k, typeof saved?.[k] === 'boolean' ? saved[k] : v]));
+  } catch { return defaults; }
+}
+function savePref(patch = {}) {
+  try { localStorage.setItem(PREF, JSON.stringify({ ...loadPref(), music: G.sound.musicOn, sfx: G.sound.sfx, ...patch })); } catch {}
+}
 const band = (on) => document.body.classList.toggle('band', on);
 // A world brings three colours (sky, ground, path). Lighter and darker shades for the sprites are derived here, and the
 // text on the sky switches between dark and light so it stays readable.
@@ -149,9 +160,9 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
-  const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
+  const pref = loadPref(); G.reduceMotion = pref.reduceMotion; G.homeProgress = pref.homeProgress; document.body.classList.toggle('motion-quiet', FAST || G.reduceMotion); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#wardrobe')) { $('#wardrobe').remove(); $('[data-act=wardrobe]')?.focus(); } if (['Enter',' '].includes(e.key) && e.target.matches('.world-door[data-act]')) { e.preventDefault(); e.target.click(); } });
   document.addEventListener('change', (e) => { const f = e.target; if (!f.dataset?.restore || !f.files?.[0]) return; const id = f.dataset.restore; const rd = new FileReader(); rd.onload = () => restore(id, String(rd.result)); rd.onerror = () => { G.pmsg = '파일을 읽지 못했어요.'; parent(); }; rd.readAsText(f.files[0]); });
@@ -163,13 +174,62 @@ async function boot() {
 }
 
 // ---- home ----
+const dayNames = ['월','화','수','목','금','토','일'];
+function homeRecord(id) {
+  try {
+    const raw = localStorage.getItem(KEY(id));
+    if (raw == null) return newState(id);
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+    const rec = migrate(obj, id);
+    return rec.newer ? null : rec.state;
+  } catch { return null; }
+}
+function homeSummary(st) {
+  if (!st) return null;
+  if (!st.words || typeof st.words !== 'object') return null;
+  const today = todayISO();
+  const monday = new Date(today + 'T00:00:00Z');
+  monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
+  const days = dayNames.map((_, i) => new Date(+monday + i * 86400000).toISOString().slice(0,10));
+  const known = G.words.map(w => st.words[w.id]).filter(r => gradeOf(r) >= 2);
+  const completed = (Array.isArray(st.runs) ? st.runs : []).filter(r => r?.reason === 'done' && r.day <= today).map(r => r.day);
+  const lastDay = [...completed, ...Object.values(st.words).map(r => r?.lastDay)].filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today).sort().at(-1);
+  return {
+    known: known.length,
+    week: known.filter(r => r.firstDay >= days[0] && r.firstDay <= today).length,
+    played: days.map(d => completed.includes(d)),
+    world: currentWorld(G.ix, st),
+    lastDay
+  };
+}
 function home() {
   clearPresentation();
   G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id });
-  $('#app').innerHTML = `<div class="page center"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
-  <div class="hero">${anim('flag-a', 'flag-b', 64)}</div>
-  <div class="profiles">${PROFILES.map((id) => `<button class="profile" data-act="pick" data-id="${id}"><svg class="spr" width="96" height="96" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${id === 'son' ? 'teal' : 'gold'}-${id === 'son' ? 'idle' : 'wave'}"/></svg>${esc(name(id))}</button>`).join('')}</div>
+  const records = PROFILES.map(homeRecord);
+  const summaries = records.map(homeSummary);
+  const both = summaries.every(Boolean);
+  const together = both ? summaries.reduce((total, x) => total + x.week, 0) : 0;
+  $('#app').innerHTML = `<div class="page center home-postal"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
+  <div class="home-yard" aria-hidden="true">
+    ${spr('c014-cloud',76,'cloud cloud-back')}${spr('c014-cloud',104,'cloud cloud-front')}
+    ${spr('c014-bird',38,'postal-bird')}${spr('c014-post-office',128,'home-office')}${spr('c014-mailbox',54,'home-mailbox')}
+    <span class="office-post">${G.homeProgress && both ? [4,7,11,14].filter(n=> together>=n).map(()=>spr('c014-mail',24)).join('') : ''}</span>
+  </div>
+  <div class="profiles">${PROFILES.map((id, i) => {
+    const x = summaries[i];
+    const stale = x?.lastDay && G.sync && !G.syncStatus?.available;
+    return `<button class="profile" data-act="pick" data-id="${id}">
+      <span class="home-courier">${courier('idle', undefined, 80, id, records[i])}</span><strong>${esc(name(id))}</strong>
+      ${x ? `<span class="profile-world">${spr('flag-a',19)} ${esc(x.world.name)}</span>` : ''}
+      ${G.homeProgress ? x ? `<span class="home-count">아는 단어 <b>${x.known}</b></span><span class="home-week">이번 주 +${x.week}</span>
+        <span class="week-dots" aria-label="이번 주 공부한 날">${dayNames.map((d, j) => `<span data-played="${x.played[j]}" aria-label="${d} ${x.played[j] ? '공부함' : '기록 없음'}">${d}</span>`).join('')}</span>
+        ${stale ? `<small>${Number(x.lastDay.slice(5,7))}월 ${Number(x.lastDay.slice(8))}일 기록</small>` : ''}` : '<small>기록 확인 필요</small>' : ''}
+    </button>`;
+  }).join('')}</div>
+  ${G.homeProgress && both ? `<p class="home-goal">이번 주 둘이 함께 +${together} / 목표 14</p>` : ''}
   <p><button class="link" data-act="parent">부모 기록</button></p><p class="mut small" id="syncline">${esc(syncLine())}</p></div>`;
+
 }
 
 // ---- the map of one world ----
@@ -183,8 +243,8 @@ function terrain(w) {
   for (const e of w.map.edges) { const a = N[e.from], b = N[e.to]; const n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * K / 8);
     for (let i = 0; i <= n; i++) { const x = cell(a.x + (b.x - a.x) * i / n), y = cell(a.y + (b.y - a.y) * i / n); const k = x + ',' + y; if (!seen.has(k)) { seen.add(k); path.push(`<use href="#t-path" x="${x}" y="${y}" width="16" height="16"/>`); } } }
   for (const n of w.map.nodes) seen.add(cell(n.x) + ',' + cell(n.y));
-  const rng = mulberry32([...w.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0); const deco = []; const KIND = ['tree', 'bush', 'flowers', 'rock', 'bush', 'flowers'];
-  for (let i = 0; i < 60 && deco.length < 14; i++) { const x = Math.floor(rng() * 15) * 16, y = Math.floor(rng() * 9) * 16; const k = x + ',' + y; if (seen.has(k) || seen.has(x + ',' + (y + 16))) continue; seen.add(k); deco.push(`<use href="#${KIND[Math.floor(rng() * KIND.length)]}" x="${x}" y="${y}" width="16" height="16"/>`); }
+  const rng = mulberry32([...w.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0); const deco = []; const KIND = [musicOf(w) === 'sea' ? 't-water-a' : 'tree', 'bush', 'flowers', 'rock', 'bush', 'flowers'];
+  for (let i = 0; i < 60 && deco.length < 14; i++) { const x = Math.floor(rng() * 15) * 16, y = Math.floor(rng() * 9) * 16; const k = x + ',' + y; if (seen.has(k) || seen.has(x + ',' + (y + 16))) continue; seen.add(k); deco.push(`<use class="living-scenery" href="#${KIND[Math.floor(rng() * KIND.length)]}" x="${x}" y="${y}" width="16" height="16"/>`); }
   return `<svg class="terrain" viewBox="0 0 250 150" preserveAspectRatio="none" aria-hidden="true"><defs><pattern id="pg" width="16" height="16" patternUnits="userSpaceOnUse"><use href="#t-grass" width="16" height="16"/></pattern></defs><rect width="250" height="150" fill="url(#pg)"/>${path.join('')}${deco.join('')}</svg>`;
 }
 // A house hangs next to its anchor tile, on the side with the most room.
@@ -213,8 +273,15 @@ function today(id, msg = '', wid = null) {
   const near = localFrontier(w, st, v);
   const at = (n) => `left:${n.x / 10}%;top:${n.y / 6}%`;
   const place = (n, inner, label, status, extra = '') => `<button class="node ${status} ${extra}" data-act="node" data-id="${esc(n.id)}" style="${at(n)}" aria-label="${esc(label)}">${inner}${label ? `<span class="lbl">${esc(label)}</span>` : ''}${extra.includes('bonus') ? '<i class="x2">×2</i>' : ''}</button>`;
+  const badge = (n) => {
+    if (FAST) return '';
+    if (n.status === 'cleared') return spr('flag-a', 25, 'learned-flag');
+    if (n.status !== 'locked') return '';
+    const id = displayMonster({ kind: 'tile', unit: n.id }, n.words.length).id;
+    return `<span class="sleeping-guard">${spr(id, 27)}${spr('c014-sleep',20,'sleep-mark')}</span>`;
+  };
   const nodes = v.nodes.map((n) => {
-    if (n.kind === 'tile') { const stamp = v.gate?.stamps.find((x) => x.nodeId === n.id); return place(n, spr(STONE[n.status] || 'stone-open', 64, 'big') + (stamp ? `<span class="gate-stamp ${stamp.collected ? 'collected' : ''}" data-stamp="${stamp.id}" data-collected="${stamp.collected}" aria-label="우표 ${stamp.id} ${stamp.collected ? '모음' : '모으기'}">${stampPic(stamp)}${stamp.collected ? '<b>✓</b>' : ''}</span>` : ''), '', n.status, `${n.bonus ? 'bonus' : ''} ${n.status === 'open' ? near.has(n.id) ? 'nearby' : 'distant' : ''}`); }
+    if (n.kind === 'tile') { const stamp = v.gate?.stamps.find((x) => x.nodeId === n.id); return place(n, spr(STONE[n.status] || 'stone-open', 64, 'big') + badge(n) + (stamp ? `<span class="gate-stamp ${stamp.collected ? 'collected' : ''}" data-stamp="${stamp.id}" data-collected="${stamp.collected}" aria-label="우표 ${stamp.id} ${stamp.collected ? '모음' : '모으기'}">${stampPic(stamp)}${stamp.collected ? '<b>✓</b>' : ''}</span>` : ''), '', n.status, `${n.bonus ? 'bonus' : ''} ${n.status === 'open' ? near.has(n.id) ? 'nearby' : 'distant' : ''}`); }
     if (n.kind === 'castle') return place(n, `${v.crown ? `<i class="crown">${spr('crown', 32)}</i>` : ''}${v.castle.status !== 'cleared' && v.gate?.ready ? spr('c011-door-open',64,'big') : big('gate')}${v.gate && !v.crown ? `<span class="castle-pin" aria-hidden="true">${v.gate.tilesDone}/${v.gate.minTiles} ${v.gate.stamps.map((stamp) => stamp.id + (stamp.collected ? '✓' : '·')).join(' ')}</span>` : ''}`, v.crown ? '왕관!' : w.castle?.name || '성', n.status, 'castle');
     if (n.kind === 'minigame') return place(n, `${big('playhouse')}${n.status === 'cleared' ? `<i class="crown">${spr('stamp', 32)}</i>` : ''}`, '놀이집', n.status === 'cleared' ? 'open done' : n.status, 'game');
     if (n.kind === 'start') return `<div class="node start" style="${at(n)}">${anim('flag-a', 'flag-b', 64)}<span class="lbl">출발</span></div>`;
@@ -234,7 +301,7 @@ function today(id, msg = '', wid = null) {
   <div class="gate-toolbar"><div id="world-stamps" class="world-stamps" aria-label="모은 관문 우표">${(v.gate?.stamps || []).map((x) => `<span class="stamp-chip ${x.collected ? 'collected' : 'missing'}" data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</div>
   <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div></div>
   ${castleGate(v.gate,v.castle.status === 'cleared')}${giftNote(w.id)}
-  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
+  <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${!FAST && v.bat.full ? anim('bat-a','bat-b',48,'flying-bats') : ''}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
   <p class="msg" id="msg">${esc(hint)}</p>
   <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
@@ -256,6 +323,7 @@ function stormLayer(w, st, storm, ev, held, at) {
   let out = rider;
   if (storm) { const from = ev && ev.event === 'move' && !FAST && w._nodes[ev.from] ? w._nodes[ev.from] : w._nodes[storm.node];   // drawn where it was, then slides over
     out += `<button class="storm ${held ? 'held' : ''} ${ev?.event === 'spawn' ? 'spawn' : ''}" id="storm" data-act="storm" data-node="${esc(storm.node)}" style="${at(from)}" aria-label="회오리">${anim('fx-storm-a', 'fx-storm-b', 48, 'fast')}</button>`; }
+  if (storm && !FAST) out += `<span class="storm-leaf" style="${at(w._nodes[storm.node])}">${spr('c014-leaf',27)}</span>`;
   if (ev && ev.event === 'gone' && w._nodes[ev.node]) out += `<div class="stormfx gone" id="stormgone" style="${at(w._nodes[ev.node])}">${spr('fx-storm-gone', 48)}</div>`;
   return out;
 }
@@ -279,7 +347,62 @@ function nodeClick(id) {
   if (n.status === 'locked') return out(MSG.locked);
   if (n.status === 'blocked') return out(MSG.blocked);
   if (n.status === 'cleared') return out(n.tiles ? '이 집은 다 읽었어요.' : '이 칸은 이미 깼어요.');
-  return start(id);
+  return n.kind === 'tile' ? walkTo(n) : start(id);
+}
+let walking = null;
+function cancelWalk() {
+  if (!walking) return;
+  walking.animation.cancel();
+  walking.petAnimation?.cancel();
+  walking = null;
+  renderRider();
+}
+function walkTo(target) {
+  const rider = $('#rider');
+  if (FAST || motionOff() || !rider?.animate) return start(target.id);
+  if (walking?.id === target.id) {
+    cancelWalk();
+    return start(target.id);
+  }
+  cancelWalk();
+  const world = G.world;
+  const from = rider.dataset.node;
+  const { reached } = reach(world, G.st);
+  const previous = new Map([[from, null]]);
+  const queue = [from];
+  for (const id of queue) {
+    if (id === target.id) break;
+    for (const nextId of world._adj[id] || []) {
+      if (!previous.has(nextId) && (reached.has(nextId) || nextId === target.id)) {
+        previous.set(nextId, id);
+        queue.push(nextId);
+      }
+    }
+  }
+  if (!previous.has(target.id) || from === target.id) return start(target.id);
+  const route = [];
+  for (let id = target.id; id !== null; id = previous.get(id)) route.unshift(world._nodes[id]);
+  const box = $('#world').getBoundingClientRect();
+  const source = route[0];
+  const deltaX = (to, from) => (to.x - from.x) * box.width / 1000;
+  const deltaY = (to, from) => (to.y - from.y) * box.height / 600;
+  const frames = route.map(n => ({
+    transform: `translate(calc(-50% + ${deltaX(n, source)}px),calc(-82% + ${deltaY(n, source)}px))`
+  }));
+  const timing = { duration: Math.min(1000, 250*(route.length-1)), easing: 'steps(8)', fill: 'forwards' };
+  renderRider(true);
+  const animation = rider.animate(frames, timing);
+  const petFrames = route.map((node, i) => {
+    const behind = route[Math.max(0, i - 1)];
+    return { transform: `translate(${deltaX(behind, node)}px,${deltaY(behind, node)}px)` };
+  });
+  const petAnimation = rider.querySelector('.rider-pet')?.animate(petFrames, timing);
+  walking = { id: target.id, animation, petAnimation };
+  animation.onfinish = () => {
+    if (walking?.animation !== animation || G.view !== 'today' || G.world !== world) return;
+    cancelWalk();
+    start(target.id);
+  };
 }
 
 // Only immediate choices from the rider glow. Other legal frontiers remain clickable.
@@ -349,8 +472,8 @@ function atlas(transition = null, list = false) {
 const GIFTS = [{ id:'leaf-cap', stars:12, name:'잎사귀 모자' }, { id:'sun-bag', stars:40, name:'햇살 가방' }, { id:'sea-coat', stars:100, name:'물결 옷' }, { id:'night-cap', stars:240, name:'밤하늘 모자' }, { id:'letter-bag', stars:500, name:'편지 가방' }, { id:'festival-coat', stars:1000, name:'축제 옷' }];
 let presentationTimers = [], deviceMemory = {}, lookMemory = {};
 function later(fn, ms) { const id = setTimeout(fn, FAST ? Math.min(ms, 20) : ms); presentationTimers.push(id); return id; }
-function clearPresentation() { presentationTimers.forEach(clearTimeout); presentationTimers = []; G.sound?.cancelFanfares(); G.door = null; $('#wardrobe')?.remove(); }
-const motionOff = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+function clearPresentation() { cancelWalk(); presentationTimers.forEach(clearTimeout); presentationTimers = []; G.sound?.cancelFanfares(); G.door = null; $('#wardrobe')?.remove(); }
+const motionOff = () => G.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
 function deviceSeen() {
   let doc = deviceMemory; try { const raw = JSON.parse(localStorage.getItem('cards.v0.seen') || '{}'); if (raw && typeof raw === 'object' && !Array.isArray(raw)) doc = { ...raw, ...deviceMemory }; /* Retain this session's acknowledgements if storage writes fail. */ } catch {}
   deviceMemory = doc; const old = doc[G.pid]; const item = old && typeof old === 'object' && !Array.isArray(old) ? old : {};
@@ -456,7 +579,10 @@ function riderLook(moving=false) {
 }
 function renderRider(moving=false) {
   const rider=$('#rider');
-  if (rider) { rider.classList.toggle('mounted',moving&&!!lookSelection(G.pid,G.st).ride); rider.innerHTML=riderLook(moving); }
+  if (!rider) return;
+  rider.classList.toggle('walking', moving);
+  rider.classList.toggle('mounted', moving && !!lookSelection(G.pid,G.st).ride);
+  rider.innerHTML = riderLook(moving);
 }
 const giftNote = id => {
   const gift=worldGift(id);
@@ -562,8 +688,11 @@ function begin(node, rng) {
     <div class="boss monster-panel ${['castle','finale'].includes(node.kind) ? 'guardian' : ''}"><span class="boss-emoji" id="boss"></span><div class="monster-health"><b>몬스터 체력</b><div class="hpbar" role="progressbar" aria-label="몬스터 체력"><i id="hp"></i></div><span id="hp-count"></span><small id="monster-hint"></small></div><span class="floater" id="floater"></span></div>
     <div class="combo" id="combo"></div><div class="left" id="left"></div></header>
   <section class="stage"><div class="card" id="card"></div></section>
-  <footer class="actions" id="actions"></footer></div>`;
+  <footer class="actions" id="actions"></footer><div class="card-motion"></div></div>`;
   paintHud(); showCard();
+  if (!FAST && !motionOff() && ['castle','finale'].includes(node.kind) && G.view === 'card') {
+    $('.card-motion').innerHTML = `<button class="guardian-entry" data-act="motion-skip" aria-label="등장 장면 건너뛰기">${spr('c011-door-open',70)}${spr('c014-torch',30,'torch')}${spr(G.displayBoss.id,65,'entry-guard')}</button>`;
+  }
   if (G.view === 'card') { $('#monster-hint').textContent = '이 길의 몬스터가 나타났어요!'; later(() => { if (G.view === 'card') paintHud(); },900); }
 }
 function displayMonster(node,N) {
@@ -625,12 +754,26 @@ function onPick(i) {
   if (G.busy || G.view !== 'card') return;
   reveal(G.run.pick(i));                                 // the card back shows the right answer; the options are cleared
 }
+function playCardMotion(res, line) {
+  const layer = $('.card-motion');
+  if (!layer || FAST) return;
+  if (!res.ok) {
+    $('#boss')?.classList.add('tease');
+    layer.innerHTML = spr('c014-taunt',34,'guard-taunt');
+    later(() => $('#boss')?.classList.remove('tease'), 300);
+    return;
+  }
+  const two = res.combo > 0 && res.combo % 3 === 0;
+  layer.innerHTML = `<span class="last-answer">${esc(res.word.ko || res.word.form)}${line ? ' · ' + esc(line) : ''}</span><span class="mail-flight ${motionOff() ? 'quick' : ''}"><span class="thrower">${courier('throw',undefined,58)}</span>${spr('c014-mail',28,'air-mail')}${two ? spr('c014-mail',25,'air-mail second') + spr('c014-star',30,'combo-glint') : ''}</span>`;
+}
 function reveal(res) {
   G.busy = true; lock(true); save(); const w = res.word; const card = $('#card'); const shielded = G.run.shieldUsed > (G.shieldSeen || 0); G.shieldSeen = G.run.shieldUsed;
   const up = res.grade && res.grade.to > res.grade.from ? res.grade.to : 0; const sight = isSight(w);
   const line = res.ok ? (up ? `${GRADE[up]} 카드!` : res.verified ? '확인 성공!' : '') : res.said === 'wrong' ? (sight ? '이 글자예요' : '이 뜻이에요') : '이제 배워요';
   card.classList.remove('in'); card.classList.add('flip');
-  setTimeout(() => {
+  const answered = G.run.current;
+  if (FAST || !res.ok) setTimeout(() => {
+    if (G.view !== 'card' || !G.busy || G.run?.current !== answered || !card.isConnected) return;
     card.className = `card back g${gradeOf(G.st.words[w.id])} ${res.ok ? 'ok' : 'learn'} ${up ? 'up' : ''}`;
     card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${sight ? `<div class="word">${esc(w.form)}</div>` : `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>`}${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
   }, FAST ? 0 : 90);
@@ -640,7 +783,8 @@ function reveal(res) {
   else G.sound.blip(res.said === 'wrong' && !shielded ? 'miss' : shielded ? 'shield' : 'retry');
   if (up) setTimeout(() => G.sound.jingle('grade'), 250);
   paintHud();
-  if (res.ok) { $('#actions').innerHTML = ''; G.timer = setTimeout(next, FAST ? 30 : up ? 1300 : 900); }
+  playCardMotion(res, line);
+  if (res.ok) { $('#actions').innerHTML = ''; if (FAST) G.timer = setTimeout(next, 30); else next(); }
   else {                                                 // a word to learn: hear it again, then move on (tap to go sooner)
     $('#actions').innerHTML = `<button class="act goon" data-act="next" id="goon">다음 ▶</button>`;
     setTimeout(() => G.sound.play(w.id, w.form), FAST ? 0 : 350);
@@ -679,7 +823,7 @@ function endRun(reason) {
   const gifts = GIFTS.filter((g) => G.st.map.stars >= g.stars && !deviceSeen().gifts[g.id]);
   const go = celebration ? ['celebration-atlas','세계 지도 보기'] : batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ro(ww.nextWorld.name)}`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ro(ww.nextContinent.name)}`] : ['today', '▶ 지도로'];
   const goId = ww.key && ww.nextWorld ? ww.nextWorld.id : ww.finale?.pass && ww.nextContinent ? ww.nextContinent.worlds[0].id : '';
-  $('#app').innerHTML = `<div class="page center ${celebration ? 'celebration' : ''}"><h1 class="title">${title}</h1>${celebration ? `<div class="celebration-art">${spr(ww.key ? 'c011-castle-world' : 'c011-castle-continent',128)}<span class="celebration-key">${spr('key',48)}</span></div>` : defeated ? `<div class="monster-finished" data-hp="0" data-sprite="${G.displayBoss.id}">${spr(G.displayBoss.id,64)}<span>몬스터 체력 0/${G.displayBoss.N}</span></div>` : ''}${lines.join('')}${gifts.length ? `<div id="giftgain">${spr('c011-gift-open',48)} 새 선물이 열렸어요 <button class="sec" data-act="wardrobe">배달부 꾸미기</button></div>` : ''}
+  $('#app').innerHTML = `<div class="page center ${celebration ? 'celebration' : ''}"><h1 class="title">${title}</h1>${celebration ? `<div class="celebration-art">${spr(ww.key ? 'c011-castle-world' : 'c011-castle-continent',128)}<span class="celebration-key">${spr('key',48)}</span></div>` : defeated ? `<div class="monster-finished" data-hp="0" data-sprite="${G.displayBoss.id}">${spr(G.displayBoss.id,64)}${!FAST ? spr('c014-smoke',48,'defeat-cloud') + spr('c014-star',28,'defeat-star') : ''}<span>몬스터 체력 0/${G.displayBoss.N}</span></div>` : ''}${lines.join('')}${gifts.length ? `<div id="giftgain">${spr('c011-gift-open',48)} 새 선물이 열렸어요 <button class="sec" data-act="wardrobe">배달부 꾸미기</button></div>` : ''}
   <div class="tiles"><div><b>${rec.cards}</b><span>넘긴 카드</span></div><div><b>1</b><span>몬스터와 한 판</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
   <button class="go" data-act="${go[0]}" data-id="${esc(goId)}">${esc(go[1])}</button>${go[0] !== 'today' ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
@@ -825,7 +969,7 @@ function album() {
 
 // ---- parent ----
 function parent() {
-  G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
+  clearPresentation(); G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
     const T = totals(st); const tot = { cards: T.cards, wall: T.wall, claims: T.claims, v: T.verifies, vok: T.verifyOk, rv: T.reviews, rok: T.reviewOk, sp: T.spots, spok: T.spotOk, bd: T.bunchDone, bok: T.bunchOk };
     return `<h2>${esc(name(id))}</h2><p class="small">오늘 ${Math.floor(R.filter((run) => run.day === todayISO()).reduce((sum, run) => sum + run.wall, 0) / 6e4)}분 · 별 ${m.stars} · 열쇠 ${all.filter((w) => w.castle).length}/${all.length} · 왕관 ${all.filter((w) => w.crown).length} · 큰 성 ${a.filter((x) => x.finale.status === 'cleared').length}/${a.length} · 만난 카드 ${Object.keys(st.words).length}/${new Set(G.ix.worlds.flatMap(worldWords)).size} · 번개 최고 ${m.best} · 밀린 복습 ${dueCount(st, todayISO())}장 · 박쥐 ${m.bat.fill}/${m.bat.cap} · 금 ${c[3]} · 은 ${c[2]} · 동 ${c[1]} · 아직 ${c[0]} / 전체 ${T.n}판, 카드 ${tot.cards}장, 분당 ${tot.wall ? (tot.cards / (tot.wall / 6e4)).toFixed(1) : '-'}장, "알아요" 확인 정답률 ${pct(tot.vok, tot.v)} (${tot.vok}/${tot.v}), 복습 정답률 ${pct(tot.rok, tot.rv)} (${tot.rok}/${tot.rv}), 넘긴 단어 확인 정답률 ${pct(tot.spok, tot.sp)} (${tot.spok}/${tot.sp}), 묶음 확인 ${tot.bok}/${tot.bd}</p>
@@ -837,6 +981,8 @@ function parent() {
       <select id="snap-${id}" aria-label="날짜별 사본"><option value="">날짜별 사본…</option></select><button class="sec" data-act="snap" data-id="${id}">그 날짜 사본에서 복원</button><button class="link" data-act="reset" data-id="${id}">이 기기의 기록 지우기</button></p>
     <p class="small mut">복원은 지금 기록에 합치는 방식이라 어느 쪽 기록도 지워지지 않습니다.</p>`; };
   $('#app').innerHTML = `<div class="page parent"><button class="back" data-act="home" aria-label="처음으로">‹</button><h1 class="title">부모 기록</h1>
+  <div class="row"><button class="sec" aria-pressed="${G.homeProgress}" data-act="home-progress">첫 화면에 성과 보이기 ${G.homeProgress ? '켜짐' : '꺼짐'}</button>
+  <button class="sec" aria-pressed="${G.reduceMotion}" data-act="reduce-motion">움직임 줄이기 ${G.reduceMotion ? '켜짐' : '꺼짐'}</button></div>
   <p class="small mut">분당 카드는 뜻을 보는 시간까지 포함한 실제 속도, 확인 정답률은 "알아요"라고 한 카드를 뜻 고르기로 확인한 결과, 복습 정답률은 날짜가 된 복습 카드의 결과, 넘긴 단어 확인은 단어 목록에서 넘긴 단어를 바로 뜻 고르기로 확인한 결과, 묶음 확인은 30일 뒤 표본 확인을 통과한 칸 묶음 수/끝난 묶음 수입니다. 소리: ${esc(G.sound.source)}${G.dataNote ? ' · ' + esc(G.dataNote) : ''}</p><p class="small" id="syncline">${esc(syncLine())}</p>
   <div class="safety" id="safety"><b>기록 보관 상태</b><span>① 이 기기: ${G.volatile ? '저장 불가' : '저장 중'}</span><span id="sf-server">② Mac 서버: 확인 중…</span><span id="sf-daily">③ 날짜별 사본: 확인 중…</span><span id="sf-off">④ 외부 백업(GitHub): 확인 중…</span></div>
   <p class="msg small" id="pmsg">${esc(G.pmsg || '')}</p>
@@ -890,7 +1036,23 @@ async function onClick(e) {
     case 'hide': return hideBanner();
     case 'snap': { const day = document.getElementById('snap-' + b.dataset.id)?.value; if (!day) { G.pmsg = '복원할 날짜를 먼저 고르세요.'; return parent(); }
       try { const r = await fetch(`api/snapshot/p.${b.dataset.id}/${day}`); if (!r.ok) throw new Error('사본을 읽지 못했어요'); return restore(b.dataset.id, await r.text()); } catch (e) { G.pmsg = `복원하지 못했어요: ${e.message}`; return parent(); } }
-    case 'pick': await G.sound.unlock(); return openProfile(b.dataset.id);
+    case 'home-progress': G.homeProgress = !G.homeProgress; savePref({ homeProgress: G.homeProgress }); return parent();
+    case 'reduce-motion': G.reduceMotion = !G.reduceMotion; document.body.classList.toggle('motion-quiet', FAST || G.reduceMotion); savePref({ reduceMotion: G.reduceMotion }); return parent();
+    case 'motion-skip': b.remove(); return;
+    case 'pick': {
+      if (G.pickingProfile) return;
+      G.pickingProfile = true;
+      const id = b.dataset.id;
+      if (!FAST && !motionOff()) {
+        const face = b.querySelector('.home-courier');
+        if (face) { face.innerHTML = courier('wave', undefined, 80, id, homeRecord(id)); face.classList.add('departing'); }
+      }
+      try {
+        await G.sound.unlock();
+        if (G.view === 'home') await openProfile(id);
+      } finally { G.pickingProfile = false; }
+      return;
+    }
     case 'today': return today(G.pid);
     case 'atlas': return atlas();
     case 'atlas-list': return atlas(null, true);
