@@ -505,7 +505,8 @@ const PET_GOALS = [500, 1500, 3000];
 const COLOR_GOALS = [0, 3, 40];
 // Choose the first local game date on the new schedule at release (YYYY-MM-DD).
 // Until a date is scheduled, keep C-018 active on deployed copies.
-const ITEM_TIERS_FROM = null;
+// The tiered item table (C-019) applies from this day. The children start after it, so they only ever see the new table.
+const ITEM_TIERS_FROM = '2026-11-19';
 const itemTiersActive = () => ITEM_TIERS_FROM !== null && todayISO() >= ITEM_TIERS_FROM;
 const REWARD_RANKS = ['','새싹 들판','굽이굽이 바다','별빛 하늘'];
 const TIER_GIFTS = [
