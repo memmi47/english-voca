@@ -692,11 +692,12 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await fb.evaluate(()=>{const g=window.__cards;g.st.map.stars=12;localStorage.setItem('cards.v0.p.son',JSON.stringify(g.st));});
   await fb.click('[data-act=home]'); await fb.click('[data-act=pick][data-id=son]'); await fb.waitForSelector('.world');
   const beforeLook = await fb.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
-  await fb.click('[data-act=wardrobe]'); await fb.waitForSelector('#wardrobe'); await fb.click('.look[data-id=leaf-cap]');
+  await fb.click('[data-act=wardrobe]'); await fb.waitForSelector('#wardrobe'); await fb.click('[data-act=gear][data-slot=hat][data-id=leaf-cap]');
   await fb.screenshot({path:'/tmp/c011-screens/wardrobe.png',animations:'disabled'});
-  const savedLookInvariant = await fb.evaluate((before)=>localStorage.getItem('cards.v0.p.son')===before&&JSON.parse(localStorage.getItem('cards.v0.look.son')).outfit==='leaf-cap'&&document.querySelector('.look[data-id="sun-bag"]').disabled&&document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle',beforeLook);
+  await fb.click('[data-act=gear-tab][data-slot=bag]');
+  const savedLookInvariant = await fb.evaluate((before)=>localStorage.getItem('cards.v0.p.son')===before&&JSON.parse(localStorage.getItem('cards.v0.look.son')).slots.hat.id==='leaf-cap'&&document.querySelector('[data-act=gear][data-slot=bag][data-id="sun-bag"]').disabled&&!!document.querySelector('#rider use[data-layer="hat"][href="#c016-hat-legacy-leaf-cap-0"]'),beforeLook);
   await fb.keyboard.press('Escape'); await fb.reload(); await fb.waitForSelector('.profiles'); await fb.click('[data-act=pick][data-id=son]'); await fb.waitForSelector('.world');
-  ok('C011: outfit persists after reload without consuming stars',await fb.evaluate(()=>window.__cards.st.map.stars===12&&document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle'));
+  ok('C011: outfit persists after reload without consuming stars',await fb.evaluate(()=>window.__cards.st.map.stars===12&&!!document.querySelector('#rider use[data-layer="hat"][href="#c016-hat-legacy-leaf-cap-0"]')));
   await fb.click('[data-act=home]'); await fb.click('[data-act=pick][data-id=daughter]'); await fb.waitForSelector('.world');
   ok('C011: outfit choice is separate for each child',await fb.$eval('#rider use',e=>e.getAttribute('href'))==='#courier-gold-idle');
   await fb.click('[data-act=atlas]'); ok('C011: a locked world has a shut door and cannot be entered',await fb.$eval('.wcard[data-id="d1-02"]',e=>e.disabled&&!!e.querySelector('use[href="#c011-door-locked"]')));
@@ -727,10 +728,10 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const quotactx=await browser.newContext({viewport:{width:1180,height:820}}),quotaPage=await open(quotactx,'today=2026-11-12&triage=off&seed=9&sound=off&fast=1');
   await quotaPage.click('[data-act=pick][data-id=son]');await quotaPage.waitForSelector('.world');
   const quotaBefore=await quotaPage.evaluate(()=>{const g=window.__cards;g.st.map.stars=12;g.st.map.keys=1;g.st.map.worlds['d1-01'].castle='2026-11-12';localStorage.setItem('cards.v0.p.son',JSON.stringify(g.st));const before=localStorage.getItem('cards.v0.p.son'),set=Storage.prototype.setItem;window.__quotaAttempts=[];Storage.prototype.setItem=function(k,v){if(k==='cards.v0.seen'||k.startsWith('cards.v0.look.')||k.startsWith('cards.v0.p.')){window.__quotaAttempts.push({key:k,value:v});throw new DOMException('quota fixture','QuotaExceededError');}return set.call(this,k,v);};return before;});
-  await quotaPage.click('[data-act=wardrobe]');await quotaPage.click('.look[data-id=leaf-cap]');await quotaPage.click('#wardrobe [data-act=look-close]');
+  await quotaPage.click('[data-act=wardrobe]');await quotaPage.click('[data-act=gear][data-slot=hat][data-id=leaf-cap]');await quotaPage.click('#wardrobe [data-act=look-close]');
   await quotaPage.click('[data-act=atlas]');await quotaPage.click('.world-door[data-act=door][data-id="d1-02"]');await quotaPage.waitForSelector('.door-stage[data-phase=open]');
-  await quotaPage.click('[data-act=today]');await quotaPage.waitForSelector('.world');const quotaLook=await quotaPage.$eval('#rider use',e=>e.getAttribute('href'));await quotaPage.click('[data-act=atlas]');
-  ok('C011: first gift, locked outfits and saved look keep child JSON unchanged; read-only device storage retains door and gift acknowledgements and outfit in memory',savedLookInvariant&&quotaLook==='#c011-look-leaf-cap-idle'&&await quotaPage.evaluate(before=>{const a=window.__quotaAttempts,docs=a.filter(x=>x.key==='cards.v0.seen').map(x=>JSON.parse(x.value));return localStorage.getItem('cards.v0.p.son')===before&&!a.some(x=>x.key.startsWith('cards.v0.p.'))&&docs.some(x=>x.son?.gifts?.['leaf-cap']&&x.son?.doors?.['world:d1-01:d1-02'])&&!!document.querySelector('.wcard[data-id="d1-02"] .world-door use[href="#c011-door-open"]')&&!document.querySelector('.wcard[data-id="d1-02"] .world-door.unseen');},quotaBefore));
+  await quotaPage.click('[data-act=today]');await quotaPage.waitForSelector('.world');const quotaLook=await quotaPage.$eval('#rider use[data-layer="hat"]',e=>e.getAttribute('href'));await quotaPage.click('[data-act=atlas]');
+  ok('C011: first gift, locked outfits and saved look keep child JSON unchanged; read-only device storage retains door and gift acknowledgements and outfit in memory',savedLookInvariant&&quotaLook==='#c016-hat-legacy-leaf-cap-0'&&await quotaPage.evaluate(before=>{const a=window.__quotaAttempts,docs=a.filter(x=>x.key==='cards.v0.seen').map(x=>JSON.parse(x.value));return localStorage.getItem('cards.v0.p.son')===before&&!a.some(x=>x.key.startsWith('cards.v0.p.'))&&docs.some(x=>x.son?.gifts?.['leaf-cap']&&x.son?.doors?.['world:d1-01:d1-02'])&&!!document.querySelector('.wcard[data-id="d1-02"] .world-door use[href="#c011-door-open"]')&&!document.querySelector('.wcard[data-id="d1-02"] .world-door.unseen');},quotaBefore));
   await quotaPage.close();await quotactx.close();
 
   // A pending recording load must not start after leaving a celebration.
@@ -874,17 +875,24 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   }));
   await vp.click('[data-act=wardrobe]');
   await vp.screenshot({ path: '/tmp/c015-screens/wardrobe.png', animations: 'disabled' });
-  ok('C015: six outfits share the default courier display size and similar painted bounds', await vp.evaluate(() => {
-    const drawings = [...document.querySelectorAll('.look svg')];
-    const boxes = drawings.map((drawing) => {
-      const box = drawing.getBoundingClientRect();
-      const art = drawing.querySelector('use').getBBox();
-      const view = drawing.viewBox.baseVal;
-      return [box.width, box.height, art.width / view.width, art.height / view.height];
-    });
-    return boxes.length === 7 && boxes.every(([w,h,aw,ah]) => w === boxes[0][0] && h === boxes[0][1] &&
-      Math.abs(aw - boxes[0][2]) <= .07 && Math.abs(ah - boxes[0][3]) <= .07);
-  }));
+  const courierBounds = () => vp.locator('.gear-preview svg').evaluate(drawing => {
+    const box = drawing.getBoundingClientRect();
+    const art = drawing.getBBox();
+    const view = drawing.viewBox.baseVal;
+    return [box.width, box.height, art.width / view.width, art.height / view.height];
+  });
+  const defaultBounds = await courierBounds();
+  const fitted = [];
+  for (const [slot,ids] of [['hat',['leaf-cap','night-cap']],['bag',['sun-bag','letter-bag']],['coat',['sea-coat','festival-coat']]]) {
+    await vp.click(`[data-act=gear-tab][data-slot=${slot}]`);
+    for (const id of ids) {
+      await vp.click(`[data-act=gear][data-slot=${slot}][data-id=${id}]`);
+      fitted.push(await courierBounds());
+    }
+    await vp.click(`[data-act=gear][data-slot=${slot}][data-id=default]`);
+  }
+  ok('C015: six outfits share the default courier display size and similar painted bounds', fitted.length === 6 && fitted.every(([w,h,aw,ah]) =>
+    w === defaultBounds[0] && h === defaultBounds[1] && Math.abs(aw-defaultBounds[2]) <= .07 && Math.abs(ah-defaultBounds[3]) <= .07), JSON.stringify({defaultBounds,fitted}));
   await vp.click('#wardrobe [data-act=look-close]');
   await vp.click('[data-act=atlas]');
   await vp.screenshot({ path: '/tmp/c015-screens/atlas-p1.png', animations: 'disabled' });
@@ -966,7 +974,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     m.conts.c1={castle:'2026-11-17'};
     for(const w of g.words.slice(0,500))s.words[w.id]={st:'done'};
     localStorage.setItem('cards.v0.p.son',JSON.stringify(s));
-    localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'leaf-cap'}));
+    localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'sea-coat'}));
+    localStorage.setItem('cards.v0.seen',JSON.stringify({son:{gifts:{'sea-coat':true}}}));
   });
   await gearPage.click('[data-act=pick][data-id=son]');
   await gearPage.waitForSelector('#world[data-world=p1-01]');
@@ -977,7 +986,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C016: revised first-world stamps and the earned legacy outfit are rendered',await gearPage.evaluate(()=>{
     const stamps=[...document.querySelectorAll('#world .gate-stamp')].map(e=>e.closest('[data-id]').dataset.id);
     return stamps.includes('p1-01-detour-2-3')&&stamps.includes('p1-01-detour-3-3')&&
-      document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle';
+      document.querySelector('#rider use').getAttribute('href')==='#c011-look-sea-coat-idle';
   }));
   await gearPage.click('[data-act=wardrobe]');
   await gearPage.click('[data-act=gear-tab][data-slot=hat]');
@@ -988,8 +997,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C016: a world castle opens its hat only, star thresholds select color, and the legacy coat stays equipped',
     hatLocked&&colorLocked&&await gearPage.evaluate(()=>{
       const look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
-      return look.slots.hat.id==='p1-01'&&look.slots.hat.color===1&&look.outfit==='leaf-cap'&&
-        !!document.querySelector('#rider use[href="#c016-coat-legacy-leaf-cap-0"]');
+      return look.slots.hat.id==='p1-01'&&look.slots.hat.color===1&&look.outfit==='sea-coat'&&
+        !!document.querySelector('#rider use[href="#c016-coat-legacy-sea-coat-0"]');
     }));
   await gearPage.screenshot({path:out016+'/wardrobe.png',animations:'disabled'});
   await gearPage.click('[data-act=gear-tab][data-slot=ride]');
@@ -1169,6 +1178,207 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   }
   await pairCapture('card-couriers',throwImages);
   await kids.close();
+
+  // C-018 wardrobe slots, old device looks, and gifts on the world map.
+  const out018='/tmp/c018-screens';
+  fs.mkdirSync(out018,{recursive:true});
+  const polish=await browser.newContext({viewport:{width:1180,height:820},hasTouch:true});
+  const polishPage=await polish.newPage();
+  polishPage.on('pageerror',e=>errs.push(String(e)));
+  await polishPage.goto(BASE+'?today=2026-11-18&fast=1&nosync=1&sound=off&storm=off');
+  await polishPage.waitForSelector('.profiles');
+  await polishPage.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+    const st=newState('son'), map=ensureMap(st);
+    map.at='p1-01';
+    for (const id of ['p1-01','p1-02']) map.worlds[id]={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
+    localStorage.setItem('cards.v0.p.son',JSON.stringify(st));
+    localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'leaf-cap',slots:{
+      coat:{id:'leaf-cap',color:0},hat:{id:'p1-01',color:0},bag:{id:'p1-02',color:0}
+    }}));
+  });
+  const legacyHat='[data-act=gear][data-slot=hat][data-id=leaf-cap]';
+  await polishPage.click('[data-act=pick][data-id=son]');
+  await polishPage.waitForSelector('#rider');
+  const beforePolish=await polishPage.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  await polishPage.click('[data-act=wardrobe]');
+  await polishPage.screenshot({path:out018+'/wardrobe-hats.png',animations:'disabled'});
+  const migrated=await polishPage.evaluate(before=>{
+    const doc=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+    return doc.outfit==='default'&&!doc.slots.coat&&doc.slots.hat.id==='leaf-cap'&&doc.slots.bag.id==='p1-02'&&
+      localStorage.getItem('cards.v0.p.son')===before;
+  },beforePolish);
+  await polishPage.click('[data-act=gear][data-slot=hat][data-id=p1-01]');
+  await polishPage.reload(); await polishPage.waitForSelector('.profiles');
+  await polishPage.click('[data-act=pick][data-id=son]');
+  await polishPage.click('[data-act=wardrobe]');
+  await polishPage.click(legacyHat);
+  ok('C018: an old coat-slot star hat moves to the hat slot, remains earned, and keeps the other slots and child JSON',
+    migrated&&await polishPage.locator(legacyHat).getAttribute('aria-pressed')==='true'&&await polishPage.evaluate(before=>
+      localStorage.getItem('cards.v0.p.son')===before&&!!document.querySelector('#rider use[data-layer=hat][href="#c016-hat-legacy-leaf-cap-0"]'),beforePolish));
+
+  const slots018={hat:[['leaf-cap','잎사귀 모자',12],['night-cap','밤하늘 모자',240]],
+    bag:[['sun-bag','햇살 가방',40],['letter-bag','편지 가방',500]],coat:[['sea-coat','물결 옷',100],['festival-coat','축제 옷',1000]],ride:[],pet:[]};
+  const layout018=[], silhouettes018=[];
+  for(const [slot,legacy] of Object.entries(slots018)){
+    await polishPage.click(`[data-act=gear-tab][data-slot=${slot}]`);
+    const checked=await polishPage.locator('.looks .gear:not([data-id=default])').evaluateAll((buttons,{slot,legacy})=>{
+      const starred=buttons.filter(b=>b.querySelector('.star-gift'));
+      const locked=buttons.filter(b=>b.disabled);
+      const artIds=buttons.every(b=>b.dataset.slot===slot&&b.querySelector('use').getAttribute('href').startsWith(`#c016-${slot}-`));
+      const starNames=starred.length===legacy.length&&legacy.every(([id,name,stars])=>starred.some(b=>b.dataset.id===id&&
+        b.querySelector('b').textContent===name&&(!b.disabled||b.querySelector('small').textContent===`★ ${stars}에 열려요`)));
+      const silhouettes=locked.length>0&&locked.every(b=>{
+        const drawing=b.querySelector('svg.gear-art'), use=drawing?.querySelector('use');
+        if(!use) return false;
+        const art=use.getBBox(), view=drawing.viewBox.baseVal;
+        return b.classList.contains('silhouette')&&getComputedStyle(b).opacity==='1'&&getComputedStyle(drawing).filter.includes('brightness(0)')&&
+          art.width>=10&&art.height>=8&&art.height/art.width>=.25&&art.x>=view.x&&art.y>=view.y&&
+          art.x+art.width<=view.x+view.width&&art.y+art.height<=view.y+view.height&&b.querySelector('small').textContent.length>0;
+      });
+      return {layout:buttons.length===(legacy.length?12:3)&&artIds&&starNames,silhouettes};
+    },{slot,legacy});
+    layout018.push(checked.layout);silhouettes018.push(checked.silhouettes);
+    if(slot==='coat') await polishPage.screenshot({path:out018+'/locked-items.png',animations:'disabled'});
+  }
+  ok('C018: every wardrobe slot contains only its own item type, and exactly the six legacy items carry star gifts',layout018.every(Boolean),JSON.stringify(layout018));
+  ok('C018: every locked item shows a dark, fully framed item-shaped silhouette and its unlock condition',silhouettes018.every(Boolean),JSON.stringify(silhouettes018));
+
+  await polishPage.click('#wardrobe .sec[data-act=look-close]');
+  await polishPage.click('[data-act=atlas]');
+  await polishPage.screenshot({path:out018+'/world-atlas.png',animations:'disabled'});
+  const atlasQuiet=await polishPage.evaluate(()=>{
+    const icons=[...document.querySelectorAll('.atlas-stop .atlas-gift')];
+    return icons.length===30&&icons.every(icon=>!icon.textContent.trim()&&!!icon.querySelector('use'))&&
+      !document.querySelector('.atlas .world-gift')&&!!document.querySelector('.atlas-gift[data-id=p1-01] .gift-check path')&&
+      !document.querySelector('.atlas-gift[data-id=p1-04] .gift-check');
+  });
+  const lockedVillage=polishPage.locator('.wcard[data-id=p1-04]');
+  const lockedStill=await lockedVillage.isDisabled();
+  const sign=lockedVillage.locator('b');
+  await sign.scrollIntoViewIfNeeded();
+  const labelPosition=await sign.boundingBox();
+  await polishPage.touchscreen.tap(labelPosition.x+labelPosition.width/2,labelPosition.y+labelPosition.height/2);
+  const guide=await polishPage.locator('#banner:not([hidden])').textContent();
+  await polishPage.click('#banner [data-act=hide]');
+  await polishPage.click('.wcard[data-id=p1-02]');
+  await polishPage.waitForSelector('#world[data-world=p1-02]');
+  const mapGift=await polishPage.locator('.world-gift').evaluate(el=>
+    el.textContent.includes('과일 주머니')&&el.querySelector('svg').getBoundingClientRect().height>=2*el.querySelector('span').getBoundingClientRect().height);
+  ok('C018: atlas gifts use icons with earned checks, village taps reveal the name, and the world gift is double text height',
+    atlasQuiet&&lockedStill&&guide.includes('나무결 모자')&&mapGift);
+  await polish.close();
+
+  // C-019 uses a scheduled date at deployment. Exercise both sides of a date
+  // on the original app code, substituting only that setting in this browser.
+  const cutoff='2026-11-18', previousDay='2026-11-17';
+  const tierSource=fs.readFileSync(path.join(__dirname,'../cards/js/main.js'),'utf8');
+  const dateSetting=/^const ITEM_TIERS_FROM = (?:null|'\d{4}-\d{2}-\d{2}');$/m;
+  if (!dateSetting.test(tierSource)) throw new Error('Could not find the C-019 rollout date setting.');
+  const tierCode=tierSource.replace(dateSetting,`const ITEM_TIERS_FROM = '${cutoff}';`);
+  const tierOut='/tmp/c019-screens';
+  fs.mkdirSync(tierOut,{recursive:true});
+  const rewards=await browser.newContext({viewport:{width:1180,height:820},reducedMotion:'no-preference'});
+  await rewards.route('**/js/main.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:tierCode}));
+  const tierPage=await rewards.newPage();
+  tierPage.on('pageerror',e=>errs.push(String(e)));
+  const tierTab=slot=>tierPage.click(`[data-act=gear-tab][data-slot=${slot}]`);
+  const tierGear=id=>tierPage.locator(`[data-act=gear][data-id=${id}]`);
+  const leaveTiers=()=>tierPage.click('#wardrobe .sec[data-act=look-close]');
+  async function tierProfile({pid='son',day=cutoff,at='p1-01',castles={},conts={},slots={},stars=0}) {
+    await tierPage.goto(BASE+`?today=${day}&nosync=1&sound=off&storm=off`);
+    await tierPage.waitForSelector('.profiles');
+    await tierPage.evaluate(async({pid,at,castles,conts,slots,stars,day})=>{
+      const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+      const st=newState(pid), map=ensureMap(st);
+      map.at=at; map.stars=stars;
+      for (const [id,date] of Object.entries(castles)) map.worlds[id]={castle:date,seen:date,cleared:{},stamps:{}};
+      map.worlds[at]??={castle:null,seen:day,cleared:{},stamps:{}};
+      map.conts=Object.fromEntries(Object.entries(conts).map(([id,castle])=>[id,{castle}]));
+      localStorage.setItem(`cards.v0.p.${pid}`,JSON.stringify(st));
+      localStorage.setItem(`cards.v0.look.${pid}`,JSON.stringify({outfit:'default',slots}));
+    },{pid,at,castles,conts,slots,stars,day});
+    await tierPage.click(`[data-act=pick][data-id=${pid}]`);
+    await tierPage.waitForSelector(`#world[data-world=${at}]`);
+  }
+  await tierProfile({day:previousDay,castles:{'p1-01':previousDay}});
+  await tierPage.click('[data-act=wardrobe]');
+  const beforeCutoff=await tierGear('p1-01').isEnabled()&&await tierGear('c019-h-straw').count()===0;
+  await tierProfile({castles:{'p1-01':cutoff}});
+  const noFirstWorldGift=await tierPage.locator('.world-gift').count()===0;
+  await tierPage.click('[data-act=wardrobe]');
+  const zeroHats=await tierPage.locator('.gear[data-rank]:enabled').count()===0;
+  await tierTab('bag');
+  const zeroBags=await tierPage.locator('.gear[data-rank]:enabled').count()===0;
+  await tierTab('coat');
+  const zeroCoats=await tierPage.locator('.gear[data-id]:enabled:not([data-id=default])').count()===0;
+  await leaveTiers();
+  await tierPage.click('[data-act=atlas]');
+  const atlasRewards=await tierPage.locator('button.atlas-gift').evaluateAll(icons=>icons.map(icon=>icon.dataset.id));
+  await tierProfile({at:'p1-02',castles:{'p1-01':cutoff,'p1-02':cutoff}});
+  const secondWorldGift=await tierPage.locator('.world-gift span').textContent();
+  await tierPage.click('[data-act=wardrobe]');
+  const firstHat=await tierGear('c019-h-straw').isEnabled()&&await tierPage.locator('.gear[data-rank]:enabled').count()===1;
+  await tierProfile({at:'p1-08',castles:Object.fromEntries(Array.from({length:8},(_,i)=>[`p1-0${i+1}`,cutoff]))});
+  await tierPage.click('[data-act=wardrobe]');
+  await tierTab('coat');
+  const fieldCoatsLocked=await tierPage.locator('.gear[data-id]:enabled:not([data-id=default])').count()===0;
+  ok('C019: the date switches the schedule, the first castle gives nothing, and new field records cannot earn coats',
+    beforeCutoff&&noFirstWorldGift&&zeroHats&&zeroBags&&zeroCoats&&firstHat&&fieldCoatsLocked&&secondWorldGift.includes('밀짚 우편모자')&&
+    JSON.stringify(atlasRewards)===JSON.stringify(['p1-02','p1-05','p1-08','p2-02','p2-04','p2-06','p2-08','p2-10','p2-12','p2-15','p3-02','p3-04','p3-06','p3-07']));
+
+  await tierProfile({at:'p1-01',castles:{'p1-01':previousDay,'p1-02':previousDay,'p1-03':previousDay,'p1-06':previousDay},stars:3,
+    slots:{hat:{id:'p1-01',color:1},bag:{id:'p1-02',color:0},coat:{id:'p1-03',color:0}}});
+  const beforeMigration=await tierPage.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  await tierPage.click('[data-act=wardrobe]');
+  const hatMigrated=await tierGear('c019-h-straw').getAttribute('aria-pressed')==='true';
+  await tierTab('bag');
+  const bagMigrated=await tierGear('c019-b-acorn').getAttribute('aria-pressed')==='true';
+  await tierTab('coat');
+  const coatsKept=await tierGear('p1-03').getAttribute('aria-pressed')==='true'&&await tierGear('p1-06').isEnabled();
+  await tierPage.reload(); await tierPage.waitForSelector('.profiles');
+  await tierPage.click('[data-act=pick][data-id=son]'); await tierPage.waitForSelector('#rider');
+  const migratedRecord=await tierPage.evaluate(before=>{
+    const look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+    return look.slots.hat.id==='c019-h-straw'&&look.slots.hat.color===1&&look.slots.bag.id==='c019-b-acorn'&&look.slots.coat.id==='p1-03'&&
+      !!document.querySelector('#rider use[href="#c019-coat-p1-03-0"]')&&localStorage.getItem('cards.v0.p.son')===before;
+  },beforeMigration);
+  ok('C019: earlier castle dates retain equivalent unlocks and both archived field coats without rewriting child records',
+    hatMigrated&&bagMigrated&&coatsKept&&migratedRecord);
+
+  const sky={
+    at:'p3-07',stars:40,conts:{c1:previousDay,c2:previousDay},
+    castles:Object.fromEntries([[1,8],[2,15],[3,7]].flatMap(([band,count])=>
+      Array.from({length:count},(_,i)=>[`p${band}-${String(i+1).padStart(2,'0')}`,cutoff]))),
+    slots:{hat:{id:'c019-h-plume',color:0},bag:{id:'c019-b-dawn',color:0},coat:{id:'c019-c-star',color:0}}
+  };
+  const motionCheck=()=>tierPage.locator('#rider .rider-body .frame:first-child .gear-glint').evaluateAll(frames=>({
+    count:frames.length, active:frames.filter(f=>getComputedStyle(f).animationName==='gear-shimmer').length
+  }));
+  await tierProfile({...sky,pid:'son'});
+  const couldMove=await motionCheck();
+  const sonIdentity=await tierPage.locator('#rider use[href="#c017-scarf-son"]').count()>0;
+  await tierPage.screenshot({path:tierOut+'/sky-son.png'});
+  await tierPage.click('[data-act=wardrobe]');
+  for (const [slot,file] of [['hat','hats'],['bag','bags'],['coat','coats']]) {
+    await tierTab(slot);
+    await tierPage.screenshot({path:`${tierOut}/${file}.png`});
+  }
+  const noEarlySpark=await tierPage.locator('.gear:not([data-rank="3"]) .gear-glint').count()===0;
+  await tierProfile({...sky,pid:'daughter'});
+  const daughterIdentity=await tierPage.locator('#rider use[href="#c017-heart-daughter"]').count()>0;
+  await tierPage.screenshot({path:tierOut+'/sky-daughter.png'});
+  await tierPage.emulateMedia({reducedMotion:'reduce'});
+  const mediaQuiet=await motionCheck();
+  await tierPage.emulateMedia({reducedMotion:'no-preference'});
+  await tierPage.click('[data-act=home]'); await tierPage.click('[data-act=parent]');
+  await tierPage.click('[data-act=reduce-motion]'); await tierPage.click('[data-act=home]');
+  await tierPage.click('[data-act=pick][data-id=daughter]'); await tierPage.waitForSelector('#rider');
+  const deviceQuiet=await motionCheck();
+  ok('C019: tier-three glints animate only on the eligible gear and stop for either motion preference',
+    couldMove.count===6&&couldMove.active===6&&noEarlySpark&&sonIdentity&&daughterIdentity&&
+    mediaQuiet.count===6&&mediaQuiet.active===0&&deviceQuiet.count===6&&deviceQuiet.active===0);
+  await rewards.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
