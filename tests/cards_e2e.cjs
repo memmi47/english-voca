@@ -758,7 +758,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     const expected = {};
     for (const [i,id] of ['son','daughter'].entries()) {
       const ids = window.__cards.words.slice(0,4+i).map(w => w.id);
-      const words = Object.fromEntries(ids.map((word,j) => [word, { st: j === 1 ? 'review' : 'done', step: j === 1 ? 0 : 2, firstDay: j === 0 ? '2026-11-15' : '2026-11-16', lastDay:'2026-11-18' }]));
+      const words = Object.fromEntries(ids.map((word,j) => [word, { st: j === 1 ? 'review' : 'done', step: j === 1 ? 0 : 2, firstDay: j === 0 ? '2026-11-15' : '2026-11-16', lastDay:'2026-11-18', ...(j === 1 ? {} : { up: j === 0 ? '2026-11-15' : '2026-11-16' }) }]));
       const record = JSON.stringify({ v:3,id,words,runs:[{day:'2026-11-16',reason:'done'},{day:'2026-11-17',reason:'left'}] });
       localStorage.setItem('cards.v0.p.'+id,record);
       expected[id] = record;
@@ -769,7 +769,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   fs.mkdirSync('/tmp/c014-screens',{recursive:true});
   await hm.screenshot({path:'/tmp/c014-screens/home.png'});
   await hm.click('[data-act=parent]'); await hm.click('[data-act=home]');
-  ok('C014: current silver words and Monday-first activity match each child record; home is read-only', await hm.evaluate(expected => {
+  ok('C014: firm words (all time and since Monday) and Monday-first activity match each child record; home is read-only', await hm.evaluate(expected => {
     return ['son','daughter'].every((id,i) => {
       const panel = document.querySelector(`.profile[data-id=${id}]`);
       return panel.querySelector('.home-count b').textContent === String(3+i) &&

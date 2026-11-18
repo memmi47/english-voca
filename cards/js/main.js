@@ -1,5 +1,5 @@
 // Flashcard game: screens. Rules live in deck.js (cards), map.js (review load, items), world.js (worlds, castles); audio in sound.js.
-import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG } from './deck.js';
+import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG, firmCount } from './deck.js';
 import { Sound } from './sound.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope } from './map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, setLeftOutKinds, startTile } from './world.js';
@@ -192,12 +192,13 @@ function homeSummary(st) {
   const monday = new Date(today + 'T00:00:00Z');
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
   const days = dayNames.map((_, i) => new Date(+monday + i * 86400000).toISOString().slice(0,10));
-  const known = G.words.map(w => st.words[w.id]).filter(r => gradeOf(r) >= 2);
+  // Words a later check confirmed (deck.firmCount, `up`): passing words on the word list alone does not raise these (C-014 answer).
+  const known = firmCount(st), week = firmCount(st, days[0]);
   const completed = (Array.isArray(st.runs) ? st.runs : []).filter(r => r?.reason === 'done' && r.day <= today).map(r => r.day);
   const lastDay = [...completed, ...Object.values(st.words).map(r => r?.lastDay)].filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today).sort().at(-1);
   return {
-    known: known.length,
-    week: known.filter(r => r.firstDay >= days[0] && r.firstDay <= today).length,
+    known,
+    week,
     played: days.map(d => completed.includes(d)),
     world: currentWorld(G.ix, st),
     lastDay
@@ -222,7 +223,7 @@ function home() {
     return `<button class="profile" data-act="pick" data-id="${id}">
       <span class="home-courier kid-idle ${id}">${courierFrame('idle', lookSelection(id, records[i]), 80, id)}</span><strong>${esc(name(id))}</strong>
       ${x ? `<span class="profile-world">${spr('flag-a',19)} ${esc(x.world.name)}</span>` : ''}
-      ${G.homeProgress ? x ? `<span class="home-count">아는 단어 <b>${x.known}</b></span><span class="home-week">이번 주 +${x.week}</span>
+      ${G.homeProgress ? x ? `<span class="home-count">익힌 단어 <b>${x.known}</b></span><span class="home-week">이번 주 +${x.week}</span>
         <span class="week-dots" aria-label="이번 주 공부한 날">${dayNames.map((d, j) => `<span data-played="${x.played[j]}" aria-label="${d} ${x.played[j] ? '공부함' : '기록 없음'}">${d}</span>`).join('')}</span>
         ${stale ? `<small>${Number(x.lastDay.slice(5,7))}월 ${Number(x.lastDay.slice(8))}일 기록</small>` : ''}` : '<small>기록 확인 필요</small>' : ''}
     </button>`;
@@ -518,7 +519,7 @@ function rememberPetUnlock(st = G.st, id = G.pid) {
   if (!st || !id || G.readonly) return;
   const look = readLook(id);
   if (look.petTier === PET_GOALS.length) return;
-  const known = G.words.reduce((count,w) => count + Number(gradeOf(st.words?.[w.id]) >= 2),0);
+  const known = firmCount(st);   // only grows, and lives in the child's record, so every device agrees (C-016 answer)
   const tier = PET_GOALS.filter(goal=>known>=goal).length;
   if (tier > look.petTier) writeLook(id,{...look,petTier:tier});
 }
@@ -615,7 +616,7 @@ function wardrobe(slot='coat') {
   const cards=items.map(item=>{
     const enabled=unlocked(item,G.st,look,seen.gifts), active=selection[slot]?.id===item.id;
     const icon=slot==='ride'?`c016-ride-${item.id}-idle`:slot==='pet'?`c016-pet-${item.id}-0`:layerId({...item,color:0},slot,'teal');
-    const why=item.world?`${item.world.name} 성을 깨면`:item.continent?`${item.continent.name} 큰 성을 깨면`:`아는 단어 ${PET_GOALS[item.tier-1]}개`;
+    const why=item.world?`${item.world.name} 성을 깨면`:item.continent?`${item.continent.name} 큰 성을 깨면`:`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
     return `<button class="gear ${enabled?'':'silhouette'}" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="${active}" ${enabled?'':'disabled'}>${wardrobeArt(icon,54)}<b>${esc(item.name)}</b><small>${enabled?(active?'선택했어요':'고르기'):esc(why)}</small></button>`;
   }).join('');
   const active=selection[slot];
