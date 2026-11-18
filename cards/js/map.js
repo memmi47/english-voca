@@ -16,11 +16,14 @@ export const RULES = { tileDue: 8, tileDueMax: 20, tileDueShare: 0.5, monsterPer
 // Tile triage (docs/LEARNING_VALUE_SPEC.md 2.3, 2.4; card T-003). on: false = every new word is asked one card at a time, as before.
 //   spotFrom: this many passed words get two spot checks (fewer: one)   sample: cards per bunch check   auditDays: when a bunch is checked
 //   splitDays: a bunch with a miss: the other words get their first check this many days later   auditsPerRun: bunches checked in one run
-export const TRIAGE = { on: true, spotFrom: 4, sample: 3, auditDays: 30, splitDays: 7, auditsPerRun: 2 };
-// What the child's choice on the word list means: tapped = unknown, the rest passed, a random one or two of those checked now.
-export function triagePlan(unseen, tapped, rng) {
-  const t = new Set(tapped); const passed = unseen.filter((id) => !t.has(id)); const n = passed.length >= TRIAGE.spotFrom ? 2 : passed.length ? 1 : 0;
-  return { passed, tapped: unseen.filter((id) => t.has(id)), spot: shuffle(passed, rng).slice(0, n) };
+export const TRIAGE = { on: true, spotFrom: 4, spots: 3, sample: 3, auditDays: 30, splitDays: 7, auditsPerRun: 2 };
+// What the child's choice on the word list means: tapped = unknown, the rest passed, some of those checked now:
+// 1 when 1-3 were passed, TRIAGE.spots (3) when 4 or more. hardness(id) -> number (higher = harder, cards/data/difficulty.json):
+// the hardest passed words are checked; without it, or among equals, the pick is random (user request 2026-11-18).
+export function triagePlan(unseen, tapped, rng, hardness = null) {
+  const t = new Set(tapped); const passed = unseen.filter((id) => !t.has(id)); const n = passed.length >= TRIAGE.spotFrom ? TRIAGE.spots : passed.length ? 1 : 0;
+  const order = shuffle(passed, rng); if (hardness) order.sort((a, b) => (hardness(b) || 0) - (hardness(a) || 0));   // a stable sort keeps the random order among equals
+  return { passed, tapped: unseen.filter((id) => t.has(id)), spot: order.slice(0, n) };
 }
 // Puts a triage plan into a tile run's scope (deck.Run reads scope.triage). The bunch is named after the tile.
 export function triageScope(node, plan, today) { node.scope = { ...node.scope, triage: { bunch: node.unit, ...plan, due: addDays(today, TRIAGE.auditDays) } }; delete node.triage; return node; }

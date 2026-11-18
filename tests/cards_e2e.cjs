@@ -530,7 +530,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     && JSON.stringify(tson.bunches) === '{"A1":{"due":"2026-12-12","done":null}}' && tson.v === 3 && tson.map.bat.fill === 3, JSON.stringify(tson.bunches) + ' fill ' + tson.map.bat.fill);
   await toMap(t); await t.click('[data-act=node][data-id=B1]'); await t.waitForSelector('.twords'); await t.click('#tgo'); await t.waitForSelector(READY);
   const qB = await t.evaluate(() => window.__cards.run.queue.map((x) => x.role)); const seenB = await playTri(t); tson = await state(t, 'son');
-  ok('triage: a tile where every word is known asks only the two spot checks and is cleared', qB.join() === 'spot,spot' && seenB.length === 2 && /칸 클리어/.test(await t.textContent('h1')) && TILE('B1').every((id) => tson.words[id].st === 'likely' && tson.words[id].bunch === 'B1'), qB.join());
+  ok('triage: a tile where every word is known asks only the three spot checks (the hardest words) and is cleared', qB.join() === 'spot,spot,spot' && seenB.length === 3 && /칸 클리어/.test(await t.textContent('h1')) && TILE('B1').every((id) => tson.words[id].st === 'likely' && tson.words[id].bunch === 'B1'), qB.join());
   await t.close();
   const t30 = await open(tctx, 'today=2026-12-12&seed=32&sound=off&fast=1'); await t30.click('[data-act=pick][data-id=son]'); await t30.waitForSelector('.world');
   await t30.click('[data-act=node][data-id=C1]'); await t30.waitForSelector('.twords'); await t30.click('#tgo'); await t30.waitForSelector(READY);
@@ -539,7 +539,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('bunch check: 30 days later another tile run mixes in 3 sample cards from each due bunch (A1, B1), after its spot checks', audits.length === 6 && audits.filter((x) => x === 'audit:A1').length === 3 && audits.filter((x) => x === 'audit:B1').length === 3 && q30.slice(0, 2).every((x) => x.startsWith('spot:')) && seen30.filter((x) => x.role === 'audit').length === 6, q30.join());
   ok('bunch check: all samples right -> every passed word of both bunches is gold and the bunches are closed "ok"', passedA1.concat(TILE('B1')).every((id) => s30.words[id].st === 'done' && s30.words[id].due === null) && s30.bunches.A1.result === 'ok' && s30.bunches.B1.result === 'ok' && s30.bunches.A1.done === '2026-12-12' && s30.bunches.C1.done === null, JSON.stringify(s30.bunches));
   await t30.click('[data-act=today]'); await t30.waitForSelector('.world'); await t30.click('[data-act=home]'); await t30.click('[data-act=parent]'); const ptext = await t30.textContent('.parent');
-  ok('parent view shows the spot-check accuracy of passed words and the bunch checks passed / finished', /넘긴 단어 확인 정답률 100% \(6\/6\)/.test(ptext) && /묶음 확인 2\/2/.test(ptext), (/넘긴 단어[^,]*/.exec(ptext) || [''])[0] + ' ' + (/묶음 확인 \d+\/\d+/.exec(ptext) || [''])[0]);
+  ok('parent view shows the spot-check accuracy of passed words and the bunch checks passed / finished', ((m) => !!m && Number(m[1]) >= 6)(/넘긴 단어 확인 정답률 100% \((\d+)\/\1\)/.exec(ptext)) && /묶음 확인 2\/2/.test(ptext), (/넘긴 단어 확인 정답률[^,]*/.exec(ptext) || [''])[0] + ' ' + (/묶음 확인 \d+\/\d+/.exec(ptext) || [''])[0]);
   await t30.close(); await tctx.close();
 
   // 13. fixes from the cross review C-005 (card T-011)

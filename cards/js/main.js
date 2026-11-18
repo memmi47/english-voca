@@ -160,6 +160,7 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
+  try { const r = await fetch('data/difficulty.json'); if (r.ok) G.hard = (await r.json()).score; } catch { /* no table: random checks */ }
   await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   if (ITEM_TIERS_FROM) await loadSprites('assets/postal/item-tiers/sprites.svg');
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
@@ -843,7 +844,7 @@ function triageMark(b) {
 }
 async function triageGo() {
   const t = G.tri; if (!t || G.view !== 'triage') return; G.tri = null; await G.sound.unlock();
-  return begin(triageScope(t.node, triagePlan(t.node.triage, [...t.marked], t.rng), todayISO()), t.rng);
+  return begin(triageScope(t.node, triagePlan(t.node.triage, [...t.marked], t.rng, G.hard ? (id) => G.hard[id] : null), todayISO()), t.rng);
 }
 function begin(node, rng) {
   const items = takeBag(G.st); G.node = node; startTile(G.st, node, todayISO()); if (!save() && G.readonly) return;   // the mark is saved before any word is
@@ -945,7 +946,7 @@ function reveal(res) {
     card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${sight ? `<div class="word">${esc(w.form)}</div>` : `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>`}${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
   }, FAST ? 0 : 90);
   if (res.ok) { G.displayBoss.hp = Math.max(1,G.displayBoss.hp-1); const f = $('#floater'); f.textContent = '-1'; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
-    $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.blip('hit');
+    $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.sfxPlay('correct');   // a right answer sounds bright, not like a blow (user feedback 2026-11-18); a miss keeps its heavier sound
     if (G.run.items.flame) setTimeout(() => G.sound.sfxPlay('flame'), 120); if (res.combo === 5) setTimeout(() => G.sound.sfxPlay('combo'), 160); }
   else G.sound.blip(res.said === 'wrong' && !shielded ? 'miss' : shielded ? 'shield' : 'retry');
   if (up) setTimeout(() => G.sound.jingle('grade'), 250);
