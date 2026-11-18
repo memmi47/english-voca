@@ -148,3 +148,18 @@ docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-014.md 를 수행한다. C-011
 끝난 뒤 보고: PR 번호, 새 그림 목록, 각 명령의 통과 수, 카드 한 장 평균 시간 전후, 화면 캡처 경로, 확인하지 못한 것.
 ```
 
+## C-014 → C-015 (2026-11-18, Astra에게. 한 채팅에서 순서대로)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다. C-011과 C-013은 이미 병합됐다.
+docs/ORCHESTRATION.md 를 읽은 뒤 순서대로 한다.
+1. docs/tasks/C-014.md 를 수행한다. 지시는 docs/tasks/CODEX_PROMPT.md 의 "C-014" 절 그대로이되, 기준은 이제 claude/modest-mccarthy-3gadjk 이다(C-011 위에 쌓을 필요 없음). 브랜치 codex/motion-and-home.
+2. C-014 PR을 연 뒤 병합을 기다리지 말고 codex/motion-and-home 에서 갈라 codex/visual-pass-1 을 만들어 docs/tasks/C-015.md 를 수행한다. PR 설명 첫 줄에 "C-014(PR #번호) 위에 쌓은 브랜치. C-014를 먼저 병합해야 함"이라고 적는다. C-014에 고칠 점이 생기면 codex/motion-and-home 에 고치고 codex/visual-pass-1 에는 merge 로 반영한다(rebase·force push 금지).
+- 두 카드 모두 화면 파일(cards/js/main.js, cards/css/app.css), 그림 생성기와 그 출력, tests/cards_e2e.cjs 만 고친다. 규칙 코드, 저장 형식, 저장 키, id 는 바꾸지 않는다.
+- 새 그림은 모두 새로 그린다. 다른 게임의 지도·캐릭터·그림·동작을 흉내 내지 않는다. 이모지를 그림으로 쓰지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 카드마다 새 브라우저 검사와 화면 캡처 경로를 적는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 카드에 없는 결정이 필요하면 그 카드만 멈추고 카드의 "막히면"에 질문을 적는다.
+- 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 PR마다 한 줄만 덧붙인다. 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: 카드별 PR 번호, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
+```
+
