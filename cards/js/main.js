@@ -210,14 +210,21 @@ function homeSummary(st) {
     lastDay
   };
 }
+// Browsers start sound only after a tap: the first touch anywhere on the title screen unlocks it and plays the title music.
+function armTitleMusic() {
+  if (G.titleArmed || !G.sound || G.sound.ctx || G.sound.off) return; G.titleArmed = true;
+  const once = async () => { document.removeEventListener('pointerdown', once, true); try { await G.sound.unlock(); if (G.view === 'home') G.sound.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id }); } catch {} $('#tapHint')?.remove(); };
+  document.addEventListener('pointerdown', once, true);
+}
 function home() {
+  armTitleMusic();
   clearPresentation();
   G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id });
   const records = PROFILES.map(homeRecord);
   const summaries = records.map(homeSummary);
   const both = summaries.every(Boolean);
   const together = both ? summaries.reduce((total, x) => total + x.newThisWeek, 0) : 0;
-  $('#app').innerHTML = `<div class="page center home-postal"><h1 class="title">단어 카드</h1><p class="mut">누가 할까요?</p>
+  $('#app').innerHTML = `<div class="page center home-postal"><h1 class="title">단어 배달부</h1><p class="home-sub">편지 따라 떠나는 영어 단어 대모험</p>${G.sound && !G.sound.ctx && G.sound.musicOn && !G.sound.off ? '<p class="tap-hint" id="tapHint">화면을 누르면 음악이 나와요</p>' : ''}<p class="mut">누가 할까요?</p>
   <div class="home-yard" aria-hidden="true">
     ${spr('c014-cloud',76,'cloud cloud-back')}${spr('c014-cloud',104,'cloud cloud-front')}
     ${spr('c014-bird',38,'postal-bird')}${spr('c014-post-office',128,'home-office')}${spr('c014-mailbox',54,'home-mailbox')}
@@ -242,7 +249,7 @@ function home() {
 // ---- the map of one world ----
 const STONE = { open: 'stone-open', cleared: 'stone-done', locked: 'stone-locked', blocked: 'stone-blocked' };
 const big = (id) => `<svg class="spr big" width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><use href="#${id}" width="64" height="64"/></svg>`;
-const MSG = { locked: '앞 칸을 먼저 깨요', blocked: '박쥐 떼가 몰려왔어요! 먼저 쫓아내요', castleLocked: '길을 따라 성까지 가면 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요', gameLocked: '놀이집으로 가는 길을 먼저 지나가요', soon: '아직 준비 중이에요' };
+const MSG = { locked: '앞 마을을 먼저 클리어해요', blocked: '박쥐 떼가 몰려왔어요! 먼저 쫓아내요', castleLocked: '길을 따라 성까지 가면 열려요', bonusLocked: `카드를 ${LIGHTNING_MIN}장 이상 익히면 열려요`, used: '오늘 보너스는 받았어요. 내일 또 열려요', gameLocked: '놀이집으로 가는 길을 먼저 지나가요', soon: '아직 준비 중이에요' };
 // Ground, a path of tiles along every line of the map (snapped to the 16 px grid), and a few plants away from the paths.
 // Map coordinates are 1000 x 600; the picture is drawn on a 250 x 150 grid so one tile is one stone wide.
 function terrain(w) {
@@ -353,10 +360,10 @@ function nodeClick(id) {
   if (held && n.status === 'open' && (n.kind === 'tile' || v.houses.includes(n))) return startStorm();
   if (n.kind === 'minigame') { if (n.status === 'locked') return out(MSG.gameLocked); return n.playable ? startGame(n) : out(MSG.soon); }
   if (n.kind === 'castle' && n.status === 'locked') return out(v.gate ? gateMessage(v.gate) : MSG.castleLocked);
-  if (n.kind === 'castle' && n.status === 'cleared') return out('이 성은 이미 깼어요.');
+  if (n.kind === 'castle' && n.status === 'cleared') return out('이 성은 이미 클리어했어요.');
   if (n.status === 'locked') return out(MSG.locked);
   if (n.status === 'blocked') return out(MSG.blocked);
-  if (n.status === 'cleared') return out(n.tiles ? '이 집은 다 읽었어요.' : '이 칸은 이미 깼어요.');
+  if (n.status === 'cleared') return n.kind === 'tile' ? walkTo(n) : start(id);   // a cleared tile or house: practice again (world.nodeRun)
   return n.kind === 'tile' ? walkTo(n) : start(id);
 }
 let walking = null;
@@ -966,7 +973,7 @@ function endRun(reason) {
   G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from); const w = G.world; const pc = (x) => Math.round(x * 100);
   const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
   const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : '성 시험 결과',
-    finale: ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요', review: `${n}판 끝!` }[node.kind];
+    finale: ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요', review: `${n}판 끝!` , practice: '연습 끝!'}[node.kind];
   const lines = rw.stars > 0 ? [`<div class="gain">${spr('star', 32)} +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
   if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
   if (ww.key) lines.push(`<div class="gain" id="keygain">${spr('key', 32)} ${esc(w.key?.name || '열쇠')}를 얻었어요</div>`);

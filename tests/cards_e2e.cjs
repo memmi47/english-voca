@@ -69,7 +69,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await page.click('[data-act=pick][data-id=son]'); await page.waitForSelector('.world');
   const first = await Promise.all(['A1', 'B1', 'C1'].map((id) => nodeStatus(page, id))); const second = await Promise.all(['A2', 'B2', 'C2', 'castle', 'bonus'].map((id) => nodeStatus(page, id)));
   ok('map: first tile of every road is open, the rest are locked', first.every((c) => /\bopen\b/.test(c)) && second.every((c) => /\blocked\b/.test(c)), first.join('|') + ' / ' + second.join('|'));
-  await page.click('[data-act=node][data-id=A2]'); ok('a locked tile explains itself and does not start', /앞 칸을 먼저/.test(await page.textContent('#msg')) && !(await page.$('.run')));
+  await page.click('[data-act=node][data-id=A2]'); ok('a locked tile explains itself and does not start', /앞 마을을 먼저 클리어/.test(await page.textContent('#msg')) && !(await page.$('.run')));
   ok('map fits one screen width; landmarks are labelled', await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1) && (await page.$$('.node .lbl')).length >= 4);   // was 5 with the house label; the house is off the path now
   ok('pixel font and a clear word font are both in use', await page.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px Galmuri11') && /Galmuri11/.test(getComputedStyle(document.body).fontFamily) && !/Galmuri11/.test(getComputedStyle(document.documentElement).getPropertyValue('--word')); }));
 
@@ -272,7 +272,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const worldId = () => x.$eval('#world', (e) => e.dataset.world); const msg = () => x.textContent('#msg');
   ok('the first visit shows the world\'s opening line and its name', (await worldId()) === 'd1-01' && /첫 편지/.test(await msg()) && /새싹 들판 · 단어 마을/.test(await x.textContent('#wtitle')));
   await x.click('[data-act=node][data-id=G1]'); const m1x = await msg(); await x.click('[data-act=node][data-id=H1]');
-  ok('a playhouse and a house are closed until the path reaches them', /놀이집으로 가는 길/.test(m1x) && /앞 칸을 먼저/.test(await msg()) && !(await x.$('.run')));
+  ok('a playhouse and a house are closed until the path reaches them', /놀이집으로 가는 길/.test(m1x) && /앞 마을을 먼저 클리어/.test(await msg()) && !(await x.$('.run')));
   await startNode(x, 'A1'); await play(x); await toMap(x);
   ok('the house opens when its tile is done', /\bopen\b/.test(await nodeStatus(x, 'H1')) && /0\/1/.test(await x.textContent('[data-id=H1]')));
   await startNode(x, 'H1'); const sc = await cur(x); const sw = WORDS.find((w) => w.id === sc.id); const sightForms = WORDS.filter((w) => w.track === 'sight').map((w) => w.form);
@@ -1538,6 +1538,26 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     await early.evaluate(records => records.every(([id,record]) => localStorage.getItem('cards.v0.p.'+id) === record), firstRecords));
   await captureFirstPlay(early, 'first-week-home');
   await earlyCtx.close();
+
+  // 2026-11-18 user feedback: a title, music from the first touch on the title screen, practice on a cleared tile
+  const fbpCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const fbp = await open(fbpCtx, 'today=2026-12-01&triage=off&seed=7&fast=1');
+  ok('FB1: the title screen has the new title and asks for one tap to start the music',
+    (await fbp.textContent('h1')) === '단어 배달부' && !!(await fbp.$('#tapHint')) && (await fbp.title()) === '단어 배달부');
+  await fbp.mouse.click(30, 30); await fbp.waitForFunction(() => window.__cards.sound.ctx && !document.querySelector('#tapHint'), null, { timeout: 8000 });
+  ok('FB2: the first touch anywhere on the title screen unlocks the sound and starts the title music, before a child is chosen',
+    await fbp.evaluate(() => window.__cards.sound.seen.has('scene:' + window.__cards.sound.sceneId) && !!window.__cards.sound.ctx));
+  await fbp.goto(BASE + '?set=demo&today=2026-12-01&triage=off&seed=7&fast=1&nosync=1&storm=off&sound=off'); await fbp.waitForSelector('.profiles');   // cards wait for the word sound: no sound from here on
+  await fbp.click('[data-act=pick][data-id=son]'); await fbp.waitForSelector('.world');
+  await fbp.evaluate(async () => { const { ensureMap } = await import('./js/map.js'); const g = window.__cards; const node = g.ix.byId['d1-01'].map.nodes.find((n) => n.id === 'A1');
+    for (const id of node.words) g.st.words[id] = { st: 'review', step: 1, due: '2026-12-05', firstDay: '2026-11-20', lastDay: '2026-11-21', lapses: 0 }; ensureMap(g.st).worlds['d1-01'] ||= { castle: null, cleared: {}, stamps: {}, seen: '2026-11-20' }; ensureMap(g.st).worlds['d1-01'].cleared.A1 = '2026-11-21'; localStorage.setItem('cards.v0.p.son', JSON.stringify(g.st)); });
+  await fbp.reload(); await fbp.waitForSelector('.profiles'); await fbp.click('[data-act=pick][data-id=son]'); await fbp.waitForSelector('.world');
+  const sched = await fbp.evaluate(() => JSON.stringify(Object.values(window.__cards.st.words).map((r) => [r.st, r.step, r.due])));
+  await fbp.click('[data-act=node][data-id=A1]'); await fbp.waitForSelector(READY, { timeout: 8000 });
+  ok('FB3: a cleared tile starts again as a practice run of its words', await fbp.evaluate(() => window.__cards.run && window.__cards.run.queue.every((q) => q.role === 'practice')));
+  await play(fbp); await fbp.waitForSelector('.tiles', { timeout: 15000 });
+  ok('FB4: after practice the schedule of every word is as it was', await fbp.evaluate((before) => JSON.stringify(Object.values(window.__cards.st.words).map((r) => [r.st, r.step, r.due])) === before, sched));
+  await fbpCtx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

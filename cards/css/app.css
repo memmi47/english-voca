@@ -385,3 +385,8 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 @media (prefers-reduced-motion: reduce) {
   .kid-idle:is(.son, .daughter) { animation: none; }
 }
+/* title screen: subtitle and the one-time "tap for music" hint */
+.home-sub{margin:-6px 0 6px;font-size:18px;color:var(--fg);opacity:.85}
+.tap-hint{margin:2px 0 4px;font-size:15px;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.tap-hint{animation:none}}

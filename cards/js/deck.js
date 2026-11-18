@@ -139,6 +139,8 @@ export class Run {
     // bat test (scope.bat = { due, fresh }): overdue reviews as check cards first (normal scheduling), then words met since the last test
     if (scope.bat) { this.queue = scope.bat.due.map((id) => (state.words[id].st === 'learn' ? { id, role: 'retry', form: 'check' } : { ...dueItem(id), form: 'check' })).concat(scope.bat.fresh.map((id) => ({ id, role: 'castle', form: 'check' }))); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     if (scope.castle) { this.queue = shuffle(scope.castle, rng).map((id) => ({ id, role: 'castle', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
+    // Practice of a tile already cleared: check cards that change nothing on the word but its "not known" record (_miss).
+    if (scope.practice) { this.queue = scope.practice.filter((id) => this.byId[id] && this.s.words[id]).map((id) => ({ id, role: 'practice', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     // Bunch samples go at random places among the run's cards; the spot checks of the tile come first of all.
     this.audits = {};
     for (const p of scope.audit ? scope.audit.picks : []) { if (!bunchLeft(state, p.bunch).includes(p.id)) continue; const a = (this.audits[p.bunch] ||= { left: 0, miss: false, closed: false }); a.left++;

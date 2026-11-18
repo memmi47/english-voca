@@ -165,15 +165,18 @@ export function nodeRun(ix, view, id, state, words, rng) {
   if (id === 'review') return view.review.present ? { kind: 'review', wid: w.id, tag: 'review', scope: audit({ noNew: true, duePerRun: 14 }) } : null;
   const unitRun = (u, bonus) => { const node = { kind: 'tile', wid: w.id, tag: u.id, unit: u.id, bonus, scope: audit({ newIds: u.words, newPerRun: u.words.length, duePerRun: tileDue(view.monster.count) }) };
     const unseen = u.words.filter((x) => !state.words[x]); if (TRIAGE.on && unseen.length) node.triage = unseen; return node; };
+  // A tile (or house) already cleared can be played again as practice: its met words as check cards. Practice changes no
+  // schedule, grade or gauge (deck.Run, scope.practice); only what the child did not know is kept on the word.
+  const practiceRun = (words, tag) => { const ids = words.filter((x) => state.words[x]); return ids.length ? { kind: 'practice', wid: w.id, tag: 'practice:' + tag, scope: { practice: shuffle(ids, rng).slice(0, 12) } } : null; };
   const n = view.nodes.find((x) => x.id === id);
-  if (n && n.kind === 'tile') return n.status === 'open' && !caught ? unitRun(n, n.bonus) : null;
+  if (n && n.kind === 'tile') return caught ? null : n.status === 'open' ? unitRun(n, n.bonus) : n.status === 'cleared' ? practiceRun(n.words, n.id) : null;
   if (n && n.kind === 'castle') {
     if (n.status !== 'open' || !worldGate(w, state).ready || wstate(state, w.id).castle) return null; const rule = w.castleRule || {};
     const pool = shuffle(worldWords(w).filter((x) => state.words[x]), rng).slice(0, rule.cards ?? CASTLE.cards);
     return pool.length ? { kind: 'castle', wid: w.id, tag: 'castle:' + w.id, pass: rule.passRate ?? CASTLE.pass, scope: { castle: pool } } : null;
   }
   const h = view.houses.find((x) => x.id === id);
-  if (h) { if (h.status !== 'open' || caught) return null; const t = h.tiles.find((x) => !x.cleared); return t ? unitRun(t, h.bonus) : null; }
+  if (h) { if (caught) return null; if (h.status === 'cleared') return practiceRun(h.tiles.flatMap((t) => t.words), h.id); if (h.status !== 'open') return null; const t = h.tiles.find((x) => !x.cleared); return t ? unitRun(t, h.bonus) : null; }
   return null;
 }
 // The continent castle: cards met anywhere in the continent, the same number from every world.

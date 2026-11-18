@@ -286,7 +286,7 @@ oldLegacy('W9: the house (function words) opens when its anchor tile is done; it
   clear(s, 'A1'); const node = nodeRun(IX, view(s), 'H1', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.unit, node.scope.newIds.length], ['tile', 'H1-1', 6]);
   const run = mkRun(s, node); assert.ok(run.queue.filter((q) => q.role === 'new').every((q) => q.form === 'check'));
   const r = clear(s, 'H1'); assert.equal(r.cleared, true); const v = view(s); assert.deepEqual([v.houses[0].status, v.houses[0].done, v.houses[0].total], ['cleared', 1, 1]);
-  assert.equal(nodeRun(IX, v, 'H1', s, WORDS, mulberry32(1)), null);
+  const again = nodeRun(IX, v, 'H1', s, WORDS, mulberry32(1)); assert.equal(again.kind, 'practice', 'a cleared house is played again as practice (user request 2026-11-18)');
 });
 
 oldTest('W10: playhouses: open when their anchor tile is done; a stamp is given once and changes nothing else', () => {
@@ -638,7 +638,7 @@ test('F6: everything finished and 3 words still to learn: the map offers "review
   for (const w of IX.worlds) { meetAll(s, w); m.worlds[w.id] = { castle: '2026-11-10', cleared: {}, stamps: {}, seen: '2026-11-01' }; } for (const c of IX.continents) m.conts[c.id] = { castle: '2026-11-10' };
   const learn = WORDS.filter((w) => w.ko).slice(0, 3).map((w) => w.id); for (const id of learn) s.words[id] = { st: 'learn', due: '2026-11-15', firstDay: '2026-11-01', lastDay: '2026-11-14', lapses: 0 };
   for (const w of IX.worlds) { const v = view(s, T, w); assert.deepEqual([v.monster.present, v.bat.full, v.review], [false, false, { present: true, count: 3 }], w.id);
-    assert.ok([...v.nodes, ...v.houses].every((n) => !nodeRun(IX, v, n.id, s, WORDS, mulberry32(1))), w.id + ': no other run starts'); }
+    assert.ok([...v.nodes, ...v.houses].every((n) => { const r = nodeRun(IX, v, n.id, s, WORDS, mulberry32(1)); return !r || r.kind === 'practice'; }), w.id + ': no other run starts (cleared tiles only offer practice)'); }
   assert.ok(IX.continents.every((c) => !finaleRun(IX, c, s, T, mulberry32(1))));
   const v = view(s, T, W3); const node = nodeRun(IX, v, 'review', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.scope.noNew, node.scope.duePerRun], ['review', true, 14]);
   const run = mkRun(s, node, T); assert.deepEqual(run.queue.map((q) => q.role + ':' + q.id).sort(), learn.map((id) => 'retry:' + id).sort());
@@ -851,3 +851,19 @@ test('W20: malformed explicit exploration rules are data errors; absent or reach
     assert.equal(worldView(ix, w, s, D1).castle.status, 'open'); assert.ok(nodeRun(ix, worldView(ix, w, s, D1), w.map.castleNodeId, s, WORDS, mulberry32(1)));
   }
 });
+
+test('P1: a cleared tile can be played again as practice: check cards of its met words; the schedule, grades, bunches and bat gauge stay; a miss is kept on the word', () => {
+  const s = newState('son'); clear(s, 'A1'); const v = view(s); assert.equal(status(v, 'A1'), 'cleared');
+  const node = nodeRun(IX, v, 'A1', s, WORDS, mulberry32(3)); assert.equal(node.kind, 'practice'); assert.ok(node.scope.practice.length > 0);
+  const tile = W1.map.nodes.find((n) => n.id === 'A1'); assert.ok(node.scope.practice.every((id) => tile.words.includes(id) && s.words[id]));
+  const keep = (x) => JSON.stringify(Object.fromEntries(Object.entries(x.words).map(([k, r]) => [k, { st: r.st, step: r.step, lstep: r.lstep, due: r.due }])));
+  const before = [keep(s), JSON.stringify(s.bunches), JSON.stringify(ensureMap(s).bat)];
+  const run = mkRun(s, node); assert.ok(run.queue.every((q) => q.role === 'practice' && q.form === 'check'));
+  let first = null;
+  for (let it = run.show(); it; it = run.show()) { const right = it.options.findIndex((o) => o.id === it.id); if (!first) { first = it.id; run.pick((right + 1) % 3); } else run.pick(right); run.advance(); }
+  const rec = run.finish('done'); settleRun(s, node, run, rec, D1, mulberry32(1)); settleWorld(IX, s, node, rec, D1);
+  assert.deepEqual([keep(s), JSON.stringify(s.bunches), JSON.stringify(ensureMap(s).bat)], before, 'nothing on the schedule moved');
+  assert.equal(s.words[first].misses, 1); assert.equal(rec.stars, 0);
+  assert.equal(status(view(s), 'A1'), 'cleared', 'still cleared');
+});
+
