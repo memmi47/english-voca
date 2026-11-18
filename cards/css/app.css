@@ -347,6 +347,17 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .gear.silhouette .gear-art{filter:brightness(0) opacity(.85)}
 .star-gift{border:1px solid #926d31;background:#fff0bf;padding:1px 4px;font-size:11px;font-weight:700}
 
+.gear[data-rank="1"]{--gear-rank:#895c35;--gear-tint:#f3e7d1}
+.gear[data-rank="2"]{--gear-rank:#23777e;--gear-tint:#d9efea}
+.gear[data-rank="3"]{--gear-rank:#96600b;--gear-tint:#fff0bd}
+.gear[data-rank]{border-color:var(--gear-rank)}
+.gear-tier{color:var(--gear-rank);background:var(--gear-tint);border:1px solid currentColor;padding:1px 5px;font-size:11px;font-weight:700}
+.gear-glint{animation:gear-shimmer 1.4s step-end infinite}
+.gear-glint.frame-1{animation-delay:-.7s}
+@keyframes gear-shimmer{0%{opacity:1}50%{opacity:0}}
+.gear.silhouette .gear-glint,.motion-quiet .gear-glint{animation:none;visibility:hidden}
+@media(prefers-reduced-motion:reduce){.gear-glint{animation:none;visibility:hidden}}
+
 /* Move the whole idle courier in CSS pixels, independently of pose frames. */
 .kid-idle.son { animation: courier-son-idle 1.4s linear infinite; }
 .kid-idle.daughter { animation: courier-daughter-idle .8s linear infinite; }

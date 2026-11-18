@@ -1269,6 +1269,117 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     atlasQuiet&&lockedStill&&guide.includes('나무결 모자')&&mapGift);
   await polish.close();
 
+  // C-019 uses a scheduled date at deployment. Exercise both sides of a date
+  // on the original app code, substituting only that setting in this browser.
+  const cutoff='2026-11-18', previousDay='2026-11-17';
+  const tierSource=fs.readFileSync(path.join(__dirname,'../cards/js/main.js'),'utf8');
+  const dateSetting=/^const ITEM_TIERS_FROM = (?:null|'\d{4}-\d{2}-\d{2}');$/m;
+  if (!dateSetting.test(tierSource)) throw new Error('Could not find the C-019 rollout date setting.');
+  const tierCode=tierSource.replace(dateSetting,`const ITEM_TIERS_FROM = '${cutoff}';`);
+  const tierOut='/tmp/c019-screens';
+  fs.mkdirSync(tierOut,{recursive:true});
+  const rewards=await browser.newContext({viewport:{width:1180,height:820},reducedMotion:'no-preference'});
+  await rewards.route('**/js/main.js',route=>route.fulfill({status:200,contentType:'text/javascript',body:tierCode}));
+  const tierPage=await rewards.newPage();
+  tierPage.on('pageerror',e=>errs.push(String(e)));
+  const tierTab=slot=>tierPage.click(`[data-act=gear-tab][data-slot=${slot}]`);
+  const tierGear=id=>tierPage.locator(`[data-act=gear][data-id=${id}]`);
+  const leaveTiers=()=>tierPage.click('#wardrobe .sec[data-act=look-close]');
+  async function tierProfile({pid='son',day=cutoff,at='p1-01',castles={},conts={},slots={},stars=0}) {
+    await tierPage.goto(BASE+`?today=${day}&nosync=1&sound=off&storm=off`);
+    await tierPage.waitForSelector('.profiles');
+    await tierPage.evaluate(async({pid,at,castles,conts,slots,stars,day})=>{
+      const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+      const st=newState(pid), map=ensureMap(st);
+      map.at=at; map.stars=stars;
+      for (const [id,date] of Object.entries(castles)) map.worlds[id]={castle:date,seen:date,cleared:{},stamps:{}};
+      map.worlds[at]??={castle:null,seen:day,cleared:{},stamps:{}};
+      map.conts=Object.fromEntries(Object.entries(conts).map(([id,castle])=>[id,{castle}]));
+      localStorage.setItem(`cards.v0.p.${pid}`,JSON.stringify(st));
+      localStorage.setItem(`cards.v0.look.${pid}`,JSON.stringify({outfit:'default',slots}));
+    },{pid,at,castles,conts,slots,stars,day});
+    await tierPage.click(`[data-act=pick][data-id=${pid}]`);
+    await tierPage.waitForSelector(`#world[data-world=${at}]`);
+  }
+  await tierProfile({day:previousDay,castles:{'p1-01':previousDay}});
+  await tierPage.click('[data-act=wardrobe]');
+  const beforeCutoff=await tierGear('p1-01').isEnabled()&&await tierGear('c019-h-straw').count()===0;
+  await tierProfile({castles:{'p1-01':cutoff}});
+  const noFirstWorldGift=await tierPage.locator('.world-gift').count()===0;
+  await tierPage.click('[data-act=wardrobe]');
+  const zeroHats=await tierPage.locator('.gear[data-rank]:enabled').count()===0;
+  await tierTab('bag');
+  const zeroBags=await tierPage.locator('.gear[data-rank]:enabled').count()===0;
+  await tierTab('coat');
+  const zeroCoats=await tierPage.locator('.gear[data-id]:enabled:not([data-id=default])').count()===0;
+  await leaveTiers();
+  await tierPage.click('[data-act=atlas]');
+  const atlasRewards=await tierPage.locator('button.atlas-gift').evaluateAll(icons=>icons.map(icon=>icon.dataset.id));
+  await tierProfile({at:'p1-02',castles:{'p1-01':cutoff,'p1-02':cutoff}});
+  const secondWorldGift=await tierPage.locator('.world-gift span').textContent();
+  await tierPage.click('[data-act=wardrobe]');
+  const firstHat=await tierGear('c019-h-straw').isEnabled()&&await tierPage.locator('.gear[data-rank]:enabled').count()===1;
+  await tierProfile({at:'p1-08',castles:Object.fromEntries(Array.from({length:8},(_,i)=>[`p1-0${i+1}`,cutoff]))});
+  await tierPage.click('[data-act=wardrobe]');
+  await tierTab('coat');
+  const fieldCoatsLocked=await tierPage.locator('.gear[data-id]:enabled:not([data-id=default])').count()===0;
+  ok('C019: the date switches the schedule, the first castle gives nothing, and new field records cannot earn coats',
+    beforeCutoff&&noFirstWorldGift&&zeroHats&&zeroBags&&zeroCoats&&firstHat&&fieldCoatsLocked&&secondWorldGift.includes('밀짚 우편모자')&&
+    JSON.stringify(atlasRewards)===JSON.stringify(['p1-02','p1-05','p1-08','p2-02','p2-04','p2-06','p2-08','p2-10','p2-12','p2-15','p3-02','p3-04','p3-06','p3-07']));
+
+  await tierProfile({at:'p1-01',castles:{'p1-01':previousDay,'p1-02':previousDay,'p1-03':previousDay,'p1-06':previousDay},stars:3,
+    slots:{hat:{id:'p1-01',color:1},bag:{id:'p1-02',color:0},coat:{id:'p1-03',color:0}}});
+  const beforeMigration=await tierPage.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  await tierPage.click('[data-act=wardrobe]');
+  const hatMigrated=await tierGear('c019-h-straw').getAttribute('aria-pressed')==='true';
+  await tierTab('bag');
+  const bagMigrated=await tierGear('c019-b-acorn').getAttribute('aria-pressed')==='true';
+  await tierTab('coat');
+  const coatsKept=await tierGear('p1-03').getAttribute('aria-pressed')==='true'&&await tierGear('p1-06').isEnabled();
+  await tierPage.reload(); await tierPage.waitForSelector('.profiles');
+  await tierPage.click('[data-act=pick][data-id=son]'); await tierPage.waitForSelector('#rider');
+  const migratedRecord=await tierPage.evaluate(before=>{
+    const look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+    return look.slots.hat.id==='c019-h-straw'&&look.slots.hat.color===1&&look.slots.bag.id==='c019-b-acorn'&&look.slots.coat.id==='p1-03'&&
+      !!document.querySelector('#rider use[href="#c019-coat-p1-03-0"]')&&localStorage.getItem('cards.v0.p.son')===before;
+  },beforeMigration);
+  ok('C019: earlier castle dates retain equivalent unlocks and both archived field coats without rewriting child records',
+    hatMigrated&&bagMigrated&&coatsKept&&migratedRecord);
+
+  const sky={
+    at:'p3-07',stars:40,conts:{c1:previousDay,c2:previousDay},
+    castles:Object.fromEntries([[1,8],[2,15],[3,7]].flatMap(([band,count])=>
+      Array.from({length:count},(_,i)=>[`p${band}-${String(i+1).padStart(2,'0')}`,cutoff]))),
+    slots:{hat:{id:'c019-h-plume',color:0},bag:{id:'c019-b-dawn',color:0},coat:{id:'c019-c-star',color:0}}
+  };
+  const motionCheck=()=>tierPage.locator('#rider .rider-body .frame:first-child .gear-glint').evaluateAll(frames=>({
+    count:frames.length, active:frames.filter(f=>getComputedStyle(f).animationName==='gear-shimmer').length
+  }));
+  await tierProfile({...sky,pid:'son'});
+  const couldMove=await motionCheck();
+  const sonIdentity=await tierPage.locator('#rider use[href="#c017-scarf-son"]').count()>0;
+  await tierPage.screenshot({path:tierOut+'/sky-son.png'});
+  await tierPage.click('[data-act=wardrobe]');
+  for (const [slot,file] of [['hat','hats'],['bag','bags'],['coat','coats']]) {
+    await tierTab(slot);
+    await tierPage.screenshot({path:`${tierOut}/${file}.png`});
+  }
+  const noEarlySpark=await tierPage.locator('.gear:not([data-rank="3"]) .gear-glint').count()===0;
+  await tierProfile({...sky,pid:'daughter'});
+  const daughterIdentity=await tierPage.locator('#rider use[href="#c017-heart-daughter"]').count()>0;
+  await tierPage.screenshot({path:tierOut+'/sky-daughter.png'});
+  await tierPage.emulateMedia({reducedMotion:'reduce'});
+  const mediaQuiet=await motionCheck();
+  await tierPage.emulateMedia({reducedMotion:'no-preference'});
+  await tierPage.click('[data-act=home]'); await tierPage.click('[data-act=parent]');
+  await tierPage.click('[data-act=reduce-motion]'); await tierPage.click('[data-act=home]');
+  await tierPage.click('[data-act=pick][data-id=daughter]'); await tierPage.waitForSelector('#rider');
+  const deviceQuiet=await motionCheck();
+  ok('C019: tier-three glints animate only on the eligible gear and stop for either motion preference',
+    couldMove.count===6&&couldMove.active===6&&noEarlySpark&&sonIdentity&&daughterIdentity&&
+    mediaQuiet.count===6&&mediaQuiet.active===0&&deviceQuiet.count===6&&deviceQuiet.active===0);
+  await rewards.close();
+
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
   const fails = results.filter((r) => r[0] === 'FAIL').length;

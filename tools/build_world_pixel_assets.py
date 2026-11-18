@@ -7,6 +7,9 @@ import argparse, hashlib, importlib.util, json, re, sys, xml.etree.ElementTree a
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('postal_pixel_recipes', Path(__file__).with_name('postal_pixel_recipes.py'))
 art = importlib.util.module_from_spec(spec); spec.loader.exec_module(art)
+item_spec = importlib.util.spec_from_file_location('item_tier_recipes', Path(__file__).with_name('item_tier_recipes.py'))
+item_art = importlib.util.module_from_spec(item_spec)
+item_spec.loader.exec_module(item_art)
 BIBLE = ROOT/'docs/WORLD_BIBLE.md'
 ASSETS = Path('cards/assets/postal/world-pixels')
 SOURCE = Path('assets/post-office/world-pixels/pixels.json')
@@ -452,7 +455,7 @@ def kid_identity_assets():
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets() | motion_assets() | kid_identity_assets()
+    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets() | motion_assets() | kid_identity_assets() | item_art.assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:
