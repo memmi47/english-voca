@@ -92,7 +92,9 @@ export function mergeCards(a, b, ix = null) {
   const out = { ...b, ...a, v: Math.max(a.v || 0, b.v || 0), id: a.id || b.id };
   out.words = { ...(b.words || {}) };
   for (const [id, r] of Object.entries(a.words || {})) { const o = out.words[id]; if (!o) { out.words[id] = r; continue; } const w = newer(o, r); const other = w === o ? r : o;
-    out.words[id] = !('bunch' in w) && other.bunch != null ? { ...w, bunch: other.bunch } : w; }   // the bunch tag is kept whichever side wins
+    let m = !('bunch' in w) && other.bunch != null ? { ...w, bunch: other.bunch } : w;   // the bunch tag is kept whichever side wins
+    const up = minStr(w.up, other.up); if (up != null && m.up !== up) m = { ...m, up };            // so is the first day the word was firm (the earlier)
+    out.words[id] = m; }
   out.bunches = mergeBunches(a.bunches, b.bunches);
   out.forms = mergeForms(a.forms, b.forms);
   // Old run records are folded into totals (store.compact). The side that folded further wins; runs it already counted are dropped.

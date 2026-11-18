@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Sync, mergeCards, mergeMeta } from '../cards/js/sync.js';
 import { loadRecord } from '../cards/js/store.js';
-import { Run, newState, mulberry32, addDays } from '../cards/js/deck.js';
+import { Run, newState, mulberry32, addDays, firmCount } from '../cards/js/deck.js';
 
 function memoryStorage() { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; }
 // In-memory stand-in for tools/serve_cards.py (same contract: rev check, 404, 409).
@@ -206,5 +206,26 @@ test('R2 (C-007): a damaged local copy that cannot be kept aside (storage full) 
   await assert.rejects(sync.reconcile('p.son')); assert.equal(s.getItem(key), text);
   const rec = loadRecord(s, key, 'son'); assert.deepEqual([rec.damaged, rec.kept], [true, false]); assert.equal(s.getItem(key), text);
   const ok = memoryStorage(); ok.setItem(key, text); assert.deepEqual([loadRecord(ok, key, 'son').kept, ok.getItem(key)], [true, null], 'kept aside when there is room');
+});
+
+test('U1: `up` = the first day a word was firm (7-day check passed or gold); a later miss keeps it; a word only passed on the word list has none; firmCount only grows', () => {
+  const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const id = WORDS[0].id, id2 = WORDS[1].id; const D = '2026-11-16';
+  const s = { ...newState('son'), words: { [id]: { st: 'likely', lstep: 0, due: D, firstDay: '2026-11-09', lastDay: '2026-11-09', lapses: 0 }, [id2]: { st: 'likely', lstep: 0, due: null, firstDay: D, lastDay: D, lapses: 0 } } };
+  assert.equal(firmCount(s), 0, 'called known but not checked yet: not firm');
+  const r = new Run({ state: s, words: WORDS, today: D, rng: mulberry32(1), now: () => 1000, scope: { noNew: true } });
+  const it = r.show(); r.pick(it.options.findIndex((o) => o.id === id)); assert.deepEqual([s.words[id].lstep, s.words[id].up], [1, D]);
+  assert.deepEqual([firmCount(s), firmCount(s, D), firmCount(s, '2026-11-17')], [1, 1, 0]);
+  const D2 = addDays(D, 30); s.words[id].due = D2;
+  const r2 = new Run({ state: s, words: WORDS, today: D2, rng: mulberry32(2), now: () => 2000, scope: { castle: [id] } });
+  const it2 = r2.show(); r2.pick((it2.options.findIndex((o) => o.id === id) + 1) % 3);
+  assert.equal(s.words[id].st, 'learn'); assert.equal(s.words[id].up, D, 'a later miss keeps the day'); assert.equal(firmCount(s), 1);
+});
+
+test('U2: merging keeps the earlier `up` of the two sides, also when the side without it wins', () => {
+  const a = state({ v: 3, words: { w: word({ st: 'review', step: 2, lastDay: '2026-11-10', up: '2026-11-10' }) } });
+  const b = state({ v: 3, words: { w: word({ st: 'review', step: 3, lastDay: '2026-11-12' }) } });
+  for (const m of [mergeCards(a, b), mergeCards(b, a)]) assert.deepEqual([m.words.w.step, m.words.w.up], [3, '2026-11-10']);
+  const c = state({ v: 3, words: { w: word({ up: '2026-11-08' }) } });
+  for (const m of [mergeCards(a, c), mergeCards(c, a)]) assert.equal(m.words.w.up, '2026-11-08');
 });
 

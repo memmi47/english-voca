@@ -49,6 +49,15 @@ export function gradeOf(w) {
   if (w.st === 'review') return w.step >= 2 ? 2 : 1;
   return 0;
 }
+// A word is "firm" once a later check confirmed it: the 7-day step of a review, the 7-day check of a word called known, or gold.
+// `up` (optional, no format change) records the first day it was firm and is never cleared, so counts built on it only grow:
+// the first screen's "this week" and the pet unlocks use it (cards C-014, C-016). Records saved before `up` existed have none.
+export const firmOf = (r) => !!r && (r.st === 'done' || (r.st === 'review' && (r.step || 0) >= 2) || (r.st === 'likely' && (r.lstep || 0) >= 1));
+// Words that became firm on or after `since` (ISO day; null = ever). Words firm before `up` existed count only when since is null.
+export function firmCount(state, since = null) {
+  let n = 0; for (const r of Object.values(state.words || {})) { if (r.up ? (since == null || r.up >= since) : (since == null && firmOf(r))) n++; }
+  return n;
+}
 export function gradeCounts(state, words) {
   const c = [0, 0, 0, 0];
   for (const w of words) c[gradeOf(state.words[w.id])]++;
@@ -200,6 +209,7 @@ export class Run {
   _set(id, next) {
     const from = gradeOf(this.s.words[id]);
     this.s.words[id] = { firstDay: this.today, lapses: 0, ...this.s.words[id], ...next, lastDay: this.today, at: this.now() };
+    if (!this.s.words[id].up && firmOf(this.s.words[id])) this.s.words[id].up = this.today;   // first day it was firm; kept after a later miss
     const to = gradeOf(this.s.words[id]);
     if (to !== from) this.changed.push({ id, from, to });
     return { from, to };
