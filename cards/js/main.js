@@ -160,15 +160,18 @@ async function loadStormSprites() {
     d.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg">${keep}</svg>`; document.body.prepend(d); } catch { /* no picture: the whirlwind is drawn as an empty button */ }
 }
 
+// Where the start-up is (compat.js shows it when the game does not open within 10 s).
+const step = (s) => { window.__boot = s; };
 async function boot() {
+  step('기록 저장소 확인');
   let storage; try { storage = window.localStorage; storage.setItem('_t', '1'); storage.removeItem('_t'); } catch { storage = null; }
   G.volatile = !storage; G.syncStatus = { available: false, pending: [] };
   try {
     const json = (r) => { if (!r.ok) throw new Error(`${r.url.split('/').slice(-2).join('/')} 파일을 읽지 못했어요 (${r.status})`); return r.json(); };
     // The world file (from the world generator) is the only source of the maps and word assignment. If it cannot be read the
     // "열 수 없어요" screen says why; there is no stand-in file, so a child's record never lands on a guessed assignment.
-    const doc = await fetch(DATA + 'worlds.json').then(json, () => { throw new Error('worlds.json 파일을 읽지 못했어요 (연결 없음)'); });
-    const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // the real file names catalogue.json; the small demo file names none and uses its own catalog.json
+    step('세계 파일'); const doc = await fetch(DATA + 'worlds.json').then(json, () => { throw new Error('worlds.json 파일을 읽지 못했어요 (연결 없음)'); });
+    step('단어 목록'); const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // the real file names catalogue.json; the small demo file names none and uses its own catalog.json
     // Card fields this game reads: track ("sight" = hear-and-pick card) and groups (confusion groups, never offered as wrong answers).
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
@@ -179,16 +182,17 @@ async function boot() {
     G.dataNote = doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
   } catch (e) { $('#app').innerHTML = `<div class="page center"><h1 class="title">열 수 없어요</h1><p class="note" id="fatal">${esc(e.message)}</p></div>`; return; }
-  await loadForms();
+  step('단어 형태'); await loadForms();
   if (storage && qs.get('nosync') !== '1') {
+    step('Mac 서버 기록 맞추기');
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  try { const r = await fetch('data/difficulty.json'); if (r.ok) G.hard = (await r.json()).score; } catch { /* no table: random checks */ }
+  step('난이도 표'); try { const r = await fetch('data/difficulty.json'); if (r.ok) G.hard = (await r.json()).score; } catch { /* no table: random checks */ }
   if (G.hard) setHardness((id) => G.hard[id]);                       // the world's checks take the hardest passed words
-  await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  step('그림'); await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   if (ITEM_TIERS_FROM) await loadSprites('assets/postal/item-tiers/sprites.svg');
-  G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
+  step('소리 목록'); G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init(); step('첫 화면');
   const pref = loadPref(); G.reduceMotion = pref.reduceMotion; G.homeProgress = pref.homeProgress; document.body.classList.toggle('motion-quiet', FAST || G.reduceMotion); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#wardrobe')) { closeWardrobe(); $('[data-act=wardrobe]')?.focus(); } if (['Enter',' '].includes(e.key) && e.target.matches('.world-door[data-act]')) { e.preventDefault(); e.target.click(); } });

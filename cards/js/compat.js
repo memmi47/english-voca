@@ -20,8 +20,10 @@
     }
     box.textContent = '게임을 여는 중 문제가 생겼어요. 이 화면을 찍어 부모님께 보여 주세요.\n' + navigator.userAgent + '\n' + errors.slice(-5).join('\n');
   }
-  window.addEventListener('error', function (e) { show((e.message || '오류') + ' @ ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '')); });
+  // A script or style file that could not be read fires its error on the element only: caught here (capture phase).
+  window.addEventListener('error', function (e) { var t = e.target; if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) show('파일을 읽지 못했어요: ' + String(t.src || t.href).split('/').pop()); }, true);
+  window.addEventListener('error', function (e) { if (e.target && e.target !== window) return; show((e.message || '오류') + ' @ ' + String(e.filename || '').split('/').pop() + ':' + (e.lineno || '')); });
   // A rejected promise is often harmless (a sound that could not play): only note it, and show it with a real failure.
   window.addEventListener('unhandledrejection', function (e) { var r = e.reason; errors.push('promise: ' + (r && r.message ? r.message : String(r))); var app = document.getElementById('app'); if (app && !app.children.length) show(); });
-  window.setTimeout(function () { var app = document.getElementById('app'); if (app && !app.children.length) show('10초 동안 게임 화면을 만들지 못했어요'); }, 10000);
+  window.setTimeout(function () { var app = document.getElementById('app'); if (app && !app.children.length) show('10초 동안 게임 화면을 만들지 못했어요 (멈춘 단계: ' + (window.__boot || '게임 파일이 시작되지 않음') + ', 받은 파일 ' + ((window.performance && performance.getEntriesByType) ? performance.getEntriesByType('resource').length : '?') + '개)'); }, 10000);
 })();

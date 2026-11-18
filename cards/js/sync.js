@@ -153,7 +153,10 @@ export class Sync {
       const r = await this._timed(this.fetch(this.base + 'ping'), timeoutMs);
       const j = r.ok ? await r.json() : null; this.available = !!(j && j.store);
     } catch { this.available = false; }
-    if (this.available) for (const name of DOCS) { try { await this.reconcile(name); } catch (e) { this.lastError = String(e.message || e); } }
+    // A server that answers the ping but not a record must not keep the game from opening: after 6 s (all records together) the start goes on with the
+    // local copy (the reconcile keeps going and folds the record in when it arrives, onMerged).
+    if (this.available) { const note = (e) => { this.lastError = String(e.message || e); };
+      try { await this._timed(Promise.all(DOCS.map((name) => this.reconcile(name).catch(note))), 6000); } catch (e) { note(e); } }
     this._status(); return this.available;
   }
   _timed(p, ms) { return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]); }
