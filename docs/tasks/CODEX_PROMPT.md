@@ -178,3 +178,16 @@ docs/ORCHESTRATION.md, docs/WORLD_SCHEMA.md 를 읽은 뒤 docs/tasks/C-016.md �
 끝난 뒤 보고: PR 번호, 아이템 수(칸별), 우표 깊이 전후, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
 ```
 
+## C-017 (2026-11-18, Sol에게. C-016 위에 쌓거나 병합 뒤)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다.
+docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-017.md 를 수행한다. C-016이 아직 병합 전이면 codex/explore-rewards 에서 갈라 codex/kid-looks 를 만들고 PR 설명 첫 줄에 "C-016(PR #번호) 위에 쌓은 브랜치"라고 적는다. 앞 브랜치의 수정은 merge 로 반영한다(rebase·force push 금지).
+- 카드의 "정한 모습" 표를 그대로 따른다. 픽셀은 다듬어도 되지만 윤곽·위치·색과 움직임 크기(두 아이 모두 2~3px, 차이 1px 이하)는 지킨다.
+- 그림 생성기와 그 출력, 화면 파일(아이별 움직임 적용만), 검사만 고친다. 규칙 코드, 저장 형식, 저장 키는 바꾸지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 새 브라우저 검사 네 개와 화면 캡처 경로를 적는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 브랜치 codex/kid-looks 로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다. 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
+```
+
