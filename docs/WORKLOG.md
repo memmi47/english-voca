@@ -192,8 +192,10 @@
 | 2026-11-17 | Codex Sol | C-012: Mac 설치·제거·업데이트 스크립트, 게임 밖 기록 복사·LaunchAgent·선택 21:07 백업·pull 전 사본, 안내와 새 검사 여섯 개 | 이 줄을 추가한 커밋 (`codex/mac-setup`) | bash 문법 3/3, 단위 106/106; shellcheck/plutil 없음(XML 파싱), 임시 HOME·가짜 명령으로 검증; 실제 macOS/iPad·원격 백업 미확인 |
 | 2026-11-17 | Codex Astra → Sol | C-011: PR #17에서 단일 몬스터·화면 체력·성 축하/문 열기·별 꾸미기·음악 기본 켜짐, 픽셀22개·신곡2개 구현 | [Draft PR #17](https://github.com/memmi47/english-voca/pull/17) | 단위100/100·브라우저175/175·픽셀20/20·음악44GM+12칩튠+16SFX·baseline 동일; 기존130파일/42곡metadata 보존, 기기 확인 대기 |
 | 2026-11-18 | Codex Astra → Sol | C-013: PR #18을 #17 위에 쌓고 merge 반영, K=max(ceil(0.6N),L+2)·우표2장·대륙70% 구현; Demo/ST3 승인 예외 적용 | [Draft PR #18](https://github.com/memmi47/english-voca/pull/18) | 생성 재현·생성기22/22·단위107/107·브라우저180/180·baseline 동일; 실제30지도/배정 보존, 최소3100/4489개(69.06%); 실기기·난이도 미확인 |
-| 2026-11-18 | Codex Astra | C-014: 움직임·첫 화면 성과 설계 게시, 최초 은 등급 도달일이 기존 기록에 없어 주간 지표 결정 대기 | [Draft PR #19](https://github.com/memmi47/english-voca/pull/19) | 기록 필드 확인, 구현·완료 검사·캡처 미실행 |
-| 2026-11-18 | Codex Astra → Sol | C-015: 대륙 그림 지도 3장, 성 조건표 위치, 의상 6벌, 긴 보기와 지도 상단 줄 보완 | 이 줄을 추가한 커밋 (`codex/visual-pass-1`, C-014 #19 위) | 단위 117/117, 브라우저 186/186, 픽셀 20/20, 생성 재현·시뮬레이션 기준 동일, iPad 미확인 |
+| 2026-11-18 | Codex Astra → Sol | C-014: 주간 지표 승인 반영, 협동 목표 14개·첫 화면 성과·세 겹 움직임 구현 | [설계 PR #19](https://github.com/memmi47/english-voca/pull/19) 병합, [구현은 #21](https://github.com/memmi47/english-voca/pull/21) | 단위 117/117, 브라우저 186/186, 픽셀 20/20, 체험 27/27, 기준 동일. 자동 카드당 1,318.78→18.81ms. iPad·실제 사용 미확인 |
+| 2026-11-18 | Codex Astra → Sol | C-015: 대륙 그림 지도 3장, 성 조건표 위치, 의상 6벌, 긴 보기와 지도 상단 줄 보완 | [PR #20](https://github.com/memmi47/english-voca/pull/20) 병합, 후속 통합 #21 | 단위 117/117, 브라우저 192/192(C-014 통합 후), 픽셀 20/20, 생성 재현·시뮬레이션 기준 동일, iPad 미확인 |
+| 2026-11-18 | Codex Astra → Sol | C-016: 탐험 보상 다섯 칸, 80px 배달부와 이동, 실제 30세계의 깊은 우표 배치 | [Draft PR #21](https://github.com/memmi47/english-voca/pull/21), C-015 #20 위 | 단위 119/119, 브라우저 197/197, 생성 검사 23/23와 자료 재현, 기준 동일. 우표 깊이 1·2·5 → 4·5·7, iPad 미확인 |
+| 2026-11-18 | Codex Astra → Sol | C-017: 아이별 머리·목도리·하트, 제자리 움직임과 꾸미기 층 적용 | [Draft PR #22](https://github.com/memmi47/english-voca/pull/22), C-016 #21 위 | 단위 119/119, 브라우저 204/204, 픽셀 20/20, 생성 재현·기준 동일. 아들 2px·딸 3px, iPad 미확인 |
 
 ## 9. 요청과 이번 설계의 검증
 

@@ -209,6 +209,94 @@ def stamp_assets():
     sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>\n'+''.join(f'<symbol id="{sid}" viewBox="0 0 16 16">{runs(s["pixels"])}</symbol>\n' for sid,s in symbols.items())+'</defs></svg>\n'
     return {Path('cards/assets/postal/stamps/manifest.json'):json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',Path('cards/assets/postal/stamps/sprites.svg'):sheet}
 
+def wardrobe_assets():
+    """Original modular postal couriers and exploration rewards on a 48-unit grid."""
+    import html
+    parts = []
+    ink, skin, cream = '#233F3A', '#E8B78B', '#FFF0CA'
+    teal, gold, brown, coral = '#387D74', '#EAB65C', '#98664B', '#CC6651'
+    colors = [teal, coral, '#6A5683']
+    def rect(x, y, w, h, color):
+        return f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{color}"/>'
+    def shape(sid, body):
+        parts.append(f'<symbol id="{html.escape(sid)}" viewBox="0 0 48 48">{body}</symbol>')
+    def pixels(rects):
+        return ''.join(rect(*r) for r in rects)
+    # The common pose occupies the same head/body bounds as the existing 48-unit courier.
+    for variant, cap in [('teal',teal),('gold',gold)]:
+        for action in ('idle','walk'):
+            for frame in range(4):
+                left = [12,11,12,13][frame] if action=='walk' else 12
+                right = [25,26,25,24][frame] if action=='walk' else 25
+                body=pixels([(10,40,25,3,'#D8D7BA'),(left,35,7,5,ink),(right,35,7,5,ink),
+                    (14,29,6,8,teal),(24,29,6,8,teal),(10,20,24,13,ink),(12,21,20,10,cream),
+                    (8,24,4,8,ink),(8,25,3,6,skin)])
+                if action=='idle' and frame==3: body+=rect(25,34,7,1,gold)
+                if action=='walk' and frame==2: body+=rect(13,36,3,1,cream)
+                if action=='walk' and frame==3: body+=rect(26,36,3,1,cream)
+                shape(f'c016-body-{variant}-{action}{frame}',body)
+                face=pixels([(11,9,22,14,ink),(13,10,18,12,skin),(20,19,5,1,brown)])
+                if action=='idle' and frame==1:
+                    face+=pixels([(16,15,3,1,ink),(26,15,3,1,ink)])
+                elif action=='idle' and frame==2:
+                    face+=pixels([(18,14,2,3,ink),(28,14,2,3,ink)])
+                else:
+                    face+=pixels([(16,14,2,3,ink),(26,14,2,3,ink)])
+                shape(f'c016-head-{variant}-{action}{frame}',face)
+        shape(f'c016-coat-default-{variant}',pixels([(13,22,5,9,cap),(27,22,4,9,cap)]))
+        shape(f'c016-bag-default-{variant}',pixels([(14,22,3,2,brown),(17,23,3,2,brown),(20,24,3,2,brown),(23,25,3,2,brown),(26,26,3,2,brown),(28,26,10,10,ink),(29,27,8,8,brown),(29,27,8,3,gold),(32,30,2,2,cream)]))
+        shape(f'c016-hat-default-{variant}',pixels([(12,3,20,7,ink),(14,4,16,6,cap),(9,9,27,3,ink),(10,9,25,2,cap),(19,5,8,4,cream),(20,6,6,1,gold)]))
+
+    worlds=[f'p1-{i:02}' for i in range(1,9)]+[f'p2-{i:02}' for i in range(1,16)]+[f'p3-{i:02}' for i in range(1,8)]
+    # Repeated motif geometry is combined with ten individually distinct badge patterns per slot.
+    motifs=[
+        [(16,6,3,2),(19,4,3,3)], [(17,5,2,3),(20,7,4,2)],
+        [(15,6,2,2),(18,5,3,2),(22,6,2,2)], [(18,4,5,1),(17,6,7,1)],
+        [(16,7,2,2),(19,5,2,3),(22,6,2,2)], [(16,5,6,2),(18,7,2,2)],
+        [(16,6,8,1),(18,4,4,2)], [(16,5,2,2),(19,5,2,2),(22,5,2,2)],
+        [(18,4,4,4),(17,5,6,2)], [(15,5,3,3),(20,5,3,3)]]
+    for index,wid in enumerate(worlds):
+        slot=('hat','bag','coat')[index%3]; design=index//3
+        for color_index,color in enumerate(colors):
+            accent=[gold,cream,'#B4A0C8'][color_index]
+            if slot=='hat':
+                body=pixels([(12,3,20,7,ink),(14,4,16,6,color),(9,9,27,3,ink),(10,9,25,2,color)])
+                body+=pixels([(x,y,ww,hh,accent) for x,y,ww,hh in motifs[design]])
+            elif slot=='bag':
+                body=pixels([(14,22,3,2,brown),(17,23,3,2,brown),(20,24,3,2,brown),(23,25,3,2,brown),(26,26,3,2,brown),
+                    (28,26,10,10,ink),(29,27,8,8,color),(29,27,8,2,accent)])
+                body+=pixels([(29+(x-15),29+(y-4),max(1,ww//2),max(1,hh//2),accent) for x,y,ww,hh in motifs[design]])
+            else:
+                body=pixels([(12,21,20,10,color),(13,22,5,9,color),(27,22,4,9,color),
+                    (20,21,2,10,accent)])
+                body+=pixels([(13+(x-15),23+(y-4),max(1,ww//2),max(1,hh//2),accent) for x,y,ww,hh in motifs[design]])
+            shape(f'c016-{slot}-{wid}-{color_index}',body)
+    for legacy,coat,bag in [('leaf-cap',teal,brown),('sun-bag',teal,gold),('sea-coat','#7BC4D0',brown),('night-cap','#927BAB',brown),('letter-bag',teal,'#927BAB'),('festival-coat','#E89AA8',gold)]:
+        for color_index in range(3):
+            color=[coat,coral,'#6A5683'][color_index]
+            body=pixels([(12,21,20,10,color),(13,22,5,9,color),(27,22,4,9,color),(20,21,2,10,bag),(23,24,3,3,cream)])
+            shape(f'c016-coat-legacy-{legacy}-{color_index}',body)
+
+    for cid,body in [
+        ('c1',pixels([(4,34,12,10,ink),(7,36,6,6,cream),(31,34,12,10,ink),(34,36,6,6,cream),(10,30,25,3,teal),(18,25,4,8,coral),(30,25,4,8,gold)])),
+        ('c2',pixels([(3,31,42,5,ink),(6,36,36,5,brown),(10,41,27,3,ink),(18,28,12,4,cream),(22,26,4,3,coral)])),
+        ('c3',pixels([(6,24,36,6,ink),(9,25,30,4,coral),(16,30,2,9,brown),(30,30,2,9,brown),(14,39,20,5,ink),(17,40,14,3,gold)]))
+    ]:
+        shape(f'c016-ride-{cid}-idle',body)
+        shape(f'c016-ride-{cid}-move',body+pixels([(3,44,8,1,cream),(35,44,8,1,cream)]))
+    for pet in ('snail','lizard','moth'):
+        for frame in range(2):
+            if pet=='snail':
+                body=pixels([(10,27,27,8,ink),(12,26,22,7,teal),(17,17,14,12,ink),(19,19,10,8,gold),(22,21,5,2,coral),(32,22-frame,3,7,ink),(34,20-frame,3,3,cream)])
+            elif pet=='lizard':
+                body=pixels([(10,26,25,7,ink),(12,25,21,6,'#77B4A0'),(31,21,7,8,teal),(34,22,2,2,cream),(7,24+frame,6,3,coral),(15,32,4,3,ink),(27,32,4,3,ink)])
+            else:
+                body=pixels([(21,19,6,15,ink),(23,20,2,12,gold),(10,18+frame,11,10,coral),(27,18+frame,11,10,coral),(13,20+frame,6,5,cream),(29,20+frame,6,5,cream),(19,14,2,5,ink),(27,14,2,5,ink)])
+            shape(f'c016-pet-{pet}-{frame}',body)
+    sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>'+''.join(parts)+'</defs></svg>\n'
+    return {Path('cards/assets/postal/wardrobe/sprites.svg'):sheet}
+
+
 def atlas_assets():
     """Original three hand-composed continental postage maps."""
     fields = {
@@ -244,9 +332,112 @@ def atlas_assets():
              + ''.join(parts) + '</defs></svg>\n')
     return {Path('cards/assets/postal/atlas/sprites.svg'):sheet}
 
+def motion_assets():
+    """Original postal motion props and courier poses."""
+    import xml.etree.ElementTree as ET
+    master=ET.parse(ROOT/'assets/post-office/v1/sprites.svg')
+    originals={n.get('id'):n for n in master.iter() if n.get('id')}
+    parts=[]
+    for color in ('teal','gold'):
+        for pose,frame in [('run','walk2'),('throw','happy')]:
+            body=''.join(ET.tostring(x,encoding='unicode').replace('ns0:','').replace(':ns0','') for x in originals['courier-'+color+'-'+frame])
+            parts.append(f'<symbol id="c014-courier-{color}-{pose}" viewBox="0 0 48 48">{body}</symbol>')
+    patterns={
+      'cloud':[(2,7,12,5,'w'),(4,4,7,5,'w'),(7,3,5,4,'w')],
+      'bird':[(1,6,4,2,'k'),(4,4,5,4,'b'),(9,6,4,2,'k'),(7,5,1,1,'w'),(10,8,4,3,'w')],
+      'mail':[(2,4,12,8,'k'),(3,5,10,6,'w'),(4,5,2,1,'r'),(6,6,4,1,'r'),(10,5,2,1,'r')],
+      'smoke':[(2,7,4,4,'n'),(5,4,6,7,'w'),(10,7,4,4,'n'),(6,10,4,3,'w')],
+      'star':[(7,1,2,14,'g'),(1,7,14,2,'g'),(5,5,6,6,'y')],
+      'sleep':[(1,2,5,1,'u'),(4,3,1,1,'u'),(2,4,3,1,'u'),(8,7,6,1,'u'),(11,8,1,1,'u'),(9,9,4,1,'u')],
+      'torch':[(6,7,4,7,'b'),(5,5,6,3,'k'),(6,2,3,4,'r'),(8,0,2,6,'y')],
+      'mailbox':[(3,4,10,8,'k'),(4,5,8,6,'r'),(6,7,4,1,'w'),(7,12,2,3,'b'),(12,2,1,5,'g'),(13,2,2,2,'g')],
+      'leaf':[(3,3,8,8,'l'),(5,2,6,10,'t'),(3,12,10,1,'b')],
+      'taunt':[(3,4,3,2,'k'),(10,4,3,2,'k'),(5,9,6,2,'k'),(7,10,3,3,'r')],
+      'post-office':[(2,6,12,9,'k'),(3,7,10,7,'w'),(1,5,14,2,'r'),(4,3,8,2,'r'),(6,9,4,6,'t'),(11,1,1,4,'b'),(12,1,3,2,'g')]
+    }
+    for name,rects in patterns.items():
+        p=art.Pixels()
+        for x,y,w,h,c in rects:p.rect(x,y,w,h,c)
+        parts.append(f'<symbol id="c014-{name}" viewBox="0 0 16 16">{runs(p.finish())}</symbol>')
+    sheet='<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>'+''.join(parts)+'</defs></svg>\n'
+    return {Path('cards/assets/postal/motion/sprites.svg'):sheet}
+
+
+def kid_identity_assets():
+    """Original 48-unit identity layers to composite with the C-016 courier.
+
+    Hair is drawn after the face and before the hat. The scarf is drawn over the
+    coat and bag, and the heart after the hat. Coordinates use the shared
+    courier origin and remain fixed in the idle and walking pose families.
+    For the raised happy/throw frame, translate the hair and heart up one unit.
+    """
+    from pathlib import Path
+
+    def rect(x, y, width, height, color):
+        return f'<rect x="{x}" y="{y}" width="{width}" height="{height}" fill="{color}"/>'
+
+    def body(rectangles):
+        return ''.join(rect(*r) for r in rectangles)
+
+    ink = '#233F3A'
+    hair = '#49352F'
+    hair_light = '#795044'
+    red = '#B63839'
+    red_light = '#E56B59'
+    pink_dark = '#9C315B'
+    pink = '#E976A1'
+    pink_light = '#FFE3ED'
+
+    # Short irregular locks under the brim; a small lock sticks out behind.
+    son_hair = body([
+        (12, 12, 3, 4, hair), (15, 12, 4, 2, hair),
+        (20, 12, 3, 1, hair), (25, 12, 4, 2, hair),
+        (30, 12, 3, 4, hair), (32, 12, 4, 3, hair),
+        (34, 13, 3, 2, hair_light), (14, 12, 2, 2, hair_light),
+    ])
+    # Neck wrap and two-part tail, extending towards the right rear.
+    son_scarf = body([
+        (12, 21, 18, 5, ink), (13, 21, 16, 3, red),
+        (22, 24, 7, 4, red), (28, 22, 6, 4, red),
+        (33, 20, 6, 4, ink), (34, 20, 5, 3, red),
+        (38, 19, 4, 3, ink), (38, 19, 3, 2, red_light),
+        (15, 22, 7, 1, red_light),
+    ])
+    # Shoulder-length pigtails with separate pink ties.
+    daughter_hair = body([
+        (10, 12, 4, 7, hair), (8, 17, 5, 11, hair),
+        (7, 23, 5, 8, hair), (8, 28, 4, 2, hair_light),
+        (31, 12, 4, 7, hair), (34, 17, 5, 11, hair),
+        (35, 23, 5, 8, hair), (35, 28, 4, 2, hair_light),
+        (8, 17, 5, 3, pink), (34, 17, 5, 3, pink),
+        (9, 17, 2, 1, pink_light), (35, 17, 2, 1, pink_light),
+    ])
+    # A centered approximately 9×8 heart, with dark stepped outline and shine.
+    daughter_heart = body([
+        (20, 3, 3, 1, pink_dark), (25, 3, 3, 1, pink_dark),
+        (19, 4, 10, 2, pink_dark), (20, 6, 8, 1, pink_dark),
+        (21, 7, 6, 1, pink_dark), (22, 8, 4, 1, pink_dark),
+        (23, 9, 2, 1, pink_dark),
+        (20, 4, 3, 1, pink), (25, 4, 3, 1, pink),
+        (20, 5, 8, 1, pink), (21, 6, 6, 1, pink),
+        (22, 7, 4, 1, pink), (23, 8, 2, 1, pink),
+        (20, 4, 2, 1, pink_light),
+    ])
+    symbols = {
+        'c017-hair-son': son_hair,
+        'c017-scarf-son': son_scarf,
+        'c017-hair-daughter': daughter_hair,
+        'c017-heart-daughter': daughter_heart,
+    }
+    sheet = '<svg xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><defs>'
+    sheet += ''.join(f'<symbol id="{sid}" viewBox="0 0 48 48">{value}</symbol>' for sid, value in symbols.items())
+    sheet += '</defs></svg>\n'
+    return {Path('cards/assets/postal/kids/sprites.svg'): sheet}
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
-    files=build() | feedback_assets() | stamp_assets() | atlas_assets()
+    files=build() | feedback_assets() | stamp_assets() | wardrobe_assets() | atlas_assets() | motion_assets() | kid_identity_assets()
     for path,content in files.items():
         full=ROOT/path
         if args.check:

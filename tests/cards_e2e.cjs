@@ -107,12 +107,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('verification results are kept for the parent view', son.runs[1].verifies >= 1 && son.verify.includes(false));
   ok('a caught false claim still lets the tile clear once every word was met', /칸 클리어/.test(await page.textContent('h1')));
 
-  // 4. the other child is untouched; parent view lists the runs; no sibling comparison
+  // 4. the other child is untouched; parent view lists the runs; home privacy mode hides all progress numbers
   ok('sibling record untouched', (await state(page, 'daughter')) === null);
   await toMap(page); await page.click('[data-act=home]'); await page.click('[data-act=parent]');
   ok('parent view shows runs, tile names, the check accuracy and stars', (await page.$$('.parent table tr')).length >= 3 && /확인 정답률/.test(await page.textContent('.parent')) && /별 \d+/.test(await page.textContent('.parent')) && /A1/.test(await page.textContent('.parent table')));
+  await page.click('[data-act=home-progress]');
   await page.click('[data-act=home]');
-  ok('home screen shows no numbers (no sibling comparison)', !/\d/.test(await page.textContent('.profiles')));
+  ok('home screen shows no numbers when the parent hides progress', !/\d/.test(await page.textContent('.profiles')));
+  await page.click('[data-act=parent]'); await page.click('[data-act=home-progress]');
 
   // 5. day 2: the reviews of two tiles pile up into an optional monster; it does not block the roads
   const d2 = await open(ctx, 'today=2026-11-13&triage=off&seed=6&sound=off&fast=1');
@@ -749,6 +751,91 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await gp.screenshot({path:'/tmp/c013-screens/continent-gates.png',animations:'disabled'});
   await gp.close();await gatectx.close();
 
+  // C-014 checks with real motion enabled and isolated presentation preferences.
+  const homeCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const hm = await open(homeCtx, 'today=2026-11-18&triage=off&sound=off&seed=9');
+  const expectedHome = await hm.evaluate(() => {
+    const expected = {};
+    for (const [i,id] of ['son','daughter'].entries()) {
+      const ids = window.__cards.words.slice(0,4+i).map(w => w.id);
+      const words = Object.fromEntries(ids.map((word,j) => [word, { st: j === 1 ? 'review' : 'done', step: j === 1 ? 0 : 2, firstDay: j === 0 ? '2026-11-15' : '2026-11-16', lastDay:'2026-11-18' }]));
+      const record = JSON.stringify({ v:3,id,words,runs:[{day:'2026-11-16',reason:'done'},{day:'2026-11-17',reason:'left'}] });
+      localStorage.setItem('cards.v0.p.'+id,record);
+      expected[id] = record;
+    }
+    return expected;
+  });
+  await hm.reload(); await hm.waitForSelector('.profiles'); await hm.evaluate(() => document.fonts.ready);
+  fs.mkdirSync('/tmp/c014-screens',{recursive:true});
+  await hm.screenshot({path:'/tmp/c014-screens/home.png'});
+  await hm.click('[data-act=parent]'); await hm.click('[data-act=home]');
+  ok('C014: current silver words and Monday-first activity match each child record; home is read-only', await hm.evaluate(expected => {
+    return ['son','daughter'].every((id,i) => {
+      const panel = document.querySelector(`.profile[data-id=${id}]`);
+      return panel.querySelector('.home-count b').textContent === String(3+i) &&
+        panel.querySelector('.home-week').textContent === '이번 주 +' + (2+i) &&
+        [...panel.querySelectorAll('.week-dots span')].map(x=>x.dataset.played).join(',') === 'true,false,false,false,false,false,false' &&
+        expected[id] === localStorage.getItem('cards.v0.p.'+id);
+    }) && document.querySelector('.home-goal').textContent.includes('+5 / 목표 14') &&
+      !/1등|왕관|이겼다/.test(document.querySelector('.home-postal').textContent);
+  },expectedHome));
+  await hm.click('[data-act=parent]'); await hm.click('[data-act=home-progress]'); await hm.click('[data-act=home]');
+  ok('C014: parent can hide home scores for both children', await hm.locator('.home-count,.home-week,.home-goal,.week-dots').count()===0);
+  await hm.click('[data-act=parent]'); await hm.click('[data-act=reduce-motion]'); await hm.click('[data-act=home]');
+  ok('C014: reduced motion stops the home courier pulse', await hm.locator('.home-courier').first().evaluate(el=>getComputedStyle(el).animationName==='none'));
+  await hm.close(); await homeCtx.close();
+
+  const motionCtx = await browser.newContext({ viewport:{width:1180,height:820}, hasTouch:true });
+  const motion = await open(motionCtx,'today=2026-11-18&triage=off&sound=off&seed=9');
+  await motion.click('[data-act=pick][data-id=son]');
+  await motion.waitForSelector('.world');
+  await motion.evaluate(()=>document.fonts.ready);
+  await motion.screenshot({path:'/tmp/c014-screens/world.png'});
+  const skipped = await motion.evaluate(() => {
+    const choice = document.querySelector('[data-act=node][data-id=A1]');
+    choice.click();
+    const move = document.querySelector('#rider').getAnimations().find(a=>a.playState==='running');
+    choice.click();
+    return !!move && move.playState==='idle';
+  });
+  await motion.waitForSelector(READY);
+  ok('C014: a tile tap walks the route and a second tap skips the travel', skipped && await motion.evaluate(()=>window.__cards.node?.unit==='A1'));
+  const throwResponse = await motion.evaluate(async () => {
+    const g=window.__cards;
+    g.run.rng=()=>.99;
+    const i=g.run.i;
+    const started=performance.now();
+    document.querySelector('.act.yes').click();
+    const fx=!!document.querySelector('.mail-flight');
+    return new Promise(resolve=>{
+      const frame=()=>{
+        const enabled=document.querySelector('.act.yes:not([disabled]),.opt:not([disabled])');
+        if (enabled && g.run.i===i+1) resolve({fx,t:performance.now()-started});
+        else if (performance.now()-started>=100) resolve({fx,t:-1});
+        else requestAnimationFrame(frame);
+      };
+      frame();
+    });
+  });
+  ok('C014: mail flies while the next card is accepting input within 100ms', throwResponse.fx && throwResponse.t>=0 && throwResponse.t<100, JSON.stringify(throwResponse));
+  await motion.screenshot({path:'/tmp/c014-screens/throw.png'});
+  await motion.close(); await motionCtx.close();
+  const castleMotionCtx = await browser.newContext({viewport:{width:1180,height:820}});
+  const castleMotion = await open(castleMotionCtx,'today=2026-11-18&triage=off&sound=off&seed=9');
+  await castleMotion.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'); const {ensureMap}=await import('./js/map.js');
+    const st=newState('son'), m=ensureMap(st); m.at='d1-01';
+    const w=window.__cards.ix.byId['d1-01'];
+    for (const n of w.map.nodes.filter(n=>n.kind==='tile')) for (const id of n.words) st.words[id]={st:'done'};
+    localStorage.setItem('cards.v0.p.son',JSON.stringify(st));
+  });
+  await castleMotion.click('[data-act=pick][data-id=son]'); await startNode(castleMotion,'castle');
+  await castleMotion.waitForSelector('.guardian-entry'); await castleMotion.screenshot({path:'/tmp/c014-screens/castle.png'});
+  const skipEntry = castleMotion.getByRole('button',{name:'등장 장면 건너뛰기'});
+  await skipEntry.evaluate(b=>b.click());
+  ok('C014: a castle entrance can be skipped while choices remain enabled', await castleMotion.locator('.guardian-entry').count()===0 && await castleMotion.locator('.opt:not([disabled])').count()>0);
+  await castleMotion.close();await castleMotionCtx.close();
+
   // C-015. Real atlas geometry, the gate outside the map, shared courier size and option typography.
   const visual = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const vp = await visual.newPage();
@@ -864,6 +951,224 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   }
   ok('C015: the catalogue’s longest glosses wrap and all three options have equal height', longChoicesFit);
   await visual.close();
+
+  // C-016 wardrobe: each slot is earned from a different kind of progress.
+  const gearCtx=await browser.newContext({viewport:{width:1180,height:820}});
+  const gearPage=await gearCtx.newPage();
+  gearPage.on('pageerror',e=>errs.push(String(e)));
+  await gearPage.goto(BASE+'/?today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+  await gearPage.waitForSelector('.profiles');
+  await gearPage.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+    const g=window.__cards,s=newState('son'),m=ensureMap(s);
+    m.at='p1-01';m.stars=12;
+    m.worlds['p1-01']={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
+    m.conts.c1={castle:'2026-11-17'};
+    for(const w of g.words.slice(0,500))s.words[w.id]={st:'done'};
+    localStorage.setItem('cards.v0.p.son',JSON.stringify(s));
+    localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'leaf-cap'}));
+  });
+  await gearPage.click('[data-act=pick][data-id=son]');
+  await gearPage.waitForSelector('#world[data-world=p1-01]');
+  const out016='/tmp/c016-screens';
+  fs.mkdirSync(out016,{recursive:true});
+  await gearPage.screenshot({path:out016+'/stamps.png',animations:'disabled'});
+  const beforeGear=await gearPage.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  ok('C016: revised first-world stamps and the earned legacy outfit are rendered',await gearPage.evaluate(()=>{
+    const stamps=[...document.querySelectorAll('#world .gate-stamp')].map(e=>e.closest('[data-id]').dataset.id);
+    return stamps.includes('p1-01-detour-2-3')&&stamps.includes('p1-01-detour-3-3')&&
+      document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle';
+  }));
+  await gearPage.click('[data-act=wardrobe]');
+  await gearPage.click('[data-act=gear-tab][data-slot=hat]');
+  const hatLocked=await gearPage.locator('[data-act=gear][data-id=p1-04]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=p1-01]');
+  const colorLocked=await gearPage.locator('[data-act=gear-color][data-color="2"]').isDisabled();
+  await gearPage.click('[data-act=gear-color][data-color="1"]');
+  ok('C016: a world castle opens its hat only, star thresholds select color, and the legacy coat stays equipped',
+    hatLocked&&colorLocked&&await gearPage.evaluate(()=>{
+      const look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+      return look.slots.hat.id==='p1-01'&&look.slots.hat.color===1&&look.outfit==='leaf-cap'&&
+        !!document.querySelector('#rider use[href="#c016-coat-legacy-leaf-cap-0"]');
+    }));
+  await gearPage.screenshot({path:out016+'/wardrobe.png',animations:'disabled'});
+  await gearPage.click('[data-act=gear-tab][data-slot=ride]');
+  const rideLocked=await gearPage.locator('[data-act=gear][data-id=c2]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=c1]');
+  await gearPage.click('[data-act=gear-tab][data-slot=pet]');
+  const petLocked=await gearPage.locator('[data-act=gear][data-id=lizard]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=snail]');
+  await gearPage.click('#wardrobe .sec[data-act=look-close]');
+  ok('C016: ride and pet use separate slots, 4 rider frames and 2 pet frames, without writing child progress',
+    rideLocked&&petLocked&&await gearPage.evaluate(before=>{
+      const rider=document.querySelector('#rider');
+      return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
+        rider.querySelector('.rider-body').dataset.frames==='4'&&rider.querySelector('.rider-pet').dataset.frames==='2'&&
+        !!rider.querySelector('use[href="#c016-ride-c1-idle"]')&&getComputedStyle(rider).pointerEvents==='none';
+    },beforeGear));
+  await gearPage.screenshot({path:out016+'/rider-ride-pet.png',animations:'disabled'});
+  await gearPage.evaluate(()=>{
+    const key='cards.v0.p.son',s=JSON.parse(localStorage.getItem(key));
+    s.words[Object.keys(s.words)[0]].st='learn';
+    localStorage.setItem(key,JSON.stringify(s));
+  });
+  await gearPage.reload();
+  await gearPage.waitForSelector('.profiles');
+  await gearPage.click('[data-act=pick][data-id=son]');
+  await gearPage.waitForSelector('#rider');
+  await gearPage.click('[data-act=wardrobe]');
+  await gearPage.click('[data-act=gear-tab][data-slot=pet]');
+  ok('C016: the earned pet stays unlocked after the known-word count drops and the page reloads',
+    await gearPage.locator('[data-act=gear][data-id=snail]').isEnabled()&&
+    await gearPage.$eval('#rider use[href="#c016-pet-snail-0"]',e=>!!e));
+  await gearPage.click('#wardrobe .sec[data-act=look-close]');
+  const mounted = await gearPage.evaluate(() => {
+    const choice = document.querySelector('#world .node.open.nearby');
+    const rider = document.querySelector('#rider');
+    choice.click();
+    const move = rider.getAnimations()[0];
+    const pet = rider.querySelector('.rider-pet').getAnimations()[0];
+    if (!move || !pet) return null;
+    for (const animation of [move, pet]) {
+      animation.pause();
+      animation.currentTime = animation.effect.getTiming().duration * .6;
+    }
+    const follows = pet.effect.getKeyframes().some(frame => frame.transform !== 'translate(0px, 0px)');
+    const mountedArt = !!rider.querySelector('use[href="#c016-ride-c1-move"]') &&
+      !!rider.querySelector('use[href="#c016-body-teal-walk3"]') && rider.classList.contains('mounted');
+    return { id: choice.dataset.id, follows, mountedArt };
+  });
+  if (mounted) {
+    await gearPage.screenshot({path:out016+'/mounted-pet.png'});
+    await gearPage.locator(`[data-act=node][data-id="${mounted.id}"]`).evaluate(button => button.click());
+    await gearPage.waitForSelector(READY);
+  }
+  ok('C016: the courier rides while moving, the pet follows the previous stop, and a second tap still opens the tile',
+    mounted?.follows && mounted.mountedArt && await gearPage.evaluate(id=>window.__cards.node?.unit===id,mounted.id));
+  await gearCtx.close();
+
+  // C-017 identity overlays and measured idle movement.
+  const kidsOut='/tmp/c017-screens';
+  fs.mkdirSync(kidsOut,{recursive:true});
+  const kids=await browser.newContext({viewport:{width:1180,height:820}});
+  const mapKids=[];
+  for (const [child,world] of [['son','p1-03'],['daughter','p1-01']]) {
+    const page=await kids.newPage();
+    page.on('pageerror',e=>errs.push(String(e)));
+    await page.goto(BASE+'?today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+    await page.waitForSelector('.profiles');
+    await page.evaluate(async({child,world})=>{
+      const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+      const st=newState(child), map=ensureMap(st);
+      map.at=world;
+      map.worlds[world]={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
+      localStorage.setItem('cards.v0.p.'+child,JSON.stringify(st));
+    },{child,world});
+    await page.click(`[data-act=pick][data-id=${child}]`);
+    await page.waitForSelector('#rider .rider-body');
+    mapKids.push(page);
+  }
+  const signature=(page,sel)=>page.locator(sel).evaluate(el=>
+    [...el.querySelectorAll('use[data-layer=hair],use[data-layer=identity]')].map(use=>use.getAttribute('href')));
+  const sonSignature=['#c017-hair-son','#c017-scarf-son'];
+  const daughterSignature=['#c017-hair-daughter','#c017-heart-daughter'];
+  const [sonMap,daughterMap]=mapKids;
+  const mapSignatures=await Promise.all(mapKids.map(page=>signature(page,'#rider .rider-body')));
+  ok('C017: every map frame carries only its own child’s hair and marker',
+    JSON.stringify(mapSignatures)===JSON.stringify([Array(4).fill(sonSignature).flat(),Array(4).fill(daughterSignature).flat()]),
+    JSON.stringify(mapSignatures));
+
+  const motionSample=(page)=>page.locator('#rider .rider-body').evaluate(el=>{
+    const animation=el.getAnimations()[0];
+    if (!animation) return null;
+    animation.pause();
+    const duration=animation.effect.getTiming().duration;
+    el.style.animation='none';
+    const origin=el.getBoundingClientRect();
+    el.style.animation='';
+    const paused=el.getAnimations()[0];
+    paused.pause();
+    const points=Array.from({length:16},(_,i)=>{
+      paused.currentTime=duration*i/16;
+      const bounds=el.getBoundingClientRect();
+      return [bounds.left-origin.left,bounds.top-origin.top];
+    });
+    paused.play();
+    return {duration,quarters:[0,4,8,12].map(i=>points[i]),max:Math.max(...points.map(([x,y])=>Math.hypot(x,y)))};
+  });
+  const [sonMotion,daughterMotion]=await Promise.all(mapKids.map(motionSample));
+  const near=(value,expected)=>Math.abs(value-expected)<.001;
+  ok('C017: the map idle curves are 1.4-second sway and 0.8-second hop, at most 3 CSS px apart by no more than 1 px',
+    sonMotion?.duration===1400&&daughterMotion?.duration===800&&near(sonMotion.max,2)&&near(daughterMotion.max,3)&&
+    daughterMotion.max-sonMotion.max<=1&&JSON.stringify(sonMotion.quarters)===JSON.stringify([[-2,0],[0,1],[2,0],[0,1]])&&
+    JSON.stringify(daughterMotion.quarters)===JSON.stringify([[0,0],[0,-2],[0,-3],[0,-2]]),
+    JSON.stringify({son:sonMotion,daughter:daughterMotion}));
+
+  async function pairCapture(name, images) {
+    const comparison=await kids.newPage();
+    await comparison.setViewportSize({width:Math.min(1880,images.length*780),height:820});
+    await comparison.setContent(`<main style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:#f8efd6;color:#233f3a;font:20px system-ui">${images.map((img,i)=>`<figure style="margin:0;text-align:center"><figcaption>${i===0?'아들':'딸'}</figcaption><img alt="" style="width:100%;max-height:740px;object-fit:contain;image-rendering:pixelated" src="data:image/png;base64,${img.toString('base64')}"></figure>`).join('')}</main>`);
+    await comparison.locator('main').screenshot({path:`${kidsOut}/${name}.png`});
+    await comparison.close();
+  }
+  await pairCapture('map-couriers',await Promise.all(mapKids.map(page=>page.locator('#world').screenshot({animations:'disabled'}))));
+  for (const [page,slot,item,badge,file] of [
+    [sonMap,'coat','p1-03',sonSignature[1],'son-coat'],
+    [daughterMap,'hat','p1-01',daughterSignature[1],'daughter-hat']
+  ]) {
+    await page.click('[data-act=wardrobe]');
+    await page.click(`[data-act=gear-tab][data-slot=${slot}]`);
+    await page.click(`[data-act=gear][data-id=${item}]`);
+    const visible=await page.locator('.gear-preview').evaluate((el,{slot,item,badge})=>{
+      const gear=el.querySelector(`use[data-layer=${slot}][href="#c016-${slot}-${item}-0"]`);
+      const mark=el.querySelector(`use[data-layer=identity][href="${badge}"]`);
+      return !!gear&&!!mark&&!!mark.getBBox().width&&!!(gear.compareDocumentPosition(mark)&Node.DOCUMENT_POSITION_FOLLOWING);
+    },{slot,item,badge});
+    ok(`C017: ${file} keeps the original marker on top of the selected layer`,visible);
+    await page.locator('.wardrobe').screenshot({path:`${kidsOut}/${file}.png`,animations:'disabled'});
+    await page.click('#wardrobe .sec[data-act=look-close]');
+  }
+  await Promise.all(mapKids.map(page=>page.emulateMedia({reducedMotion:'reduce'})));
+  const mediaPaused=await Promise.all(mapKids.map(motionSample));
+  await Promise.all(mapKids.map(page=>page.emulateMedia({reducedMotion:'no-preference'})));
+  await sonMap.click('[data-act=home]');
+  const homeMotion=page=>page.locator('.home-courier').evaluateAll(el=>el.map(face=>getComputedStyle(face).animationName));
+  const homePlaying=await homeMotion(sonMap);
+  await sonMap.click('[data-act=parent]');
+  await sonMap.click('[data-act=reduce-motion]');
+  await Promise.all(mapKids.map(page=>page.reload()));
+  await Promise.all(mapKids.map(async(page,i)=>{
+    const child=i===0?'son':'daughter';
+    await page.click(`[data-act=pick][data-id=${child}]`);
+    await page.waitForSelector('#rider .rider-body');
+  }));
+  const prefPaused=await Promise.all(mapKids.map(motionSample));
+  await sonMap.click('[data-act=home]');
+  const homePaused=await homeMotion(sonMap);
+  ok('C017: the browser preference and the parent switch both stop either child’s idle movement',
+    [...mediaPaused,...prefPaused].every(value=>value===null)&&
+    JSON.stringify(homePlaying)===JSON.stringify(['courier-son-idle','courier-daughter-idle'])&&
+    JSON.stringify(homePaused)===JSON.stringify(['none','none']));
+
+  const throwImages=[];
+  for (const [id,expected] of [['son',sonSignature],['daughter',daughterSignature]]) {
+    const throwCtx=await browser.newContext({viewport:{width:1180,height:820}});
+    const throwPage=await open(throwCtx,'today=2026-11-18&triage=off&sound=off&seed=9');
+    await throwPage.click(`[data-act=pick][data-id=${id}]`);
+    await startNode(throwPage,'A1');
+    await throwPage.addStyleTag({content:'.thrower { animation:none !important; }'});
+    await throwPage.evaluate(()=>{
+      window.__cards.run.rng=()=>.99;
+      document.querySelector('.act.yes').click();
+    });
+    await throwPage.waitForSelector('.thrower svg');
+    const layers=await signature(throwPage,'.thrower');
+    ok(`C017: ${id} keeps identity in the active throwing frame`,JSON.stringify(layers)===JSON.stringify(expected));
+    throwImages.push(await throwPage.locator('#app').screenshot({animations:'disabled'}));
+    await throwCtx.close();
+  }
+  await pairCapture('card-couriers',throwImages);
+  await kids.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

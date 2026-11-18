@@ -102,10 +102,8 @@ add('bat-b', sym(["........", ".....U..", ".....UU.", ".....UuU", "....UwkU", "U
                   "........", "........", "........", "........"], 'bat-b'), 'enemy')
 
 # ---------- items and rewards ----------
-add('mushroom', sym(["........", "....kkkk", "..kkrrrr", ".krrrrcc", "krrcrrcc", "krrcrrrr", "krrrrrrr", "kRRRRRRR", "kkkkkkkk", "....kccc", "....kccc",
-                     "....kccc", "....kkcc", ".....kkk", "........", "........"], 'mushroom'), 'item')
-add('fire-flower', sym(["........", "....kkkk", "..kkkrrr", ".krrrrgg", ".krrggyy", ".krgyyky", ".krggyyy", ".kkrrggg", "..kkkrrr", "......kt", "...kk.kt",
-                        "..kllkkt", "..kkllkt", "......kt", "....kkkk", "........"], 'fire-flower'), 'item')
+add('mushroom', sym(["........","..kkkkkk",".ktttttt","kttwwwww","ktwwwwww","ktwwwttt","ktwwtttt","ktwwtttt","ktwwwttt","ktwwwwww","kttwwwww",".ktttttt","..kkkkkk","....gggg","........","........"], 'shield-stamp'), 'item')
+add('fire-flower', sym(["........","..kkkkkk",".kgggggg","kggwwwww","kgwwwwww","kgwwwrrr","kgwwrrry","kgwwryyy","kgwwrrry","kgwwwrrr","kgwwwwww","kggwwwww",".kgggggg","..kkkkkk","........","........"], 'flame-stamp'), 'item')
 add('crown', sym(["........", "........", "..k....k", "..kk..kk", ".kggk.kg", ".kggkkgg", ".kgggggg", ".kggyggr", ".kgggggg", ".kGGGGGG", ".kkkkkkk", "........",
                   "........", "........", "........", "........"], 'crown'), 'item')
 add('padlock', blit(blank(), LOCK, 4, 4), 'ui')

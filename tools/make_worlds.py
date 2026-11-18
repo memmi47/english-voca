@@ -111,7 +111,7 @@ def tile_pools(regular,phrases,cap,minimum):
     for i in range(total):out.append(('phrase',positions[i]) if i in positions else ('vocab',next(v)))
     return out
 
-def exploration_rule(world, settings):
+def exploration_rule(world, settings, *, deep=False):
     """Place two stamps in distinct components outside ALL cheapest routes.
 
     Costs count tiles on entry, including the source tile when measuring from a
@@ -123,12 +123,13 @@ def exploration_rule(world, settings):
     for e in mp['edges']:
         a,b=e['from'],e['to']
         if a in nodes and b in nodes:adj[a].append(b);adj[b].append(a)
-    def distances(source):
+    def distances(source, *, avoid_castle=False):
         dist={i:math.inf for i in nodes};dist[source]=weight[source];q=[(dist[source],source)]
         while q:
             d,v=heapq.heappop(q)
             if d!=dist[v]:continue
             for u in adj[v]:
+                if avoid_castle and u == mp['castleNodeId']:continue
                 nd=d+weight[u]
                 if nd<dist[u]:dist[u]=nd;heapq.heappush(q,(nd,u))
         return dist
@@ -138,19 +139,38 @@ def exploration_rule(world, settings):
     k=max(math.ceil(settings['targetTileRate']*n),int(length)+settings['minExtraTiles'])
     need(math.ceil(n/2)<=k<=math.floor(7*n/10),world['id']+': impossible exploration K range')
     shortest={v for v in nodes if ds[v]+dc[v]-weight[v]==length}
-    unseen=set(nodes)-shortest;candidates=[]
+    unseen=set(nodes)-shortest;branches=[]
     while unseen:
         first=min(unseen);unseen.remove(first);component={first};q=[first]
         while q:
             for u in adj[q.pop()]:
                 if u in unseen:unseen.remove(u);component.add(u);q.append(u)
         choices=[v for v in component if weight[v]]
-        if choices:
-            best=min(choices,key=lambda v:(-(dc[v]-1),v));candidates.append((dc[best]-1,best))
-    candidates.sort(key=lambda item:(-item[0],item[1]))
-    need(len(candidates)>=2,world['id']+': two off-shortest branches required')
+        if choices:branches.append(choices)
+    need(len(branches)>=2,world['id']+': two off-shortest branches required')
+    if deep:
+        deepest=max(ds[i] for i in tiles)
+        min_a=max(3,(deepest+1)//2)
+        min_b=max(4,(7*deepest+9)//10)
+        scores=[]
+        for i,branch in enumerate(branches):
+            for a in branch:
+                if ds[a]<min_a:continue
+                distances_a=distances(a,avoid_castle=True)
+                for j,other in enumerate(branches):
+                    if i==j:continue
+                    for b in other:
+                        separation=distances_a[b]-weight[a]
+                        if ds[b]>=min_b and 3<=separation<math.inf:
+                            scores.append((-min(ds[a],ds[b]),-ds[a]-ds[b],-separation,-ds[b],a,b))
+        need(scores,world['id']+': no deep stamp pair')
+        selected=min(scores)[-2:]
+    else:
+        # The three Demo maps retain their C-013 placement.
+        candidates=[min(branch,key=lambda v:(-dc[v],v)) for branch in branches]
+        selected=sorted(candidates,key=lambda v:(-dc[v],v))[:2]
     return dict(type='explore',nodeId=mp['castleNodeId'],**{key:world['castleRule'][key] for key in ('cards','passRate')},
-        minTiles=k,stamps=[dict(id=label,nodeId=tid) for label,(_,tid) in zip(('A','B'),candidates[:2])])
+        minTiles=k,stamps=[dict(id=label,nodeId=tid) for label,tid in zip(('A','B'),selected)])
 
 def generate(config,overrides,manual,art,db,source_sha):
     validate_config(config);need(source_sha==EXPECTED_SHA,'reference DB changed; review before allocation')
@@ -178,7 +198,7 @@ def generate(config,overrides,manual,art,db,source_sha):
             # JSON edge contract uses the literal keys from/to.
             world['map']['edges']=[{'from':e['fromId'],'to':e['toId']} for e in world['map']['edges']]
             world['castleRule']=dict(type='reach',nodeId=g['castleNodeId'],**config['worldCastle'])
-            world['castleRule']=exploration_rule(world,config['worldGate'])
+            world['castleRule']=exploration_rule(world,config['worldGate'],deep=True)
             world['sideActivities']=[]
             world['nextWorldId']=f'{band.lower()}-{wi+2:02}' if wi+1<amount else None
             world['counts']=dict(vocab=len(regular),phrase=len(phrases),sight=0,cards=len(regular)+len(phrases),tiles=len(pools))
@@ -239,7 +259,7 @@ def validate_output(worlds,catalogue,cap):
             need(not w['sideActivities'],'side activities must be empty')
             need(w['castleRule']['cards']==worlds['rules']['worldCastle']['cards'],'castle config not propagated')
             need(w['castleRule']['passRate']==worlds['rules']['worldCastle']['passRate'],'castle rate not propagated')
-            need(w['castleRule']==exploration_rule(w,worlds['rules']['worldGate']),'exploration gate differs from deterministic placement')
+            need(w['castleRule']==exploration_rule(w,worlds['rules']['worldGate'],deep=True),'exploration gate differs from deterministic placement')
         need(count==sum(c['band']==continent['band'] and c['learningKind']!='sight' for c in cards.values()),'continent total')
         need(continent['finale']['required'] is True,'continent gate was removed')
         need(continent['finale']['unlock']=='all-world-castles-and-tile-ratio' and continent['finale']['minTileRate']==worlds['rules']['continentTileRate'],'continent exploration gate not propagated')

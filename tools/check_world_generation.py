@@ -1,20 +1,21 @@
 """Contract/regression tests for real vocabulary allocation. No runtime/state mutations."""
 import copy, math, unittest, importlib.util
+from itertools import combinations
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('make_worlds',Path(__file__).with_name('make_worlds.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 
-def independent_gate(world):
+def independent_gate(world, *, with_depths=False):
     # Bellman relaxation rather than the generator's heap-based search.
     mp=world['map'];nodes={n['id']:n for n in mp['nodes'] if n['kind']!='minigame'}
     edges=[(e['from'],e['to']) for e in mp['edges'] if e['from'] in nodes and e['to'] in nodes]
     weight={i:int(n['kind']=='tile') for i,n in nodes.items()}
-    def distances(source):
+    def distances(source, avoid=None):
         d={i:math.inf for i in nodes};d[source]=weight[source]
         for _ in nodes:
             changed=False
             for a,b in edges:
                 for u,v in ((a,b),(b,a)):
-                    if d[u]+weight[v]<d[v]:d[v]=d[u]+weight[v];changed=True
+                    if v!=avoid and d[u]+weight[v]<d[v]:d[v]=d[u]+weight[v];changed=True
             if not changed:break
         return d
     ds,dc=distances(mp['startNodeId']),distances(mp['castleNodeId']);length=ds[mp['castleNodeId']]
@@ -30,6 +31,8 @@ def independent_gate(world):
         tiles=[i for i in group if weight[i]]
         if tiles:components.append(sorted(tiles,key=lambda i:(1-dc[i],i)))
     candidates=sorted([g[0] for g in components],key=lambda i:(1-dc[i],i))
+    if with_depths:
+        return length,shortest,components,candidates,ds,dc,distances
     return length,shortest,components,candidates,ds,dc
 
 class Generation(unittest.TestCase):
@@ -104,16 +107,67 @@ class Generation(unittest.TestCase):
         self.assertEqual(len(worlds),33)
         for w in worlds:
             with self.subTest(world=w['id']):
-                length,shortest,components,candidates,ds,dc=independent_gate(w)
+                length,shortest,components,candidates,ds,dc,distances=independent_gate(w,with_depths=True)
                 rule=w['castleRule'];n=sum(t['kind']=='tile' for t in w['map']['nodes']);k=rule['minTiles']
                 self.assertEqual(rule['type'],'explore');self.assertEqual(rule['nodeId'],w['map']['castleNodeId'])
                 self.assertEqual(k,max(math.ceil(3*n/5),length+2));self.assertGreaterEqual(k,math.ceil(n/2));self.assertLessEqual(k,math.floor(7*n/10))
                 self.assertEqual([s['id'] for s in rule['stamps']],['A','B']);actual=[s['nodeId'] for s in rule['stamps']]
-                self.assertEqual(actual,candidates[:2]);self.assertEqual(len(set(actual)),2)
+                self.assertEqual(len(set(actual)),2)
+                real=not w['id'].startswith('d')
+                if real:
+                    deepest=max(ds[t['id']] for t in w['map']['nodes'] if t['kind']=='tile')
+                    a,b=actual
+                    self.assertGreaterEqual(ds[a],max(3,math.ceil(.5*deepest)))
+                    self.assertGreaterEqual(ds[b],max(4,math.ceil(.7*deepest)))
+                    self.assertGreaterEqual(distances(a,w['map']['castleNodeId'])[b]-1,3)
+                    ranked=[]
+                    for branch in components:
+                        for x in branch:
+                            if ds[x]<max(3,math.ceil(.5*deepest)):continue
+                            from_x=distances(x,w['map']['castleNodeId'])
+                            for other in components:
+                                if branch is other:continue
+                                for y in other:
+                                    gap=from_x[y]-1
+                                    if ds[y]>=max(4,math.ceil(.7*deepest)) and 3<=gap<math.inf:
+                                        ranked.append((-min(ds[x],ds[y]),-sum((ds[x],ds[y])),-gap,-ds[y],x,y))
+                    self.assertEqual(tuple(actual),min(ranked)[-2:])
+                else:
+                    self.assertEqual(actual,candidates[:2])
                 self.assertTrue(set(actual).isdisjoint(shortest));self.assertTrue(all(math.isfinite(ds[i]) for i in actual))
                 self.assertFalse(any(set(actual)<=set(component) for component in components))
                 reordered=copy.deepcopy(w);reordered['map']['nodes'].reverse();reordered['map']['edges'].reverse()
-                self.assertEqual(m.exploration_rule(reordered,self.config['worldGate']),rule,'node/edge order must not change A/B or K')
+                self.assertEqual(m.exploration_rule(reordered,self.config['worldGate'],deep=real),rule,'node/edge order must not change A/B or K')
+    def test_deep_stamps_can_be_collected_with_exactly_k_villages(self):
+        for c in self.result['continents']:
+            for w in c['worlds']:
+                mp=w['map']
+                nodes={n['id']:n['kind'] for n in mp['nodes'] if n['kind']!='minigame'}
+                adj={v:set() for v in nodes}
+                for e in mp['edges']:
+                    a,b=e['from'],e['to']
+                    if a in adj and b in adj:
+                        adj[a].add(b)
+                        adj[b].add(a)
+                tile_ids={v for v,kind in nodes.items() if kind=='tile'}
+                stamps={s['nodeId'] for s in w['castleRule']['stamps']}
+                k=w['castleRule']['minTiles']
+                start,castle=mp['startNodeId'],mp['castleNodeId']
+
+                def can_reach(extra):
+                    completed=stamps|set(extra)
+                    seen={start}
+                    frontier=[start]
+                    for v in frontier:
+                        for nxt in adj[v]-seen-{castle}:
+                            if nxt in tile_ids and nxt not in completed:continue
+                            seen.add(nxt)
+                            frontier.append(nxt)
+                    return completed<=seen and bool(adj[castle]&seen)
+
+                with self.subTest(world=w['id']):
+                    self.assertTrue(any(can_reach(extra) for extra in combinations(sorted(tile_ids-stamps),k-2)))
+
     def test_real_assignment_fingerprint_and_graphs_unchanged(self):
         self.assertEqual(self.result['assignmentSha256'],'ea675ce1747c6abc1242bec8aa091c4bd2ad0f5e7f7e6e84df9c21b6f2c954dd')
         # Pin the pre-C013 graph as well: the assignment hash does not include
