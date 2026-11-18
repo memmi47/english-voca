@@ -101,7 +101,7 @@ export class Sound {
     this.musicBus = this.ctx.createGain(); this.musicBus.connect(this.master); this.sfxBus = this.ctx.createGain(); this.sfxBus.gain.value = 0.8; this.sfxBus.connect(this.master);
     return true;
   }
-  _note(n) { (this.seen ||= new Set()).add(n); }                  // names of everything triggered so far (tests read this)
+  _note(n) { (this.seen || (this.seen = new Set())).add(n); }                  // names of everything triggered so far (tests read this)
   sfxPlay(name) {
     this._note(name);
     if (this.off || !this.sfx || !this.ctx || !this.chip?.mod || !this._graph()) return;

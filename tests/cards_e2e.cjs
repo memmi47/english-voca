@@ -1557,6 +1557,11 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('FB3: a cleared tile starts again as a practice run of its words', await fbp.evaluate(() => window.__cards.run && window.__cards.run.queue.every((q) => q.role === 'practice')));
   await play(fbp); await fbp.waitForSelector('.tiles', { timeout: 15000 });
   ok('FB4: after practice the schedule of every word is as it was', await fbp.evaluate((before) => JSON.stringify(Object.values(window.__cards.st.words).map((r) => [r.st, r.step, r.due])) === before, sched));
+  // the mail game's mailbox is drawn (its moving box must not share the sprite's id)
+  await fbp.evaluate(async () => { const g = window.__cards; const w = g.ix.byId['d1-01']; for (const n of w.map.nodes.filter((x) => x.id === 'C1' || x.id === 'C2')) for (const id of n.words) g.st.words[id] ||= { st: 'review', step: 1, due: '2026-12-05', firstDay: '2026-11-20', lastDay: '2026-11-21', lapses: 0 }; localStorage.setItem('cards.v0.p.son', JSON.stringify(g.st)); });
+  await fbp.reload(); await fbp.waitForSelector('.profiles'); await fbp.click('[data-act=pick][data-id=son]'); await fbp.waitForSelector('.world');
+  await fbp.click('[data-act=node][data-id=G2]'); await fbp.waitForSelector('#mailmover');
+  ok('FB5: the mail game shows its mailbox (the sprite is drawn, not an empty box)', await fbp.evaluate(() => { const r = document.querySelector('#mailmover svg').getBoundingClientRect(); const use = document.querySelector('#mailmover use'); return r.width > 40 && document.querySelectorAll('[id=mailbox]').length === 1 && document.getElementById('mailbox').tagName.toLowerCase() === 'symbol' && !!use; }));
   await fbpCtx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));

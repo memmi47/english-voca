@@ -127,7 +127,7 @@ export class Sync {
     this.ix = ix; this.s = storage; this.fetch = fetchImpl; this.base = base; this.onMerged = onMerged; this.onStatus = onStatus; this.debounceMs = debounceMs; this.timers = {};
     this.available = null; this.lastError = null; this.inFlight = {}; this.again = {}; this.stale = false;   // stale: the server holds a newer format than this program
     try { this.state = JSON.parse(this.s.getItem(SYNC_KEY)) || {}; } catch { this.state = {}; }
-    this.state.revs ||= {}; this.state.dirty ||= {};
+    this.state.revs || (this.state.revs = {}); this.state.dirty || (this.state.dirty = {});
   }
   _saveState() { try { this.s.setItem(SYNC_KEY, JSON.stringify(this.state)); } catch {} }
   // A local copy that cannot be read (not JSON, or not an object) is set aside first, like store.loadRecord does, and then

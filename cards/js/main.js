@@ -268,7 +268,7 @@ function housePos(w, h, taken) {
     const x = a.x + dx, y = a.y + dy; if (x < 60 || x > 940 || y < 70 || y > 520) continue;
     const d = Math.min(...taken.map((t) => Math.hypot(t.x - x, t.y - y))); if (!best || d > best.d) best = { x, y, d };
   }
-  best ||= { x: Math.min(940, a.x + 90), y: Math.min(520, a.y + 90) }; taken.push(best); return best;
+  best || (best = { x: Math.min(940, a.x + 90), y: Math.min(520, a.y + 90) }); taken.push(best); return best;
 }
 function today(id, msg = '', wid = null) {
   clearPresentation();
@@ -518,7 +518,7 @@ function deviceSeen() {
     for (const key of ['doors', 'gifts', 'newGifts', 'viewedGifts']) seen[key] = { ...object(disk[key]), ...object(memory[key]) };
     deviceMemory[id] = seen;
   }
-  return deviceMemory[G.pid] ||= { doors:{}, gifts:{}, newGifts:{}, viewedGifts:{} };
+  return deviceMemory[G.pid] || (deviceMemory[G.pid] = { doors:{}, gifts:{}, newGifts:{}, viewedGifts:{} });
 }
 function writeDevice() { try { localStorage.setItem('cards.v0.seen', JSON.stringify(deviceMemory)); } catch {} }
 function nextGift(stars) { const g = GIFTS.find((x) => stars < x.stars); return g ? `다음 선물까지 ★ ${g.stars-stars}` : '선물을 모두 열었어요'; }
@@ -1100,7 +1100,7 @@ async function startGame(n) {
   G.game = n.gameType === 'memory' ? { node: n, type: 'memory', deck: shuffle([...em, ...em], rng), open: [], matched: new Set(), busy: false }
     : { node: n, type: 'mail', done: 0, t0: performance.now(), pos() { return 50 + 38 * Math.sin((performance.now() - this.t0) / (FAST ? 90 : 900)); }, inZone() { return Math.abs(this.pos() - 50) <= 13; } };
   paintGame();
-  if (G.game.type === 'mail') { const tick = () => { if (G.view !== 'game' || !G.game || G.game.type !== 'mail') return; const b = $('#mailbox'); if (b) b.style.left = G.game.pos() + '%'; requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+  if (G.game.type === 'mail') { const tick = () => { if (G.view !== 'game' || !G.game || G.game.type !== 'mail') return; const b = $('#mailmover'); if (b) b.style.left = G.game.pos() + '%'; requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
 }
 function paintGame() {
   const g = G.game; const head = `<button class="back" data-act="today" aria-label="그만 놀고 지도로">‹</button>`;
@@ -1110,7 +1110,7 @@ function paintGame() {
     <p class="mut small">두 장씩 뒤집어 같은 그림을 찾아요. 서두르지 않아도 돼요.</p></div>`;
   } else {
     $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">우체통에 편지 넣기</h1><p class="mut" id="gstatus">${g.done} / 3통</p>
-    <div class="mailtrack"><div class="mailzone"></div><div class="mailbox" id="mailbox" style="left:${g.pos()}%"><svg class="spr" width="96" height="96" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg></div></div>
+    <div class="mailtrack"><div class="mailzone"></div><div class="mailbox" id="mailmover" style="left:${g.pos()}%"><svg class="spr" width="96" height="96" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg></div></div>
     <button class="go" data-act="mail">${spr('envelope', 40)} 넣기!</button><p class="mut small" id="ghint">우체통이 노란 칸에 왔을 때 눌러요. 틀려도 괜찮아요.</p></div>`;
   }
 }

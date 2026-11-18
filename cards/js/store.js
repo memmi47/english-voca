@@ -14,13 +14,13 @@ const SUMS = ['cards', 'wall', 'claims', 'verifies', 'verifyOk', 'reviews', 'rev
 // One step per format change: STEPS[n] upgrades a record of version n to n + 1.
 const STEPS = [
   (s) => {                                               // 0 -> 1: the 60-word prototype kept one world's tiles at the top of the map
-    s.words ||= {}; s.verify ||= []; s.runs ||= []; s.log ||= [];
+    s.words || (s.words = {}); s.verify || (s.verify = []); s.runs || (s.runs = []); s.log || (s.log = []);
     if (s.map && (s.map.cleared || 'castle' in s.map)) { s.map.legacy = { cleared: s.map.cleared || {}, castle: s.map.castle ?? null }; delete s.map.cleared; delete s.map.castle; }
-    if (s.map) { s.map.worlds ||= {}; s.map.conts ||= {}; }
+    if (s.map) { s.map.worlds || (s.map.worlds = {}); s.map.conts || (s.map.conts = {}); }
     return s;
   },
-  (s) => { s.bunches ||= {}; return s; },              // 1 -> 2: tile triage keeps one record per tile bunch (passed words carry `bunch`); word records untouched
-  (s) => { s.forms ||= {}; return s; },                // 2 -> 3: word-form cards keep one record per form (storm.js); nothing else changes
+  (s) => { s.bunches || (s.bunches = {}); return s; },              // 1 -> 2: tile triage keeps one record per tile bunch (passed words carry `bunch`); word records untouched
+  (s) => { s.forms || (s.forms = {}); return s; },                // 2 -> 3: word-form cards keep one record per form (storm.js); nothing else changes
 ];
 // -> { state, from, newer }. `newer`: the record was saved by a later program than this one; it must not be changed.
 export function migrate(raw, id = null) {
@@ -28,7 +28,7 @@ export function migrate(raw, id = null) {
   const from = Number.isInteger(raw.v) ? raw.v : 0;
   if (from > SCHEMA) return { state: raw, from, newer: true };
   let s = raw; for (let v = from; v < SCHEMA; v++) s = STEPS[v](s);
-  s.v = SCHEMA; if (id && !s.id) s.id = id; s.words ||= {}; s.verify ||= []; s.runs ||= []; s.log ||= [];
+  s.v = SCHEMA; if (id && !s.id) s.id = id; s.words || (s.words = {}); s.verify || (s.verify = []); s.runs || (s.runs = []); s.log || (s.log = []);
   return { state: s, from, newer: false };
 }
 
@@ -40,7 +40,7 @@ export function compact(state, today) {
   const runs = state.runs.slice().sort((a, b) => String(a.endedAt).localeCompare(String(b.endedAt))); const edge = addDays(today, -FOLD_DAYS);
   let n = 0; while (n < runs.length - RUNS_KEEP && String(runs[n].day) < edge) n++;
   if (!n) return false; const old = runs.slice(0, n);
-  const past = (state.past ||= { n: 0, until: '', days: 0 }); const days = new Set(old.map((r) => r.day));
+  const past = (state.past || (state.past = { n: 0, until: '', days: 0 })); const days = new Set(old.map((r) => r.day));
   for (const r of old) { past.n++; for (const k of SUMS) past[k] = (past[k] || 0) + counted(r, k); if (String(r.endedAt) > past.until) past.until = String(r.endedAt); }
   past.days += days.size; state.runs = runs.slice(n); return true;
 }

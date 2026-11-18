@@ -20,7 +20,7 @@ export function indexForms(doc) {
   if (!doc || !Array.isArray(doc.forms)) return null;
   const forms = doc.forms.filter((f) => f && f.id && f.base && f.baseForm && f.form && !(Array.isArray(f.clash) && f.clash.length));
   const byId = Object.fromEntries(forms.map((f) => [f.id, f])); const byBase = {};
-  for (const f of forms) (byBase[f.base] ||= []).push(f);
+  for (const f of forms) (byBase[f.base] || (byBase[f.base] = [])).push(f);
   return { forms, byId, byBase };
 }
 
@@ -34,7 +34,7 @@ export function formPool(state, fx, today) {
 }
 // One answer to a form. A second right answer on the same day does not count again; a wrong one starts the row again.
 export function recordForm(state, id, ok, today, at) {
-  const forms = (state.forms ||= {}); const r = forms[id] || { n: 0, ok: 0, last: null, at: null };
+  const forms = (state.forms || (state.forms = {})); const r = forms[id] || { n: 0, ok: 0, last: null, at: null };
   const row = ok ? (r.last === today && (r.ok || 0) > 0 ? r.ok : (r.ok || 0) + 1) : 0;
   forms[id] = { n: (r.n || 0) + 1, ok: row, last: today, at };
   return forms[id];
@@ -130,7 +130,7 @@ export class StormRun {
       this.first[c.id] = ok; recordForm(this.s, c.id, ok, this.today, this.now());
       if (ok) { this.stats.formOk++; this.stats.stars++; } else { this.stats.formMiss++; this.queue.push({ card: { ...c, options: shuffle(c.options, this.rng) }, again: true }); }
     } else { this.stats.again++; if (ok) this.stats.againOk++; }
-    this.s.log ||= [];
+    this.s.log || (this.s.log = []);
     this.s.log.push({ t: new Date(this.now()).toISOString(), day: this.today, id: c.id, role: 'storm', form: 'base', ok, verified: false, said: 'know', ms, sound: null, again: q.again });
     if (this.s.log.length > LOG_CAP) this.s.log = this.s.log.slice(-LOG_CAP);
     return { ok, answer: c.baseForm, base: c.base, ko: c.ko, picked: idx, again: q.again, form: c.form, kind: c.kind };
@@ -140,7 +140,7 @@ export class StormRun {
   // totals (store.totals) and run table read it like any other run without counting it as learning.
   finish(reason = 'done') {
     if (this.ended) return this.ended;
-    const n = (this.s.runs ||= []).filter((r) => r.day === this.today).length + 1;
+    const n = (this.s.runs || (this.s.runs = [])).filter((r) => r.day === this.today).length + 1;
     const zero = { claims: 0, verifies: 0, verifyOk: 0, fresh: 0, known: 0, unknown: 0, learned: 0, reviews: 0, reviewOk: 0, lapses: 0, bosses: 0, castleOk: 0, castleMiss: 0, testOk: 0, testMiss: 0, spots: 0, spotOk: 0, bunchOk: 0, bunchDone: 0 };
     this.ended = { day: this.today, n, reason, kind: 'storm', tag: 'storm', ...zero, ...this.stats, changed: 0, wall: this.now() - this.startedAt, endedAt: new Date(this.now()).toISOString() };
     this.s.runs.push(this.ended);

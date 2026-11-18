@@ -38,9 +38,9 @@ export const ITEMS = { shield: { name: '방패 버섯', emoji: '🍄', info: '�
 const SEEN_OK = (r) => r && (r.st === 'likely' || r.st === 'done' || (r.st === 'review' && r.step >= 1));   // words "ripe" enough for the lightning round
 
 export function ensureMap(state) {
-  const m = (state.map ||= { stars: 0, items: { shield: 0, flame: 0 }, bag: null, monsterDay: null, bonusDay: null, best: 0, keys: 0 });
-  m.worlds ||= {}; m.conts ||= {}; m.at ??= null;                      // per world: castle day, cleared tiles, stamps; per continent: castle day
-  m.bat ||= { fill: 0, cap: BAT.cap, met: [], last: null };            // the bat gauge: +1 per new word met, -1 per review answered
+  const m = (state.map || (state.map = { stars: 0, items: { shield: 0, flame: 0 }, bag: null, monsterDay: null, bonusDay: null, best: 0, keys: 0 }));
+  m.worlds || (m.worlds = {}); m.conts || (m.conts = {}); m.at ?? (m.at = null);                      // per world: castle day, cleared tiles, stamps; per continent: castle day
+  m.bat || (m.bat = { fill: 0, cap: BAT.cap, met: [], last: null });            // the bat gauge: +1 per new word met, -1 per review answered
   return m;
 }
 const waiting = (r, today) => (r.st === 'review' || r.st === 'likely' || r.st === 'learn') && r.due && r.lastDay !== today;

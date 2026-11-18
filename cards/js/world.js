@@ -52,11 +52,11 @@ export const worldWords = (w) => unitsIn(w).flatMap((u) => u.words);
 // the end screen. A record from before the marks existed has none, so its tiles are judged by the word records alone.
 const tileDone = (state, wid, id, words) => words.every((x) => state.words[x]) && !ensureMap(state).worlds[wid]?.open?.[id];
 export const unitDone = (state, u) => tileDone(state, u.wid, u.id, u.words);
-const wstate = (state, wid) => { const m = ensureMap(state); return (m.worlds[wid] ||= { castle: null, cleared: {}, stamps: {}, seen: null }); };
+const wstate = (state, wid) => { const m = ensureMap(state); return (m.worlds[wid] || (m.worlds[wid] = { castle: null, cleared: {}, stamps: {}, seen: null })); };
 // A tile run starts: the tile stays unfinished until a run of it reaches its end (settleWorld), even when every word got a
 // record on the way. Called by the screen before the run is made (a triage run records passed words when it is made).
-export function startTile(state, node, today) { if (node.kind !== 'tile') return; const ws = wstate(state, node.wid); (ws.open ||= {})[node.unit] = today; }
-const cstate = (state, cid) => { const m = ensureMap(state); return (m.conts[cid] ||= { castle: null }); };
+export function startTile(state, node, today) { if (node.kind !== 'tile') return; const ws = wstate(state, node.wid); (ws.open || (ws.open = {}))[node.unit] = today; }
+const cstate = (state, cid) => { const m = ensureMap(state); return (m.conts[cid] || (m.conts[cid] = { castle: null })); };
 
 // Walk from the start through free nodes and finished tiles. An unfinished tile next to that set is "open".
 export function reach(w, state) {

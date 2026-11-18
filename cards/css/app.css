@@ -41,7 +41,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .page.map{max-width:1080px}
 .world{position:relative;width:100%;aspect-ratio:1000/600;background:var(--w-ground,#86b682);border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink);overflow:hidden}
 .first-tile-hint{width:fit-content;margin:6px auto 10px;padding:6px 12px;border:3px solid var(--ink);background:#ffefc7;font-weight:700;text-align:center}
-.terrain{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;shape-rendering:crispEdges;image-rendering:pixelated}
+.terrain{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;shape-rendering:crispEdges;image-rendering:pixelated}
 .node{position:absolute;z-index:1;transform:translate(-50%,-50%);width:9%;min-width:56px;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0;color:var(--ink)}
 .node .spr,.node .anim2{filter:drop-shadow(3px 3px 0 rgba(35,63,58,.45))}
 .node .big,.node.start .spr{width:min(6.2vw,64px);height:min(6.2vw,64px)}
@@ -198,7 +198,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .door-scene{position:relative;display:flex;align-items:center;justify-content:space-between;max-width:440px;margin:0 auto;height:110px}.door-path{position:absolute;left:70px;right:62px;top:58px;border-top:12px dashed var(--gold);transform-origin:left;animation:door-path .45s steps(6)}
 @keyframes door-path{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .flying-key{position:absolute;left:16%;top:2px;z-index:2;transition:left .7s steps(7)}.door-stage[data-phase=key] .flying-key,.door-stage[data-phase=open] .flying-key{left:80%}.door-stage[data-phase=open] .flying-key{opacity:0}#atlas-door{z-index:1}
-.wardrobe-shade{position:fixed;inset:0;z-index:12;background:#233f3acc;display:flex;align-items:center;justify-content:center;padding:20px}.wardrobe{position:relative;background:var(--paper);border:5px solid var(--ink);box-shadow:7px 7px var(--ink);padding:30px 22px;max-width:800px;max-height:94vh;overflow:auto;text-align:center}.wardrobe h2{margin:0 40px 16px}.wardrobe .back{width:44px;height:44px;left:auto;right:10px;top:10px;font-size:22px}.looks{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:12px;margin:18px 0}.look{display:flex;flex-direction:column;align-items:center;gap:8px;border:4px solid var(--ink);background:#e6eee0;padding:10px;min-height:150px}.look b{font-size:15px}.look small{font-size:12px}.look.selected{outline:4px solid #eab65c;outline-offset:1px;background:#fff0bf}.look:disabled{opacity:.6}.wardrobe .sec{min-height:44px}
+.wardrobe-shade{position:fixed;top:0;right:0;bottom:0;left:0;z-index:12;background:#233f3acc;display:flex;align-items:center;justify-content:center;padding:20px}.wardrobe{position:relative;background:var(--paper);border:5px solid var(--ink);box-shadow:7px 7px var(--ink);padding:30px 22px;max-width:800px;max-height:94vh;overflow:auto;text-align:center}.wardrobe h2{margin:0 40px 16px}.wardrobe .back{width:44px;height:44px;left:auto;right:10px;top:10px;font-size:22px}.looks{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:12px;margin:18px 0}.look{display:flex;flex-direction:column;align-items:center;gap:8px;border:4px solid var(--ink);background:#e6eee0;padding:10px;min-height:150px}.look b{font-size:15px}.look small{font-size:12px}.look.selected{outline:4px solid #eab65c;outline-offset:1px;background:#fff0bf}.look:disabled{opacity:.6}.wardrobe .sec{min-height:44px}
 button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outline-offset:4px}
 @media(max-width:680px){.hud{gap:6px;padding:6px}.monster-panel{gap:4px;padding:4px;min-height:90px}.monster-panel .boss-emoji .spr{width:72px;height:72px}.monster-panel.guardian .boss-emoji .spr{width:88px;height:88px}.monster-health{min-width:80px}.monster-health b{font-size:12px}.monster-health small{font-size:10px}.combo{min-width:35px;font-size:12px}.left{font-size:11px}.looks{grid-template-columns:repeat(2,minmax(100px,1fr))}.wardrobe{padding:28px 14px}.maphud{margin-left:40px;margin-right:20px}}
 @media(prefers-reduced-motion:reduce){.monster-panel *, .celebration-art *, .door-stage *, .world-door,.monster-finished .spr{animation:none!important;transition:none!important}}
@@ -227,7 +227,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .atlas-scroll{overflow-x:auto;max-width:100%;border:4px solid var(--ink);box-shadow:4px 4px var(--ink);background:var(--paper)}
 .atlas-land{position:relative;min-width:720px;width:100%;height:450px;isolation:isolate}
 .atlas-land.many-worlds{min-width:950px;height:510px}
-.atlas-geography{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.atlas-geography{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;pointer-events:none}
 .atlas-stop{position:absolute;width:126px;transform:translate(-50%,-40%);display:flex;justify-content:center}
 .atlas-stop .wcard{background:transparent;border:0;box-shadow:none;min-height:0;width:100%;gap:2px;padding:3px;opacity:1;display:flex;flex-direction:column;align-items:center}
 .atlas-stop .wcard:hover:not(:disabled) b,.atlas-stop .wcard:focus-visible b,.atlas-stop .wcard.here b{background:#ffeac0}
@@ -259,7 +259,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .home-mailbox { position: absolute; bottom: 3px; left: calc(50% + 54px); animation: postal-breathe 2.9s steps(4) infinite; transform-origin: bottom left; }
 .cloud { position: absolute; top: 0; left: 8%; animation: postal-cloud 38s steps(100) infinite alternate; opacity: .8; }
 .cloud-back { top: 10px; left: 58%; opacity: .55; animation-duration: 52s; animation-direction: alternate-reverse; }
-.postal-bird { position: absolute; inset: 0 auto auto -50px; animation: postal-bird 150s steps(45) infinite; }
+.postal-bird { position: absolute; top:0;right:auto;bottom:auto;left:-50px; animation: postal-bird 150s steps(45) infinite; }
 .office-post { display: inline-flex; position: absolute; left: calc(50% - 148px); bottom: 12px; }
 .home-courier { display: inline-grid; transform-origin: bottom; }
 .profile-world, .home-count, .home-met, .home-week, .home-goal { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; }
@@ -281,7 +281,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 #boss.hit .spr { animation: postal-flash .26s steps(4); }
 .flying-bats { position: absolute; left: 42%; top: 12%; z-index: 2; pointer-events: none; animation: postal-circle 7s steps(36) infinite; }
 .storm-leaf { position: absolute; z-index: 3; pointer-events: none; animation: postal-circle 2s steps(15) infinite; }
-.card-motion { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+.card-motion { position: fixed; top:0;right:0;bottom:0;left:0; pointer-events: none; z-index: 2; }
 .mail-flight { position: absolute; top: 17vh; left: max(6px,calc(50vw - 430px)); }
 .thrower, .air-mail, .combo-glint { position: absolute; }
 .thrower { top: 0; animation: postal-toss .5s steps(7) both; }
@@ -316,7 +316,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 /* The map rider and accessories are decoration, leaving tile buttons tappable. */
 .rider{width:clamp(44px,7.6vw,80px);height:clamp(44px,7.6vw,80px);transform:translate(-50%,-82%)}
 .rider-shadow{position:absolute;left:34%;right:28%;height:8%;bottom:10%;background:#233f3a55}
-.rider-frames,.rider-frames .frame{position:absolute;inset:0;display:block}
+.rider-frames,.rider-frames .frame{position:absolute;top:0;right:0;bottom:0;left:0;display:block}
 .rider-frames .frame{opacity:0;animation:rider-frame 1.28s step-end infinite;animation-delay:calc(-1.28s + var(--frame)*.32s)}
 .rider-frames .frame:first-child{opacity:1}
 @keyframes rider-frame{0%{opacity:1}25%,100%{opacity:0}}
@@ -390,3 +390,5 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .tap-hint{margin:2px 0 4px;font-size:15px;animation:blink 1.2s steps(2) infinite}
 @keyframes blink{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.tap-hint{animation:none}}
+/* Safari before iPadOS 15 has no aspect-ratio: keep the map 1000x600 with the padding trick */
+@supports not (aspect-ratio: 1 / 1) { .world{height:0;padding-top:60%} }

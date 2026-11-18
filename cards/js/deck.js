@@ -143,7 +143,7 @@ export class Run {
     if (scope.practice) { this.queue = scope.practice.filter((id) => this.byId[id] && this.s.words[id]).map((id) => ({ id, role: 'practice', form: 'check' })); this.plan = { due: [], news: [], dueLeft: 0, newLeft: 0 }; return; }
     // Bunch samples go at random places among the run's cards; the spot checks of the tile come first of all.
     this.audits = {};
-    for (const p of scope.audit ? scope.audit.picks : []) { if (!bunchLeft(state, p.bunch).includes(p.id)) continue; const a = (this.audits[p.bunch] ||= { left: 0, miss: false, closed: false }); a.left++;
+    for (const p of scope.audit ? scope.audit.picks : []) { if (!bunchLeft(state, p.bunch).includes(p.id)) continue; const a = (this.audits[p.bunch] || (this.audits[p.bunch] = { left: 0, miss: false, closed: false })); a.left++;
       q.splice(Math.floor(rng() * (q.length + 1)), 0, { id: p.id, role: 'audit', form: 'check', bunch: p.bunch }); }
     this.queue = (tri ? tri.spot.filter((id) => !state.words[id]).map((id) => ({ id, role: 'spot', form: 'check', bunch: tri.bunch })) : []).concat(q);
   }
@@ -193,9 +193,9 @@ export class Run {
   // If the tile's bunch was already checked (the tile was left half done for a month), the word cannot wait for a
   // sample that will never come: it gets its own 7- and 30-day checks, like a word the child called known on a card.
   _pass(id, { bunch, due }) {
-    const b = (this.s.bunches ||= {});
+    const b = (this.s.bunches || (this.s.bunches = {}));
     if (b[bunch]?.done) return this._set(id, { st: 'likely', lstep: 0, due: addDays(this.today, LIKELY_DAYS[0]) });
-    b[bunch] ||= { due, done: null };
+    b[bunch] || (b[bunch] = { due, done: null });
     return this._set(id, { st: 'likely', lstep: 0, due: null, bunch });
   }
   _verify(ok) { this.s.verify.push(ok); if (this.s.verify.length > 40) this.s.verify.shift(); }
@@ -204,7 +204,7 @@ export class Run {
   _settle(bunch) {
     const a = this.audits[bunch]; if (!a || a.closed) return; a.closed = true; const t = this.today; const split = this.scope.audit?.split ?? 7;
     for (const id of bunchLeft(this.s, bunch)) this._set(id, a.miss ? { due: addDays(t, split) } : { st: 'done', due: null });   // split: the 7- and 30-day checks start (lstep stays 0)
-    const b = (this.s.bunches ||= {}); b[bunch] = { ...(b[bunch] || {}), done: t, result: a.miss ? 'split' : 'ok' };
+    const b = (this.s.bunches || (this.s.bunches = {})); b[bunch] = { ...(b[bunch] || {}), done: t, result: a.miss ? 'split' : 'ok' };
     this.stats.bunchDone++; if (!a.miss) this.stats.bunchOk++;
   }
   // `at` (ms from the injected clock) orders two changes of the same day when two devices' records are merged (sync.newer).
