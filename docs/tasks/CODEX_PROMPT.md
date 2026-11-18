@@ -191,3 +191,17 @@ docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-017.md 를 수행한다. C-016
 끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
 ```
 
+## C-018 (2026-11-18, Terra에게)
+
+```text
+저장소 memmi47/english-voca, 기준 브랜치 claude/modest-mccarthy-3gadjk 에서 작업한다. C-014~C-017은 병합됐다.
+docs/ORCHESTRATION.md 를 읽은 뒤 docs/tasks/C-018.md 를 수행한다.
+- 첫 화면의 "익힌 단어"와 "이번 주 +N", 반려동물 해금은 cards/js/deck.js 의 firmCount 로 센다(Claude가 고쳐 둠). 이 기준을 바꾸지 않는다.
+- 카드의 "고칠 수 있는 파일" 밖은 고치지 않는다. 규칙 코드, 저장 형식, 아이 기록의 저장 키, 아이템 id 는 바꾸지 않는다. 이미 열린 아이템을 다시 잠그지 않는다.
+- 새 그림은 모두 새로 그린다. 다른 게임을 흉내 내지 않는다. 이모지를 그림으로 쓰지 않는다.
+- 완료 기준의 명령을 실제로 실행해 결과에 적고, 새 브라우저 검사 네 개와 화면 캡처 경로를 적는다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 카드에 없는 결정이 필요하면 멈추고 카드의 "막히면"에 질문을 적는다.
+- 브랜치 codex/visual-pass-2 로 Draft PR(base: claude/modest-mccarthy-3gadjk)을 연다. 카드 상태와 docs/tasks/BOARD.md 를 고치고 docs/WORKLOG.md 8절에 한 줄만 덧붙인다. 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: PR 번호, 각 명령의 통과 수, 화면 캡처 경로, 확인하지 못한 것.
+```
+
