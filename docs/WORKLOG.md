@@ -194,7 +194,7 @@
 | 2026-11-18 | Codex Astra → Sol | C-013: PR #18을 #17 위에 쌓고 merge 반영, K=max(ceil(0.6N),L+2)·우표2장·대륙70% 구현; Demo/ST3 승인 예외 적용 | [Draft PR #18](https://github.com/memmi47/english-voca/pull/18) | 생성 재현·생성기22/22·단위107/107·브라우저180/180·baseline 동일; 실제30지도/배정 보존, 최소3100/4489개(69.06%); 실기기·난이도 미확인 |
 | 2026-11-18 | Codex Astra → Sol | C-014: 주간 지표 승인 반영, 협동 목표 14개·첫 화면 성과·세 겹 움직임 구현 | [설계 PR #19](https://github.com/memmi47/english-voca/pull/19) 병합, [구현은 #21](https://github.com/memmi47/english-voca/pull/21) | 단위 117/117, 브라우저 186/186, 픽셀 20/20, 체험 27/27, 기준 동일. 자동 카드당 1,318.78→18.81ms. iPad·실제 사용 미확인 |
 | 2026-11-18 | Codex Astra → Sol | C-015: 대륙 그림 지도 3장, 성 조건표 위치, 의상 6벌, 긴 보기와 지도 상단 줄 보완 | [PR #20](https://github.com/memmi47/english-voca/pull/20) 병합, 후속 통합 #21 | 단위 117/117, 브라우저 192/192(C-014 통합 후), 픽셀 20/20, 생성 재현·시뮬레이션 기준 동일, iPad 미확인 |
-| 2026-11-18 | Codex Astra → Sol | C-016: 탐험 보상 다섯 칸, 80px 배달부와 이동, 실제 30세계의 깊은 우표 배치 | [Draft PR #21](https://github.com/memmi47/english-voca/pull/21), C-015 #20 위 | 단위 117/117, 브라우저 197/197, 생성 검사 23/23와 자료 재현, 기준 동일. 우표 깊이 1·2·5 → 4·5·7, iPad 미확인 |
+| 2026-11-18 | Codex Astra → Sol | C-016: 탐험 보상 다섯 칸, 80px 배달부와 이동, 실제 30세계의 깊은 우표 배치 | [Draft PR #21](https://github.com/memmi47/english-voca/pull/21), C-015 #20 위 | 단위 119/119, 브라우저 197/197, 생성 검사 23/23와 자료 재현, 기준 동일. 우표 깊이 1·2·5 → 4·5·7, iPad 미확인 |
 
 ## 9. 요청과 이번 설계의 검증
 
