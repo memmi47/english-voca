@@ -245,3 +245,32 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 @media(min-width:1000px) and (min-height:760px){
   .map .world{width:min(100%,calc((100dvh - 250px) * 1.6667));margin-inline:auto}
 }
+
+/* The map rider and accessories are decoration, leaving tile buttons tappable. */
+.rider{width:clamp(44px,7.6vw,80px);height:clamp(44px,7.6vw,80px);transform:translate(-50%,-82%)}
+.rider-shadow{position:absolute;left:34%;right:28%;height:8%;bottom:10%;background:#233f3a55}
+.rider-frames,.rider-frames .frame{position:absolute;inset:0;display:block}
+.rider-frames .frame{opacity:0;animation:rider-frame 1.28s step-end infinite;animation-delay:calc(-1.28s + var(--frame)*.32s)}
+.rider-frames .frame:first-child{opacity:1}
+@keyframes rider-frame{0%{opacity:1}25%,100%{opacity:0}}
+.rider .rider-pet{width:40%;height:40%;left:auto;top:auto;right:-32%;bottom:8%}
+.rider-pet .frame{animation-name:pet-frame;animation-duration:.64s;animation-delay:calc(-.64s + var(--frame)*.32s)}
+@keyframes pet-frame{0%{opacity:1}50%,100%{opacity:0}}
+.rider .rider-ride{position:absolute;width:70%;height:70%;bottom:0;left:-50%}
+.rider .rider-ride.mounted{width:95%;height:95%;left:0;bottom:-20%}
+.rider.mounted .rider-body{transform:translateY(-12%)}
+.rider .color-1{filter:hue-rotate(38deg)}
+.rider .color-2{filter:hue-rotate(138deg)}
+.motion-quiet .rider-frames .frame{animation:none}
+@media(prefers-reduced-motion:reduce){.rider-frames .frame{animation:none}}
+.world-gift{display:flex;justify-content:center;align-items:center;gap:5px;font-size:13px;margin:3px auto 6px;font-weight:700}
+.atlas-picture~.world-gift{font-size:9px;line-height:1.2;margin:0;background:var(--paper);padding:0 3px;max-width:118px}
+.atlas-picture~.world-gift .spr{width:18px;height:18px;flex-shrink:0}
+.gear-preview{margin-top:-10px;line-height:0}
+.gear-tabs,.gear-colors{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:8px 0}
+.gear-tabs .sec,.gear-colors .sec{font-size:13px;min-height:44px;padding:4px 8px}
+.gear-tabs [aria-pressed=true],.gear-colors [aria-pressed=true]{background:#ffe9a8}
+.gear{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;border:4px solid var(--ink);background:#e6eee0;padding:8px;min-height:112px}
+.gear[aria-pressed=true]{background:#fff0bf;outline:3px solid #eab65c}
+.gear b{font-size:14px}.gear small{font-size:11px}
+.gear.silhouette .spr{filter:brightness(.25);opacity:.7}

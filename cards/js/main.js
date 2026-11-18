@@ -52,7 +52,7 @@ function catchUp(text = stored(), aside = true) {
 }
 function save() {
   if (G.readonly) { banner(`<span>${NEWER}</span><button data-act="reload">새로 고침</button>`); return false; }
-  try { if (!catchUp()) return false; compact(G.st, todayISO()); const text = JSON.stringify(G.st); localStorage.setItem(KEY(G.pid), text); G.seen = text; G.sync?.changed('p.' + G.pid); return true; } catch (e) { banner(`저장에 실패했어요: ${esc(e.message)}`); return false; }
+  try { if (!catchUp()) return false; compact(G.st, todayISO()); const text = JSON.stringify(G.st); localStorage.setItem(KEY(G.pid), text); G.seen = text; G.sync?.changed('p.' + G.pid); rememberPetUnlock(); return true; } catch (e) { banner(`저장에 실패했어요: ${esc(e.message)}`); return false; }
 }
 function loadMeta() { try { return { names: { son: '아들', daughter: '딸' }, ...JSON.parse(localStorage.getItem('cards.v0.meta') || '{}') }; } catch { return { names: { son: '아들', daughter: '딸' } }; } }
 // Another device saved newer data: fold it into what this page holds in memory.
@@ -149,7 +149,7 @@ async function boot() {
     G.sync = new Sync({ storage, fetchImpl: (u, o) => fetch(u, o), debounceMs: 800, ix: G.ix, onMerged, onStatus: (s) => { G.syncStatus = s; paintSync(); } });
     await G.sync.init();
   }
-  await loadSprites(); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
+  await loadSprites(); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init();
   const pref = loadPref(); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -205,7 +205,7 @@ function today(id, msg = '', wid = null) {
   const w = (G.world = currentWorld(G.ix, st)); const first = enterWorld(st, w, todayISO());
   const released = !G.readonly && stormRelease(st, G.ix, G.fx, todayISO());   // a whirlwind with nothing left to ask never holds the rider
   if (first || wid || released) save();
-  applyTheme(w); G.sound.scene(musicOf(w), { worldId: w.id });
+  rememberPetUnlock(); applyTheme(w); G.sound.scene(musicOf(w), { worldId: w.id });
   const v = worldView(G.ix, w, st, todayISO()); const c = gradeCounts(st, G.words);
   const ev = G.stormEv && G.stormEv.pid === id && G.stormEv.wid === w.id ? G.stormEv : null; G.stormEv = null;   // what the last run did to the whirlwind, shown once
   const sw = STORM.on ? stormOf(st, G.ix) : null; const storm = sw && sw.wid === w.id ? sw : null; const held = stormBlocks(st, w.id, G.ix);
@@ -233,7 +233,7 @@ function today(id, msg = '', wid = null) {
   <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
   <div class="gate-toolbar"><div id="world-stamps" class="world-stamps" aria-label="모은 관문 우표">${(v.gate?.stamps || []).map((x) => `<span class="stamp-chip ${x.collected ? 'collected' : 'missing'}" data-stamp="${x.id}" data-collected="${x.collected}">${stampPic(x)} 우표 ${x.id} ${x.collected ? '✓' : '·'}</span>`).join('')}</div>
   <div class="batgauge ${v.bat.full ? 'full' : ''}" id="batgauge" title="새 단어를 만나면 차고 복습하면 줄어요. 복습을 미뤄도 차요. 가득 차면 박쥐 시험!">${anim('bat-a', 'bat-b', 32)}<div class="batbar"><i style="width:${Math.min(100, Math.round(v.bat.fill / v.bat.cap * 100))}%"></i></div><b>${v.bat.fill}/${v.bat.cap}</b></div></div>
-  ${castleGate(v.gate,v.castle.status === 'cleared')}
+  ${castleGate(v.gate,v.castle.status === 'cleared')}${giftNote(w.id)}
   <div class="world" id="world" data-world="${esc(w.id)}">${terrain(w)}${nodes.join('')}${houses.join('')}${stormLayer(w, st, storm, ev, held, at)}</div>
   <p class="msg" id="msg">${esc(hint)}</p>
   <div class="dock">${v.bat.full ? dock('bat', anim('bat-a', 'bat-b', 48, 'fast'), '박쥐 시험', 'open', 'mon') : ''}
@@ -252,7 +252,7 @@ function today(id, msg = '', wid = null) {
 // its lock or its marks. Only the whirlwind can be pressed.
 function stormLayer(w, st, storm, ev, held, at) {
   const h = w._nodes[hereOf(st, w)]; const col = G.pid === 'daughter' ? 'gold' : 'teal';
-  const rider = h ? `<div class="rider" id="rider" data-node="${esc(h.id)}" style="${at(h)}">${courier(held ? 'walk1' : 'idle')}</div>` : '';
+  const rider = h ? `<div class="rider" id="rider" data-node="${esc(h.id)}" style="${at(h)}">${riderLook(false)}</div>` : '';
   let out = rider;
   if (storm) { const from = ev && ev.event === 'move' && !FAST && w._nodes[ev.from] ? w._nodes[ev.from] : w._nodes[storm.node];   // drawn where it was, then slides over
     out += `<button class="storm ${held ? 'held' : ''} ${ev?.event === 'spawn' ? 'spawn' : ''}" id="storm" data-act="storm" data-node="${esc(storm.node)}" style="${at(from)}" aria-label="회오리">${anim('fx-storm-a', 'fx-storm-b', 48, 'fast')}</button>`; }
@@ -315,7 +315,7 @@ function atlasWorld(w, illustrated) {
   const picture = illustrated ? spr('c015-village', 54) : '';
   return `<button class="wcard ${w.open ? 'open' : 'locked'} ${here ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" aria-label="${esc(w.name)} · ${status}" ${w.open ? '' : 'disabled'}>
     <span class="atlas-picture">${picture}${here && illustrated ? `<span class="atlas-courier">${courier('idle', undefined, 42)}</span>` : ''}<span class="atlas-badge">${badge}</span><span class="world-door">${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', illustrated ? 27 : 48)}</span></span>
-    <b>${esc(w.name)}</b><i>${w.met}/${w.total}</i></button>
+    <b>${esc(w.name)}</b><i>${w.met}/${w.total}</i>${giftNote(w.id)}</button>
     ${unseen ? `<button class="world-door atlas-door-trigger unseen" data-act="door" data-id="${esc(w.id)}" aria-label="${esc(w.name)} 열쇠로 문 열기" title="열쇠로 문 열기">${spr('key', 24)}</button>` : ''}`;
 }
 function atlasFinale(c) {
@@ -359,22 +359,146 @@ function deviceSeen() {
 }
 function writeDevice() { try { localStorage.setItem('cards.v0.seen', JSON.stringify(deviceMemory)); } catch {} }
 function nextGift(stars) { const g = GIFTS.find((x) => stars < x.stars); return g ? `다음 선물까지 ★ ${g.stars-stars}` : '선물을 모두 열었어요'; }
-function chosenLook() {
-  let value = lookMemory[G.pid]; if (!Object.hasOwn(lookMemory,G.pid)) { try { value = JSON.parse(localStorage.getItem('cards.v0.look.' + G.pid) || 'null')?.outfit; } catch {} }
-  return GIFTS.some((g) => g.id === value && G.st.map.stars >= g.stars) ? value : 'default';
+const SLOTS = { hat:'모자', bag:'가방', coat:'옷', ride:'탈것', pet:'반려동물' };
+const WORLD_GIFT_NAMES = ['꽃씨 챙모자','과일 주머니','풀잎 조끼','나무결 모자','연잎 가방','굴마을 외투','언덕 베레모','종방울 가방','항구 셔츠','조개 테두리 모자','빵바구니 가방','시계 조끼','풍선 캡','빗방울 가방','물감 앞치마','승차표 모자','공구 가방','눈꽃 외투','단추 모자','사진 가방','모래빛 셔츠','유리구슬 모자','책등 가방','구름 조끼','달조각 모자','별가루 주머니','깃털 외투','바람개비 모자','망원경 가방','창문빛 셔츠'];
+const PET_GOALS = [500, 1500, 3000];
+const COLOR_GOALS = [0, 3, 40];
+function worldGift(id) {
+  const match = /^p([123])-(\d\d)$/.exec(id);
+  if (!match) return null;
+  const index = [0, 8, 23][Number(match[1]) - 1] + Number(match[2]) - 1;
+  const world = G.ix.byId[id];
+  if (!world || !WORLD_GIFT_NAMES[index]) return null;
+  return { id, slot:['hat','bag','coat'][index % 3], name:WORLD_GIFT_NAMES[index], world };
 }
-function courier(frame = 'idle', outfit = chosenLook(), px = 48) { return outfit === 'default' ? `<svg class="spr" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true"><use href="#courier-${G.pid === 'daughter' ? 'gold' : 'teal'}-${frame}"/></svg>` : spr(`c011-look-${outfit}-${frame}`, px); }
-function wardrobe() {
-  $('#wardrobe')?.remove(); const stars = G.st.map.stars, selected = chosenLook(), seen = deviceSeen();
-  for (const g of GIFTS) if (stars >= g.stars) seen.gifts[g.id] = true; writeDevice();
-  const box = document.createElement('div'); box.id = 'wardrobe'; box.className = 'wardrobe-shade';
-  box.innerHTML = `<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars} · 별은 줄어들지 않아요</p><div class="looks">${[{ id:'default',stars:0,name:'기본 모습' }, ...GIFTS].map((g) => `<button class="look ${selected === g.id ? 'selected' : ''}" data-act="look" data-id="${g.id}" aria-pressed="${selected === g.id}" ${stars < g.stars ? 'disabled' : ''}>${courier('idle',g.id,64)}<b>${g.name}</b><small>${stars < g.stars ? `★ ${g.stars}에 열려요` : selected === g.id ? '입고 있어요' : '입기'}</small></button>`).join('')}</div><button class="sec" data-act="look-close">닫기</button></section>`;
-  $('#app').append(box); box.querySelector('[data-act=look-close]').focus();
+function wardrobeItems() {
+  const worlds = G.ix.worlds.map(w => worldGift(w.id)).filter(Boolean);
+  const rides = ['우편 자전거','봉투 나룻배','편지 열기구'].map((name,i) => ({slot:'ride', id:'c'+(i+1), name, continent:G.ix.continents[i]}));
+  const pets = ['우표 더듬이 달팽이','소인 꼬리 도마뱀','봉투 날개 나방'].map((name,i) => ({slot:'pet', id:['snail','lizard','moth'][i], name, tier:i+1}));
+  return [...worlds, ...rides.filter(r=>r.continent?.id===r.id), ...pets, ...GIFTS.map(g=>({...g,slot:'coat',legacy:true}))];
 }
-function wear(id) {
-  if (id !== 'default' && !GIFTS.some((g) => g.id === id && G.st.map.stars >= g.stars)) return;
-  lookMemory[G.pid] = id; try { localStorage.setItem('cards.v0.look.' + G.pid, JSON.stringify({ outfit:id })); } catch {}
-  const rider = $('#rider'); if (rider) rider.innerHTML = courier(rider.classList.contains('held') ? 'walk1' : 'idle'); wardrobe();
+const lookKey = id => 'cards.v0.look.' + id;
+function readLook(id) {
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(lookKey(id))) || {}; } catch {}
+  const memory = lookMemory[id];
+  const tier = value => Number.isInteger(value) && value >= 0 && value <= PET_GOALS.length ? value : 0;
+  const source = memory || stored;
+  return { outfit:typeof source.outfit==='string' ? source.outfit : 'default',
+    slots: { ...source.slots }, petTier:Math.max(tier(stored.petTier),tier(memory?.petTier)) };
+}
+function writeLook(id, doc) {
+  lookMemory[id] = doc;
+  try { localStorage.setItem(lookKey(id), JSON.stringify(doc)); } catch {}
+}
+function rememberPetUnlock(st = G.st, id = G.pid) {
+  if (!st || !id || G.readonly) return;
+  const look = readLook(id);
+  if (look.petTier === PET_GOALS.length) return;
+  const known = G.words.reduce((count,w) => count + Number(gradeOf(st.words?.[w.id]) >= 2),0);
+  const tier = PET_GOALS.filter(goal=>known>=goal).length;
+  if (tier > look.petTier) writeLook(id,{...look,petTier:tier});
+}
+function unlocked(item, st, look, seen = {}) {
+  if (item.legacy) return !!seen[item.id] || (st?.map?.stars || 0) >= item.stars;
+  if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
+  if (item.continent) return !!st?.map?.conts?.[item.id]?.castle;
+  return look.petTier >= item.tier;
+}
+function lookSelection(pid,st) {
+  const look=readLook(pid), selected={};
+  const stars=st?.map?.stars || 0;
+  let seen = deviceMemory[pid]?.gifts;
+  if (!seen) { try { seen = JSON.parse(localStorage.getItem('cards.v0.seen'))?.[pid]?.gifts; } catch {} }
+  for (const item of wardrobeItems()) {
+    const choice=look.slots[item.slot] ?? (item.slot==='coat' ? {id:look.outfit,color:0} : null);
+    if (choice?.id===item.id && unlocked(item,st,look,seen)) {
+      const color=Number.isInteger(choice.color) && COLOR_GOALS[choice.color]<=stars ? choice.color : 0;
+      selected[item.slot]={...item,color};
+    }
+  }
+  return selected;
+}
+function wardrobeArt(id, px=48, extra='') {
+  return `<svg class="spr ${extra}" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true"><use href="#${id}"/></svg>`;
+}
+function layerId(item, slot, color) {
+  if (!item) return `c016-${slot}-default-${color}`;
+  return `c016-${slot}-${item.legacy?'legacy-':''}${item.id}-${item.color}`;
+}
+function courierFrame(frame, selection, px, pid, index=0) {
+  const color=pid==='daughter'?'gold':'teal';
+  const movement=frame.startsWith('walk') ? 'walk' : 'idle';
+  const {coat,bag,hat}=selection;
+  if (!hat && !bag && !coat && index===0) {
+    const special=['run','throw'].includes(frame);
+    const legacy=special ? `c014-courier-${color}-${frame}` : `courier-${color}-${frame}`;
+    return wardrobeArt(document.getElementById(legacy)?legacy:`courier-${color}-idle`,px);
+  }
+  if (!hat && !bag && coat?.legacy && !coat.color && index===0 && !['run','throw'].includes(frame)) return spr(`c011-look-${coat.id}-${movement==='walk'?'walk1':'idle'}`,px);
+  const body = ['run','throw'].includes(frame) && document.getElementById(`c014-courier-${color}-${frame}`) ? `c014-courier-${color}-${frame}` : `c016-body-${color}-${movement}${index}`;
+  const layers=[body,layerId(coat,'coat',color),layerId(bag,'bag',color),`c016-head-${color}-${movement}${index}`,layerId(hat,'hat',color)];
+  return `<svg class="spr" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${layers.map((id,i)=>`<use data-layer="${['body','coat','bag','head','hat'][i]}" href="#${id}"/>`).join('')}</svg>`;
+}
+function courier(frame='idle', outfit, px=48, pid=G.pid, st=G.st) {
+  if (outfit==='default') return wardrobeArt(`courier-${pid==='daughter'?'gold':'teal'}-idle`,px);
+  if (outfit && GIFTS.some(g=>g.id===outfit)) return spr(`c011-look-${outfit}-idle`,px);
+  return courierFrame(frame, lookSelection(pid,st), px, pid);
+}
+function riderLook(moving=false) {
+  const selection=lookSelection(G.pid,G.st);
+  const stack=(frames,kind)=>`<span class="rider-frames ${kind}" data-frames="${frames.length}">${frames.map((html,i)=>`<span class="frame" style="--frame:${i}">${html}</span>`).join('')}</span>`;
+  const frames=Array.from({length:4},(_,i)=>courierFrame(moving?'walk1':'idle',selection,80,G.pid,i));
+  const ride=selection.ride;
+  const pet=selection.pet;
+  return `<span class="rider-shadow"></span>${ride ? wardrobeArt(`c016-ride-${ride.id}-${moving?'move':'idle'}`,64,`rider-ride ${moving?'mounted':'parked'} color-${ride.color}`):''}
+    ${stack(frames,'rider-body')}${pet ? stack([0,1].map(i=>wardrobeArt(`c016-pet-${pet.id}-${i}`,34,`color-${pet.color}`)),'rider-pet'):''}`;
+}
+function renderRider(moving=false) {
+  const rider=$('#rider');
+  if (rider) { rider.classList.toggle('mounted',moving&&!!lookSelection(G.pid,G.st).ride); rider.innerHTML=riderLook(moving); }
+}
+const giftNote = id => {
+  const gift=worldGift(id);
+  return gift ? `<span class="world-gift">${wardrobeArt(layerId({...gift,color:0},gift.slot,'teal'),32)} 이 세계의 선물: ${esc(gift.name)}</span>` : '';
+};
+function wardrobe(slot='coat') {
+  $('#wardrobe')?.remove();
+  rememberPetUnlock();
+  const stars=G.st.map.stars, look=readLook(G.pid), selection=lookSelection(G.pid,G.st), seen=deviceSeen();
+  for (const g of GIFTS) if (stars>=g.stars) seen.gifts[g.id]=true;
+  writeDevice();
+  const box=document.createElement('div'); box.id='wardrobe'; box.className='wardrobe-shade';
+  const legacy=slot==='coat' ? `<div class="looks">${[{id:'default',stars:0,name:'기본 모습'},...GIFTS].map(g=>{
+    const active=g.id==='default'?!selection.coat:selection.coat?.id===g.id;
+    return `<button class="look ${active?'selected':''}" data-act="look" data-id="${g.id}" aria-pressed="${active}" ${stars<g.stars&&!seen.gifts[g.id]?'disabled':''}>${courier('idle',g.id,64)}<b>${g.name}</b><small>${stars<g.stars&&!seen.gifts[g.id]?`★ ${g.stars}에 열려요`:active?'입고 있어요':'입기'}</small></button>`;
+  }).join('')}</div>`:'';
+  const items=wardrobeItems().filter(item=>item.slot===slot && !item.legacy);
+  const cards=items.map(item=>{
+    const enabled=unlocked(item,G.st,look,seen.gifts), active=selection[slot]?.id===item.id;
+    const icon=slot==='ride'?`c016-ride-${item.id}-idle`:slot==='pet'?`c016-pet-${item.id}-0`:layerId({...item,color:0},slot,'teal');
+    const why=item.world?`${item.world.name} 성을 깨면`:item.continent?`${item.continent.name} 큰 성을 깨면`:`아는 단어 ${PET_GOALS[item.tier-1]}개`;
+    return `<button class="gear ${enabled?'':'silhouette'}" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="${active}" ${enabled?'':'disabled'}>${wardrobeArt(icon,54)}<b>${esc(item.name)}</b><small>${enabled?(active?'선택했어요':'고르기'):esc(why)}</small></button>`;
+  }).join('');
+  const active=selection[slot];
+  const colors=active?`<div class="gear-colors" aria-label="색 고르기">${COLOR_GOALS.map((goal,i)=>`<button class="sec" data-act="gear-color" data-slot="${slot}" data-color="${i}" aria-pressed="${active.color===i}" ${stars<goal?'disabled':''}>${['기본색','색 2','색 3'][i]}${goal?` · ★ ${goal}`:''}</button>`).join('')}</div>`:'';
+  box.innerHTML=`<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars} · 별은 줄어들지 않아요</p>
+  <div class="gear-preview">${courier('idle',undefined,80)}</div><nav class="gear-tabs" aria-label="꾸미기 종류">${Object.entries(SLOTS).map(([key,label])=>`<button class="sec" data-act="gear-tab" data-slot="${key}" aria-pressed="${key===slot}">${label}</button>`).join('')}</nav>
+  ${colors}${legacy}<div class="looks">${slot!=='coat'?`<button class="gear" data-act="gear" data-id="default" data-slot="${slot}" aria-pressed="${!active}">기본</button>`:''}${cards}</div>
+  <button class="sec" data-act="look-close">닫기</button></section>`;
+  $('#app').append(box); box.querySelector(`[data-act=gear-tab][data-slot=${slot}]`).focus({preventScroll:true});
+}
+function wear(id,slot='coat',color=null) {
+  if (!Object.hasOwn(SLOTS,slot)) return;
+  const look=readLook(G.pid);
+  const item=wardrobeItems().find(i=>i.slot===slot&&i.id===id);
+  if (id!=='default' && (!item || !unlocked(item,G.st,look,deviceSeen().gifts))) return;
+  if (color!==null && (!Number.isInteger(color)||!(COLOR_GOALS[color]<=G.st.map.stars))) return;
+  look.slots[slot]=id==='default'?null:{id,color:color??0};
+  if (slot==='coat') look.outfit=item?.legacy?id:'default';
+  writeLook(G.pid,look);
+  renderRider();
+  wardrobe(slot);
 }
 function doorFor(to) {
   const world = G.ix.byId[to]; if (!world || !worldOpen(G.ix, world, G.st)) return null;
@@ -754,6 +878,9 @@ async function onClick(e) {
     case 'key-help': return banner('성을 깨면 열쇠를 얻고, 열쇠로 다음 세계 문을 열어요 <button data-act=hide>확인</button>');
     case 'wardrobe': return wardrobe();
     case 'look': return wear(b.dataset.id);
+    case 'gear-tab': return wardrobe(b.dataset.slot);
+    case 'gear': return wear(b.dataset.id,b.dataset.slot);
+    case 'gear-color': { const choice=lookSelection(G.pid,G.st)[b.dataset.slot]; if (choice) return wear(choice.id,b.dataset.slot,Number(b.dataset.color)); return; }
     case 'look-close': $('#wardrobe')?.remove(); return;
     case 'celebration-atlas': return atlas(G.celebrationDoor);
     case 'door': return showDoor(doorFor(b.dataset.id));

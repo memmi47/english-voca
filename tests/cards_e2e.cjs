@@ -865,6 +865,77 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C015: the catalogue’s longest glosses wrap and all three options have equal height', longChoicesFit);
   await visual.close();
 
+  // C-016 wardrobe: each slot is earned from a different kind of progress.
+  const gearCtx=await browser.newContext({viewport:{width:1180,height:820}});
+  const gearPage=await gearCtx.newPage();
+  gearPage.on('pageerror',e=>errs.push(String(e)));
+  await gearPage.goto(BASE+'/?today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+  await gearPage.waitForSelector('.profiles');
+  await gearPage.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+    const g=window.__cards,s=newState('son'),m=ensureMap(s);
+    m.at='p1-01';m.stars=12;
+    m.worlds['p1-01']={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
+    m.conts.c1={castle:'2026-11-17'};
+    for(const w of g.words.slice(0,500))s.words[w.id]={st:'done'};
+    localStorage.setItem('cards.v0.p.son',JSON.stringify(s));
+    localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'leaf-cap'}));
+  });
+  await gearPage.click('[data-act=pick][data-id=son]');
+  await gearPage.waitForSelector('#world[data-world=p1-01]');
+  const out016='/tmp/c016-screens';
+  fs.mkdirSync(out016,{recursive:true});
+  await gearPage.screenshot({path:out016+'/stamps.png',animations:'disabled'});
+  const beforeGear=await gearPage.evaluate(()=>localStorage.getItem('cards.v0.p.son'));
+  ok('C016: revised first-world stamps and the earned legacy outfit are rendered',await gearPage.evaluate(()=>{
+    const stamps=[...document.querySelectorAll('#world .gate-stamp')].map(e=>e.closest('[data-id]').dataset.id);
+    return stamps.includes('p1-01-detour-2-3')&&stamps.includes('p1-01-detour-3-3')&&
+      document.querySelector('#rider use').getAttribute('href')==='#c011-look-leaf-cap-idle';
+  }));
+  await gearPage.click('[data-act=wardrobe]');
+  await gearPage.click('[data-act=gear-tab][data-slot=hat]');
+  const hatLocked=await gearPage.locator('[data-act=gear][data-id=p1-04]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=p1-01]');
+  const colorLocked=await gearPage.locator('[data-act=gear-color][data-color="2"]').isDisabled();
+  await gearPage.click('[data-act=gear-color][data-color="1"]');
+  ok('C016: a world castle opens its hat only, star thresholds select color, and the legacy coat stays equipped',
+    hatLocked&&colorLocked&&await gearPage.evaluate(()=>{
+      const look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+      return look.slots.hat.id==='p1-01'&&look.slots.hat.color===1&&look.outfit==='leaf-cap'&&
+        !!document.querySelector('#rider use[href="#c016-coat-legacy-leaf-cap-0"]');
+    }));
+  await gearPage.screenshot({path:out016+'/wardrobe.png',animations:'disabled'});
+  await gearPage.click('[data-act=gear-tab][data-slot=ride]');
+  const rideLocked=await gearPage.locator('[data-act=gear][data-id=c2]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=c1]');
+  await gearPage.click('[data-act=gear-tab][data-slot=pet]');
+  const petLocked=await gearPage.locator('[data-act=gear][data-id=lizard]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=snail]');
+  await gearPage.click('#wardrobe .sec[data-act=look-close]');
+  ok('C016: ride and pet use separate slots, 4 rider frames and 2 pet frames, without writing child progress',
+    rideLocked&&petLocked&&await gearPage.evaluate(before=>{
+      const rider=document.querySelector('#rider');
+      return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
+        rider.querySelector('.rider-body').dataset.frames==='4'&&rider.querySelector('.rider-pet').dataset.frames==='2'&&
+        !!rider.querySelector('use[href="#c016-ride-c1-idle"]')&&getComputedStyle(rider).pointerEvents==='none';
+    },beforeGear));
+  await gearPage.screenshot({path:out016+'/rider-ride-pet.png',animations:'disabled'});
+  await gearPage.evaluate(()=>{
+    const key='cards.v0.p.son',s=JSON.parse(localStorage.getItem(key));
+    s.words[Object.keys(s.words)[0]].st='learn';
+    localStorage.setItem(key,JSON.stringify(s));
+  });
+  await gearPage.reload();
+  await gearPage.waitForSelector('.profiles');
+  await gearPage.click('[data-act=pick][data-id=son]');
+  await gearPage.waitForSelector('#rider');
+  await gearPage.click('[data-act=wardrobe]');
+  await gearPage.click('[data-act=gear-tab][data-slot=pet]');
+  ok('C016: the earned pet stays unlocked after the known-word count drops and the page reloads',
+    await gearPage.locator('[data-act=gear][data-id=snail]').isEnabled()&&
+    await gearPage.$eval('#rider use[href="#c016-pet-snail-0"]',e=>!!e));
+  await gearCtx.close();
+
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();
   const fails = results.filter((r) => r[0] === 'FAIL').length;
