@@ -94,6 +94,9 @@ export function mergeCards(a, b, ix = null) {
   for (const [id, r] of Object.entries(a.words || {})) { const o = out.words[id]; if (!o) { out.words[id] = r; continue; } const w = newer(o, r); const other = w === o ? r : o;
     let m = !('bunch' in w) && other.bunch != null ? { ...w, bunch: other.bunch } : w;   // the bunch tag is kept whichever side wins
     const up = minStr(w.up, other.up); if (up != null && m.up !== up) m = { ...m, up };            // so is the first day the word was firm (the earlier)
+    // and what the child did not know: the larger counts and the later miss day survive even when the other side wins
+    const miss = maxStr(w.miss, other.miss), misses = Math.max(w.misses || 0, other.misses || 0), lapses = Math.max(w.lapses || 0, other.lapses || 0);
+    if (miss != null && m.miss !== miss) m = { ...m, miss }; if (misses && m.misses !== misses) m = { ...m, misses }; if (m.lapses !== undefined && m.lapses !== lapses) m = { ...m, lapses };
     out.words[id] = m; }
   out.bunches = mergeBunches(a.bunches, b.bunches);
   out.forms = mergeForms(a.forms, b.forms);

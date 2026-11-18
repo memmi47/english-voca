@@ -254,6 +254,9 @@ export class Run {
     } else if (it.role === 'audit') {
       g = this._set(it.id, { st: 'learn', due: addDays(t, 1) }); this._audit(it, false);   // like a failed castle card
     }
+    // Every "not known" is kept on the word for later (a hard-words test, a final stage): the last day and how many times.
+    // Merges keep the larger count and the later day whichever side wins (sync.mergeCards), so this never shrinks.
+    const w = this.s.words[it.id]; if (w) { w.miss = t; w.misses = (w.misses || 0) + 1; }
     return this._done(it, { ok: false, said, picked, dmg: 0, grade: g });
   }
   _insert(at, item) { this.queue.splice(at, 0, item); return at; }

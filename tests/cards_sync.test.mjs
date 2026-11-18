@@ -229,3 +229,16 @@ test('U2: merging keeps the earlier `up` of the two sides, also when the side wi
   for (const m of [mergeCards(a, c), mergeCards(c, a)]) assert.equal(m.words.w.up, '2026-11-08');
 });
 
+test('U3: every "not known" is kept on the word (miss day, misses); merging keeps the later day and the larger counts even when the more advanced side wins', () => {
+  const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const id = WORDS[0].id; const D = '2026-11-16';
+  const s = { ...newState('son'), words: { [id]: { st: 'review', step: 1, due: D, firstDay: '2026-11-10', lastDay: '2026-11-13', lapses: 0 } } };
+  const r = new Run({ state: s, words: WORDS, today: D, rng: mulberry32(1), now: () => 1000, scope: { noNew: true } });
+  let it = r.show(); if (it.form === 'judge') r.judge(false); else r.pick(-1);
+  assert.deepEqual([s.words[id].miss, s.words[id].misses, s.words[id].lapses], [D, 1, 1]);
+  const gold = state({ v: 3, words: { w: word({ st: 'done', due: null, lastDay: '2026-11-18', lapses: 0 }) } });
+  const missed = state({ v: 3, words: { w: word({ st: 'learn', lastDay: '2026-11-17', lapses: 2, miss: '2026-11-17', misses: 3 }) } });
+  for (const m of [mergeCards(gold, missed), mergeCards(missed, gold)]) assert.deepEqual([m.words.w.st, m.words.w.miss, m.words.w.misses, m.words.w.lapses], ['done', '2026-11-17', 3, 2]);
+  const plain = state({ v: 3, words: { w: word() } });
+  for (const m of [mergeCards(plain, plain)]) assert.equal('miss' in m.words.w, false, 'records without misses keep their shape');
+});
+
