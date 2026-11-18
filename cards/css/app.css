@@ -326,9 +326,15 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .rider .color-2{filter:hue-rotate(138deg)}
 .motion-quiet .rider-frames .frame{animation:none}
 @media(prefers-reduced-motion:reduce){.rider-frames .frame{animation:none}}
-.world-gift{display:flex;justify-content:center;align-items:center;gap:5px;font-size:13px;margin:3px auto 6px;font-weight:700}
-.atlas-picture~.world-gift{font-size:9px;line-height:1.2;margin:0;background:var(--paper);padding:0 3px;max-width:118px}
-.atlas-picture~.world-gift .spr{width:18px;height:18px;flex-shrink:0}
+.world-gift{display:flex;justify-content:center;align-items:center;gap:8px;font-size:15px;line-height:1.2;margin:3px auto 6px;font-weight:700}
+.world-gift .gear-art{width:2.4em;height:2.4em;background:#fff0ca;border:2px solid var(--ink);box-sizing:border-box}
+.atlas-gift{position:absolute;z-index:2;left:0;top:-16px;width:44px;height:44px;display:grid;place-items:center;background:transparent}
+.atlas-list-stop .atlas-gift{top:0}
+.atlas-gift-icon{position:relative;display:grid;place-items:center;width:29px;height:29px;background:#fff0ca;border:2px solid var(--ink)}
+.atlas-gift:hover .atlas-gift-icon{background:#ffe9a8}
+.gift-check{position:absolute;right:-6px;bottom:-5px;width:15px;height:15px;background:#24564a;border:1px solid var(--paper);fill:none;stroke:var(--paper);stroke-width:3}
+:is(.atlas-stop,.atlas-list-stop)[data-act=atlas-gift]{cursor:pointer}
+:is(.atlas-stop,.atlas-list-stop)[data-act=atlas-gift] .wcard:disabled{pointer-events:none}
 .gear-preview{margin-top:-10px;line-height:0}
 .gear-tabs,.gear-colors{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:8px 0}
 .gear-tabs .sec,.gear-colors .sec{font-size:13px;min-height:44px;padding:4px 8px}
@@ -336,7 +342,10 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .gear{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;border:4px solid var(--ink);background:#e6eee0;padding:8px;min-height:112px}
 .gear[aria-pressed=true]{background:#fff0bf;outline:3px solid #eab65c}
 .gear b{font-size:14px}.gear small{font-size:11px}
-.gear.silhouette .spr{filter:brightness(.25);opacity:.7}
+.gear-art{overflow:hidden}
+.gear.silhouette{opacity:1;background:#e6e5d8;border-color:#687a6e}
+.gear.silhouette .gear-art{filter:brightness(0) opacity(.85)}
+.star-gift{border:1px solid #926d31;background:#fff0bf;padding:1px 4px;font-size:11px;font-weight:700}
 
 /* Move the whole idle courier in CSS pixels, independently of pose frames. */
 .kid-idle.son { animation: courier-son-idle 1.4s linear infinite; }

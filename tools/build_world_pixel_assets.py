@@ -222,6 +222,10 @@ def wardrobe_assets():
         parts.append(f'<symbol id="{html.escape(sid)}" viewBox="0 0 48 48">{body}</symbol>')
     def pixels(rects):
         return ''.join(rect(*r) for r in rects)
+    def coat_shape(color, trim):
+        return ('<path d="M15 20h5v3h6v-3h5v2h3v7h-3v5H14v-5h-4v-6h5z" fill="'
+                + ink + '"/>') + pixels([(15,23,15,10,color),(11,24,4,4,color),
+                    (30,23,3,5,color),(21,24,2,9,trim),(16,28,3,2,trim)])
     # The common pose occupies the same head/body bounds as the existing 48-unit courier.
     for variant, cap in [('teal',teal),('gold',gold)]:
         for action in ('idle','walk'):
@@ -267,15 +271,26 @@ def wardrobe_assets():
                     (28,26,10,10,ink),(29,27,8,8,color),(29,27,8,2,accent)])
                 body+=pixels([(29+(x-15),29+(y-4),max(1,ww//2),max(1,hh//2),accent) for x,y,ww,hh in motifs[design]])
             else:
-                body=pixels([(12,21,20,10,color),(13,22,5,9,color),(27,22,4,9,color),
-                    (20,21,2,10,accent)])
+                body=coat_shape(color,accent)
                 body+=pixels([(13+(x-15),23+(y-4),max(1,ww//2),max(1,hh//2),accent) for x,y,ww,hh in motifs[design]])
             shape(f'c016-{slot}-{wid}-{color_index}',body)
-    for legacy,coat,bag in [('leaf-cap',teal,brown),('sun-bag',teal,gold),('sea-coat','#7BC4D0',brown),('night-cap','#927BAB',brown),('letter-bag',teal,'#927BAB'),('festival-coat','#E89AA8',gold)]:
+    for legacy,slot,base,trim in [('leaf-cap','hat',teal,'#B2CB69'),('night-cap','hat','#927BAB',cream),
+            ('sun-bag','bag',gold,cream),('letter-bag','bag','#927BAB',cream),
+            ('sea-coat','coat','#7BC4D0',brown),('festival-coat','coat','#E89AA8',gold)]:
         for color_index in range(3):
-            color=[coat,coral,'#6A5683'][color_index]
-            body=pixels([(12,21,20,10,color),(13,22,5,9,color),(27,22,4,9,color),(20,21,2,10,bag),(23,24,3,3,cream)])
-            shape(f'c016-coat-legacy-{legacy}-{color_index}',body)
+            color=[base,coral,'#6A5683'][color_index]
+            if slot=='hat':
+                body=pixels([(12,3,20,7,ink),(14,4,16,6,color),(9,9,27,3,ink),(10,9,25,2,color)])
+                motif=[(18,6,5,2),(21,4,4,2),(23,3,2,1)] if legacy=='leaf-cap' else [(18,4,2,3),(19,7,5,2),(25,4,2,1)]
+                body+=pixels([(x,y,w,h,trim) for x,y,w,h in motif])
+            elif slot=='bag':
+                body=pixels([(14,22,3,2,brown),(17,23,3,2,brown),(20,24,3,2,brown),(23,25,3,2,brown),(26,26,3,2,brown),
+                    (27,25,12,12,ink),(28,26,10,10,color),(29,27,8,2,trim)])
+                motif=[(32,28,2,6),(30,30,6,2)] if legacy=='sun-bag' else [(29,29,8,5),(31,30,4,1)]
+                body+=pixels([(x,y,w,h,trim) for x,y,w,h in motif])
+            else:
+                body=coat_shape(color,trim)
+            shape(f'c016-{slot}-legacy-{legacy}-{color_index}',body)
 
     for cid,body in [
         ('c1',pixels([(4,34,12,10,ink),(7,36,6,6,cream),(31,34,12,10,ink),(34,36,6,6,cream),(10,30,25,3,teal),(18,25,4,8,coral),(30,25,4,8,gold)])),

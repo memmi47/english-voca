@@ -437,10 +437,17 @@ function atlasWorld(w, illustrated) {
   const badge = w.crown ? spr('crown', 24) : w.castle ? spr('key', 24) : '';
   const status = w.open ? (here ? '현재 위치' : '열림') : '잠김';
   const picture = illustrated ? spr('c015-village', 54) : '';
+  const gift = worldGift(w.id);
   return `<button class="wcard ${w.open ? 'open' : 'locked'} ${here ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" aria-label="${esc(w.name)} · ${status}" ${w.open ? '' : 'disabled'}>
-    <span class="atlas-picture">${picture}${here && illustrated ? `<span class="atlas-courier">${courier('idle', undefined, 42)}</span>` : ''}<span class="atlas-badge">${badge}</span><span class="world-door">${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', illustrated ? 27 : 48)}</span></span>
-    <b>${esc(w.name)}</b><i>${w.met}/${w.total}</i>${giftNote(w.id)}</button>
+    <span class="atlas-picture">${picture}${here && illustrated ? `<span class="atlas-courier">${courier('idle', 42)}</span>` : ''}<span class="atlas-badge">${badge}</span><span class="world-door">${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', illustrated ? 27 : 48)}</span></span>
+    <b>${esc(w.name)}</b><i>${w.met}/${w.total}</i></button>
+    ${gift ? `<button class="atlas-gift" data-act="atlas-gift" data-id="${esc(w.id)}" aria-label="${esc(w.name)} 선물${w.castle ? ' · 받음' : ''}"><span class="atlas-gift-icon">${gearArt(gift,24)}${w.castle ? '<svg class="gift-check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8l3 3 7-7"/></svg>' : ''}</span></button>` : ''}
     ${unseen ? `<button class="world-door atlas-door-trigger unseen" data-act="door" data-id="${esc(w.id)}" aria-label="${esc(w.name)} 열쇠로 문 열기" title="열쇠로 문 열기">${spr('key', 24)}</button>` : ''}`;
+}
+function atlasStop(w, point) {
+  const preview = !w.open && worldGift(w.id) ? ` data-act="atlas-gift" data-id="${esc(w.id)}"` : '';
+  return point ? `<div class="atlas-stop" style="left:${point[0]}%;top:${point[1]}%"${preview}>${atlasWorld(w,true)}</div>` :
+    `<div class="atlas-list-stop"${preview}>${atlasWorld(w,false)}</div>`;
 }
 function atlasFinale(c) {
   const status = c.finale.status;
@@ -456,7 +463,7 @@ function drawContinent(c) {
   const position = ([x,y]) => `left:${x}%;top:${y}%`;
   return `<div class="atlas-scroll" tabindex="0" aria-label="${esc(c.name)} 그림 지도"><div class="atlas-land ${c.worlds.length > 9 ? 'many-worlds' : ''}">
     <svg class="atlas-geography" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><use href="#c015-atlas-${(ATLAS_POINTS[bandName] ? bandName : 'P1').toLowerCase()}" width="100" height="100"/><polyline points="${path}" fill="none" stroke="#325d56" stroke-dasharray="3 6" stroke-linecap="round" stroke-width="4" vector-effect="non-scaling-stroke"/></svg>
-    ${c.worlds.map((w,i) => `<div class="atlas-stop" style="${position(points[i])}">${atlasWorld(w,true)}</div>`).join('')}
+    ${c.worlds.map((w,i) => atlasStop(w,points[i])).join('')}
     <div class="atlas-stop atlas-end" style="${position(points.at(-1))}">${atlasFinale(c)}</div></div></div>`;
 }
 function atlas(transition = null, list = false) {
@@ -464,13 +471,20 @@ function atlas(transition = null, list = false) {
   $('#app').innerHTML = `<div class="page atlas"><button class="back" data-act="today" aria-label="돌아가기">‹</button><h1 class="title center">세계 지도</h1>
   <button class="tgl atlas-mode" data-act="${list ? 'atlas' : 'atlas-list'}">${list ? '그림 지도로 보기' : '목록으로 보기'}</button>
   <div id="door-stage"></div>${continents.map((c) => `<section class="cont" data-cont="${esc(c.id)}"><h2>${esc(c.name)} <small>왕관 ${c.crowns}/${c.total}</small></h2><p class="mut small">${esc(c.story || '')}</p>
-    ${list ? `<div class="wgrid">${c.worlds.map((w) => `<div class="atlas-list-stop">${atlasWorld(w,false)}</div>`).join('')}${atlasFinale(c)}</div>` : drawContinent(c)}</section>`).join('')}
+    ${list ? `<div class="wgrid">${c.worlds.map((w) => atlasStop(w)).join('')}${atlasFinale(c)}</div>` : drawContinent(c)}</section>`).join('')}
   <p class="msg" id="msg"></p></div>`;
   if (transition) showDoor(transition);
 }
 
 // Presentation preferences are deliberately separate from child records and Sync.
-const GIFTS = [{ id:'leaf-cap', stars:12, name:'잎사귀 모자' }, { id:'sun-bag', stars:40, name:'햇살 가방' }, { id:'sea-coat', stars:100, name:'물결 옷' }, { id:'night-cap', stars:240, name:'밤하늘 모자' }, { id:'letter-bag', stars:500, name:'편지 가방' }, { id:'festival-coat', stars:1000, name:'축제 옷' }];
+const GIFTS = [
+  { id:'leaf-cap', stars:12, name:'잎사귀 모자', slot:'hat' },
+  { id:'sun-bag', stars:40, name:'햇살 가방', slot:'bag' },
+  { id:'sea-coat', stars:100, name:'물결 옷', slot:'coat' },
+  { id:'night-cap', stars:240, name:'밤하늘 모자', slot:'hat' },
+  { id:'letter-bag', stars:500, name:'편지 가방', slot:'bag' },
+  { id:'festival-coat', stars:1000, name:'축제 옷', slot:'coat' },
+].map(gift => ({ ...gift, legacy:true }));
 let presentationTimers = [], deviceMemory = {}, lookMemory = {};
 function later(fn, ms) { const id = setTimeout(fn, FAST ? Math.min(ms, 20) : ms); presentationTimers.push(id); return id; }
 function clearPresentation() { cancelWalk(); presentationTimers.forEach(clearTimeout); presentationTimers = []; G.sound?.cancelFanfares(); G.door = null; $('#wardrobe')?.remove(); }
@@ -499,17 +513,28 @@ function wardrobeItems() {
   const worlds = G.ix.worlds.map(w => worldGift(w.id)).filter(Boolean);
   const rides = ['우편 자전거','봉투 나룻배','편지 열기구'].map((name,i) => ({slot:'ride', id:'c'+(i+1), name, continent:G.ix.continents[i]}));
   const pets = ['우표 더듬이 달팽이','소인 꼬리 도마뱀','봉투 날개 나방'].map((name,i) => ({slot:'pet', id:['snail','lizard','moth'][i], name, tier:i+1}));
-  return [...worlds, ...rides.filter(r=>r.continent?.id===r.id), ...pets, ...GIFTS.map(g=>({...g,slot:'coat',legacy:true}))];
+  return [...worlds, ...rides.filter(r=>r.continent?.id===r.id), ...pets, ...GIFTS];
 }
 const lookKey = id => 'cards.v0.look.' + id;
-function readLook(id) {
+function readLook(id, migrate = false) {
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(lookKey(id))) || {}; } catch {}
   const memory = lookMemory[id];
   const tier = value => Number.isInteger(value) && value >= 0 && value <= PET_GOALS.length ? value : 0;
   const source = memory || stored;
-  return { outfit:typeof source.outfit==='string' ? source.outfit : 'default',
+  const look = { outfit:typeof source.outfit==='string' ? source.outfit : 'default',
     slots: { ...source.slots }, petTier:Math.max(tier(stored.petTier),tier(memory?.petTier)) };
+  const coat = look.slots.coat ?? { id:look.outfit, color:0 };
+  const misplaced = GIFTS.find(gift => gift.id === coat.id && gift.slot !== 'coat');
+  if (misplaced) {
+    look.slots[misplaced.slot] = coat;
+    delete look.slots.coat;
+  }
+  if (misplaced || GIFTS.some(gift => gift.id === look.outfit && gift.slot !== 'coat')) {
+    look.outfit = 'default';
+    if (migrate) writeLook(id, look);
+  }
+  return look;
 }
 function writeLook(id, doc) {
   lookMemory[id] = doc;
@@ -524,7 +549,7 @@ function rememberPetUnlock(st = G.st, id = G.pid) {
   if (tier > look.petTier) writeLook(id,{...look,petTier:tier});
 }
 function unlocked(item, st, look, seen = {}) {
-  if (item.legacy) return !!seen[item.id] || (st?.map?.stars || 0) >= item.stars;
+  if (item.legacy) return !!seen[item.id] || look.slots[item.slot]?.id === item.id || look.outfit === item.id || (st?.map?.stars || 0) >= item.stars;
   if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
   if (item.continent) return !!st?.map?.conts?.[item.id]?.castle;
   return look.petTier >= item.tier;
@@ -543,12 +568,18 @@ function lookSelection(pid,st) {
   }
   return selected;
 }
-function wardrobeArt(id, px=48, extra='') {
-  return `<svg class="spr ${extra}" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true"><use href="#${id}"/></svg>`;
+function wardrobeArt(id, px=48, extra='', viewBox='0 0 48 48') {
+  return `<svg class="spr ${extra}" width="${px}" height="${px}" viewBox="${viewBox}" aria-hidden="true"><use href="#${id}" width="48" height="48"/></svg>`;
 }
 function layerId(item, slot, color) {
   if (!item) return `c016-${slot}-default-${color}`;
   return `c016-${slot}-${item.legacy?'legacy-':''}${item.id}-${item.color}`;
+}
+const GEAR_VIEWBOX = { hat:'6 -8 33 33', bag:'11 12 33 33', coat:'7 12 30 30', ride:'0 10 48 48', pet:'4 5 40 40' };
+function gearArt(item, px=54) {
+  const {slot,id} = item;
+  const sprite = slot==='ride' ? `c016-ride-${id}-idle` : slot==='pet' ? `c016-pet-${id}-0` : layerId({...item,color:0},slot,'teal');
+  return wardrobeArt(sprite,px,'gear-art',GEAR_VIEWBOX[slot]);
 }
 function courierFrame(frame, selection, px, pid, index=0, idleMotion=false) {
   const child = pid === 'daughter' ? 'daughter' : 'son';
@@ -576,10 +607,8 @@ function courierFrame(frame, selection, px, pid, index=0, idleMotion=false) {
   }
   return `<svg class="spr${motion}" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${layers}</svg>`;
 }
-function courier(frame='idle', outfit, px=48, pid=G.pid, st=G.st) {
-  const legacy = GIFTS.find(g=>g.id===outfit);
-  const selection = legacy ? {coat:{...legacy,legacy:true,color:0}} : outfit==='default' ? {} : lookSelection(pid,st);
-  return courierFrame(frame, selection, px, pid, 0, frame==='idle');
+function courier(frame, px, pid=G.pid, st=G.st) {
+  return courierFrame(frame, lookSelection(pid,st), px, pid, 0, frame==='idle');
 }
 function riderLook(moving=false) {
   const selection=lookSelection(G.pid,G.st);
@@ -599,31 +628,27 @@ function renderRider(moving=false) {
 }
 const giftNote = id => {
   const gift=worldGift(id);
-  return gift ? `<span class="world-gift">${wardrobeArt(layerId({...gift,color:0},gift.slot,'teal'),32)} 이 세계의 선물: ${esc(gift.name)}</span>` : '';
+  return gift ? `<span class="world-gift">${gearArt(gift,36)}<span>이 세계의 선물: ${esc(gift.name)}</span></span>` : '';
 };
-function wardrobe(slot='coat') {
+function wardrobe(slot='hat') {
   $('#wardrobe')?.remove();
   rememberPetUnlock();
-  const stars=G.st.map.stars, look=readLook(G.pid), selection=lookSelection(G.pid,G.st), seen=deviceSeen();
-  for (const g of GIFTS) if (stars>=g.stars) seen.gifts[g.id]=true;
+  const stars=G.st.map.stars, look=readLook(G.pid,true), seen=deviceSeen();
+  for (const g of GIFTS) if (unlocked(g,G.st,look,seen.gifts)) seen.gifts[g.id]=true;
   writeDevice();
+  const selection=lookSelection(G.pid,G.st);
   const box=document.createElement('div'); box.id='wardrobe'; box.className='wardrobe-shade';
-  const legacy=slot==='coat' ? `<div class="looks">${[{id:'default',stars:0,name:'기본 모습'},...GIFTS].map(g=>{
-    const active=g.id==='default'?!selection.coat:selection.coat?.id===g.id;
-    return `<button class="look ${active?'selected':''}" data-act="look" data-id="${g.id}" aria-pressed="${active}" ${stars<g.stars&&!seen.gifts[g.id]?'disabled':''}>${courier('idle',g.id,64)}<b>${g.name}</b><small>${stars<g.stars&&!seen.gifts[g.id]?`★ ${g.stars}에 열려요`:active?'입고 있어요':'입기'}</small></button>`;
-  }).join('')}</div>`:'';
-  const items=wardrobeItems().filter(item=>item.slot===slot && !item.legacy);
+  const items=wardrobeItems().filter(item=>item.slot===slot);
   const cards=items.map(item=>{
     const enabled=unlocked(item,G.st,look,seen.gifts), active=selection[slot]?.id===item.id;
-    const icon=slot==='ride'?`c016-ride-${item.id}-idle`:slot==='pet'?`c016-pet-${item.id}-0`:layerId({...item,color:0},slot,'teal');
-    const why=item.world?`${item.world.name} 성을 깨면`:item.continent?`${item.continent.name} 큰 성을 깨면`:`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
-    return `<button class="gear ${enabled?'':'silhouette'}" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="${active}" ${enabled?'':'disabled'}>${wardrobeArt(icon,54)}<b>${esc(item.name)}</b><small>${enabled?(active?'선택했어요':'고르기'):esc(why)}</small></button>`;
+    const why=item.legacy?`★ ${item.stars}에 열려요`:item.world?`${item.world.name} 성을 깨면`:item.continent?`${item.continent.name} 큰 성을 깨면`:`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
+    return `<button class="gear ${enabled?'':'silhouette'}" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="${active}" ${enabled?'':'disabled'}>${gearArt(item)}<b>${esc(item.name)}</b>${item.legacy?'<span class="star-gift">별 선물</span>':''}<small>${enabled?(active?'선택했어요':'고르기'):esc(why)}</small></button>`;
   }).join('');
   const active=selection[slot];
   const colors=active?`<div class="gear-colors" aria-label="색 고르기">${COLOR_GOALS.map((goal,i)=>`<button class="sec" data-act="gear-color" data-slot="${slot}" data-color="${i}" aria-pressed="${active.color===i}" ${stars<goal?'disabled':''}>${['기본색','색 2','색 3'][i]}${goal?` · ★ ${goal}`:''}</button>`).join('')}</div>`:'';
   box.innerHTML=`<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars} · 별은 줄어들지 않아요</p>
-  <div class="gear-preview">${courier('idle',undefined,80)}</div><nav class="gear-tabs" aria-label="꾸미기 종류">${Object.entries(SLOTS).map(([key,label])=>`<button class="sec" data-act="gear-tab" data-slot="${key}" aria-pressed="${key===slot}">${label}</button>`).join('')}</nav>
-  ${colors}${legacy}<div class="looks">${slot!=='coat'?`<button class="gear" data-act="gear" data-id="default" data-slot="${slot}" aria-pressed="${!active}">기본</button>`:''}${cards}</div>
+  <div class="gear-preview">${courier('idle',80)}</div><nav class="gear-tabs" aria-label="꾸미기 종류">${Object.entries(SLOTS).map(([key,label])=>`<button class="sec" data-act="gear-tab" data-slot="${key}" aria-pressed="${key===slot}">${label}</button>`).join('')}</nav>
+  ${colors}<div class="looks"><button class="gear" data-act="gear" data-id="default" data-slot="${slot}" aria-pressed="${!active}">기본</button>${cards}</div>
   <button class="sec" data-act="look-close">닫기</button></section>`;
   $('#app').append(box); box.querySelector(`[data-act=gear-tab][data-slot=${slot}]`).focus({preventScroll:true});
 }
@@ -777,7 +802,7 @@ function playCardMotion(res, line) {
     return;
   }
   const two = res.combo > 0 && res.combo % 3 === 0;
-  layer.innerHTML = `<span class="last-answer">${esc(res.word.ko || res.word.form)}${line ? ' · ' + esc(line) : ''}</span><span class="mail-flight ${motionOff() ? 'quick' : ''}"><span class="thrower">${courier('throw',undefined,58)}</span>${spr('c014-mail',28,'air-mail')}${two ? spr('c014-mail',25,'air-mail second') + spr('c014-star',30,'combo-glint') : ''}</span>`;
+  layer.innerHTML = `<span class="last-answer">${esc(res.word.ko || res.word.form)}${line ? ' · ' + esc(line) : ''}</span><span class="mail-flight ${motionOff() ? 'quick' : ''}"><span class="thrower">${courier('throw',58)}</span>${spr('c014-mail',28,'air-mail')}${two ? spr('c014-mail',25,'air-mail second') + spr('c014-star',30,'combo-glint') : ''}</span>`;
 }
 function reveal(res) {
   G.busy = true; lock(true); save(); const w = res.word; const card = $('#card'); const shielded = G.run.shieldUsed > (G.shieldSeen || 0); G.shieldSeen = G.run.shieldUsed;
@@ -1036,7 +1061,6 @@ async function onClick(e) {
     case 'sfx': G.sound.setSfx(!G.sound.sfx); savePref(); G.sound.sfxPlay('tap'); return today(G.pid);
     case 'key-help': return banner('성을 깨면 열쇠를 얻고, 열쇠로 다음 세계 문을 열어요 <button data-act=hide>확인</button>');
     case 'wardrobe': return wardrobe();
-    case 'look': return wear(b.dataset.id);
     case 'gear-tab': return wardrobe(b.dataset.slot);
     case 'gear': return wear(b.dataset.id,b.dataset.slot);
     case 'gear-color': { const choice=lookSelection(G.pid,G.st)[b.dataset.slot]; if (choice) return wear(choice.id,b.dataset.slot,Number(b.dataset.color)); return; }
@@ -1058,7 +1082,7 @@ async function onClick(e) {
       const id = b.dataset.id;
       if (!FAST && !motionOff()) {
         const face = b.querySelector('.home-courier');
-        if (face) { face.innerHTML = courier('wave', undefined, 80, id, homeRecord(id)); face.classList.add('departing'); }
+        if (face) { face.innerHTML = courier('wave', 80, id, homeRecord(id)); face.classList.add('departing'); }
       }
       try {
         await G.sound.unlock();
@@ -1069,6 +1093,7 @@ async function onClick(e) {
     case 'today': return today(G.pid);
     case 'atlas': return atlas();
     case 'atlas-list': return atlas(null, true);
+    case 'atlas-gift': { const gift=worldGift(b.dataset.id); if (gift) return banner(`<span>${esc(gift.world.name)} · 선물 ${esc(gift.name)} · ${unlocked(gift,G.st) ? '받았어요' : '성을 깨면 열려요'}</span><button data-act="hide">확인</button>`); return; }
     case 'goworld': if (G.ix.byId[b.dataset.id] && worldOpen(G.ix,G.ix.byId[b.dataset.id],G.st)) return today(G.pid, '', b.dataset.id); return;
     case 'finale': { const c = atlasView(G.ix, G.st).find((x) => x.id === b.dataset.id); if (c.finale.status === 'open') return start('finale:' + c.id);
       $('#msg').textContent = c.finale.status === 'cleared' ? '이 큰 성은 이미 깼어요.' : c.finale.status === 'pending' ? MSG.soon : c.gate ? `${c.name}: ${continentGateText(c.gate)}. 세계 성을 모두 깨고 마을을 더 돌아봐요. 왕관은 선택해서 모아요.` : `${c.name}의 왕관을 모두 모으면 열려요 (${c.crowns}/${c.total}).`; return; }
