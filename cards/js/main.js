@@ -367,7 +367,7 @@ function today(id, msg = '', wid = null) {
   const hint = msg || (v.bat.full ? (v.bat.byDebt ? '미뤄 둔 복습이 쌓여 박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요' : '박쥐 떼가 몰려왔어요! 박쥐 시험을 치러야 해요') : stormHint || story || (v.continent.finale.status === 'open' ? `${v.continent.name}의 세계 성과 마을 조건을 채웠어요. 세계 지도에서 큰 성에 도전해요!` : v.monster.present ? `복습 ${v.monster.count}장이 쌓였어요. 몬스터를 물리치면 별이 2배!` : '가고 싶은 길을 골라요'));
   const dock = (id, inner, label, status, extra = '') => `<button class="dockbtn ${status} ${extra}" data-act="node" data-id="${id}" aria-label="${esc(label)}">${inner}<span class="lbl">${esc(label)}</span></button>`;
   $('#app').innerHTML = `<div class="page map"><button class="back" data-act="home" aria-label="처음으로">‹</button>
-  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><button class="chip gift-chip" data-act="wardrobe">${spr('c011-gift-closed', 24)} ${esc(nextGift(v.stars))}</button><button class="chip" title="열쇠" data-act="key-help">${spr('key', 24)} ${v.keys}</button>
+  <div class="maphud"><b class="who">${esc(name(id))}</b><span class="chip" title="별">${spr('star', 24)} ${v.stars}</span><button class="chip gift-chip wardrobe-btn" data-act="wardrobe" aria-label="꾸미기: 모자·가방·옷 바꾸기">${courier('idle', 30, id, st)}<b>꾸미기</b><small>${spr('c011-gift-closed', 18)} ${esc(nextGift(v.stars))}</small></button><button class="chip" title="열쇠" data-act="key-help">${spr('key', 24)} ${v.keys}</button>
     <button class="tgl" data-act="atlas">세계 지도</button>
     <button class="tgl ${G.sound.musicOn ? 'on' : ''}" data-act="music" aria-pressed="${G.sound.musicOn}" aria-label="음악" title="음악">♪</button><button class="tgl ${G.sound.sfx ? 'on' : ''}" data-act="sfx" aria-pressed="${G.sound.sfx}" aria-label="효과음" title="효과음">${spr('sound', 24)}</button></div>
   <div class="wtitle" id="wtitle"><b>${esc(v.continent.name)} · ${esc(w.name)}</b><span>${v.unitsDone}/${v.units}칸${v.crown ? ' · 왕관' : v.castle.status === 'cleared' ? ' · 열쇠' : ''}</span></div>
@@ -381,8 +381,8 @@ function today(id, msg = '', wid = null) {
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
     ${v.review.present ? dock('review', spr('envelope', 48), `복습 ${v.review.count}장`, v.bat.full ? 'blocked' : 'open') : ''}
     ${dock('bonus', `<svg class="spr" width="48" height="48" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`, '번개 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}</div>
-  <div class="bag"><span class="mut">가방</span>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></button>`).join('')}
-    <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '다음 판에 쓸 아이템을 골라요'}</span></div>
+  <div class="bag"><b class="bag-title">아이템 가방</b><button class="help-q" data-act="items-help" aria-label="아이템은 어떻게 써요?">?</button>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></button>`).join('')}
+    <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '아이템을 눌러 고르면 다음 판에서 저절로 써요'}</span></div>
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
     <div class="legend"><span class="g3">${spr(MEDAL[3], 24)} 금 ${c[3]}</span><span class="g2">${spr(MEDAL[2], 24)} 은 ${c[2]}</span><span class="g1">${spr(MEDAL[1], 24)} 동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
     <button class="sec" data-act="album">이 세계의 카드첩</button></div>
@@ -963,7 +963,8 @@ function begin(node, rng) {
   if (!FAST && !motionOff() && ['castle','finale'].includes(node.kind) && G.view === 'card') {
     $('.card-motion').innerHTML = `<button class="guardian-entry" data-act="motion-skip" aria-label="등장 장면 건너뛰기">${spr('c011-door-open',70)}${spr('c014-torch',30,'torch')}${spr(G.displayBoss.id,65,'entry-guard')}</button>`;
   }
-  if (G.view === 'card') { $('#monster-hint').textContent = '이 길의 몬스터가 나타났어요!'; later(() => { if (G.view === 'card') paintHud(); },900); }
+  const using = G.run ? Object.keys(ITEMS).filter((k) => (k === 'shield' ? G.run.items.shield : G.run.items.flame)).map((k) => ITEMS[k].name) : [];   // a run with nothing to show has already ended
+  if (G.view === 'card') { $('#monster-hint').textContent = using.length ? `${using.join('·')}을 가지고 왔어요!` : '이 길의 몬스터가 나타났어요!'; later(() => { if (G.view === 'card') paintHud(); }, using.length ? 1800 : 900); }
 }
 function displayMonster(node,N) {
   const w = node.kind === 'finale' ? G.ix.continents.find((c) => c.id === node.cid)?.worlds.at(-1) || G.world : G.world;
@@ -1079,7 +1080,7 @@ function endRun(reason) {
   const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : ww.castle?.final ? '성 시험 통과!' : '성 시험 결과',
     finale: ww.finale?.final ? '큰 성 시험 통과!' : ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요', review: `${n}판 끝!` , practice: '연습 끝!'}[node.kind];
   const lines = rw.stars > 0 ? [`<div class="gain">${spr('star', 32)} +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
-  if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
+  if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div><p class="mut small">지도 아래 아이템 가방에서 골라 다음 판에 써요.</p>`);
   if (ww.key) lines.push(`<div class="gain" id="keygain">${spr('key', 32)} ${esc(w.key?.name || '열쇠')}를 얻었어요</div>`);
   if (ww.crown) lines.push(`<div class="gain" id="crowngain">${spr('crown', 32)} 이 세계의 왕관을 얻었어요</div>`);
   if (ww.key && w.outro) lines.push(`<p class="story">${esc(w.outro)}</p>`);
@@ -1194,7 +1195,7 @@ function ltEnd() {
   clearInterval(G.timer); if (G.view !== 'lightning') return; G.view = 'end'; band(false); G.sound.stop(); G.sound.sfxPlay('lightning-end'); G.sound.scene(musicOf(G.world), { worldId: G.world.id });
   const r = settleLightning(G.st, G.lt, todayISO()); save(); G.sync?.flush().catch(() => {}); const sc = G.lt.score;
   $('#app').innerHTML = `<div class="page center"><h1 class="title">번개 끝!</h1><div class="tiles"><div><b>${sc}</b><span>맞힌 수</span></div><div><b>${G.st.map.best}</b><span>내 최고 기록</span></div></div>
-  ${r.newBest ? '<div class="gain">새 기록!</div>' : ''}${r.item ? `<div class="gain">${spr(ITEM_SPR[r.item], 40)} ${ITEMS[r.item].name}을 얻었어요</div>` : r.first ? '<p class="mut">3개 이상 맞히면 아이템을 줘요</p>' : ''}
+  ${r.newBest ? '<div class="gain">새 기록!</div>' : ''}${r.item ? `<div class="gain">${spr(ITEM_SPR[r.item], 40)} ${ITEMS[r.item].name}을 얻었어요</div><p class="mut small">지도 아래 아이템 가방에서 골라 다음 판에 써요.</p>` : r.first ? '<p class="mut">3개 이상 맞히면 아이템을 줘요</p>' : ''}
   <button class="go" data-act="today">▶ 지도로</button></div>`;
   G.lt = null;
 }
@@ -1517,6 +1518,8 @@ async function onClick(e) {
     case 'st-quit': return stormEnd('left');
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
+    case 'items-help': return banner(`<div class="items-help"><b>아이템 가방</b>${Object.entries(ITEMS).map(([k, it]) => `<p>${spr(ITEM_SPR[k], 28)} <b>${esc(it.name)}</b>: ${esc(it.info)}</p>`).join('')}
+      <p><b>얻는 법</b>: 복습 몬스터를 물리치면 하나, 번개 집에서 3개 이상 맞히면 하나(하루 한 번).</p><p><b>쓰는 법</b>: 지도 아래 가방에서 아이템을 눌러 고르면, 다음에 시작하는 판에서 저절로 써요. 판 위쪽에 그림이 보이면 쓰는 중이에요. 쓰지 않은 방패 버섯은 가방으로 돌아와요.</p></div><button data-act="hide">알겠어요</button>`);
     case 'final-practice': { const n = G.finalPractice; G.finalPractice = null; if (!n) return today(G.pid); await G.sound.unlock(); return begin(n, mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 31)); }
     case 'game-again': { const n = worldView(G.ix, G.world, G.st, todayISO()).nodes.find((x) => x.id === b.dataset.id); return n && n.status !== 'locked' ? startGame(n) : today(G.pid); }
     case 'lt-yes': return ltAnswer(true);

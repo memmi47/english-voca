@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
 
 const repo = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const scripts = ['install_mac.sh', 'uninstall_mac.sh', 'update_mac.sh'];
+const scripts = ['install_mac.sh', 'uninstall_mac.sh', 'update_mac.sh', 'backup_add_mac.sh'];
 const serverLabel = 'com.english-voca.server', backupLabel = 'com.english-voca.backup';
 const write = (p, text) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, text); };
 const hash = (p) => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
@@ -77,10 +77,10 @@ function fixture() {
   f.env = { ...process.env, HOME: f.home, PATH: f.bin + path.delimiter + process.env.PATH, MAC_FAKE_LOG: f.log, MAC_FAKE_STATE: f.state, MAC_FAKE_GAME: f.game, MAC_FAKE_DATA: f.data };
   return f;
 }
-// Only install_mac.sh reads an answer (y, from the stdin it keeps on fd 3). The other scripts hand their stdin to python
+// Only install_mac.sh and backup_add_mac.sh read an answer (y, from the stdin they keep on fd 3). The other scripts hand their stdin to python
 // (heredoc), so a line written to it could land after the pipe closed (EPIPE, seen once on CI 2026-11-19): they get none.
 function call(f, script, args = [], extra = {}) {
-  const result = spawnSync('bash', [path.join(f.game, 'tools', script), ...args], { env: { ...f.env, ...extra }, encoding: 'utf8', timeout: 30000, ...(script === 'install_mac.sh' ? { input: 'y\n' } : { stdio: ['ignore', 'pipe', 'pipe'] }) });
+  const result = spawnSync('bash', [path.join(f.game, 'tools', script), ...args], { env: { ...f.env, ...extra }, encoding: 'utf8', timeout: 30000, ...(['install_mac.sh', 'backup_add_mac.sh'].includes(script) ? { input: 'y\n' } : { stdio: ['ignore', 'pipe', 'pipe'] }) });
   assert.ifError(result.error); return { ...result, out: result.stdout + result.stderr };
 }
 const install = (f) => { const r = call(f, 'install_mac.sh', ['--data', f.data, '--backup-repo', f.backup]); assert.equal(r.status, 0, r.out); return r; };
@@ -177,4 +177,21 @@ test('MAC6: update copies before pull, preserves older snapshots and leaves a ru
   assert.equal(hash(path.join(f.data, 'p.son.json')), recordHash); assert.deepEqual(tree(f.source), original); assert.deepEqual(tree(f.backup), privateBackup);
   fs.symlinkSync(path.join(f.backup, 'keep.txt'), path.join(f.data, 'linked.json'));
   const saved = tree(f.root), denied = call(f, 'update_mac.sh'); assert.notEqual(denied.status, 0); assert.deepEqual(tree(f.root), saved);
+});
+
+test('MAC7: a daily backup is added to an install made without one: one agent, the record folder read from the server settings, nothing else changed', () => {
+  const f = fixture(); const r0 = call(f, 'install_mac.sh', ['--data', f.data]); assert.equal(r0.status, 0, r0.out);
+  assert(!fs.existsSync(plistPath(f, backupLabel)));
+  const before = tree(f.root), dry = call(f, 'backup_add_mac.sh', ['--backup-repo', f.backup, '--dry-run']);
+  assert.equal(dry.status, 0, dry.out); assert.match(dry.out, /21:07/); assert.deepEqual(tree(f.root), before);
+  const notGit = call(f, 'backup_add_mac.sh', ['--backup-repo', f.data]); assert.notEqual(notGit.status, 0); assert.match(notGit.out, /git clone|겹치/); assert.deepEqual(tree(f.root), before);
+  const serverBefore = fs.readFileSync(plistPath(f, serverLabel)), dataBefore = tree(f.data), privateBefore = tree(f.backup);
+  const r = call(f, 'backup_add_mac.sh', ['--backup-repo', f.backup]); assert.equal(r.status, 0, r.out);
+  const job = plist(plistPath(f, backupLabel));
+  assert.equal(job.Label, backupLabel); assert.deepEqual(job.ProgramArguments, ['/bin/bash', path.join(f.game, 'tools/backup_state.sh')]);
+  assert.equal(job.EnvironmentVariables.CARDS_STATE_DIR, f.data); assert.equal(job.EnvironmentVariables.CARDS_BACKUP_REPO, f.backup); assert.deepEqual(job.StartCalendarInterval, { Hour: 21, Minute: 7 });
+  assert(calls(f).some((c) => c.cmd === 'launchctl' && c.args[0] === 'bootstrap' && c.args[2] === plistPath(f, backupLabel)));
+  assert.deepEqual(fs.readFileSync(plistPath(f, serverLabel)), serverBefore); assert.deepEqual(tree(f.data), dataBefore); assert.deepEqual(tree(f.backup), privateBefore);
+  const again = call(f, 'backup_add_mac.sh', ['--backup-repo', f.backup]); assert.notEqual(again.status, 0); assert.match(again.out, /이미 있습니다/);
+  const none = fixture(); const n = call(none, 'backup_add_mac.sh', ['--backup-repo', none.backup]); assert.notEqual(n.status, 0); assert.match(n.out, /먼저 tools\/install_mac.sh/);
 });

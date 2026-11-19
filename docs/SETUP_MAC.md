@@ -47,6 +47,17 @@ bash tools/install_mac.sh --backup-repo "$HOME/english-voca-state"
 
 `com.english-voca.backup.plist`가 매일 Mac의 현지 시각 **21:07**에 기존 `tools/backup_state.sh`를 실행한다. `CARDS_STATE_DIR`와 `CARDS_BACKUP_REPO`에 선택한 경로를 명시한다. 설치 중 백업을 실행하거나 백업 저장소 파일을 변경하지 않는다. 백업 로그는 `~/Library/Logs/english-voca-backup.log`다. 실제 비공개 원격 확인과 전송은 기존 백업 스크립트가 담당하며 이 카드에서 그 동작을 변경하지 않았다.
 
+### 이미 설치한 뒤에 매일 백업 추가하기
+
+처음 설치할 때 `--backup-repo`를 주지 않았다면, 서버와 기록은 그대로 두고 매일 21:07 백업만 더할 수 있다(2026-11-20).
+
+```sh
+bash tools/backup_add_mac.sh --backup-repo "$HOME/english-voca-state" --dry-run   # 계획만 보기
+bash tools/backup_add_mac.sh --backup-repo "$HOME/english-voca-state" --now       # y 입력 후 예약하고 한 번 바로 백업
+```
+
+기록 폴더는 설치된 서버 설정에서 읽는다. 백업 설정이 이미 있으면 바꾸지 않고 멈춘다.
+
 원격 주소·push 설정을 바꾼 저장소에서는 [C-007의 백업 검토 사항](https://github.com/memmi47/english-voca/pull/14)도 확인한다. 실제 백업이 도착했는지는 비공개 저장소에서 최근 기록을 확인한다. Mac에 사용자의 Git 인증이 설정돼 있어야 하며 설치기는 토큰이나 암호를 저장하지 않는다. Mac이 꺼져 있거나 로그아웃한 동안의 예약 실행은 보장하지 않는다.
 
 ## iPad에서 접속과 확인

@@ -1683,6 +1683,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('PN4: five wrong codes in a row make it wait 30 seconds', /잠시 뒤에/.test(await pn.textContent('#pinmsg')));
   await pnCtx.close();
 
+  // IT. the map names its dressing-up button and explains the item bag (user 2026-11-20)
+  const itCtx = await browser.newContext({ viewport: { width: 1180, height: 820 } });
+  const itp = await open(itCtx, 'today=2026-12-01&triage=off&seed=7&sound=off&fast=1'); await itp.click('[data-act=pick][data-id=son]'); await itp.waitForSelector('.world');
+  const itBtn = await itp.textContent('.wardrobe-btn'); await itp.click('[data-act=items-help]'); await itp.waitForSelector('#banner:not([hidden]) .items-help');
+  const itHelp = await itp.textContent('.items-help'); await itp.click('[data-act=hide]'); await itp.click('.wardrobe-btn'); await itp.waitForSelector('#wardrobe');
+  ok('IT1: the map has a "꾸미기" button (with the next gift) that opens dressing-up, and "아이템 가방 ?" says how items are earned and used', /꾸미기/.test(itBtn) && /다음 선물|모두 열었/.test(itBtn) && /얻는 법/.test(itHelp) && /쓰는 법/.test(itHelp) && /아이템 가방/.test(await itp.textContent('.bag-title')), itBtn);
+  await itCtx.close();
+
   // PO. the world's post office (user request 2026-11-18): the world's words 10 at a time before any tile run; tapped = can read
   const poCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const po = await open(poCtx, 'today=2026-12-01&seed=7&sound=off&fast=1'); await po.click('[data-act=pick][data-id=son]'); await po.waitForSelector('.letters');
