@@ -249,6 +249,8 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .atlas-stop .wcard:hover:not(:disabled) b,.atlas-stop .wcard:focus-visible b,.atlas-stop .wcard.here b{background:#ffeac0}
 .atlas-stop .wcard b{background:var(--paper);box-shadow:2px 2px var(--ink);border:2px solid var(--ink);padding:2px 4px;font-size:13px;line-height:1.2;word-break:keep-all}
 .atlas-stop .wcard i,.atlas-stop .continent-gate{background:var(--paper);padding:0 3px;font-size:10px;text-shadow:none}
+/* the word count under each world: a clear face (not the pixel font at 10px, which blurs), dark ink, framed */
+.atlas-stop .wcard i{font-family:var(--word);font-weight:800;font-size:14px;line-height:1.25;color:var(--ink);border:2px solid var(--ink);padding:0 5px;-webkit-font-smoothing:antialiased}
 .atlas-picture{position:relative;display:inline-flex;align-items:center;justify-content:center}
 .atlas-picture .world-door{position:absolute;left:38px;bottom:0;min-height:0}
 .atlas-list-stop .atlas-picture .world-door{position:static}
