@@ -458,3 +458,5 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .final .hkeys button{height:44px}.final .title{margin-bottom:2px}
 .xwrap{display:flex;gap:18px;justify-content:center;align-items:flex-start;flex-wrap:wrap}.xwrap .xclues{flex-direction:column;align-items:stretch;max-width:260px;margin:6px 0}.xwrap .xclue{text-align:left}
 .xkeys{grid-template-columns:repeat(10,1fr);max-width:720px}.xkeys .padfn{font:700 16px var(--pix);background:#ffe9a8}.xkeys .xcheck{grid-column:span 2;background:var(--go);color:#fff}
+.page.dev{max-width:980px}.page.dev h2{margin:18px 0 6px}.devgames{border-collapse:collapse;margin:0 auto}.devgames th{text-align:left;padding:4px 10px}.devgames td{padding:3px}.devgames .sec{padding:6px 10px;font-size:15px}
+.page.dev .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.page.dev select{font-size:16px;padding:4px}

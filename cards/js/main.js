@@ -1,7 +1,7 @@
 // Flashcard game: screens. Rules live in deck.js (cards), map.js (review load, items), world.js (worlds, castles); audio in sound.js.
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG, firmCount } from './deck.js';
 import { Sound } from './sound.js';
-import { GAME_NAMES, gamePlan, playLevel, mountGame } from './games.js';
+import { GAME_NAMES, GAME_TYPES, gamePlan, playLevel, mountGame } from './games.js';
 import { HANG, hangmanPick, spellable, buildCrossword, mountHangman, mountCrossword } from './wordgames.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope, setHardness } from './map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, goldStamp, finishCastle, finishFinale, FINAL, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
@@ -16,6 +16,9 @@ const DATA = qs.get('set') === 'demo' ? 'data/demo/' : 'data/';   // ?set=demo: 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const PROFILES = ['son', 'daughter'];
+// The developer playground's own record (parent screen > 개발자 놀이터). Kept on this device only: the sync sends only the
+// children's records and meta (sync.DOCS), and the Mac server refuses any other name. It never touches a child's record.
+const DEV = 'dev';
 const BOSSES = ['👾', '🦖', '🐙', '🤖', '🐲', '👹'];        // used only when a world lists no boss
 const GRADE = ['', '동', '은', '금'];
 const MEDAL = ['', 'medal-bronze', 'medal-silver', 'medal-gold'];
@@ -101,7 +104,7 @@ async function openProfile(id) {
   const rec = loadRec(id); G.notice = rec.damaged && rec.kept === false ? '이 기기에 있던 기록을 읽을 수 없는데, 저장 공간이 모자라 따로 보관하지도 못했어요. 그 기록을 지우지 않도록 이 기기에서는 기록을 바꾸지 않아요. 부모 기록 화면에서 서버나 백업 파일로 복원해 주세요.' : rec.damaged ? '이 기기에 있던 기록을 읽을 수 없어 따로 보관했어요. 서버나 백업 파일의 기록으로 이어 갑니다(부모 기록 화면에서 복원할 수 있어요).' : '';   // set aside before the server copy is fetched
   if (G.sync?.available) { try { await G.sync.reconcile('p.' + id); } catch {} } return today(id);
 }
-const name = (id) => G.meta.names[id];
+const name = (id) => G.meta.names[id] || (id === DEV ? '개발자 놀이터' : id);
 
 const PREF = 'cards.v0.pref';                           // this device only: music on/off, effects on/off
 function loadPref() {
@@ -1269,6 +1272,70 @@ function finalLost(node, key, missed) {
   <p><button class="link" data-act="today">지도로</button></p></div>`;
 }
 
+// ---- developer playground (parent screen): every playhouse game at every level, the castle word games for any world or
+// continent, and any world's map in a separate record (DEV). Nothing here reads or writes a child's record. ----
+const devRec = (day) => ({ st: 'done', due: null, firstDay: day, lastDay: day, lapses: 0 });
+function devScreen(msg = '') {
+  clearPresentation(); stopGame(); G.view = 'dev'; hideBanner(); band(false); G.pid = null; G.st = null;
+  const worlds = G.ix.worlds.map((w, i) => `<option value="${esc(w.id)}">${i + 1}. ${esc(G.ix.contOf[w.id].name)} · ${esc(w.name)}</option>`).join('');
+  const conts = G.ix.continents.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  $('#app').innerHTML = `<div class="page dev"><button class="back" data-act="parent" aria-label="부모 기록으로">‹</button><h1 class="title center">개발자 놀이터</h1>
+  <p class="center mut">아이들 기록과 따로 이 기기에만 저장되고, Mac 서버로 보내지 않아요.</p><p class="msg small center" id="devmsg">${esc(msg)}</p>
+  <h2>미니게임 (단계 바로 고르기)</h2><table class="devgames">${GAME_TYPES.map((t) => `<tr><th>${GAME_NAMES[t]}</th>${[1, 2, 3, 4, 5].map((l) => `<td><button class="sec" data-act="dev-game" data-type="${t}" data-level="${l}">${l}단계</button></td>`).join('')}</tr>`).join('')}</table>
+  <h2>성 마지막 관문</h2>
+  <p class="row">세계 <select id="dev-world">${worlds}</select> 그림 <select id="dev-style"><option value="B">B 흔들다리</option><option value="A">A 박쥐</option><option value="C">C 풍선</option></select> <button class="sec" data-act="dev-hang">행맨</button></p>
+  <p class="row">대륙 <select id="dev-cont">${conts}</select> <button class="sec" data-act="dev-cross">십자말풀이</button> <button class="sec" data-act="dev-hang3">행맨 3연속</button></p>
+  <h2>세계 바로 가기</h2><p class="small">고른 세계 앞의 세계와 대륙 성은 모두 깬 상태로 시작해요. 놀이집 단계는 그 세계의 실제 단계예요.</p>
+  <p class="row"><select id="dev-goto">${worlds}</select> <label><input type="checkbox" id="dev-all"> 이 세계의 마을도 모두 깬 상태로(성 시험·행맨 바로 해 보기)</label> <button class="go" data-act="dev-world">가기</button></p>
+  <p><button class="link" data-act="dev-reset">놀이터 기록 지우기</button></p></div>`;
+}
+function devShell(title, sub, back) {
+  $('#app').innerHTML = `<div class="page center game"><button class="back" data-act="${back}" aria-label="놀이터로">‹</button><h1 class="title">${esc(title)}</h1><p class="game-level" id="glevel">${sub}</p><p class="mut" id="gstatus"></p>
+  <div id="gamebox" class="gamebox"></div><p class="mut small" id="ghint"></p></div>`;
+}
+function devDone(text, again) {
+  G.game = null; $('#app').innerHTML = `<div class="page center"><h1 class="title">${esc(text)}</h1><p class="mut">놀이터에서는 도장도 기록도 남지 않아요.</p>
+  <button class="sec" ${again}>한 번 더</button> <button class="go" data-act="dev">놀이터로</button></div>`;
+}
+async function devGame(type, level) {
+  await G.sound.unlock(); clearPresentation(); G.view = 'game'; band(false); hideBanner(); G.sound.scene('play'); const w = G.world || G.ix.worlds[0];
+  devShell(GAME_NAMES[type], `<b>${level}단계</b> · 놀이터`, 'dev'); $('#gamebox').dataset.game = type; $('#gamebox').dataset.level = level;
+  const pics = [...(w.bossSprites || []), ...GAME_PICS].filter((id, i, a) => a.indexOf(id) === i && document.getElementById(id));
+  const g = (G.game = { api: null }); const again = `data-act="dev-game" data-type="${type}" data-level="${level}"`;
+  const text = (sel) => (t) => { const e = $(sel); if (e) e.textContent = t; };
+  g.api = mountGame(type, { root: $('#gamebox'), level, rng: mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + level), fast: FAST, sfx: (x) => G.sound.sfxPlay(x), tone, spr,
+    mbox: (px) => `<svg class="spr" width="${px}" height="${px}" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`,
+    pic: (i, px) => spr(pics[i % pics.length], px), status: text('#gstatus'), hint: text('#ghint'),
+    win: () => { if (G.game !== g) return; g.api.stop(); G.sound.sfxPlay('stamp'); devDone('이겼어요!', again); },
+    fail: () => { if (G.game !== g) return; g.api.stop(); G.sound.sfxPlay('miss'); devDone('졌어요', again); } });
+}
+async function devFinal(kind, id, style) {
+  await G.sound.unlock(); clearPresentation(); G.view = 'final'; band(false); hideBanner(); G.sound.scene('castle');
+  const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 7); const worlds = kind === 'hang' ? [G.ix.byId[id]] : G.ix.continents.find((c) => c.id === id).worlds;
+  const words = shuffle(worlds.flatMap((w) => worldWords(w)).map((x) => G.byId[x]).filter(Boolean), rng);
+  let mount = null, title = '';
+  if (kind === 'hang') { const w = hangmanPick(words, [], rng); title = `${G.ix.byId[id].name} 행맨`; if (w) mount = (ctx) => mountHangman(ctx, [w], HANG.lives); }
+  else if (kind === 'cross') { const cw = buildCrossword(words.slice(0, 80), rng); title = '대륙 십자말풀이'; if (cw) mount = (ctx) => mountCrossword(ctx, cw); }
+  else { const pool = words.filter((w) => spellable(w.form, 4)).slice(0, HANG.multiWords); title = '행맨 3연속'; if (pool.length) mount = (ctx) => mountHangman(ctx, pool, HANG.multiLives); }
+  if (!mount) return devScreen('이 세계에는 맞출 단어가 없어요.');
+  const again = `data-act="dev-${kind}" data-id="${esc(id)}" data-style="${style}"`;
+  $('#app').innerHTML = `<div class="page center final"><button class="back" data-act="dev" aria-label="놀이터로">‹</button><h1 class="title">${esc(title)}</h1><p class="mut">놀이터 · 그림 ${style}</p><div id="finalbox" class="finalbox" data-final="${kind}"></div></div>`;
+  const g = (G.game = { api: null }); const say = (w) => { G.sound.unlock().then(() => G.sound.play(w.id, w.form)).catch(() => {}); };
+  g.api = mount({ root: $('#finalbox'), rng, fast: FAST, spr, sfx: (x) => G.sound.sfxPlay(x), say, style, reveal: false, courierId: 'courier-teal-idle',
+    win: () => { if (G.game !== g) return; devDone('관문을 넘었어요!', again); }, lose: () => { if (G.game !== g) return; devDone('박쥐가 이겼어요', again); } });
+}
+// A record that stands just before `wid`: every earlier world and continent castle passed, its words met. With `all`, the
+// world's own words are met too, so its castle (exam, then hangman) can be played at once.
+function devWorld(wid, all) {
+  const day = todayISO(); const st = newState(DEV); const m = ensureMap(st); const idx = G.ix.worlds.findIndex((w) => w.id === wid); m.bat.cap = 80;
+  G.ix.worlds.slice(0, idx).forEach((w) => { for (const x of worldWords(w)) st.words[x] = devRec(day); m.worlds[w.id] = { castle: day, cleared: {}, stamps: {}, seen: day }; m.keys++; });
+  for (const c of G.ix.continents) if (c.worlds.every((w) => G.ix.worlds.indexOf(w) < idx)) m.conts[c.id] = { castle: day };
+  const target = G.ix.byId[wid]; m.worlds[wid] = { castle: null, cleared: {}, stamps: {}, seen: null };
+  if (all) { for (const x of worldWords(target)) st.words[x] = devRec(day); m.worlds[wid].sorted = worldWords(target).length; }
+  m.at = wid; try { localStorage.setItem(KEY(DEV), JSON.stringify(st)); } catch { return devScreen('이 기기에 저장할 공간이 없어요.'); }
+  return today(DEV, '', wid);
+}
+
 // ---- album: the cards of this world ----
 function album() {
   G.view = 'album'; const st = G.st; const ids = worldWords(G.world); const ws = ids.map((id) => G.byId[id]); const c = gradeCounts(st, ws);
@@ -1297,7 +1364,8 @@ function parent() {
   <div class="safety" id="safety"><b>기록 보관 상태</b><span>① 이 기기: ${G.volatile ? '저장 불가' : '저장 중'}</span><span id="sf-server">② Mac 서버: 확인 중…</span><span id="sf-daily">③ 날짜별 사본: 확인 중…</span><span id="sf-off">④ 외부 백업(GitHub): 확인 중…</span></div>
   <p class="msg small" id="pmsg">${esc(G.pmsg || '')}</p>
   ${PROFILES.map(block).join('')}
-  <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p></div>`;
+  <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p>
+  <h2>개발자 놀이터</h2><p class="small">모든 미니게임·단계, 성 마지막 관문, 아무 세계나 바로 해 볼 수 있어요. 아이들 기록과 따로 이 기기에만 저장돼요.</p><p><button class="sec" data-act="dev">개발자 놀이터 열기</button></p></div>`;
   paintSafety();
 }
 // Word forms (storm.js): finished forms / forms that can be asked (their base word was met). Nothing about the other child.
@@ -1395,6 +1463,11 @@ async function onClick(e) {
     case 'album': return album();
     case 'peek': { const w = G.byId[b.dataset.id]; if (!w) return; const p = $('#peek'); if (p) p.innerHTML = `<b>${esc(w.form)}</b> ${esc(w.ko)} ${w.emoji || ''}`; await G.sound.unlock(); return G.sound.play(w.id, w.form); }
     case 'parent': G.pmsg = ''; return parent();
+    case 'dev': return devScreen();
+    case 'dev-game': return devGame(b.dataset.type, Number(b.dataset.level));
+    case 'dev-hang': case 'dev-cross': case 'dev-hang3': { const kind = b.dataset.act.slice(4); const id = b.dataset.id || (kind === 'hang' ? $('#dev-world').value : $('#dev-cont').value); return devFinal(kind, id, b.dataset.style || ($('#dev-style') ? $('#dev-style').value : 'B')); }
+    case 'dev-world': return devWorld($('#dev-goto').value, $('#dev-all').checked);
+    case 'dev-reset': localStorage.removeItem(KEY(DEV)); return devScreen('놀이터 기록을 지웠어요.');
     case 'export': return download(`cards_${b.dataset.id}_${todayISO()}.json`, load(b.dataset.id));
     case 'reset': if (confirm(`${name(b.dataset.id)}의 카드 기록을 이 기기에서 지울까요?${G.syncStatus?.available ? ' (Mac 서버의 사본은 남아 있고 다음에 다시 불러옵니다)' : ''}`)) { localStorage.removeItem(KEY(b.dataset.id)); } return parent();
     case 'names': G.meta.names = { son: $('#nm-son').value.trim() || '아들', daughter: $('#nm-daughter').value.trim() || '딸' }; localStorage.setItem('cards.v0.meta', JSON.stringify(G.meta)); G.sync?.changed('meta'); return parent();

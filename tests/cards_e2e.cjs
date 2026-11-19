@@ -1639,6 +1639,26 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('FN6: the continent castle ends with a crossword (or three hangman words); typing each word from its clue wins and opens the next continent', fcS.map.conts.d1.castle === '2026-12-01', kindC);
   await fnCtx.close();
 
+  // DV. developer playground (parent screen): any game at any level, the castle word games, any world; children untouched
+  const dvCtx = await browser.newContext({ viewport: { width: 1180, height: 820 } });
+  const dv = await open(dvCtx, 'today=2026-12-01&triage=off&seed=7&sound=off&fast=1&final=on', true);
+  await dv.click('[data-act=pick][data-id=son]'); await dv.waitForSelector('.world'); await dv.click('[data-act=home]'); await dv.waitForSelector('.profiles');
+  const dvKids = await dv.evaluate(() => [localStorage.getItem('cards.v0.p.son'), localStorage.getItem('cards.v0.p.daughter')]);
+  await dv.click('[data-act=parent]'); await dv.click('[data-act=dev]'); await dv.waitForSelector('.devgames');
+  ok('DV1: the playground lists every game with levels 1-5', (await dv.$$('[data-act=dev-game]')).length === 40);
+  await dv.click('[data-act=dev-game][data-type=shell][data-level="5"]'); await dv.waitForSelector('.gamebox[data-game=shell]');
+  ok('DV2: a game starts at the chosen level', /5단계 · 놀이터/.test(await dv.textContent('#glevel')));
+  await dv.click('[data-act=dev]'); await dv.click('[data-act=dev-hang]'); await dv.waitForSelector('.finalbox[data-final=hang]');
+  const dvWord = await dv.evaluate(() => window.__cards.game.api.peek().word); for (const c of [...new Set(dvWord)]) await dv.click(`[data-key="${c}"]`);
+  await dv.waitForFunction(() => /관문을 넘었어요/.test(document.querySelector('h1').textContent));
+  ok('DV3: a world\'s hangman can be played straight from the playground', /^[a-z]{4,}$/.test(dvWord), dvWord);
+  await dv.click('[data-act=dev]'); await dv.selectOption('#dev-goto', 'd2-01'); await dv.check('#dev-all'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#world[data-world="d2-01"]');
+  ok('DV4: jumping to a later world opens its map with earlier castles passed; with "all villages" its castle is open', /open/.test(await dv.$eval('.node.castle', (e) => e.className)));
+  await dv.waitForTimeout(1200);
+  const dvServer = await dv.evaluate(async () => (await fetch('api/doc/p.dev')).status);
+  ok('DV5: children\'s records are untouched and the playground record never reaches the Mac server', JSON.stringify(await dv.evaluate(() => [localStorage.getItem('cards.v0.p.son'), localStorage.getItem('cards.v0.p.daughter')])) === JSON.stringify(dvKids) && dvServer === 404, String(dvServer));
+  await dvCtx.close();
+
   // PO. the world's post office (user request 2026-11-18): the world's words 10 at a time before any tile run; tapped = can read
   const poCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const po = await open(poCtx, 'today=2026-12-01&seed=7&sound=off&fast=1'); await po.click('[data-act=pick][data-id=son]'); await po.waitForSelector('.letters');
