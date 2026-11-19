@@ -9,6 +9,10 @@ import { stormBlocks } from './storm.js';
 export const FREE = new Set(['start', 'junction', 'plaza']);          // nodes anyone can walk through
 export const CASTLE = { cards: 12, pass: 0.8 };                       // defaults when a world carries no castleRule
 export const FINALE = { cards: 40, pass: 0.75 };                       // continent castle defaults (the data file may set its own)
+// A castle's card exam passed is not the end: a world castle then asks a hangman word, a continent castle a crossword
+// (wordgames.js, docs/MINIGAMES.md 7). The exam pass is kept (`exam`: day and the words answered right) so a lost word game
+// never asks the exam again. on: false = the exam alone passes, as before.
+export const FINAL = { on: true };
 export const GAMES = new Set(['memory', 'mail']);   // the world file's own kinds; which game a playhouse holds comes from games.gamePlan                     // minigames this build can play; others show "준비 중"
 
 // Kinds of side-activity houses left out of the learning path (units, crown, word counts, castle pools). Emptied = the old behaviour.
@@ -193,6 +197,7 @@ export function nodeRun(ix, view, id, state, words, rng) {
   if (n && n.kind === 'tile') return caught ? null : n.status === 'open' ? unitRun(n, n.bonus) : n.status === 'cleared' ? practiceRun(n.words, n.id) : null;
   if (n && n.kind === 'castle') {
     if (n.status !== 'open' || !worldGate(w, state).ready || wstate(state, w.id).castle) return null; const rule = w.castleRule || {};
+    const ex = FINAL.on && examPending(state, w.id); if (ex) return { kind: 'final', wid: w.id, tag: 'final:' + w.id, words: ex.words };
     const pool = shuffle(worldWords(w).filter((x) => state.words[x]), rng).slice(0, rule.cards ?? CASTLE.cards);
     return pool.length ? { kind: 'castle', wid: w.id, tag: 'castle:' + w.id, pass: rule.passRate ?? CASTLE.pass, scope: { castle: pool } } : null;
   }
@@ -203,6 +208,7 @@ export function nodeRun(ix, view, id, state, words, rng) {
 // The continent castle: cards met anywhere in the continent, the same number from every world.
 export function finaleRun(ix, c, state, today, rng) {
   const v = continentView(ix, c, state); if (v.finale.status !== 'open' || batState(state, today).full) return null;
+  const ex = FINAL.on && finaleExamPending(state, c.id); if (ex) return { kind: 'finalc', cid: c.id, tag: 'finalc:' + c.id, words: ex.words };
   const per = Math.ceil(v.finale.cards / c.worlds.length); let pool = [];
   for (const w of c.worlds) pool = pool.concat(shuffle(worldWords(w).filter((x) => state.words[x]), rng).slice(0, per));
   return { kind: 'finale', cid: c.id, tag: 'finale:' + c.id, pass: v.finale.pass, scope: { castle: shuffle(pool, rng).slice(0, v.finale.cards) } };
@@ -216,7 +222,8 @@ export function stampGame(state, w, nodeId, today) { const ws = wstate(state, w.
 export function goldStamp(state, w, nodeId, today) { const ws = wstate(state, w.id); const g = ws.gold || (ws.gold = {}); if (g[nodeId]) return false; g[nodeId] = today; return true; }
 
 // World-level results of a finished run (the gauge, stars and items are settled by map.settleRun).
-export function settleWorld(ix, state, node, rec, today) {
+// extra.ok: ids answered right in a castle or continent exam (kept for its word game).
+export function settleWorld(ix, state, node, rec, today, extra = {}) {
   const m = ensureMap(state); const out = { cleared: false, key: false, crown: false, castle: null, finale: null, nextWorld: null, nextContinent: null };
   if (node.kind === 'tile') {
     const w = ix.byId[node.wid]; const u = unitsIn(w).find((x) => x.id === node.unit); const ws = wstate(state, w.id);
@@ -227,11 +234,22 @@ export function settleWorld(ix, state, node, rec, today) {
   } else if (node.kind === 'castle') {
     const w = ix.byId[node.wid]; const ws = wstate(state, w.id); const total = rec.castleOk + rec.castleMiss; const pass = rec.reason === 'done' && total > 0 && rec.castleOk / total >= node.pass;
     out.castle = { ok: rec.castleOk, total, pass, need: node.pass };
-    if (pass && !ws.castle) { ws.castle = today; m.keys++; out.key = true; out.cleared = true; out.crown = crowned(w, state); out.nextWorld = w.nextWorldId ? ix.byId[w.nextWorldId] : null; }
+    if (pass && !ws.castle) { if (FINAL.on) { ws.exam = ws.exam || { day: today, words: (extra.ok || []).slice() }; out.castle.final = true; } else grantCastle(ix, state, w, today, out); }
   } else if (node.kind === 'finale') {
     const c = ix.continents.find((x) => x.id === node.cid); const cs = cstate(state, c.id); const total = rec.castleOk + rec.castleMiss; const pass = rec.reason === 'done' && total > 0 && rec.castleOk / total >= node.pass && !finaleOf(c).pending;
     out.finale = { ok: rec.castleOk, total, pass, need: node.pass, name: c.finale?.name || `${c.name}의 큰 성`, outro: c.finale?.outro || '' };
-    if (pass && !cs.castle) { cs.castle = today; out.cleared = true; out.nextContinent = ix.continents[ix.continents.indexOf(c) + 1] || null; }
+    if (pass && !cs.castle) { if (FINAL.on) { cs.exam = cs.exam || { day: today, words: (extra.ok || []).slice() }; out.finale.final = true; } else grantFinale(ix, state, c, today, out); }
   }
   return out;
 }
+function grantCastle(ix, state, w, today, out) { const ws = wstate(state, w.id); ws.castle = today; ensureMap(state).keys++; out.key = true; out.cleared = true; out.crown = crowned(w, state); out.nextWorld = w.nextWorldId ? ix.byId[w.nextWorldId] : null; return out; }
+function grantFinale(ix, state, c, today, out) { cstate(state, c.id).castle = today; out.cleared = true; out.nextContinent = ix.continents[ix.continents.indexOf(c) + 1] || null; return out; }
+// The word game of a castle whose exam was passed is won: the castle is passed (the same result as settleWorld gave before).
+export function finishCastle(ix, state, wid, today) { const w = ix.byId[wid]; const ws = wstate(state, wid); const out = { cleared: false, key: false, crown: false, castle: { pass: true }, finale: null, nextWorld: null, nextContinent: null };
+  return ws.castle || !ws.exam ? out : grantCastle(ix, state, w, today, out); }
+export function finishFinale(ix, state, cid, today) { const c = ix.continents.find((x) => x.id === cid); const cs = cstate(state, cid);
+  const out = { cleared: false, key: false, crown: false, castle: null, finale: { pass: true, name: c.finale?.name || `${c.name}의 큰 성`, outro: c.finale?.outro || '' }, nextWorld: null, nextContinent: null };
+  return cs.castle || !cs.exam ? out : grantFinale(ix, state, c, today, out); }
+// A castle waiting for its word game: { day, words } or null.
+export const examPending = (state, wid) => { const ws = ensureMap(state).worlds[wid]; return ws && ws.exam && !ws.castle ? ws.exam : null; };
+export const finaleExamPending = (state, cid) => { const cs = ensureMap(state).conts[cid]; return cs && cs.exam && !cs.castle ? cs.exam : null; };

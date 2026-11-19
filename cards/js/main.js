@@ -2,8 +2,9 @@
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG, firmCount } from './deck.js';
 import { Sound } from './sound.js';
 import { GAME_NAMES, gamePlan, playLevel, mountGame } from './games.js';
+import { HANG, hangmanPick, spellable, buildCrossword, mountHangman, mountCrossword } from './wordgames.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope, setHardness } from './map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, goldStamp, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, goldStamp, finishCastle, finishFinale, FINAL, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
 import { STORM, indexForms, formDone, hereOf, stormOf, stormBlocks, stormRelease, stormTick, StormRun, settleStorm } from './storm.js';
@@ -177,7 +178,8 @@ async function boot() {
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
     if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
-    if (qs.get('triage') === 'tile') TRIAGE.sort = false;              // test-only: the tile word list instead of the world's post office
+    if (qs.get('triage') === 'tile') TRIAGE.sort = false;
+    if (qs.get('final') === 'off') FINAL.on = false;                   // test-only: a castle exam alone passes, as before the word games              // test-only: the tile word list instead of the world's post office
     if (qs.get('theme') === 'off') CFG.themeOption = false;            // test-only: wrong answers as before the same-theme choice
     G.ix = indexWorlds(doc); G.plan = gamePlan(G.ix); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
     G.dataNote = doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
@@ -856,6 +858,7 @@ async function start(nodeId) {
     const seen = deviceSeen();
     if (!seen.tileStarted) { seen.tileStarted = true; writeDevice(); }
   }
+  if (node.kind === 'final' || node.kind === 'finalc') return startFinal(node, rng);   // the exam was passed: the castle's word game
   if (node.kind === 'sort') return postOffice();          // the world's words are not all looked at yet: the post office first
   if (node.triage) return triage(node, rng);               // new words on this tile: the child first marks the unknown ones
   return begin(node, rng);
@@ -1027,22 +1030,24 @@ function endRun(reason) {
   clearTimeout(G.timer); G.sound.stop(); const run = G.run; const node = G.node; const rec = run.finish(reason); G.boss = { ...run.boss, day: todayISO(), pid: G.pid };
   const owned = ownedGear();
   const was = stormOf(G.st, G.ix); const heldBefore = !!node.wid && stormBlocks(G.st, node.wid, G.ix);
-  const rw = settleRun(G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); const ww = settleWorld(G.ix, G.st, node, rec, todayISO());
+  const rw = settleRun(G.st, node, run, rec, todayISO(), mulberry32(Date.now() % 1e9)); const ok = node.scope && node.scope.castle ? [...new Set(G.st.log.filter((e) => e.role === 'castle' && e.ok && Date.parse(e.t) >= run.startedAt).map((e) => e.id))] : [];   // the exam's right answers (for its word game)
+  const ww = settleWorld(G.ix, G.st, node, rec, todayISO(), { ok });
   stormAfter(node, rec, was, heldBefore); save(); G.sync?.flush().catch(() => {});
   const defeated = reason === 'done' && (!['castle','finale'].includes(node.kind) || (ww.castle || ww.finale)?.pass);
   if (defeated) { G.displayBoss.hp = 0; G.displayBoss.down = true; paintHud(); $('#boss')?.classList.add('down'); }
   G.view = 'end'; band(false); hideBanner(); const n = rec.n; const ups = run.changed.filter((c) => c.to > c.from); const w = G.world; const pc = (x) => Math.round(x * 100);
   const batNow = rw.batFull && !(node.kind === 'bat' && rw.bat.done);
-  const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : '성 시험 결과',
-    finale: ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요', review: `${n}판 끝!` , practice: '연습 끝!'}[node.kind];
+  const title = { tile: ww.cleared ? '칸 클리어!' : `${n}판 끝!`, monster: rw.monster ? '몬스터를 물리쳤어요!' : '몬스터가 남았어요', castle: ww.key ? '성을 깼어요!' : ww.castle?.final ? '성 시험 통과!' : '성 시험 결과',
+    finale: ww.finale?.final ? '큰 성 시험 통과!' : ww.finale?.pass ? '큰 성을 깼어요!' : '큰 성 시험 결과', bat: rw.bat?.done ? '박쥐를 쫓아냈어요!' : '박쥐가 남았어요', review: `${n}판 끝!` , practice: '연습 끝!'}[node.kind];
   const lines = rw.stars > 0 ? [`<div class="gain">${spr('star', 32)} +${rw.stars}${rw.mult > 1 ? ` <em>(×${rw.mult})</em>` : ''}</div>`] : [];
   if (rw.item) lines.push(`<div class="gain">${spr(ITEM_SPR[rw.item], 40)} ${ITEMS[rw.item].name}을 얻었어요</div>`);
   if (ww.key) lines.push(`<div class="gain" id="keygain">${spr('key', 32)} ${esc(w.key?.name || '열쇠')}를 얻었어요</div>`);
   if (ww.crown) lines.push(`<div class="gain" id="crowngain">${spr('crown', 32)} 이 세계의 왕관을 얻었어요</div>`);
   if (ww.key && w.outro) lines.push(`<p class="story">${esc(w.outro)}</p>`);
   if (ww.key && ww.nextWorld && w.story) lines.push(`<p class="story">${esc(w.story)}</p>`);
-  if (ww.finale?.pass && ww.finale.outro) lines.push(`<p class="story">${esc(ww.finale.outro)}</p>`);
-  if (ww.finale?.pass) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ro(ww.nextContinent.name))} 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
+  if (ww.castle?.final || ww.finale?.final) lines.push(`<div class="gain" id="finalnext">${spr('envelope', 32)} 마지막 관문이 남았어요: ${ww.castle?.final ? '단어 맞히기' : '십자말풀이'}</div>`);
+  if (ww.finale?.pass && !ww.finale.final && ww.finale.outro) lines.push(`<p class="story">${esc(ww.finale.outro)}</p>`);
+  if (ww.finale?.pass && !ww.finale.final) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ro(ww.nextContinent.name))} 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
   if (rw.bat) lines.push(rw.bat.done ? `<p class="mut">${rw.bat.ok}/${rw.bat.total}장 맞혔어요 (${pc(rw.bat.acc)}%). ${rw.batFull ? '' : '박쥐 게이지가 0으로 돌아가요. '}${rw.bat.acc >= 0.9 ? '아주 잘 외우고 있어요. 다음 박쥐는 더 늦게 와요.' : rw.bat.acc < 0.7 ? '다음 박쥐는 조금 더 일찍 올 거예요. 틀린 카드는 다시 나와요.' : ''}</p>` : '<p class="mut">시험을 다 마치면 박쥐가 사라져요.</p>');
   if (batNow && node.kind !== 'bat') lines.push(`<div class="gain bat">${anim('bat-a', 'bat-b', 32)} 박쥐 게이지가 가득 찼어요!</div>`);
   if (batNow && node.kind === 'bat') lines.push('<p class="mut">미뤄 둔 복습이 아직 많아요. 박쥐가 한 번 더 와요.</p>');
@@ -1052,8 +1057,9 @@ function endRun(reason) {
   G.celebrationDoor = target ? { key:ww.key ? `world:${w.id}:${target.id}` : `continent:${node.cid}:${target.id}`, from:w.id, to:target.id, kind:ww.key ? 'world' : 'continent' } : null;
   const giftGain = giftResults(owned);
   const resultCards = exam ? `<span>뜻을 맞힌 단어</span> <b>${exam.ok}개 / ${exam.total}</b>` : `<b>${rec.cards}</b><span>푼 카드</span>`;
-  const go = celebration ? ['celebration-atlas','세계 지도 보기'] : batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ro(ww.nextWorld.name)}`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ro(ww.nextContinent.name)}`] : ['today', '▶ 지도로'];
-  const goId = ww.key && ww.nextWorld ? ww.nextWorld.id : ww.finale?.pass && ww.nextContinent ? ww.nextContinent.worlds[0].id : '';
+  const finalNext = ww.castle?.final ? ['node', '▶ 마지막 관문', G.world.map.castleNodeId] : ww.finale?.final ? ['finale', '▶ 마지막 관문', node.cid] : node.tag === 'practice:final' && G.finalAgain ? G.finalAgain : null;
+  const go = finalNext ? finalNext : celebration ? ['celebration-atlas','세계 지도 보기'] : batNow ? ['bat-go', '박쥐 시험'] : ww.key && ww.nextWorld ? ['goworld', `▶ ${ro(ww.nextWorld.name)}`] : ww.finale?.pass && ww.nextContinent ? ['goworld', `▶ ${ro(ww.nextContinent.name)}`] : ['today', '▶ 지도로'];
+  const goId = finalNext ? finalNext[2] : ww.key && ww.nextWorld ? ww.nextWorld.id : ww.finale?.pass && ww.nextContinent ? ww.nextContinent.worlds[0].id : '';
   $('#app').innerHTML = `<div class="page center ${celebration ? 'celebration' : ''}"><h1 class="title">${title}</h1>${celebration ? `<div class="celebration-art">${spr(ww.key ? 'c011-castle-world' : 'c011-castle-continent',128)}<span class="celebration-key">${spr('key',48)}</span></div>` : defeated ? `<div class="monster-finished" data-hp="0" data-sprite="${G.displayBoss.id}">${spr(G.displayBoss.id,64)}${!FAST ? spr('c014-smoke',48,'defeat-cloud') + spr('c014-star',28,'defeat-star') : ''}<span>몬스터 체력 0/${G.displayBoss.N}</span></div>` : ''}${lines.join('')}${giftGain}
   <div class="tiles"><div class="result-cards">${resultCards}</div><div><b>1</b><span>몬스터와 한 판</span></div><div><b>${rec.learned}</b><span>새로 배운 카드</span></div></div>
   ${ups.length ? `<p class="mut">등급이 오른 카드</p><div class="minis">${ups.map((c) => miniCard(G.byId[c.id], c.to)).join('')}</div>` : ''}
@@ -1200,6 +1206,69 @@ function endGame(g, won) {
   <button class="sec" data-act="game-again" data-id="${esc(g.node.id)}">한 번 더</button> <button class="go" data-act="today">▶ 지도로</button></div>`;
 }
 
+// ---- the last gate of a castle (wordgames.js, docs/MINIGAMES.md 7). A world castle: one hangman word; a continent castle:
+// a crossword, or three hangman words when no crossword can be laid. Lost: a bat comes; the castle's words are practised
+// (no schedule change) and the gate can be tried again with another word. After two lost games on this device the first
+// letter is shown. Only the "not known" record of the missed words is written. ----
+function finalStyle() { const q = (qs.get('hang') || '').toUpperCase(); return ['A', 'B', 'C'].includes(q) ? q : 'B'; }
+function finalWords(node) {
+  const ids = (node.words || []).filter((id) => G.byId[id]);
+  const worlds = node.kind === 'final' ? [G.ix.byId[node.wid]] : G.ix.continents.find((c) => c.id === node.cid).worlds;
+  const met = worlds.flatMap((w) => worldWords(w)).filter((id) => G.st.words[id] && !ids.includes(id));
+  return { first: ids.map((id) => G.byId[id]), rest: met.map((id) => G.byId[id]) };
+}
+function startFinal(node, rng) {
+  const key = node.kind === 'final' ? 'w:' + node.wid : 'c:' + node.cid; const seen = deviceSeen(); const fails = (seen.finalFails || {})[key] || 0;
+  const { first, rest } = finalWords(node); let mount = null, kind = '';
+  if (node.kind === 'final') { const w = hangmanPick(first, rest, rng); if (w) { kind = 'hangman'; mount = (ctx) => mountHangman(ctx, [w], HANG.lives); } }
+  else {
+    const cw = buildCrossword(first, rng) || buildCrossword(first.concat(rest), rng);
+    if (cw) { kind = 'crossword'; mount = (ctx) => mountCrossword(ctx, cw); }
+    else { const pool = first.concat(rest).filter((w) => spellable(w.form, 4)); const picks = []; while (picks.length < HANG.multiWords && pool.length) { const w = hangmanPick(pool, [], rng); picks.push(w); pool.splice(pool.indexOf(w), 1); }
+      if (picks.length) { kind = 'hangman3'; mount = (ctx) => mountHangman(ctx, picks, HANG.multiLives); } }
+  }
+  if (!mount) return finalWon(node);                      // no word fit to spell (should not happen with real worlds): the exam is enough
+  clearPresentation(); G.view = 'final'; band(false); hideBanner(); G.sound.scene('castle');
+  const name = node.kind === 'final' ? (G.ix.byId[node.wid].castle?.name || '성') : (G.ix.continents.find((c) => c.id === node.cid).finale?.name || '큰 성');
+  $('#app').innerHTML = `<div class="page center final"><button class="back" data-act="today" aria-label="지도로">‹</button><h1 class="title">${esc(name)} 마지막 관문</h1>
+  <p class="mut">${kind === 'crossword' ? '대륙에서 만난 단어로 만든 십자말풀이예요.' : kind === 'hangman3' ? '세 단어를 이어서 맞혀요.' : '성 시험에 나온 단어예요. 알파벳을 골라 편지를 지켜요.'}${fails >= 2 ? ' 첫 글자를 알려 줄게요.' : ''}</p>
+  <div id="finalbox" class="finalbox" data-final="${kind}"></div></div>`;
+  const g = (G.game = { node, api: null, kind });
+  const say = (w) => { G.sound.unlock().then(() => G.sound.play(w.id, w.form)).catch(() => {}); };
+  g.api = mount({ root: $('#finalbox'), rng, fast: FAST, spr, sfx: (x) => G.sound.sfxPlay(x), say, style: finalStyle(), reveal: fails >= 2, courierId: G.pid === 'daughter' ? 'courier-gold-idle' : 'courier-teal-idle',
+    win: () => { if (G.game !== g) return; G.game = null; const f = deviceSeen().finalFails; if (f) delete f[key]; writeDevice(); finalWon(node); },
+    lose: (missed) => { if (G.game !== g) return; G.game = null; finalLost(node, key, missed); } });
+}
+function finalWon(node) {
+  const owned = ownedGear(); const t = todayISO();
+  const ww = node.kind === 'final' ? finishCastle(G.ix, G.st, node.wid, t) : finishFinale(G.ix, G.st, node.cid, t); save(); G.sync?.flush().catch(() => {});
+  G.view = 'end'; const w = G.world; const lines = [];
+  if (ww.key) lines.push(`<div class="gain" id="keygain">${spr('key', 32)} ${esc(w.key?.name || '열쇠')}를 얻었어요</div>`);
+  if (ww.crown) lines.push(`<div class="gain" id="crowngain">${spr('crown', 32)} 이 세계의 왕관을 얻었어요</div>`);
+  if (ww.key && w.outro) lines.push(`<p class="story">${esc(w.outro)}</p>`);
+  if (ww.key && ww.nextWorld && w.story) lines.push(`<p class="story">${esc(w.story)}</p>`);
+  if (ww.finale && ww.cleared && ww.finale.outro) lines.push(`<p class="story">${esc(ww.finale.outro)}</p>`);
+  if (ww.finale && ww.cleared) lines.push(`<p class="story">${ww.nextContinent ? `${esc(ro(ww.nextContinent.name))} 가는 길이 열렸어요!` : '모든 편지를 전했어요. 집으로 돌아가요!'}</p>`);
+  const target = ww.key ? ww.nextWorld : ww.cleared && ww.finale ? ww.nextContinent?.worlds[0] : null;
+  G.celebrationDoor = target ? { key: ww.key ? `world:${w.id}:${target.id}` : `continent:${node.cid}:${target.id}`, from: w.id, to: target.id, kind: ww.key ? 'world' : 'continent' } : null;
+  const celebration = !!(ww.key || (ww.finale && ww.cleared));
+  $('#app').innerHTML = `<div class="page center ${celebration ? 'celebration' : ''}"><h1 class="title">${ww.finale ? '큰 성을 깼어요!' : '성을 깼어요!'}</h1>${celebration ? `<div class="celebration-art">${spr(ww.key ? 'c011-castle-world' : 'c011-castle-continent', 128)}<span class="celebration-key">${spr('key', 48)}</span></div>` : ''}${lines.join('')}${giftResults(owned)}
+  <button class="go" data-act="${celebration ? 'celebration-atlas' : 'today'}">${celebration ? '세계 지도 보기' : '▶ 지도로'}</button>${celebration ? '<p><button class="link" data-act="today">지도에서 보기</button></p>' : ''}</div>`;
+  G.sound.scene(musicOf(w), { worldId: w.id }); if (celebration) later(() => G.sound.jingle(ww.key ? 'world-fanfare' : 'continent-fanfare'), 150);
+}
+function finalLost(node, key, missed) {
+  const t = todayISO(); for (const id of missed) { const r = G.st.words[id]; if (r) { r.miss = t; r.misses = (r.misses || 0) + 1; } } save();
+  const seen = deviceSeen(); const f = seen.finalFails || (seen.finalFails = {}); f[key] = (f[key] || 0) + 1; writeDevice();
+  const { first } = finalWords(node); const ids = [...new Set(missed.concat(first.map((w) => w.id)))].filter((id) => G.st.words[id]).slice(0, 8);
+  G.finalPractice = ids.length ? { kind: 'practice', wid: node.wid || G.world.id, tag: 'practice:final', scope: { practice: ids } } : null;
+  G.finalAgain = node.kind === 'final' ? ['node', '▶ 마지막 관문 다시', G.ix.byId[node.wid].map.castleNodeId] : ['finale', '▶ 마지막 관문 다시', node.cid];
+  G.view = 'end'; G.sound.sfxPlay('miss'); G.sound.scene('bat');
+  $('#app').innerHTML = `<div class="page center"><h1 class="title">박쥐가 나타났어요!</h1><div class="final-bat">${anim('bat-a', 'bat-b', 96)}</div>
+  <p>편지를 지키지 못했어요. 성 단어를 한 번 더 연습하고 다시 도전해요.</p><p class="mut">${f[key] >= 2 ? '다음 도전에서는 첫 글자를 알려 줄게요.' : '다른 단어로 다시 도전할 수 있어요.'}</p>
+  ${G.finalPractice ? '<button class="go" data-act="final-practice">박쥐 쫓기 연습</button>' : `<button class="go" data-act="${G.finalAgain[0]}" data-id="${esc(G.finalAgain[2])}">${G.finalAgain[1]}</button>`}
+  <p><button class="link" data-act="today">지도로</button></p></div>`;
+}
+
 // ---- album: the cards of this world ----
 function album() {
   G.view = 'album'; const st = G.st; const ids = worldWords(G.world); const ws = ids.map((id) => G.byId[id]); const c = gradeCounts(st, ws);
@@ -1307,6 +1376,7 @@ async function onClick(e) {
     case 'st-quit': return stormEnd('left');
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
+    case 'final-practice': { const n = G.finalPractice; G.finalPractice = null; if (!n) return today(G.pid); await G.sound.unlock(); return begin(n, mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 31)); }
     case 'game-again': { const n = worldView(G.ix, G.world, G.st, todayISO()).nodes.find((x) => x.id === b.dataset.id); return n && n.status !== 'locked' ? startGame(n) : today(G.pid); }
     case 'lt-yes': return ltAnswer(true);
     case 'lt-no': return ltAnswer(false);

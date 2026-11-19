@@ -23,6 +23,7 @@ async function open(ctx, q, sync = false) {
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
   if (!/(^|&)storm=/.test(q)) q += '&storm=off';                       // whirlwinds (T-008) only in section 14
+  if (!/(^|&)final=/.test(q)) q += '&final=off';                       // castle word games only in section FN
   await page.goto(BASE + '?set=demo&' + q); await page.waitForSelector('.profiles'); return page;
 }
 const state = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('cards.v0.p.' + i)), id);
@@ -1602,6 +1603,41 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const failText = await gmFail.textContent('#stampgain'); await gmFail.click('[data-act=game-again]'); await gmFail.waitForSelector('#glevel');
   ok('GM4: two failures in a row: the end screen says so and the next game is one level easier; nothing is stamped', /한 단계 쉬워져요/.test(failText) && /2단계 · 한 단계 쉽게/.test(await gmFail.textContent('#glevel')) && !(await state(gmFail, 'son'))?.map?.worlds?.['d1-01']?.stamps?.G1, failText);
   await gmCtx.close();
+
+  // FN. the last gate of a castle (docs/MINIGAMES.md 7): exam, then hangman (world) or crossword (continent)
+  const fnCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const fnSetup = (cont) => { const g = window.__cards; const words = {}; const ws = {}; const rec = { st: 'done', due: null, firstDay: '2026-11-20', lastDay: '2026-11-21', lapses: 0 };
+    for (const w of cont ? g.ix.continents[0].worlds : [g.ix.byId['d1-01']]) { for (const n of w.map.nodes) for (const id of n.words || []) words[id] = { ...rec }; for (const h of w.sideActivities || []) for (const t of h.tiles) for (const id of t.words) words[id] = { ...rec };
+      ws[w.id] = { castle: cont ? '2026-11-25' : null, cleared: {}, stamps: {}, seen: '2026-11-20' }; }
+    localStorage.setItem('cards.v0.p.son', JSON.stringify({ v: 3, id: 'son', words, verify: [], runs: [], log: [], bunches: {}, forms: {}, map: { stars: 0, items: { shield: 0, flame: 0 }, bag: null, keys: cont ? 2 : 0, best: 0, worlds: ws, conts: {}, at: 'd1-01', bat: { fill: 0, cap: 80, met: [], last: null } } })); };
+  const fnExam = async (pg) => { await pg.waitForSelector(READY); for (let k = 0; k < 80 && await pg.evaluate(() => !!(window.__cards.run && window.__cards.run.current)); k++) { await pg.evaluate(() => { const g = window.__cards; const it = g.run.current; const n = document.querySelector('[data-act=next]'); if (n) return n.click(); const o = [...document.querySelectorAll('.opt:not([disabled])')]; if (o.length && it.options) o[it.options.findIndex((x) => x.id === it.id)].click(); }); await pg.waitForTimeout(20); } };
+  const fn = await open(fnCtx, 'today=2026-12-01&triage=off&seed=7&sound=off&fast=1&final=on'); await fn.evaluate(fnSetup, false);
+  await fn.click('[data-act=pick][data-id=son]'); await fn.waitForSelector('.world'); await fn.click('[data-act=node][data-id=castle]'); await fnExam(fn); await fn.waitForSelector('#finalnext');
+  const fnS1 = await state(fn, 'son');
+  ok('FN1: a passed castle exam gives no key yet: it keeps the right answers and points to the last gate', /성 시험 통과/.test(await fn.textContent('h1')) && !fnS1.map.worlds['d1-01'].castle && fnS1.map.worlds['d1-01'].exam.words.length >= 8 && fnS1.map.keys === 0);
+  await fn.click('.go'); await fn.waitForSelector('.finalbox[data-final="hangman"]');
+  const hw = await fn.evaluate(() => window.__cards.game.api.peek());
+  ok('FN2: the hangman word is one of the exam\'s right answers, letters only, 4+ letters (5+ when there is one)', fnS1.map.worlds['d1-01'].exam.words.some((id) => id.split(':')[0] === hw.word || id.startsWith(hw.word)) && /^[a-z]{4,}$/.test(hw.word), hw.word);
+  for (const c of 'zqxjvkwy'.split('').filter((c) => !hw.word.includes(c)).slice(0, 6)) await fn.click(`[data-key="${c}"]`);
+  await fn.waitForSelector('[data-act=final-practice]');
+  const fnS2 = await state(fn, 'son'); const lostId = Object.keys(fnS2.words).find((id) => fnS2.words[id].misses && fnS2.words[id].miss === '2026-12-01');
+  ok('FN3: six wrong letters lose the letter: a bat comes, the word gets its "not known" record only, the castle is still not passed', /박쥐가 나타났어요/.test(await fn.textContent('h1')) && !!lostId && fnS2.words[lostId].st === 'done' && !fnS2.map.worlds['d1-01'].castle, lostId);
+  await fn.click('[data-act=final-practice]'); await fn.waitForSelector(READY); await play(fn); await fn.waitForSelector('.tiles');
+  const fnS3 = await state(fn, 'son');
+  ok('FN4: the bat practice changes no schedule; its end screen leads back to the last gate', JSON.stringify(Object.values(fnS3.words).map((r) => [r.st, r.due])) === JSON.stringify(Object.values(fnS2.words).map((r) => [r.st, r.due])) && /마지막 관문 다시/.test(await fn.textContent('.go')));
+  await fn.click('.go'); await fn.waitForSelector('.finalbox[data-final="hangman"]');
+  const hw2 = await fn.evaluate(() => window.__cards.game.api.peek()); for (const c of [...new Set(hw2.word)]) await fn.click(`[data-key="${c}"]`);
+  await fn.waitForSelector('#keygain'); const fnS4 = await state(fn, 'son');
+  ok('FN5: spelling the word passes the castle: key, next world open, the exam no longer pending', /성을 깼어요/.test(await fn.textContent('h1')) && fnS4.map.worlds['d1-01'].castle === '2026-12-01' && fnS4.map.keys === 1);
+  const fc = await open(fnCtx, 'today=2026-12-01&triage=off&seed=7&sound=off&fast=1&final=on'); await fc.evaluate(fnSetup, true);
+  await fc.click('[data-act=pick][data-id=son]'); await fc.waitForSelector('.world'); await fc.click('[data-act=atlas]'); await fc.waitForSelector('.wcard.finale.open'); await fc.click('.wcard.finale[data-id="d1"]');
+  await fnExam(fc); await fc.waitForSelector('#finalnext'); await fc.click('.go'); await fc.waitForSelector('.finalbox');
+  const kindC = await fc.getAttribute('.finalbox', 'data-final');
+  if (kindC === 'crossword') { const p = await fc.evaluate(() => window.__cards.game.api.peek()); for (let i = 0; i < p.entries.length; i++) { await fc.click(`[data-clue="${i}"]`); for (const ch of p.entries[i].word) await fc.click(`[data-key="${ch}"]`); } await fc.click('[data-check]'); }
+  else { for (let k = 0; k < 3; k++) { const p = await fc.evaluate(() => window.__cards.game && window.__cards.game.api.peek()); if (!p) break; for (const c of [...new Set(p.word)]) { if (await fc.$(`[data-key="${c}"]:not([disabled])`)) await fc.click(`[data-key="${c}"]`); } } }
+  await fc.waitForFunction(() => /큰 성을 깼어요/.test(document.querySelector('h1').textContent), null, { timeout: 15000 }); const fcS = await state(fc, 'son');
+  ok('FN6: the continent castle ends with a crossword (or three hangman words); typing each word from its clue wins and opens the next continent', fcS.map.conts.d1.castle === '2026-12-01', kindC);
+  await fnCtx.close();
 
   // PO. the world's post office (user request 2026-11-18): the world's words 10 at a time before any tile run; tapped = can read
   const poCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });

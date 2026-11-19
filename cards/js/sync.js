@@ -37,6 +37,7 @@ function mergeWorlds(a = {}, b = {}, aLast = true) {
     const cleared = early(x.cleared, y.cleared), open = early(x.open, y.open); for (const k of Object.keys(cleared)) delete open[k];
     out[id] = { castle: minStr(x.castle, y.castle) ?? null, seen: minStr(x.seen, y.seen) ?? null, cleared, stamps: early(x.stamps, y.stamps) };
     if (Object.keys(open).length) out[id].open = open;
+    const exam = !x.exam ? y.exam : !y.exam ? x.exam : String(x.exam.day) <= String(y.exam.day) ? x.exam : y.exam; if (exam) out[id].exam = exam;   // a passed castle exam: the earlier
     const gold = early(x.gold, y.gold); if (Object.keys(gold).length) out[id].gold = gold;                       // challenge stamps: union, earliest day
     const sorted = Math.max(x.sorted || 0, y.sorted || 0); if (sorted) out[id].sorted = sorted;   // words looked at in the post office: only grows
     const here = aLast ? x.here ?? y.here : y.here ?? x.here; if (here != null) out[id].here = here; }
@@ -46,7 +47,8 @@ function mergeWorlds(a = {}, b = {}, aLast = true) {
 function mergeMap(a, b, aLast = true) {
   if (!a) return b; if (!b) return a;
   const worlds = mergeWorlds(a.worlds, b.worlds, aLast); const conts = {};
-  for (const id of new Set([...Object.keys(a.conts || {}), ...Object.keys(b.conts || {})])) conts[id] = { castle: minStr(a.conts?.[id]?.castle, b.conts?.[id]?.castle) ?? null };
+  for (const id of new Set([...Object.keys(a.conts || {}), ...Object.keys(b.conts || {})])) { const x = a.conts?.[id] || {}, y = b.conts?.[id] || {};
+    conts[id] = { castle: minStr(x.castle, y.castle) ?? null }; const exam = !x.exam ? y.exam : !y.exam ? x.exam : String(x.exam.day) <= String(y.exam.day) ? x.exam : y.exam; if (exam) conts[id].exam = exam; }
   const monsterDay = maxStr(a.monsterDay, b.monsterDay);
   const monsterN = Math.max(a.monsterDay === monsterDay ? a.monsterN || 1 : 0, b.monsterDay === monsterDay ? b.monsterN || 1 : 0);
   const out = { stars: Math.max(a.stars || 0, b.stars || 0), keys: Object.values(worlds).filter((w) => w.castle).length, best: Math.max(a.best || 0, b.best || 0),

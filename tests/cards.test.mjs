@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS, bunchLeft } from '../cards/js/deck.js';
 import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES, TRIAGE, triagePlan, triageScope, auditPick, setHardness, checkPick } from '../cards/js/map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds, startTile, sortView, sortPage } from '../cards/js/world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds, startTile, sortView, sortPage, FINAL, finishCastle, finishFinale, examPending } from '../cards/js/world.js';
+// The castle word games (FINAL, docs/MINIGAMES.md 7) are tested in their own section (CF*); the older castle tests pass on the exam alone.
+FINAL.on = false;
 
 // The demo set: 86 cards (80 with a Korean gloss, 6 function words), two continents, three worlds (tools/make_cards_demo.py).
 const WORDS = JSON.parse(fs.readFileSync('cards/data/demo/catalog.json', 'utf8')).words; const DOC = JSON.parse(fs.readFileSync('cards/data/demo/worlds.json', 'utf8'));
@@ -980,3 +982,26 @@ test('H3: crossword: words cross on equal letters, never run side by side, ends 
     for (let i = 1; i < cw.entries.length; i++) { const a = cw.entries[i - 1], b = cw.entries[i]; assert.ok(a.row < b.row || (a.row === b.row && a.col <= b.col)); assert.ok(b.num >= a.num); } }
   assert.equal(buildCrossword(['cat', 'dog', 'ox'].map((f) => ({ id: f, form: f })), mulberry32(1)), null);
 });
+
+// ---- castle word games in the castle flow (FINAL on; docs/MINIGAMES.md 7) ----
+const withFinal = (fn) => () => { FINAL.on = true; TRIAGE.on = false; try { return fn(); } finally { FINAL.on = false; TRIAGE.on = true; } };
+legacyTest('CF1: a passed castle exam keeps the day and the right answers but gives no key; the castle then starts its word game; winning it gives the key and the next world', withFinal(() => {
+  const s = newState('son'); ensureMap(s).bat.cap = 80; for (const id of ['A1', 'A2', 'B1', 'C1']) clear(s, id);
+  const node = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); const run = mkRun(s, node); play(run, () => true); const rec = run.finish();
+  const ok = node.scope.castle.slice(0, 5); const out = settleWorld(IX, s, node, rec, D1, { ok });
+  assert.deepEqual([out.castle.pass, out.castle.final, out.key, ensureMap(s).keys, worldOpen(IX, W2, s)], [true, true, false, 0, false]);
+  assert.deepEqual(examPending(s, W1.id), { day: D1, words: ok });
+  const fin = nodeRun(IX, view(s), 'castle', s, WORDS, mulberry32(1)); assert.deepEqual([fin.kind, fin.wid, fin.words], ['final', W1.id, ok]);
+  const d2 = addDays(D1, 1); const won = finishCastle(IX, s, W1.id, d2);
+  assert.deepEqual([won.key, won.nextWorld.id, ensureMap(s).keys, ensureMap(s).worlds[W1.id].castle, worldOpen(IX, W2, s), examPending(s, W1.id)], [true, W2.id, 1, d2, true, null]);
+  assert.equal(finishCastle(IX, s, W1.id, d2).key, false, 'only once'); assert.equal(nodeRun(IX, view(s, d2), 'castle', s, WORDS, mulberry32(1)), null);
+}));
+test('CF2: the continent castle the same way: exam pass kept, crossword pending, winning opens the next continent; a failed exam keeps nothing', withFinal(() => {
+  const s = newState('son'); meetAll(s, W1); meetAll(s, W2); const m = ensureMap(s);
+  m.worlds['d1-01'] = { castle: D1, cleared: {}, stamps: {}, seen: D1 }; m.worlds['d1-02'] = { castle: D1, cleared: {}, stamps: {}, seen: D1 };
+  const fail = exam(s, finaleRun(IX, DOC.continents[0], s, D1, mulberry32(1)), D1, () => false); assert.equal(fail.out.finale.pass, false); assert.equal(m.conts.d1?.exam, undefined);
+  const node = finaleRun(IX, DOC.continents[0], s, D1, mulberry32(2)); const run = mkRun(s, node); play(run, () => true); const out = settleWorld(IX, s, node, run.finish(), D1, { ok: node.scope.castle });
+  assert.deepEqual([out.finale.pass, out.finale.final, out.cleared, worldOpen(IX, W3, s)], [true, true, false, false]);
+  const fin = finaleRun(IX, DOC.continents[0], s, D1, mulberry32(3)); assert.deepEqual([fin.kind, fin.cid, fin.words.length], ['finalc', 'd1', node.scope.castle.length]);
+  const won = finishFinale(IX, s, 'd1', D1); assert.deepEqual([won.cleared, won.nextContinent.id, worldOpen(IX, W3, s)], [true, 'd2', true]);
+}));

@@ -258,3 +258,12 @@ test('S6: gold playhouse stamps are united on merge, the earlier day kept', () =
   const c = { ...base, map: { worlds: { w: { castle: null, seen: null, cleared: {}, stamps: {} } } } };
   assert.equal('gold' in mergeCards(c, c).map.worlds.w, false);
 });
+
+test('S7: a passed castle exam waiting for its word game: the earlier one is kept, for worlds and continents', () => {
+  const base = { v: 3, id: 'son', words: {}, runs: [], log: [], verify: [], bunches: {}, forms: {} };
+  const mk = (day, words) => ({ ...base, map: { worlds: { w: { castle: null, seen: null, cleared: {}, stamps: {}, exam: { day, words } } }, conts: { c: { castle: null, exam: { day, words } } } } });
+  const m = mergeCards(mk('2026-11-12', ['b']), mk('2026-11-10', ['a'])).map; assert.deepEqual([m.worlds.w.exam, m.conts.c.exam], [{ day: '2026-11-10', words: ['a'] }, { day: '2026-11-10', words: ['a'] }]);
+  const none = { ...base, map: { worlds: { w: { castle: null, seen: null, cleared: {}, stamps: {} } }, conts: { c: { castle: null } } } };
+  const n = mergeCards(none, none).map; assert.deepEqual(['exam' in n.worlds.w, 'exam' in n.conts.c], [false, false]);
+  assert.deepEqual(mergeCards(none, mk('2026-11-12', ['b'])).map.worlds.w.exam, { day: '2026-11-12', words: ['b'] });
+});

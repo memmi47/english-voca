@@ -121,30 +121,34 @@ export function mountHangman(ctx, words, lives) {
 
 // The continent castle's crossword: tap a clue (or a cell), type with the letter keys; "확인" checks. 3 checks in all.
 export function mountCrossword(ctx, cw, checks = 3) {
-  const cells = crossCells(cw); const typed = {}; let sel = 0, left = checks, over = false; const timers = [];
+  const cells = crossCells(cw); const typed = {}; let sel = 0, cur = 0, left = checks, over = false; const timers = [];   // cur: the cell of the chosen word the next letter goes in
   if (ctx.reveal) for (const e of cw.entries) typed[e.row + ',' + e.col] = e.word[0];
   const cellsOf = (e) => Array.from({ length: e.word.length }, (_, i) => (e.row + (e.dir === 'd' ? i : 0)) + ',' + (e.col + (e.dir === 'a' ? i : 0)));
   const paint = (msg = '', marks = {}) => {
-    const e = cw.entries[sel]; const on = new Set(cellsOf(e)); const nums = {}; for (const x of cw.entries) nums[x.row + ',' + x.col] = x.num;
+    const e = cw.entries[sel]; const on = new Set(cellsOf(e)); const here = cellsOf(e)[cur]; const nums = {}; for (const x of cw.entries) nums[x.row + ',' + x.col] = x.num;
     let grid = ''; for (let r = 0; r < cw.rows; r++) for (let c = 0; c < cw.cols; c++) { const k = r + ',' + c;
-      grid += cells[k] ? `<button class="xcell ${on.has(k) ? 'on' : ''} ${marks[k] || ''}" data-cell="${k}">${nums[k] ? `<sup>${nums[k]}</sup>` : ''}${typed[k] || ''}</button>` : '<i class="xblank"></i>'; }
-    ctx.root.innerHTML = `<div class="xgrid" style="grid-template-columns:repeat(${cw.cols},var(--xc))">${grid}</div>
-      <div class="xclues">${cw.entries.map((x, i) => `<button class="xclue ${i === sel ? 'on' : ''}" data-clue="${i}"><b>${x.num}${x.dir === 'a' ? '→' : '↓'}</b> ${x.ko || '?'} <span data-say="${i}">${ctx.spr('sound', 18)}</span></button>`).join('')}</div>
-      <p class="hleft">확인 기회 <b>${left}</b></p><p class="hmsg">${msg}</p>${keyboard()}<p><button class="sec" data-del="1">지우기</button> <button class="go" data-check="1">확인</button></p>`;
+      grid += cells[k] ? `<button class="xcell ${on.has(k) ? 'on' : ''} ${k === here ? 'cur' : ''} ${marks[k] || ''}" data-cell="${k}">${nums[k] ? `<sup>${nums[k]}</sup>` : ''}${typed[k] || ''}</button>` : '<i class="xblank"></i>'; }
+    ctx.root.innerHTML = `<div class="xwrap"><div class="xgrid" style="grid-template-columns:repeat(${cw.cols},var(--xc))">${grid}</div>
+      <div class="xclues">${cw.entries.map((x, i) => `<button class="xclue ${i === sel ? 'on' : ''}" data-clue="${i}"><b>${x.num}${x.dir === 'a' ? '→' : '↓'}</b> ${x.ko || '?'} <span data-say="${i}">${ctx.spr('sound', 18)}</span></button>`).join('')}
+      <p class="hleft">확인 기회 <b>${left}</b></p></div></div><p class="hmsg">${msg}</p>
+      <div class="hkeys xkeys">${KEYS.map((k) => `<button data-key="${k}">${k}</button>`).join('')}<button class="padfn" data-del="1">지우기</button><button class="padfn xcheck" data-check="1">확인</button></div>`;
   };
-  const nextEmpty = () => cellsOf(cw.entries[sel]).find((k) => !typed[k]);
+  // Choosing a word puts the cursor on its first cell. Typing writes there and moves on, over letters already in place
+  // (a crossing), so a child types the whole word from its start.
+  const choose = (i) => { sel = i; cur = 0; };
   ctx.root.onclick = (ev) => { if (over) return; const t = ev.target;
     const sayEl = t.closest('[data-say]'); if (sayEl) { const x = cw.entries[Number(sayEl.dataset.say)]; return ctx.say({ id: x.id, form: x.word }); }
-    const clue = t.closest('[data-clue]'); if (clue) { sel = Number(clue.dataset.clue); return paint(); }
-    const cell = t.closest('[data-cell]'); if (cell) { const k = cell.dataset.cell; const i = cw.entries.findIndex((x, j) => j !== sel && cellsOf(x).includes(k)); if (!cellsOf(cw.entries[sel]).includes(k) && i >= 0) sel = i; return paint(); }
-    if (t.closest('[data-del]')) { const ks = cellsOf(cw.entries[sel]).filter((k) => typed[k]); if (ks.length) delete typed[ks[ks.length - 1]]; return paint(); }
-    const key = t.closest('[data-key]'); if (key) { const k = nextEmpty(); if (k) { typed[k] = key.dataset.key; ctx.sfx('tap'); } if (!nextEmpty()) { const i = cw.entries.findIndex((x) => cellsOf(x).some((c) => !typed[c])); if (i >= 0) sel = i; } return paint(); }
+    const clue = t.closest('[data-clue]'); if (clue) { choose(Number(clue.dataset.clue)); return paint(); }
+    const cell = t.closest('[data-cell]'); if (cell) { const k = cell.dataset.cell; if (!cellsOf(cw.entries[sel]).includes(k)) sel = cw.entries.findIndex((x) => cellsOf(x).includes(k)); cur = cellsOf(cw.entries[sel]).indexOf(k); return paint(); }
+    if (t.closest('[data-del]')) { const ks = cellsOf(cw.entries[sel]); if (!typed[ks[cur]] && cur > 0) cur--; delete typed[ks[cur]]; return paint(); }
+    const key = t.closest('[data-key]'); if (key) { const ks = cellsOf(cw.entries[sel]); typed[ks[cur]] = key.dataset.key; ctx.sfx('tap');
+      if (cur < ks.length - 1) cur++; else { const i = cw.entries.findIndex((x) => cellsOf(x).some((c) => !typed[c])); if (i >= 0) choose(i); } return paint(); }
     if (t.closest('[data-check]')) { const all = Object.keys(cells); if (all.some((k) => !typed[k])) return paint('빈칸을 모두 채운 뒤 확인해요.');
       const marks = {}; let wrong = 0; for (const k of all) { const ok = typed[k] === cells[k]; marks[k] = ok ? 'ok' : 'bad'; if (!ok) wrong++; }
       if (!wrong) { over = true; ctx.sfx('correct'); paint('모두 맞혔어요! 큰 성의 문이 열려요.', marks); return void timers.push(setTimeout(ctx.win, ctx.fast ? 30 : 1500)); }
       left--; ctx.sfx('miss');
       if (left <= 0) { over = true; const missed = cw.entries.filter((x) => cellsOf(x).some((k) => typed[k] !== cells[k])).map((x) => x.id); for (const k of all) typed[k] = cells[k]; paint('정답을 보여 줄게요.', marks); return void timers.push(setTimeout(() => ctx.lose(missed), ctx.fast ? 30 : 2500)); }
       for (const k of all) if (typed[k] !== cells[k]) delete typed[k]; return paint(`틀린 칸 ${wrong}개를 지웠어요. 다시 채워요.`, marks); } };
-  paint('뜻을 보고 단어를 채워요. 칸이 겹치는 글자가 힌트예요.');
-  return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ cells: { ...cells }, typed: { ...typed }, sel, left, entries: cw.entries.map((x) => ({ ...x })) }) };
+  choose(0); paint('뜻을 보고 단어를 채워요. 칸이 겹치는 글자가 힌트예요.');
+  return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ cells: { ...cells }, typed: { ...typed }, sel, cur, left, entries: cw.entries.map((x) => ({ ...x })) }) };
 }
