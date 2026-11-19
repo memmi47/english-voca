@@ -485,7 +485,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .d-C .bln.wobble{animation:wob .5s ease-in-out infinite alternate;transform-origin:center bottom;transform-box:fill-box;animation-delay:var(--d)}@keyframes wob{to{transform:rotate(6deg)}}
 .d-C .c-kid{left:4%}.d-C.close .c-letter{animation:tremble .2s linear infinite}
 .hear-once{background:#ffe9a8}
-.result-face{margin:6px auto}.final-bat{display:flex;justify-content:center;align-items:flex-end;gap:12px}
+.result-face{display:flex;justify-content:center;margin:6px auto}.final-bat{display:flex;justify-content:center;align-items:flex-end;gap:12px}
 .xscene{display:flex;align-items:flex-end;justify-content:center;gap:24px;margin:2px auto 6px}.xhp{display:flex;gap:6px}.xhp i{width:18px;height:18px;background:var(--coral);border:3px solid var(--ink)}.xhp i.gone{background:#c9c2ad}
 .x-guard{display:inline-block}.x-guard.hit{animation:tremble .12s linear 4}.x-guard.down{transform:rotate(80deg) translateY(10px);opacity:.6;transition:all .6s}
 .home-help{max-width:620px;margin:4px auto;font-size:13px;color:var(--mut)}
