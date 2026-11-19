@@ -77,7 +77,8 @@ function shuffle(arr, rng) { const a = arr.slice(); for (let i = a.length - 1; i
 const KEYS = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const keyboard = () => `<div class="hkeys">${KEYS.map((k) => `<button data-key="${k}">${k}</button>`).join('')}</div>`;
 
-// The picture that comes one step closer with each wrong letter (three styles to compare, user request 2026-11-19).
+// The picture that comes one step closer with each wrong letter. B (the rope bridge) is the one in use (user decision
+// 2026-11-19); A and C stay for comparison only (?hang=A / C).
 function danger(style, wrong, lives, ctx) {
   const lost = wrong >= lives; const k = Math.min(wrong, lives);
   if (style === 'A') {        // a bat takes the letter piece by piece
