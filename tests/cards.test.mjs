@@ -926,7 +926,7 @@ test('S4: with TRIAGE.on = false there is no post office: tiles start at once an
 });
 
 // ---- playhouse games: placement and levels (cards/js/games.js, docs/MINIGAMES.md) ----
-import { gamePlan, playLevel, LEVELS, GAME_TYPES, DEBUT, shellSwaps, shellFollow, updownHint, mailPos, inZone } from '../cards/js/games.js';
+import { gamePlan, playLevel, LEVELS, GAME_TYPES, DEBUT, shellSwaps, shellFollow, updownHint, mailPos, inZone, warmth, numEn, numKo, heartsHtml } from '../cards/js/games.js';
 const REAL = indexWorlds(JSON.parse(fs.readFileSync('cards/data/worlds.json', 'utf8')));
 test('G1: the real 30 worlds: 60 playhouses, the first four worlds bring in 8 games two by two at level 1, every game comes back, never the same pair twice in a row', () => {
   const plan = gamePlan(REAL); const ws = REAL.worlds; const all = ws.flatMap((w) => Object.values(plan[w.id]));
@@ -1005,3 +1005,16 @@ test('CF2: the continent castle the same way: exam pass kept, crossword pending,
   const fin = finaleRun(IX, DOC.continents[0], s, D1, mulberry32(3)); assert.deepEqual([fin.kind, fin.cid, fin.words.length], ['finalc', 'd1', node.scope.castle.length]);
   const won = finishFinale(IX, s, 'd1', D1); assert.deepEqual([won.cleared, won.nextContinent.id, worldOpen(IX, W3, s)], [true, 'd2', true]);
 }));
+
+test('G4: reworked levels (user 2026-11-20): pairs flip limit 40, bat tap and mailbox with 3 hearts, bat tap not faster than 1 s, house number changes its help, quick draw changes its task, number words', () => {
+  assert.equal(LEVELS.memory[4].flips, 40);
+  assert.ok(LEVELS.whack.every((l) => l.show >= 1000), 'no level faster than 1 s');
+  assert.deepEqual(LEVELS.whack.map((l) => [!!l.armored, !!l.sleepy]), [[false, false], [false, false], [false, false], [true, false], [true, true]]);
+  assert.deepEqual(LEVELS.updown.map((l) => [!!l.bar, !!l.history, l.lang || 'hot']), [[true, true, 'ko'], [false, true, 'ko'], [false, true, 'en'], [false, false, 'en'], [false, true, 'hot']]);
+  assert.deepEqual(LEVELS.quick.map((l) => l.mode), ['one', 'one', 'side', 'side', 'word']);
+  assert.deepEqual(LEVELS.order.map((l) => l.words), [0, 0, 0.3, 0.4, 0.6]);
+  assert.deepEqual([warmth(50, 50), warmth(50, 53), warmth(50, 40), warmth(50, 75), warmth(50, 76)], ['found', 'very hot', 'hot', 'warm', 'cold']);
+  assert.deepEqual([1, 2, 10, 13, 20, 23, 25].map(numEn), ['one', 'two', 'ten', 'thirteen', 'twenty', 'twenty-three', 'twenty-five']);
+  assert.deepEqual([1, 9, 10, 11, 20, 23, 25].map(numKo), ['일', '구', '십', '십일', '이십', '이십삼', '이십오']);
+  assert.equal((heartsHtml(2).match(/class="on"/g) || []).length, 2); assert.equal((heartsHtml(2).match(/class="off"/g) || []).length, 1);
+});

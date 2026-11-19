@@ -11,19 +11,20 @@ export const DEBUT = [['memory', 'mail'], ['whack', 'shell'], ['updown', 'simon'
 // Level tables (1-5). Numbers are first guesses, to be tuned after the children play [docs/MINIGAMES.md 4.2].
 export const LEVELS = {
   memory: [{ pairs: 3, cols: 3, preview: 2000, hide: 800 }, { pairs: 4, cols: 4, preview: 0, hide: 800 }, { pairs: 6, cols: 4, preview: 0, hide: 500 },
-    { pairs: 8, cols: 4, preview: 0, hide: 500 }, { pairs: 10, cols: 5, preview: 0, hide: 500, flips: 30 }],
+    { pairs: 8, cols: 4, preview: 0, hide: 500 }, { pairs: 10, cols: 5, preview: 0, hide: 500, flips: 40 }],
   mail: [{ boxes: [900], zone: 26, goal: 3 }, { boxes: [600], zone: 20, goal: 5 }, { boxes: [900, 620], zone: 22, goal: 2 },
     { boxes: [900, 620], zone: 34, goal: 3, together: true }, { boxes: [900, 650, 470], zone: 44, goal: 3, together: true, turn: true }],
-  whack: [{ holes: 4, show: 1200, goal: 8, courier: 0, at: 1 }, { holes: 6, show: 1000, goal: 10, courier: 0.15, at: 1 }, { holes: 9, show: 800, goal: 12, courier: 0.3, at: 1 },
-    { holes: 9, show: 700, goal: 15, courier: 0.3, at: 2, gold: 0.15 }, { holes: 12, show: 600, goal: 18, courier: 0.3, at: 3, gold: 0.15, sleepy: 0.15 }],
+  whack: [{ holes: 4, show: 1300, goal: 8, courier: 0, at: 1 }, { holes: 6, show: 1200, goal: 10, courier: 0.15, at: 1 }, { holes: 9, show: 1100, goal: 12, courier: 0.25, at: 1 },
+    { holes: 9, show: 1100, goal: 14, courier: 0.25, at: 2, armored: 0.25 }, { holes: 9, show: 1000, goal: 16, courier: 0.25, at: 2, armored: 0.25, sleepy: 0.15 }],
   shell: [{ boxes: 3, swaps: 3, ms: 700, letters: 1 }, { boxes: 3, swaps: 5, ms: 500, letters: 1 }, { boxes: 4, swaps: 6, ms: 380, letters: 1 },
     { boxes: 4, swaps: 8, ms: 320, letters: 2 }, { boxes: 5, swaps: 10, ms: 260, letters: 2 }],
-  updown: [{ max: 20, tries: 6 }, { max: 50, tries: 7 }, { max: 100, tries: 8 }, { max: 100, tries: 7 }, { max: 200, tries: 8 }],
+  updown: [{ max: 20, tries: 6, bar: true, history: true, lang: 'ko' }, { max: 50, tries: 7, history: true, lang: 'ko' }, { max: 50, tries: 6, history: true, lang: 'en' },
+    { max: 100, tries: 7, lang: 'en' }, { max: 100, tries: 10, history: true, hot: true }],
   simon: [{ boxes: 4, from: 3, to: 5, ms: 700, retry: true }, { boxes: 4, from: 3, to: 7, ms: 550, retry: true }, { boxes: 4, from: 4, to: 9, ms: 420 },
     { boxes: 6, from: 4, to: 9, ms: 550 }, { boxes: 6, from: 5, to: 11, ms: 420 }],
-  quick: [{ rounds: 3, need: 2, window: 1200, fakes: 0 }, { rounds: 5, need: 3, window: 1000, fakes: 1 }, { rounds: 5, need: 4, window: 800, fakes: 2 },
-    { rounds: 7, need: 5, window: 700, fakes: 3 }, { rounds: 7, need: 6, window: 600, fakes: 4, twitch: true }],
-  order: [{ n: 9, time: 0, hide: true }, { n: 16, time: 0, hide: true }, { n: 16, time: 40, hide: true }, { n: 25, time: 60, hide: true }, { n: 25, time: 60, hide: false, mix: true }],
+  quick: [{ rounds: 3, need: 2, window: 1500, mode: 'one' }, { rounds: 5, need: 3, window: 1300, mode: 'one', fakes: 2 }, { rounds: 5, need: 4, window: 1400, mode: 'side' },
+    { rounds: 7, need: 5, window: 1400, mode: 'side', bats: 2 }, { rounds: 7, need: 5, window: 1600, mode: 'word', bats: 2 }],
+  order: [{ n: 9, time: 0, hide: true, words: 0 }, { n: 16, time: 0, hide: true, words: 0 }, { n: 16, time: 60, hide: true, words: 0.3 }, { n: 25, time: 90, hide: true, words: 0.4 }, { n: 25, time: 90, hide: false, words: 0.6 }],
 };
 export const levelOf = (type, level) => LEVELS[type][Math.max(1, Math.min(5, level)) - 1];
 
@@ -85,11 +86,16 @@ function memory(ctx) {
   return { stop() { clearTimeout(timer); }, peek: () => ({ deck: deck.slice(), matched: [...matched], open: open.slice(), busy, preview: peekAll }) };
 }
 
+// Hearts: wrong taps the game forgives (user request 2026-11-20). Pixel hearts, the lost ones grey.
+export const HEARTS = 3;
+const HEART = '<svg class="heart" width="22" height="20" viewBox="0 0 11 10" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 1h3v1h1v-1h3v1h1v3h-1v1h-1v1h-1v1h-1v1h-1v-1h-1v-1h-1v-1h-1v-1h-1v-3h1z" fill="currentColor"/></svg>';
+export const heartsHtml = (left, max = HEARTS) => `<span class="hearts" aria-label="하트 ${left}개">${Array.from({ length: max }, (_, i) => `<i class="${i < left ? 'on' : 'off'}">${HEART}</i>`).join('')}</span>`;
+
 function mail(ctx) {
-  const L = levelOf('mail', ctx.level); const n = L.boxes.length; const done = L.boxes.map(() => 0); let hits = 0, raf = 0, t0 = performance.now(), prevT = t0;
+  const L = levelOf('mail', ctx.level); const n = L.boxes.length; const done = L.boxes.map(() => 0); let hits = 0, raf = 0, t0 = performance.now(), prevT = t0, lives = HEARTS, over = false;
   const phase = L.boxes.map((_, i) => i * 1.7), dir = L.boxes.map(() => 1); let nextTurn = t0 + 3500;
   const goalText = () => (L.together ? `${hits} / ${L.goal}번` : n === 1 ? `${done[0]} / ${L.goal}통` : done.map((d, i) => `${i + 1}번 통 ${d}/${L.goal}`).join(' · '));
-  ctx.root.innerHTML = `<div class="mailtrack ${n > 1 ? 'multi' : ''}" style="height:${70 + 92 * n}px"><div class="mailzone" style="left:${50 - L.zone / 2}%;width:${L.zone}%"></div>
+  ctx.root.innerHTML = `<div class="game-hearts" id="hearts">${heartsHtml(lives)}</div><div class="mailtrack ${n > 1 ? 'multi' : ''}" style="height:${70 + 92 * n}px"><div class="mailzone" style="left:${50 - L.zone / 2}%;width:${L.zone}%"></div>
     ${L.boxes.map((_, i) => `<div class="mailbox mover" data-k="${i}" style="top:${8 + i * 92}px">${ctx.mbox(96)}<b class="mail-n">${n > 1 ? i + 1 : ''}</b></div>`).join('')}</div>
     <button class="go" data-mail="1">${ctx.spr('envelope', 40)} 넣기!</button>`;
   const boxes = [...ctx.root.querySelectorAll('.mover')];
@@ -98,34 +104,41 @@ function mail(ctx) {
     if (L.turn && t > nextTurn) { dir[n - 1] *= -1; nextTurn = t + 2500 + ctx.rng() * 2500; }
     const ps = pos(); boxes.forEach((b, i) => { b.style.left = ps[i] + '%'; }); raf = requestAnimationFrame(tick); };
   raf = requestAnimationFrame(tick); ctx.status(goalText());
-  ctx.hint(L.together ? `우체통 ${n}개가 모두 노란 칸에 함께 있을 때 눌러요. 한꺼번에 쏙!` : n > 1 ? '노란 칸에 와 있는 우체통에 편지가 들어가요. 모든 통에 넣어요.' : '우체통이 노란 칸에 왔을 때 눌러요. 틀려도 괜찮아요.');
-  ctx.root.onclick = (ev) => { if (!ev.target.closest('[data-mail]')) return; const ps = pos(); const ins = ps.map((p) => inZone(p, L.zone));
-    if (L.together) { if (ins.every(Boolean)) { hits++; ctx.sfx('mail'); ctx.hint('한꺼번에 쏙! 잘했어요.'); } else { ctx.sfx('retry'); ctx.hint(`${ins.filter(Boolean).length}개만 칸에 있었어요. 모두 모일 때를 기다려요.`); } }
-    else { let got = false; ins.forEach((y, i) => { if (y && done[i] < L.goal) { done[i]++; got = true; } }); if (got) { ctx.sfx('mail'); ctx.hint('쏙! 잘 넣었어요.'); } else { ctx.sfx('retry'); ctx.hint('조금만 더 기다렸다가 눌러요.'); } }
-    ctx.status(goalText()); if (L.together ? hits >= L.goal : done.every((d) => d >= L.goal)) { cancelAnimationFrame(raf); ctx.win(); } };
-  return { stop() { cancelAnimationFrame(raf); }, peek: () => ({ pos: pos(), zone: L.zone, together: !!L.together }) };
+  ctx.hint(L.together ? `우체통 ${n}개가 모두 노란 칸에 함께 있을 때 눌러요. 한꺼번에 쏙!` : n > 1 ? '노란 칸에 와 있는 우체통에 편지가 들어가요. 모든 통에 넣어요.' : '우체통이 노란 칸에 왔을 때 눌러요. 잘못 누르면 하트가 하나 줄어요.');
+  const miss = (text) => { lives--; ctx.sfx('retry'); ctx.root.querySelector('#hearts').innerHTML = heartsHtml(lives); ctx.hint(lives ? text : '하트를 모두 잃었어요.'); if (!lives) { over = true; cancelAnimationFrame(raf); ctx.fail(); } };
+  ctx.root.onclick = (ev) => { if (over || !ev.target.closest('[data-mail]')) return; const ps = pos(); const ins = ps.map((p) => inZone(p, L.zone));
+    if (L.together) { if (ins.every(Boolean)) { hits++; ctx.sfx('mail'); ctx.hint('한꺼번에 쏙! 잘했어요.'); } else return miss(`${ins.filter(Boolean).length}개만 칸에 있었어요. 모두 모일 때를 기다려요.`); }
+    else { let got = false; ins.forEach((y, i) => { if (y && done[i] < L.goal) { done[i]++; got = true; } }); if (got) { ctx.sfx('mail'); ctx.hint('쏙! 잘 넣었어요.'); } else return miss('조금만 더 기다렸다가 눌러요.'); }
+    ctx.status(goalText()); if (L.together ? hits >= L.goal : done.every((d) => d >= L.goal)) { over = true; cancelAnimationFrame(raf); ctx.win(); } };
+  return { stop() { over = true; cancelAnimationFrame(raf); }, peek: () => ({ pos: pos(), zone: L.zone, together: !!L.together, lives }) };
 }
 
+// Bat tap: harder levels add decoys and helmets, not much speed (user request 2026-11-20: levels 4-5 were too fast to touch).
+// A helmeted bat needs two taps; tapping the courier or a sleeping bat costs a heart.
 function whack(ctx) {
-  const L = levelOf('whack', ctx.level); const show = ctx.fast ? 400 : L.show; const cols = L.holes <= 4 ? 2 : L.holes <= 6 ? 3 : L.holes <= 9 ? 3 : 4; const end = Date.now() + (ctx.fast ? 8000 : 30000);
-  let score = 0; const up = new Map(); const timers = []; let over = false;
-  ctx.root.innerHTML = `<div class="whack" style="grid-template-columns:repeat(${cols},1fr)">${Array.from({ length: L.holes }, (_, i) => `<button class="hole" data-h="${i}" aria-label="${i + 1}번 우체통">${ctx.mbox(84)}<span class="pop"></span></button>`).join('')}</div>`;
+  const L = levelOf('whack', ctx.level); const show = ctx.fast ? 500 : L.show; const cols = L.holes <= 4 ? 2 : 3; const end = Date.now() + (ctx.fast ? 9000 : 30000);
+  let score = 0, lives = HEARTS; const up = new Map(); const timers = []; let over = false;
+  ctx.root.innerHTML = `<div class="game-hearts" id="hearts">${heartsHtml(lives)}</div><div class="whack" style="grid-template-columns:repeat(${cols},1fr)">${Array.from({ length: L.holes }, (_, i) => `<button class="hole" data-h="${i}" aria-label="${i + 1}번 우체통">${ctx.mbox(84)}<span class="pop"></span></button>`).join('')}</div>`;
   const holes = [...ctx.root.querySelectorAll('.hole')];
   const status = () => ctx.status(`${score} / ${L.goal}마리 · ${Math.max(0, Math.ceil((end - Date.now()) / 1000))}초`);
   const hide = (h) => { up.delete(h); holes[h].classList.remove('up'); holes[h].querySelector('.pop').innerHTML = ''; };
+  const draw = (h, kind) => { holes[h].querySelector('.pop').innerHTML = kind === 'courier' ? ctx.spr('courier-teal-wave', 64) : `<span class="bat ${kind}">${ctx.spr(kind === 'sleepy' ? 'bat-b' : 'bat-a', 64)}${kind === 'armored' ? '<i class="helmet"></i>' : ''}${kind === 'sleepy' ? '<b class="zz">z z</b>' : ''}</span>`; };
   const spawn = () => { if (over) return; const free = holes.map((_, i) => i).filter((i) => !up.has(i)); const k = Math.min(L.at, free.length);
-    for (let j = 0; j < k; j++) { const h = free.splice(Math.floor(ctx.rng() * free.length), 1)[0]; const r = ctx.rng();
-      const kind = r < L.courier ? 'courier' : r < L.courier + (L.gold || 0) ? 'gold' : r < L.courier + (L.gold || 0) + (L.sleepy || 0) ? 'sleepy' : 'bat';
-      up.set(h, kind); holes[h].classList.add('up'); holes[h].querySelector('.pop').innerHTML = kind === 'courier' ? ctx.spr('courier-teal-wave', 64) : `<span class="bat ${kind}">${ctx.spr(kind === 'sleepy' ? 'bat-b' : 'bat-a', 64)}</span>`;
-      timers.push(setTimeout(() => { if (up.get(h) === kind) hide(h); }, show)); }
+    for (let j = 0; j < k; j++) { const h = free.splice(Math.floor(ctx.rng() * free.length), 1)[0]; const r = ctx.rng(); const a = L.courier, b = a + (L.armored || 0), c = b + (L.sleepy || 0);
+      const kind = r < a ? 'courier' : r < b ? 'armored' : r < c ? 'sleepy' : 'bat'; const token = {};
+      up.set(h, { kind, token }); holes[h].classList.add('up'); draw(h, kind);
+      timers.push(setTimeout(() => { const u = up.get(h); if (u && u.token === token) hide(h); }, show * (kind === 'armored' ? 1.4 : 1))); }
     timers.push(setTimeout(spawn, show * 0.9)); };
   const clock = setInterval(() => { status(); if (Date.now() >= end && !over) { over = true; score >= L.goal ? ctx.win() : ctx.fail(); } }, 250);
-  ctx.root.onclick = (ev) => { const b = ev.target.closest('.hole'); if (!b || over) return; const h = Number(b.dataset.h); const kind = up.get(h); if (!kind) return;
-    hide(h); if (kind === 'courier' || kind === 'sleepy') { score = Math.max(0, score - 1); ctx.sfx('retry'); ctx.hint(kind === 'courier' ? '앗, 배달부예요! 박쥐만 눌러요.' : '잠든 박쥐를 깨웠어요!'); }
-    else { score += kind === 'gold' ? 2 : 1; ctx.sfx('hit'); }
+  ctx.root.onclick = (ev) => { const btn = ev.target.closest('.hole'); if (!btn || over) return; const h = Number(btn.dataset.h); const u = up.get(h); if (!u) return;
+    if (u.kind === 'armored') { u.kind = 'bat'; draw(h, 'bat'); ctx.sfx('tap'); ctx.hint('투구를 벗겼어요! 한 번 더!'); return; }
+    hide(h);
+    if (u.kind === 'courier' || u.kind === 'sleepy') { lives--; ctx.sfx('retry'); ctx.root.querySelector('#hearts').innerHTML = heartsHtml(lives); ctx.hint(u.kind === 'courier' ? '앗, 배달부예요! 하트가 하나 줄었어요.' : '잠든 박쥐를 깨웠어요! 하트가 하나 줄었어요.');
+      if (!lives) { over = true; status(); return ctx.fail(); } }
+    else { score++; ctx.sfx('hit'); }
     status(); if (score >= L.goal && !over) { over = true; ctx.win(); } };
-  ctx.hint(L.courier ? '박쥐만 톡! 배달부는 누르면 안 돼요.' : '튀어나온 박쥐를 톡 눌러요.'); status(); spawn();
-  return { stop() { over = true; clearInterval(clock); timers.forEach(clearTimeout); }, peek: () => ({ up: [...up.entries()], score, goal: L.goal }) };
+  ctx.hint(L.sleepy ? '깨어 있는 박쥐만 톡! 투구 쓴 박쥐는 두 번, 잠든 박쥐와 배달부는 누르면 안 돼요.' : L.armored ? '박쥐만 톡! 투구 쓴 박쥐는 두 번 눌러요.' : L.courier ? '박쥐만 톡! 배달부를 누르면 하트가 줄어요.' : '튀어나온 박쥐를 톡 눌러요.'); status(); spawn();
+  return { stop() { over = true; clearInterval(clock); timers.forEach(clearTimeout); }, peek: () => ({ up: [...up.entries()].map(([h, u]) => [h, u.kind]), score, goal: L.goal, lives }) };
 }
 
 function shell(ctx) {
@@ -152,10 +165,17 @@ function shell(ctx) {
   return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ phase, letters: letters.slice(), slotOf: slotOf.slice() }) };
 }
 
+// House number: a bigger street alone is not harder (one more halving, user 2026-11-20). The levels take help away
+// instead: the range bar, the list of guesses, Korean hints (English "higher / lower" from level 3), and at level 5 the
+// neighbour only says how warm the guess is (hot / warm / cold), not which way.
+export const warmth = (target, guess) => { const d = Math.abs(target - guess); return d === 0 ? 'found' : d <= 3 ? 'very hot' : d <= 10 ? 'hot' : d <= 25 ? 'warm' : 'cold'; };
+const WARM_KO = { 'very hot': '아주 뜨거워요!', hot: '뜨거워요', warm: '미지근해요', cold: '차가워요' };
 function updown(ctx) {
-  const L = levelOf('updown', ctx.level); const target = 1 + Math.floor(ctx.rng() * L.max); let lo = 1, hi = L.max, left = L.tries, typed = '', over = false;
+  const L = levelOf('updown', ctx.level); const target = 1 + Math.floor(ctx.rng() * L.max); let lo = 1, hi = L.max, left = L.tries, typed = '', over = false; const log = [];
+  const say = (h, g) => (L.hot ? `${warmth(target, g)} · ${WARM_KO[warmth(target, g)]}` : L.lang === 'en' ? (h > 0 ? `${g} → higher ▲` : `${g} → lower ▼`) : (h > 0 ? `${g}번지보다 큰 번지예요 ▲` : `${g}번지보다 작은 번지예요 ▼`));
   const paint = () => { ctx.status(`남은 기회 ${left}번`);
-    ctx.root.innerHTML = `<div class="street"><div class="street-bar"><i style="left:${(lo - 1) / L.max * 100}%;width:${(hi - lo + 1) / L.max * 100}%"></i></div><p class="street-range">${lo}번지 ~ ${hi}번지 중 한 집</p></div>
+    ctx.root.innerHTML = `<div class="street">${L.bar ? `<div class="street-bar"><i style="left:${(lo - 1) / L.max * 100}%;width:${(hi - lo + 1) / L.max * 100}%"></i></div><p class="street-range">${lo}번지 ~ ${hi}번지 중 한 집</p>` : `<p class="street-range">1번지 ~ ${L.max}번지 중 한 집</p>`}</div>
+      ${L.history ? `<div class="guesses">${log.map((x) => `<span class="${x.cls}">${x.g}<small>${x.mark}</small></span>`).join('')}</div>` : ''}
       <div class="pad-show" id="padshow">${typed || '?'}<small>번지</small></div>
       <div class="numpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '지움', 0, '확인'].map((k) => `<button data-k="${k}" class="${typeof k === 'string' ? 'padfn' : ''}">${k}</button>`).join('')}</div>`; };
   ctx.root.onclick = (ev) => { const b = ev.target.closest('[data-k]'); if (!b || over) return; const k = b.dataset.k;
@@ -163,12 +183,12 @@ function updown(ctx) {
       typed = ''; left--; const h = updownHint(target, g);
       if (h === 0) { over = true; ctx.sfx('correct'); ctx.hint(`${g}번지! 찾았어요.`); paint(); return void setTimeout(ctx.win, wait(ctx, 600)); }
       if (h > 0) lo = Math.max(lo, g + 1); else hi = Math.min(hi, g - 1); ctx.sfx('tap');
-      ctx.hint(h > 0 ? `${g}번지보다 더 큰 번지예요 ▶` : `◀ ${g}번지보다 더 작은 번지예요`);
+      const w = warmth(target, g); log.push({ g, mark: L.hot ? w : h > 0 ? '▲' : '▼', cls: L.hot ? w.replace(' ', '-') : '' }); ctx.hint(say(h, g));
       if (left <= 0) { over = true; paint(); ctx.hint(`정답은 ${target}번지였어요.`); return void setTimeout(ctx.fail, wait(ctx, 1200)); } }
     else if (typed.length < String(L.max).length) typed += k;
     paint(); };
-  ctx.hint(`1번지부터 ${L.max}번지 중 편지 받을 집을 찾아요. 이웃이 크다·작다를 알려 줘요.`); paint();
-  return { stop() {}, peek: () => ({ target, lo, hi, left }) };
+  ctx.hint(L.hot ? `1~${L.max}번지. 이웃이 "hot(뜨거워요)·warm·cold"로 얼마나 가까운지만 알려 줘요.` : L.lang === 'en' ? `1~${L.max}번지. 이웃이 영어로 알려 줘요: higher(더 큰) / lower(더 작은).` : `1번지부터 ${L.max}번지 중 편지 받을 집을 찾아요. 이웃이 크다·작다를 알려 줘요.`); paint();
+  return { stop() { over = true; }, peek: () => ({ target, lo, hi, left }) };
 }
 
 const SIMON_COLORS = ['#cc6651', '#387d74', '#eab65c', '#7d6bb0', '#5b8fd1', '#8fb85a'];
@@ -190,36 +210,64 @@ function simon(ctx) {
   return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ seq: seq.slice(), pos, phase }) };
 }
 
+// Quick draw: harder levels ask for a choice, not a faster hand (user 2026-11-20). 'one': one button, "지금!" (level 2 adds
+// a "잠깐!" fake). 'side': two mailboxes, tap the one the letter jumps out of; a bat instead of a letter means "don't tap".
+// 'word': the sign says LEFT or RIGHT in English (sometimes a letter pops up on the other side to fool you).
 function quick(ctx) {
-  const L = levelOf('quick', ctx.level); let round = 0, wins = 0, phase = 'wait', signalAt = 0; const timers = [];
-  const fakeRounds = new Set(shuffleIn(Array.from({ length: L.rounds }, (_, i) => i), ctx.rng).slice(0, L.fakes));
-  ctx.root.innerHTML = `<button class="quick" id="quickbtn"><span class="quick-bat">${ctx.spr('bat-a', 72)}</span><b id="quicksay">준비…</b></button>`;
-  const btn = ctx.root.querySelector('#quickbtn'), say = ctx.root.querySelector('#quicksay');
-  const set = (cls, text) => { btn.className = 'quick q-' + cls; say.textContent = text; };
+  const L = levelOf('quick', ctx.level); let round = 0, wins = 0, phase = 'wait', want = null; const timers = [];
+  const pick = (k) => shuffleIn(Array.from({ length: L.rounds }, (_, i) => i), ctx.rng).slice(0, k);
+  const fakeRounds = new Set(pick(L.fakes || 0)), batRounds = new Set(pick(L.bats || 0).filter((i) => i > 0)), lureRounds = new Set(pick(L.mode === 'word' ? 3 : 0));
+  const two = L.mode !== 'one';
+  ctx.root.innerHTML = two ? `<div class="qsides"><button class="qside" data-side="L">${ctx.mbox(96)}<span class="qpop"></span><b>왼쪽</b></button><div class="qsign" id="quicksay">준비…</div><button class="qside" data-side="R">${ctx.mbox(96)}<span class="qpop"></span><b>오른쪽</b></button></div>`
+    : `<button class="quick" id="quickbtn" data-side="C"><span class="quick-bat">${ctx.spr('bat-a', 72)}</span><b id="quicksay">준비…</b></button>`;
+  const say = ctx.root.querySelector('#quicksay'); const pops = { L: ctx.root.querySelector('[data-side=L] .qpop'), R: ctx.root.querySelector('[data-side=R] .qpop') };
+  const clear = () => { if (two) { pops.L.innerHTML = pops.R.innerHTML = ''; } };
+  const set = (cls, text) => { const el = two ? say : ctx.root.querySelector('#quickbtn'); el.className = (two ? 'qsign ' : 'quick ') + 'q-' + cls; say.textContent = text; };
+  const end = (ok, text) => { phase = 'done'; if (ok) wins++; round++; ctx.sfx(ok ? 'hit' : 'retry'); set(ok ? 'ok' : 'early', text); timers.push(setTimeout(() => { clear(); next(); }, wait(ctx, 900))); };
   const next = () => { if (wins >= L.need) return ctx.win(); if (round - wins > L.rounds - L.need) return ctx.fail(); if (round >= L.rounds) return wins >= L.need ? ctx.win() : ctx.fail();
-    phase = 'wait'; set('wait', '준비…'); ctx.status(`${round + 1}판 / ${L.rounds}판 · 성공 ${wins} (목표 ${L.need})`);
-    const delay = 1200 + ctx.rng() * 1800;
-    if (fakeRounds.has(round)) timers.push(setTimeout(() => { if (phase === 'wait') { set('fake', '잠깐!'); timers.push(setTimeout(() => { if (phase === 'wait') set('wait', '준비…'); }, wait(ctx, 500))); } }, wait(ctx, delay * 0.5)));
-    if (L.twitch) timers.push(setTimeout(() => { if (phase === 'wait') btn.classList.add('q-twitch'); }, wait(ctx, delay * 0.8)));
-    timers.push(setTimeout(() => { if (phase !== 'wait') return; phase = 'go'; signalAt = performance.now(); set('go', '지금!'); ctx.sfx('gate');
-      timers.push(setTimeout(() => { if (phase !== 'go') return; phase = 'done'; set('late', '늦었어요'); round++; timers.push(setTimeout(next, wait(ctx, 900))); }, ctx.fast ? 2000 : L.window)); }, wait(ctx, delay))); };
-  btn.onclick = () => { if (phase === 'go') { phase = 'done'; const ms = Math.round(performance.now() - signalAt); wins++; round++; ctx.sfx('hit'); set('ok', `${ms / 1000}초!`); timers.push(setTimeout(next, wait(ctx, 900))); }
-    else if (phase === 'wait') { phase = 'done'; round++; ctx.sfx('retry'); set('early', '너무 빨랐어요'); timers.push(setTimeout(next, wait(ctx, 900))); } };
-  ctx.hint('"지금!"이 뜨면 바로 눌러요. "잠깐!"이나 준비 중에 누르면 그 판은 실패예요.'); next();
-  return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ phase, round, wins }) };
+    phase = 'wait'; want = null; set('wait', '준비…'); ctx.status(`${round + 1}판 / ${L.rounds}판 · 성공 ${wins} (목표 ${L.need})`);
+    const delay = 1200 + ctx.rng() * 1600; const r = round;
+    if (fakeRounds.has(r)) timers.push(setTimeout(() => { if (phase === 'wait') { set('fake', '잠깐!'); timers.push(setTimeout(() => { if (phase === 'wait') set('wait', '준비…'); }, wait(ctx, 500))); } }, wait(ctx, delay * 0.5)));
+    timers.push(setTimeout(() => { if (phase !== 'wait' || round !== r) return;
+      const side = ctx.rng() < 0.5 ? 'L' : 'R', other = side === 'L' ? 'R' : 'L';
+      if (batRounds.has(r)) { phase = 'nogo'; want = 'none'; set('bat', '박쥐다! 참아요'); if (two) pops[side].innerHTML = ctx.spr('bat-a', 56); else ctx.root.querySelector('.quick-bat').classList.add('show');
+        timers.push(setTimeout(() => { if (phase === 'nogo' && round === r) end(true, '잘 참았어요!'); }, ctx.fast ? 600 : L.window)); return; }
+      phase = 'go'; want = two ? side : 'C';
+      if (L.mode === 'one') set('go', '지금!');
+      else if (L.mode === 'side') { set('go', '편지다!'); pops[side].innerHTML = ctx.spr('envelope', 48); }
+      else { set('go', side === 'L' ? 'LEFT' : 'RIGHT'); if (lureRounds.has(r)) pops[other].innerHTML = ctx.spr('envelope', 48); }
+      ctx.sfx('gate');
+      timers.push(setTimeout(() => { if (phase === 'go' && round === r) end(false, '늦었어요'); }, ctx.fast ? 2000 : L.window)); }, wait(ctx, delay))); };
+  ctx.root.onclick = (ev) => { const b = ev.target.closest('[data-side]'); if (!b || phase === 'done') return; const s = b.dataset.side;
+    if (phase === 'wait') return end(false, '너무 빨랐어요');
+    if (phase === 'nogo') return end(false, '박쥐였어요!');
+    if (phase === 'go') return s === want ? end(true, '좋아요!') : end(false, L.mode === 'word' ? (want === 'L' ? 'LEFT는 왼쪽!' : 'RIGHT는 오른쪽!') : '반대쪽이었어요'); };
+  ctx.hint(L.mode === 'one' ? (L.fakes ? '"지금!"에만 눌러요. "잠깐!"이나 준비 중에 누르면 실패예요.' : '"지금!"이 뜨면 바로 눌러요.')
+    : L.mode === 'side' ? `편지가 튀어나온 쪽 우체통을 눌러요.${L.bats ? ' 박쥐가 나오면 누르지 말고 참아요.' : ''}`
+    : '가운데 영어를 보고 그쪽을 눌러요: LEFT는 왼쪽, RIGHT는 오른쪽. 편지에 속지 마세요! 박쥐는 참아요.');
+  next();
+  return { stop() { phase = 'done'; timers.forEach(clearTimeout); }, peek: () => ({ phase, round, wins, want }) };
 }
 
+// 1 to N: sizes and colours are mixed from level 1; from level 3 some numbers are written as English or Korean words
+// (two, 이십삼), more of them at the higher levels (user 2026-11-20).
+const NUM_EN = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'];
+const KO_D = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+export const numEn = (n) => (n <= 20 ? NUM_EN[n] : 'twenty-' + NUM_EN[n - 20]);
+export const numKo = (n) => (n < 10 ? KO_D[n] : (n >= 20 ? KO_D[Math.floor(n / 10)] : '') + '십' + KO_D[n % 10]);
 function order(ctx) {
   const L = levelOf('order', ctx.level); const nums = shuffleIn(Array.from({ length: L.n }, (_, i) => i + 1), ctx.rng); let want = 1, over = false; const t0 = Date.now(); let clock = 0;
   const cols = Math.round(Math.sqrt(L.n));
-  ctx.root.innerHTML = `<div class="ordergrid" style="grid-template-columns:repeat(${cols},1fr)">${nums.map((v) => `<button class="ord" data-v="${v}" style="${L.mix ? `font-size:${18 + Math.floor(ctx.rng() * 18)}px;color:${SIMON_COLORS[Math.floor(ctx.rng() * 4)]}` : ''}">${v}</button>`).join('')}</div>`;
+  const face = (v) => { const r = ctx.rng(); if (r < L.words / 2) return { text: numEn(v), word: true }; if (r < L.words) return { text: numKo(v), word: true }; return { text: String(v), word: false }; };
+  ctx.root.innerHTML = `<div class="ordergrid" style="grid-template-columns:repeat(${cols},1fr)">${nums.map((v) => { const f = face(v); const size = f.word ? 13 + Math.floor(ctx.rng() * 6) : 18 + Math.floor(ctx.rng() * 18);
+    return `<button class="ord ${f.word ? 'word' : ''}" data-v="${v}" style="font-size:${size}px;color:${SIMON_COLORS[Math.floor(ctx.rng() * 5)]}">${f.text}</button>`; }).join('')}</div>`;
   const status = () => ctx.status(`다음: ${want}${L.time ? ` · ${Math.max(0, L.time - Math.floor((Date.now() - t0) / 1000))}초` : ` · ${Math.floor((Date.now() - t0) / 1000)}초`}`);
-  clock = setInterval(() => { status(); if (L.time && !over && Date.now() - t0 >= (ctx.fast ? 3000 : L.time * 1000)) { over = true; clearInterval(clock); ctx.fail(); } }, 250);
+  clock = setInterval(() => { status(); if (L.time && !over && Date.now() - t0 >= (ctx.fast ? 6000 : L.time * 1000)) { over = true; clearInterval(clock); ctx.fail(); } }, 250);
   ctx.root.onclick = (ev) => { const b = ev.target.closest('.ord'); if (!b || over) return; const v = Number(b.dataset.v);
     if (v !== want) { ctx.sfx('retry'); b.classList.add('shake'); setTimeout(() => b.classList.remove('shake'), 300); return; }
-    ctx.sfx('tap'); if (L.hide) b.classList.add('gone'); want++; status();
+    ctx.sfx('tap'); b.classList.add(L.hide ? 'gone' : 'done'); want++; status();
     if (want > L.n) { over = true; clearInterval(clock); ctx.hint(`${((Date.now() - t0) / 1000).toFixed(1)}초 만에 다 찾았어요!`); setTimeout(ctx.win, wait(ctx, 600)); } };
-  ctx.hint(`1부터 ${L.n}까지 차례로 눌러요.`); status();
+  ctx.hint(L.words ? `1부터 ${L.n}까지 차례로. 숫자가 영어(two)나 한글(이십삼)로 숨어 있기도 해요.` : `1부터 ${L.n}까지 차례로 눌러요.`); status();
   return { stop() { over = true; clearInterval(clock); }, peek: () => ({ want, n: L.n }) };
 }
 

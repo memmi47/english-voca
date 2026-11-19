@@ -35,9 +35,9 @@ export class Hangman {
 
 // A small crossword from `words` (objects with form, ko, id): `want` words that cross each other. Greedy, a few shuffles.
 // -> { rows, cols, entries: [{ id, word, ko, row, col, dir: 'a'|'d', num }] } or null when fewer than `min` words fit.
-export function buildCrossword(words, rng, { want = 5, min = 4, tries = 80 } = {}) {
+export function buildCrossword(words, rng, { want = 5, min = 4, tries = 80, maxLen = 8 } = {}) {
   const cand = []; const seen = new Set();
-  for (const w of words) { const f = (w.form || '').toLowerCase(); if (spellable(f, 3) && f.length <= 8 && !seen.has(f)) { seen.add(f); cand.push({ ...w, f }); } }
+  for (const w of words) { const f = (w.form || '').toLowerCase(); if (spellable(f, 3) && f.length <= maxLen && !seen.has(f)) { seen.add(f); cand.push({ ...w, f }); } }
   if (cand.length < min) return null;
   let best = null;
   for (let t = 0; t < tries && !(best && best.entries.length >= want); t++) {
@@ -77,37 +77,53 @@ function shuffle(arr, rng) { const a = arr.slice(); for (let i = a.length - 1; i
 const KEYS = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const keyboard = () => `<div class="hkeys">${KEYS.map((k) => `<button data-key="${k}">${k}</button>`).join('')}</div>`;
 
-// The picture that comes one step closer with each wrong letter. B (the rope bridge) is the one in use (user decision
-// 2026-11-19); A and C stay for comparison only (?hang=A / C).
+// The picture that comes one step closer with each wrong letter. The castles take turns: B rope bridge, A bat, C balloons
+// (user 2026-11-20: mixed by stage). The last two chances shake and warn; the courier's face follows (scared, then sad or
+// X eyes). ctx.courier(face, px) draws the child's courier with a face; ctx.bat(px) a flapping bat.
+const BALLOON = ['#cc6651', '#eab65c', '#387d74', '#7d6bb0', '#5b8fd1', '#e89aa8'];
 function danger(style, wrong, lives, ctx) {
-  const lost = wrong >= lives; const k = Math.min(wrong, lives);
-  if (style === 'A') {        // a bat takes the letter piece by piece
-    const pieces = Array.from({ length: lives }, (_, i) => `<i class="piece ${i < k ? 'gone' : ''}"></i>`).join('');
-    return `<div class="danger d-bat" data-step="${k}"><div class="letter-pieces">${pieces}</div><span class="d-batpic" style="left:${8 + k * (62 / lives)}%">${ctx.spr(lost ? 'bat-b' : 'bat-a', 72)}</span>${lost ? '<b class="d-say">편지를 빼앗겼어요!</b>' : ''}</div>`;
+  const k = Math.min(wrong, lives), lost = wrong >= lives, close = !lost && lives - k <= 2;
+  const face = lost ? (style === 'B' ? 'hurt' : 'sad') : close ? 'scared' : '';
+  const kid = (cls) => `<span class="d-kid ${cls} ${close ? 'tremble' : ''}">${ctx.courier(face, 64)}${close ? '<i class="sweat"></i>' : ''}</span>`;
+  const warn = close ? `<b class="d-warn">${lives - k === 1 ? '마지막 기회!' : '조심해요!'}</b>` : '';
+  const cls = `danger d-${style} ${close ? 'close' : ''} ${lost ? 'lost' : ''}`;
+  if (style === 'A') {        // a bat flies in from the right, closer with each wrong letter; at the end it takes the letter away
+    const left = lost ? 46 : 84 - k * (34 / lives);
+    return `<div class="${cls}" data-step="${k}">${kid('a-kid')}<span class="d-letter ${lost ? 'taken' : ''}">${ctx.spr('envelope', 64)}<i class="seal"></i></span>
+      <span class="d-batpic" style="left:${left}%">${ctx.bat(close || lost ? 88 : 72)}${lost ? `<span class="carried">${ctx.spr('envelope', 40)}</span>` : ''}</span>${warn}${lost ? '<b class="d-say">박쥐가 편지를 물고 날아갔어요!</b>' : ''}</div>`;
   }
-  if (style === 'C') {        // balloons pop one by one and the letter sinks
-    const balloons = Array.from({ length: lives }, (_, i) => `<i class="balloon ${i < k ? 'pop' : ''}" style="--i:${i}"></i>`).join('');
-    return `<div class="danger d-balloon" data-step="${k}"><div class="balloons" style="top:${10 + k * 12}px">${balloons}<span class="b-letter">${ctx.spr('envelope', 48)}</span></div><div class="pond"></div>${lost ? '<b class="d-say">퐁당! 편지가 연못에 빠졌어요</b>' : ''}</div>`;
+  if (style === 'C') {        // the letter hangs on six balloons by strings; each wrong letter pops one and the letter sinks
+    const ly = lost ? 128 : 70 + k * 9; const spots = [[60, 30], [92, 16], [124, 10], [156, 16], [188, 30], [124, 42]];
+    let svg = '';
+    spots.forEach(([x, y], i) => { if (i < k) { if (i === k - 1 && !lost) svg += `<g class="popped"><path d="M${x - 10} ${y}l-6 -6M${x + 10} ${y}l6 -6M${x} ${y - 12}v-8M${x - 8} ${y + 10}l-6 6M${x + 8} ${y + 10}l6 6" stroke="#233F3A" stroke-width="3"/></g>`; return; }
+      svg += `<line x1="${x}" y1="${y + 16}" x2="124" y2="${ly}" stroke="#233F3A" stroke-width="2"/><g class="bln ${close ? 'wobble' : ''}" style="--d:${i * 0.15}s"><ellipse cx="${x}" cy="${y}" rx="13" ry="16" fill="${BALLOON[i]}" stroke="#233F3A" stroke-width="3"/><ellipse cx="${x - 5}" cy="${y - 6}" rx="3" ry="5" fill="#fff" opacity=".7"/><path d="M${x - 3} ${y + 17}h6l-3 4z" fill="#233F3A"/></g>`; });
+    svg += `<rect x="40" y="132" width="168" height="18" rx="9" fill="#7fb7d6" stroke="#233F3A" stroke-width="3"/>${lost ? '<ellipse cx="124" cy="136" rx="30" ry="6" fill="none" stroke="#fff" stroke-width="3"/>' : ''}`;
+    return `<div class="${cls}" data-step="${k}"><svg class="c-sky" viewBox="0 0 248 150" aria-hidden="true">${svg}</svg><span class="c-letter" style="top:${ly * 1.27}px">${ctx.spr('envelope', 48)}</span>${kid('c-kid')}${warn}${lost ? '<b class="d-say">퐁당! 편지가 연못에 빠졌어요</b>' : ''}</div>`;
   }
-  const planks = Array.from({ length: lives }, (_, i) => `<i class="plank ${i < k ? 'fall' : ''}"></i>`).join('');   // B: the rope bridge loses its planks
-  return `<div class="danger d-bridge ${lost ? 'lost' : ''}" data-step="${k}"><div class="river"></div><div class="bridge">${planks}</div><span class="d-courier">${ctx.spr(ctx.courierId || 'courier-teal-idle', 72)}</span>${lost ? '<b class="d-say">퐁당! 헤엄쳐 나왔어요</b>' : ''}</div>`;
+  // B: planks fall from the left; the courier steps onto the first plank still there; the last plank cracks.
+  const at = lost ? lives - 1 : k; const step = 84 / lives;
+  const planks = Array.from({ length: lives }, (_, i) => `<i class="plank ${i < k ? 'fall' : ''} ${close && i === lives - 1 ? 'crack' : ''}"></i>`).join('');
+  return `<div class="${cls}" data-step="${k}"><div class="river"><i></i><i></i></div><i class="post l"></i><i class="post r"></i><div class="bridge">${planks}</div>
+    <span class="d-courier ${close ? 'tremble' : ''}" style="left:${8 + (at + 0.5) * step}%">${ctx.courier(face, 72)}${close ? '<i class="sweat"></i>' : ''}${lost ? '<i class="splash"></i>' : ''}</span>${warn}${lost ? '<b class="d-say">퐁당! 헤엄쳐 나왔어요</b>' : ''}</div>`;
 }
 
 // words: [{ id, form, ko }]. Several words share the lives (continent fallback).
 export function mountHangman(ctx, words, lives) {
-  const h = new Hangman(words.map((w) => w.form), lives, ctx.reveal ? 1 : 0); const style = ctx.style || 'B'; const timers = [];
+  const h = new Hangman(words.map((w) => w.form), lives, ctx.reveal ? 1 : 0); const style = ctx.style || 'B'; const timers = []; let heard = false;
+  // The sound is no free help (user 2026-11-20): it is offered once, only when two chances or fewer are left.
+  const canHear = () => !heard && h.lives - h.wrong.length <= 2 && !h.over;
   const cur = () => words[h.at];
   const paint = (msg = '') => {
     ctx.root.innerHTML = `${danger(style, h.wrong.length, h.lives, ctx)}
       ${words.length > 1 ? `<p class="mut">단어 ${h.at + 1} / ${words.length}</p>` : ''}
       <div class="hword">${h.shown.map((c) => `<span class="hslot">${c}</span>`).join('')}</div>
-      <p class="hclue">뜻: <b>${cur().ko || '?'}</b> <button class="sec small" data-say="1">${ctx.spr('sound', 20)} 듣기</button></p>
+      <p class="hclue">뜻: <b>${cur().ko || '?'}</b>${canHear() ? ` <button class="sec small hear-once" data-say="1">${ctx.spr('sound', 20)} 한 번만 듣기</button>` : ''}</p>
       <p class="hleft">남은 기회 <b>${h.lives - h.wrong.length}</b>${h.wrong.length ? ` · 틀린 글자 ${h.wrong.join(' ')}` : ''}</p>
       <p class="hmsg">${msg}</p>${keyboard()}`;
     for (const b of ctx.root.querySelectorAll('[data-key]')) { const k = b.dataset.key; if (h.right.has(k)) b.classList.add('hit'); if (h.wrong.includes(k)) b.classList.add('miss'); if (h.right.has(k) || h.wrong.includes(k)) b.disabled = true; }
   };
   ctx.root.onclick = (ev) => {
-    if (ev.target.closest('[data-say]')) return ctx.say(cur());
+    if (ev.target.closest('[data-say]')) { if (!canHear()) return; heard = true; ctx.say(cur()); return paint('잘 들어 봐요.'); }
     const b = ev.target.closest('[data-key]'); if (!b || h.over) return; const before = cur(); const r = h.guess(b.dataset.key);
     if (r === 'again') return;
     ctx.sfx(r === 'miss' || r === 'lose' ? 'miss' : 'correct');
@@ -117,19 +133,21 @@ export function mountHangman(ctx, words, lives) {
     paint();
   };
   paint(words.length > 1 ? '세 단어를 이어서 맞혀요. 기회는 함께 써요.' : '알파벳을 눌러 단어를 맞혀요.');
-  return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ word: h.word, at: h.at, wrong: h.wrong.slice(), style }) };
+  return { stop() { timers.forEach(clearTimeout); }, peek: () => ({ word: h.word, at: h.at, wrong: h.wrong.slice(), style, heard }) };
 }
 
 // The continent castle's crossword: tap a clue (or a cell), type with the letter keys; "확인" checks. 3 checks in all.
 export function mountCrossword(ctx, cw, checks = 3) {
-  const cells = crossCells(cw); const typed = {}; let sel = 0, cur = 0, left = checks, over = false; const timers = [];   // cur: the cell of the chosen word the next letter goes in
+  const cells = crossCells(cw); const typed = {}; let sel = 0, cur = 0, left = checks, over = false, won = false, hit = false; const timers = []; const solved = new Set();   // solved: cells checked right   // cur: the cell of the chosen word the next letter goes in
   if (ctx.reveal) for (const e of cw.entries) typed[e.row + ',' + e.col] = e.word[0];
   const cellsOf = (e) => Array.from({ length: e.word.length }, (_, i) => (e.row + (e.dir === 'd' ? i : 0)) + ',' + (e.col + (e.dir === 'a' ? i : 0)));
   const paint = (msg = '', marks = {}) => {
     const e = cw.entries[sel]; const on = new Set(cellsOf(e)); const here = cellsOf(e)[cur]; const nums = {}; for (const x of cw.entries) nums[x.row + ',' + x.col] = x.num;
     let grid = ''; for (let r = 0; r < cw.rows; r++) for (let c = 0; c < cw.cols; c++) { const k = r + ',' + c;
-      grid += cells[k] ? `<button class="xcell ${on.has(k) ? 'on' : ''} ${k === here ? 'cur' : ''} ${marks[k] || ''}" data-cell="${k}">${nums[k] ? `<sup>${nums[k]}</sup>` : ''}${typed[k] || ''}</button>` : '<i class="xblank"></i>'; }
-    ctx.root.innerHTML = `<div class="xwrap"><div class="xgrid" style="grid-template-columns:repeat(${cw.cols},var(--xc))">${grid}</div>
+      grid += cells[k] ? `<button class="xcell ${on.has(k) ? 'on' : ''} ${k === here ? 'cur' : ''} ${marks[k] || (solved.has(k) ? 'ok' : '')}" data-cell="${k}">${nums[k] ? `<sup>${nums[k]}</sup>` : ''}${typed[k] || ''}</button>` : '<i class="xblank"></i>'; }
+    const done = cw.entries.filter((x) => cellsOf(x).every((k) => solved.has(k))).length; const face = over && won ? 'joy' : over ? 'sad' : left === 1 ? 'scared' : '';
+    ctx.root.innerHTML = `<div class="xscene"><span class="x-kid ${left === 1 && !over ? 'tremble' : ''}">${ctx.courier(face, 64)}</span><div class="xhp" aria-label="남은 단어 ${cw.entries.length - done}">${cw.entries.map((x, i) => `<i class="${i < done ? 'gone' : ''}"></i>`).join('')}</div><span class="x-guard ${hit ? 'hit' : ''} ${over && won ? 'down' : ''}">${ctx.guard(80)}</span></div>
+      <div class="xwrap"><div class="xgrid" style="grid-template-columns:repeat(${cw.cols},var(--xc))">${grid}</div>
       <div class="xclues">${cw.entries.map((x, i) => `<button class="xclue ${i === sel ? 'on' : ''}" data-clue="${i}"><b>${x.num}${x.dir === 'a' ? '→' : '↓'}</b> ${x.ko || '?'} <span data-say="${i}">${ctx.spr('sound', 18)}</span></button>`).join('')}
       <p class="hleft">확인 기회 <b>${left}</b></p></div></div><p class="hmsg">${msg}</p>
       <div class="hkeys xkeys">${KEYS.map((k) => `<button data-key="${k}">${k}</button>`).join('')}<button class="padfn" data-del="1">지우기</button><button class="padfn xcheck" data-check="1">확인</button></div>`;
@@ -146,7 +164,8 @@ export function mountCrossword(ctx, cw, checks = 3) {
       if (cur < ks.length - 1) cur++; else { const i = cw.entries.findIndex((x) => cellsOf(x).some((c) => !typed[c])); if (i >= 0) choose(i); } return paint(); }
     if (t.closest('[data-check]')) { const all = Object.keys(cells); if (all.some((k) => !typed[k])) return paint('빈칸을 모두 채운 뒤 확인해요.');
       const marks = {}; let wrong = 0; for (const k of all) { const ok = typed[k] === cells[k]; marks[k] = ok ? 'ok' : 'bad'; if (!ok) wrong++; }
-      if (!wrong) { over = true; ctx.sfx('correct'); paint('모두 맞혔어요! 큰 성의 문이 열려요.', marks); return void timers.push(setTimeout(ctx.win, ctx.fast ? 30 : 1500)); }
+      for (const k of all) if (marks[k] === 'ok') solved.add(k); hit = true; timers.push(setTimeout(() => { hit = false; }, 600));
+      if (!wrong) { over = true; won = true; ctx.sfx('correct'); paint('모두 맞혔어요! 큰 성의 문이 열려요.', marks); return void timers.push(setTimeout(ctx.win, ctx.fast ? 30 : 1500)); }
       left--; ctx.sfx('miss');
       if (left <= 0) { over = true; const missed = cw.entries.filter((x) => cellsOf(x).some((k) => typed[k] !== cells[k])).map((x) => x.id); for (const k of all) typed[k] = cells[k]; paint('정답을 보여 줄게요.', marks); return void timers.push(setTimeout(() => ctx.lose(missed), ctx.fast ? 30 : 2500)); }
       for (const k of all) if (typed[k] !== cells[k]) delete typed[k]; return paint(`틀린 칸 ${wrong}개를 지웠어요. 다시 채워요.`, marks); } };

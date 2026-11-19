@@ -1586,11 +1586,11 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     const levelShown = await pg.textContent('#glevel'); const t0 = Date.now();
     while (!(await pg.$('#stampgain')) && Date.now() - t0 < 40000) {
       await pg.evaluate((type) => { const g = window.__cards.game; if (!g) return; const p = g.api.peek(); const q = (s) => document.querySelector(s);
-        if (type === 'whack') { for (const [h, kind] of p.up) if (kind === 'bat' || kind === 'gold') { const e = q(`.hole[data-h="${h}"]`); if (e) e.click(); } }
+        if (type === 'whack') { for (const [h, kind] of p.up) if (kind === 'bat' || kind === 'armored') { const e = q(`.hole[data-h="${h}"]`); if (e) { e.click(); if (kind === 'armored') e.click(); } } }
         else if (type === 'shell') { if (p.phase === 'pick') for (const b of p.letters) { const e = q(`.shellbox[data-b="${b}"]`); if (e && !e.classList.contains('picked')) e.click(); } }
-        else if (type === 'updown') { const mid = Math.floor((p.lo + p.hi) / 2); for (const d of String(mid)) q(`[data-k="${d}"]`).click(); q('[data-k="확인"]').click(); }
+        else if (type === 'updown') { for (const d of String(p.target)) q(`[data-k="${d}"]`).click(); q('[data-k="확인"]').click(); }
         else if (type === 'simon') { if (p.phase === 'input') for (let i = p.pos; i < p.seq.length; i++) { const e = q(`.sbox[data-s="${p.seq[i]}"]`); if (e) e.click(); } }
-        else if (type === 'quick') { if (p.phase === 'go') q('#quickbtn').click(); }
+        else if (type === 'quick') { if (p.phase === 'go') q(`[data-side="${p.want}"]`).click(); }
         else if (type === 'order') { const e = q(`.ord[data-v="${p.want}"]`); if (e) e.click(); } }, type);
       await pg.waitForTimeout(40);
     }
@@ -1619,10 +1619,15 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await fn.click('.go'); await fn.waitForSelector('.finalbox[data-final="hangman"]');
   const hw = await fn.evaluate(() => window.__cards.game.api.peek());
   ok('FN2: the hangman word is one of the exam\'s right answers, letters only, 4+ letters (5+ when there is one)', (await fn.evaluate((ids) => ids.map((id) => window.__cards.byId[id].form.toLowerCase()), fnS1.map.worlds['d1-01'].exam.words)).includes(hw.word) && /^[a-z]{4,}$/.test(hw.word), hw.word);
-  for (const c of 'zqxjvkwy'.split('').filter((c) => !hw.word.includes(c)).slice(0, 6)) await fn.click(`[data-key="${c}"]`);
+  const wrongL = 'zqxjvkwy'.split('').filter((c) => !hw.word.includes(c));
+  const hearNone = !(await fn.$('[data-say]')); for (const c of wrongL.slice(0, 4)) await fn.click(`[data-key="${c}"]`);
+  const nearEnd = await fn.evaluate(() => ({ hear: !!document.querySelector('[data-say]'), close: !!document.querySelector('.danger.close'), scared: !!document.querySelector('.danger use[href="#face-scared"]') }));
+  await fn.click('[data-say]'); const hearAfter = !!(await fn.$('[data-say]'));
+  ok('FN2b: no listen button at first; with two chances left the picture warns, the courier is scared, and the word can be heard once', hearNone && nearEnd.hear && nearEnd.close && nearEnd.scared && !hearAfter, JSON.stringify(nearEnd));
+  for (const c of wrongL.slice(4, 6)) await fn.click(`[data-key="${c}"]`);
   await fn.waitForSelector('[data-act=final-practice]');
   const fnS2 = await state(fn, 'son'); const lostId = Object.keys(fnS2.words).find((id) => fnS2.words[id].misses && fnS2.words[id].miss === '2026-12-01');
-  ok('FN3: six wrong letters lose the letter: a bat comes, the word gets its "not known" record only, the castle is still not passed', /박쥐가 나타났어요/.test(await fn.textContent('h1')) && !!lostId && fnS2.words[lostId].st === 'done' && !fnS2.map.worlds['d1-01'].castle, lostId);
+  ok('FN3: six wrong letters lose the letter: a bat comes (the courier looks sad), the word gets its "not known" record only, the castle is still not passed', /박쥐가 나타났어요/.test(await fn.textContent('h1')) && !!(await fn.$('.final-bat use[href="#face-sad"]')) && !!lostId && fnS2.words[lostId].st === 'done' && !fnS2.map.worlds['d1-01'].castle, lostId);
   await fn.click('[data-act=final-practice]'); await fn.waitForSelector(READY); await play(fn); await fn.waitForSelector('.tiles');
   const fnS3 = await state(fn, 'son');
   ok('FN4: the bat practice changes no schedule; its end screen leads back to the last gate', JSON.stringify(Object.values(fnS3.words).map((r) => [r.st, r.due])) === JSON.stringify(Object.values(fnS2.words).map((r) => [r.st, r.due])) && /마지막 관문 다시/.test(await fn.textContent('.go')));

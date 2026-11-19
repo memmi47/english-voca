@@ -199,6 +199,7 @@ async function boot() {
   if (G.hard) setHardness((id) => G.hard[id]);                       // the world's checks take the hardest passed words
   step('그림'); await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   if (ITEM_TIERS_FROM) await loadSprites('assets/postal/item-tiers/sprites.svg');
+  addFaces();
   step('소리 목록'); G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init(); step('첫 화면');
   const pref = loadPref(); G.reduceMotion = pref.reduceMotion; G.homeProgress = pref.homeProgress; document.body.classList.toggle('motion-quiet', FAST || G.reduceMotion); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
   document.addEventListener('click', onClick);
@@ -701,7 +702,21 @@ function gearArt(item, px=54) {
   if (item.art) return `<svg class="spr gear-art" width="${px}" height="${px}" viewBox="${TIER_VIEWBOX[slot]}" aria-hidden="true"><use href="#${sprite}" width="48" height="48"/>${gearGlints(item,true)}</svg>`;
   return wardrobeArt(sprite,px,'gear-art',GEAR_VIEWBOX[slot]);
 }
-function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, showGlints=false) {
+// Courier faces (user 2026-11-20: the game had no expressions). Drawn over the courier's own face on the 48-pixel grid
+// (eyes x15-16 and x25-26 at y14-16, mouth x19-23 at y19), so every outfit and both children can wear them.
+const FACE_PIX = (() => { const S = '#E8B78B', K = '#233F3A', M = '#98664B', W = '#FFF0CA', B = '#7FB7D6';
+  const px = (list, c) => list.map(([x, y, w = 1, h = 1]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`).join('');
+  const clear = px([[13, 13, 6, 5], [23, 13, 6, 5], [18, 19, 7, 3]], S);
+  const eyes2 = (x, y) => [[x, y, 2, 2]];
+  return {
+    joy: clear + px([[14, 15], [15, 14], [16, 14], [17, 15], [24, 15], [25, 14], [26, 14], [27, 15], [19, 19], [23, 19], [20, 20, 3, 1]], K),
+    sad: clear + px([...eyes2(15, 15), ...eyes2(25, 15), [14, 13, 2, 1], [26, 13, 2, 1], [19, 21], [20, 20, 3, 1], [23, 21]], K) + px([[14, 17, 1, 2]], B),
+    scared: clear + px([[14, 13, 4, 5], [24, 13, 4, 5], [19, 20], [20, 19], [21, 20], [22, 19], [23, 20]], K) + px([[15, 14, 2, 3], [25, 14, 2, 3]], W) + px([[16, 15], [26, 15]], K),
+    hurt: clear + px([[14, 14], [16, 14], [15, 15], [14, 16], [16, 16], [25, 14], [27, 14], [26, 15], [25, 16], [27, 16], [20, 19, 3, 3]], K) + px([[21, 20]], M),
+  }; })();
+function addFaces() { const box = document.createElement('div'); box.setAttribute('aria-hidden', 'true'); box.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+  box.innerHTML = `<svg>${Object.entries(FACE_PIX).map(([k, v]) => `<symbol id="face-${k}" viewBox="0 0 48 48">${v}</symbol>`).join('')}</svg>`; document.body.appendChild(box); }
+function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, showGlints=false, face='') {
   const child = pid === 'daughter' ? 'daughter' : 'son';
   const color = child === 'daughter' ? 'gold' : 'teal';
   const hair = 'c017-hair-' + child;
@@ -726,10 +741,12 @@ function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, show
       use('hat',layerId(hat,'hat',color),raised) +
       (showGlints ? [coat,bag,hat].map(item=>gearGlints(item)).join('') : '') + use('identity',badge,raised && child==='daughter');
   }
+  if (face && FACE_PIX[face]) layers += use('face', 'face-' + face, raised);
   return `<svg class="spr${motion}" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${layers}</svg>`;
 }
-function courier(frame, px, pid=G.pid, st=G.st) {
-  return courierFrame(frame, lookSelection(pid,st), px, pid, 0, frame==='idle', frame==='idle');
+function courier(frame, px, pid=G.pid, st=G.st, face='') {
+  if (!pid || pid === DEV || !st) return courierFrame(frame, {}, px, 'son', 0, false, false, face);   // the playground: the plain courier
+  return courierFrame(frame, lookSelection(pid,st), px, pid, 0, frame==='idle' && !face, frame==='idle' && !face, face);
 }
 function riderLook(moving=false) {
   const selection=lookSelection(G.pid,G.st);
@@ -1206,7 +1223,7 @@ function endGame(g, won) {
   const easier = !won && fails[g.spec.key] >= 2 && g.spec.level > 1;
   const line = won ? (gold ? `${spr('stamp', 40)} 도전 성공! 금 도장을 찍었어요` : fresh ? `${spr('stamp', 40)} 엽서에 놀이 도장을 찍었어요` : `${spr('stamp', 40)} ${g.spec.gold ? '금 도장도 이미 모았어요' : '이 도장은 이미 모았어요'}`)
     : easier ? '괜찮아요! 다음 판은 한 단계 쉬워져요.' : '괜찮아요! 다시 해 봐요.';
-  $('#app').innerHTML = `<div class="page center"><h1 class="title">${won ? '잘 놀았어요!' : '아쉬워요!'}</h1><div class="gain" id="stampgain">${line}</div>
+  $('#app').innerHTML = `<div class="page center"><h1 class="title">${won ? '잘 놀았어요!' : '아쉬워요!'}</h1><div class="result-face">${courier('idle', 96, G.pid, G.st, won ? 'joy' : 'sad')}</div><div class="gain" id="stampgain">${line}</div>
   <p class="mut">${won && !g.spec.stamped ? '다시 하면 한 단계 어려운 도전판이 돼요. ' : ''}놀이 도장은 카드 공부와는 상관없는 기념이에요.</p>
   <button class="sec" data-act="game-again" data-id="${esc(g.node.id)}">한 번 더</button> <button class="go" data-act="today">▶ 지도로</button></div>`;
 }
@@ -1215,7 +1232,11 @@ function endGame(g, won) {
 // a crossword, or three hangman words when no crossword can be laid. Lost: a bat comes; the castle's words are practised
 // (no schedule change) and the gate can be tried again with another word. After two lost games on this device the first
 // letter is shown. Only the "not known" record of the missed words is written. ----
-function finalStyle() { const q = (qs.get('hang') || '').toUpperCase(); return ['A', 'B', 'C'].includes(q) ? q : 'B'; }
+// The three hangman pictures take turns by world (user 2026-11-20): B, A, C, B, ... ?hang=A|B|C shows one everywhere (tests).
+function finalStyle(wid) { const q = (qs.get('hang') || '').toUpperCase(); if (['A', 'B', 'C'].includes(q)) return q; const i = G.ix.worlds.findIndex((w) => w.id === wid); return ['B', 'A', 'C'][Math.max(0, i) % 3]; }
+// Crossword words for a child: 3 to 6 letters, the easiest first (cards/data/difficulty.json).
+function crossPick(words) { const ok = words.filter((w) => spellable(w.form, 3) && w.form.length <= 6); return G.hard ? ok.sort((a, b) => (G.hard[a.id] || 9999) - (G.hard[b.id] || 9999)) : ok; }
+function sceneCtx(pid) { return { courier: (face, px) => courier('idle', px, pid, pid ? G.st : null, face), bat: (px) => anim('bat-a', 'bat-b', px, 'fast'), guard: (px) => spr((G.world && G.world.castle && document.getElementById(G.world.castle.spriteId || '') ? G.world.castle.spriteId : 'c011-monster'), px) }; }
 function finalWords(node) {
   const ids = (node.words || []).filter((id) => G.byId[id]);
   const worlds = node.kind === 'final' ? [G.ix.byId[node.wid]] : G.ix.continents.find((c) => c.id === node.cid).worlds;
@@ -1227,20 +1248,19 @@ function startFinal(node, rng) {
   const { first, rest } = finalWords(node); let mount = null, kind = '';
   if (node.kind === 'final') { const w = hangmanPick(first, rest, rng); if (w) { kind = 'hangman'; mount = (ctx) => mountHangman(ctx, [w], HANG.lives); } }
   else {
-    const cw = buildCrossword(first, rng) || buildCrossword(first.concat(rest), rng);
+    // short and easy words only; the exam's own words first. No crossword at all (very unlikely): the exam is enough.
+    const cw = buildCrossword(crossPick(first).slice(0, 24), rng, { maxLen: 6 }) || buildCrossword(crossPick(first.concat(rest)).slice(0, 60), rng, { maxLen: 6, tries: 160 });
     if (cw) { kind = 'crossword'; mount = (ctx) => mountCrossword(ctx, cw); }
-    else { const pool = first.concat(rest).filter((w) => spellable(w.form, 4)); const picks = []; while (picks.length < HANG.multiWords && pool.length) { const w = hangmanPick(pool, [], rng); picks.push(w); pool.splice(pool.indexOf(w), 1); }
-      if (picks.length) { kind = 'hangman3'; mount = (ctx) => mountHangman(ctx, picks, HANG.multiLives); } }
   }
   if (!mount) return finalWon(node);                      // no word fit to spell (should not happen with real worlds): the exam is enough
   clearPresentation(); G.view = 'final'; band(false); hideBanner(); G.sound.scene('castle');
   const name = node.kind === 'final' ? (G.ix.byId[node.wid].castle?.name || '성') : (G.ix.continents.find((c) => c.id === node.cid).finale?.name || '큰 성');
   $('#app').innerHTML = `<div class="page center final"><button class="back" data-act="today" aria-label="지도로">‹</button><h1 class="title">${esc(name)} 마지막 관문</h1>
-  <p class="mut">${kind === 'crossword' ? '대륙에서 만난 단어로 만든 십자말풀이예요.' : kind === 'hangman3' ? '세 단어를 이어서 맞혀요.' : '성 시험에 나온 단어예요. 알파벳을 골라 편지를 지켜요.'}${fails >= 2 ? ' 첫 글자를 알려 줄게요.' : ''}</p>
+  <p class="mut">${kind === 'crossword' ? '대륙에서 만난 단어로 만든 십자말풀이예요. 맞힌 단어마다 성 지킴이가 약해져요.' : '성 시험에 나온 단어예요. 알파벳을 골라 편지를 지켜요.'}${fails >= 2 ? ' 첫 글자를 알려 줄게요.' : ''}</p>
   <div id="finalbox" class="finalbox" data-final="${kind}"></div></div>`;
   const g = (G.game = { node, api: null, kind });
   const say = (w) => { G.sound.unlock().then(() => G.sound.play(w.id, w.form)).catch(() => {}); };
-  g.api = mount({ root: $('#finalbox'), rng, fast: FAST, spr, sfx: (x) => G.sound.sfxPlay(x), say, style: finalStyle(), reveal: fails >= 2, courierId: G.pid === 'daughter' ? 'courier-gold-idle' : 'courier-teal-idle',
+  g.api = mount({ root: $('#finalbox'), rng, fast: FAST, spr, sfx: (x) => G.sound.sfxPlay(x), say, ...sceneCtx(G.pid), style: finalStyle(node.wid), reveal: fails >= 2, courierId: G.pid === 'daughter' ? 'courier-gold-idle' : 'courier-teal-idle',
     win: () => { if (G.game !== g) return; G.game = null; const f = deviceSeen().finalFails; if (f) delete f[key]; writeDevice(); finalWon(node); },
     lose: (missed) => { if (G.game !== g) return; G.game = null; finalLost(node, key, missed); } });
 }
@@ -1268,7 +1288,7 @@ function finalLost(node, key, missed) {
   G.finalPractice = ids.length ? { kind: 'practice', wid: node.wid || G.world.id, tag: 'practice:final', scope: { practice: ids } } : null;
   G.finalAgain = node.kind === 'final' ? ['node', '▶ 마지막 관문 다시', G.ix.byId[node.wid].map.castleNodeId] : ['finale', '▶ 마지막 관문 다시', node.cid];
   G.view = 'end'; G.sound.sfxPlay('miss'); G.sound.scene('bat');
-  $('#app').innerHTML = `<div class="page center"><h1 class="title">박쥐가 나타났어요!</h1><div class="final-bat">${anim('bat-a', 'bat-b', 96)}</div>
+  $('#app').innerHTML = `<div class="page center"><h1 class="title">박쥐가 나타났어요!</h1><div class="final-bat">${courier('idle', 96, G.pid, G.st, 'sad')}${anim('bat-a', 'bat-b', 96)}</div>
   <p>편지를 지키지 못했어요. 성 단어를 한 번 더 연습하고 다시 도전해요.</p><p class="mut">${f[key] >= 2 ? '다음 도전에서는 첫 글자를 알려 줄게요.' : '다른 단어로 다시 도전할 수 있어요.'}</p>
   ${G.finalPractice ? '<button class="go" data-act="final-practice">박쥐 쫓기 연습</button>' : `<button class="go" data-act="${G.finalAgain[0]}" data-id="${esc(G.finalAgain[2])}">${G.finalAgain[1]}</button>`}
   <p><button class="link" data-act="today">지도로</button></p></div>`;
@@ -1286,7 +1306,7 @@ function devScreen(msg = '') {
   <h2>미니게임 (단계 바로 고르기)</h2><table class="devgames">${GAME_TYPES.map((t) => `<tr><th>${GAME_NAMES[t]}</th>${[1, 2, 3, 4, 5].map((l) => `<td><button class="sec" data-act="dev-game" data-type="${t}" data-level="${l}">${l}단계</button></td>`).join('')}</tr>`).join('')}</table>
   <h2>성 마지막 관문</h2>
   <p class="row">세계 <select id="dev-world">${worlds}</select> 그림 <select id="dev-style"><option value="B">B 흔들다리</option><option value="A">A 박쥐</option><option value="C">C 풍선</option></select> <button class="sec" data-act="dev-hang">행맨</button></p>
-  <p class="row">대륙 <select id="dev-cont">${conts}</select> <button class="sec" data-act="dev-cross">십자말풀이</button> <button class="sec" data-act="dev-hang3">행맨 3연속</button></p>
+  <p class="row">대륙 <select id="dev-cont">${conts}</select> <button class="sec" data-act="dev-cross">십자말풀이</button></p>
   <h2>세계 바로 가기</h2><p class="small">고른 세계 앞의 세계와 대륙 성은 모두 깬 상태로 시작해요. 놀이집 단계는 그 세계의 실제 단계예요.</p>
   <p class="row"><select id="dev-goto">${worlds}</select> <label><input type="checkbox" id="dev-all"> 이 세계의 마을도 모두 깬 상태로(성 시험·행맨 바로 해 보기)</label> <button class="go" data-act="dev-world">가기</button></p>
   <p><button class="link" data-act="dev-reset">놀이터 기록 지우기</button></p></div>`;
@@ -1296,7 +1316,7 @@ function devShell(title, sub, back) {
   <div id="gamebox" class="gamebox"></div><p class="mut small" id="ghint"></p></div>`;
 }
 function devDone(text, again) {
-  G.game = null; $('#app').innerHTML = `<div class="page center"><h1 class="title">${esc(text)}</h1><p class="mut">놀이터에서는 도장도 기록도 남지 않아요.</p>
+  G.game = null; $('#app').innerHTML = `<div class="page center"><h1 class="title">${esc(text)}</h1><div class="result-face">${courier('idle', 96, null, null, /졌|박쥐/.test(text) ? 'sad' : 'joy')}</div><p class="mut">놀이터에서는 도장도 기록도 남지 않아요.</p>
   <button class="sec" ${again}>한 번 더</button> <button class="go" data-act="dev">놀이터로</button></div>`;
 }
 async function devGame(type, level) {
@@ -1317,13 +1337,12 @@ async function devFinal(kind, id, style) {
   const words = shuffle(worlds.flatMap((w) => worldWords(w)).map((x) => G.byId[x]).filter(Boolean), rng);
   let mount = null, title = '';
   if (kind === 'hang') { const w = hangmanPick(words, [], rng); title = `${G.ix.byId[id].name} 행맨`; if (w) mount = (ctx) => mountHangman(ctx, [w], HANG.lives); }
-  else if (kind === 'cross') { const cw = buildCrossword(words.slice(0, 80), rng); title = '대륙 십자말풀이'; if (cw) mount = (ctx) => mountCrossword(ctx, cw); }
-  else { const pool = words.filter((w) => spellable(w.form, 4)).slice(0, HANG.multiWords); title = '행맨 3연속'; if (pool.length) mount = (ctx) => mountHangman(ctx, pool, HANG.multiLives); }
+  else { const cw = buildCrossword(crossPick(words.slice(0, 200)).slice(0, 40), rng, { maxLen: 6, tries: 160 }); title = '대륙 십자말풀이'; if (cw) mount = (ctx) => mountCrossword(ctx, cw); }
   if (!mount) return devScreen('이 세계에는 맞출 단어가 없어요.');
   const again = `data-act="dev-${kind}" data-id="${esc(id)}" data-style="${style}"`;
   $('#app').innerHTML = `<div class="page center final"><button class="back" data-act="dev" aria-label="놀이터로">‹</button><h1 class="title">${esc(title)}</h1><p class="mut">놀이터 · 그림 ${style}</p><div id="finalbox" class="finalbox" data-final="${kind}"></div></div>`;
   const g = (G.game = { api: null }); const say = (w) => { G.sound.unlock().then(() => G.sound.play(w.id, w.form)).catch(() => {}); };
-  g.api = mount({ root: $('#finalbox'), rng, fast: FAST, spr, sfx: (x) => G.sound.sfxPlay(x), say, style, reveal: false, courierId: 'courier-teal-idle',
+  g.api = mount({ root: $('#finalbox'), rng, fast: FAST, spr, sfx: (x) => G.sound.sfxPlay(x), say, style, reveal: false, ...sceneCtx(null),
     win: () => { if (G.game !== g) return; devDone('관문을 넘었어요!', again); }, lose: () => { if (G.game !== g) return; devDone('박쥐가 이겼어요', again); } });
 }
 // A record that stands just before `wid`: every earlier world and continent castle passed, its words met. With `all`, the
@@ -1504,7 +1523,7 @@ async function onClick(e) {
     case 'pin-change': G.pin = { mode: 'new', typed: '' }; return paintPin('새 암호를 정해요.');
     case 'dev': return devScreen();
     case 'dev-game': return devGame(b.dataset.type, Number(b.dataset.level));
-    case 'dev-hang': case 'dev-cross': case 'dev-hang3': { const kind = b.dataset.act.slice(4); const id = b.dataset.id || (kind === 'hang' ? $('#dev-world').value : $('#dev-cont').value); return devFinal(kind, id, b.dataset.style || ($('#dev-style') ? $('#dev-style').value : 'B')); }
+    case 'dev-hang': case 'dev-cross': { const kind = b.dataset.act.slice(4); const id = b.dataset.id || (kind === 'hang' ? $('#dev-world').value : $('#dev-cont').value); return devFinal(kind, id, b.dataset.style || ($('#dev-style') ? $('#dev-style').value : 'B')); }
     case 'dev-world': return devWorld($('#dev-goto').value, $('#dev-all').checked);
     case 'dev-reset': localStorage.removeItem(KEY(DEV)); return devScreen('놀이터 기록을 지웠어요.');
     case 'export': return download(`cards_${b.dataset.id}_${todayISO()}.json`, load(b.dataset.id));
