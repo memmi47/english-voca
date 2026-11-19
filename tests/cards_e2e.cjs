@@ -286,21 +286,29 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await startNode(x, 'B1'); await play(x); await toMap(x);
   const before10c = JSON.stringify((await state(x, 'son')).words);
   await x.click('[data-act=node][data-id=G1]'); await x.waitForSelector('.memgrid');
-  ok('the playhouse opens a picture-pair game with six cards', (await x.$$('.memcard')).length === 6 && /0 \/ 3쌍/.test(await x.textContent('#gstatus')));
-  const deck = await x.evaluate(() => window.__cards.game.deck); const wrongPair = [0, deck.findIndex((e) => e !== deck[0])];
+  ok('the playhouse opens a picture-pair game with six cards at level 1', (await x.$$('.memcard')).length === 6 && /0 \/ 3쌍/.test(await x.textContent('#gstatus')) && /1단계/.test(await x.textContent('#glevel')));
+  const peekG = () => x.evaluate(() => window.__cards.game && window.__cards.game.api.peek());
+  await x.waitForFunction(() => !window.__cards.game.api.peek().preview);
+  const deck = (await peekG()).deck; const wrongPair = [0, deck.findIndex((e) => e !== deck[0])];
   for (const i of wrongPair) await x.click(`.memcard[data-i="${i}"]`);
-  await x.waitForFunction(() => window.__cards.game.open.length === 0 && !window.__cards.game.busy);
-  ok('a wrong pair turns back and costs nothing', (await x.evaluate(() => window.__cards.game.matched.size)) === 0);
+  await x.waitForFunction(() => { const p = window.__cards.game.api.peek(); return p.open.length === 0 && !p.busy; });
+  ok('a wrong pair turns back and costs nothing', (await peekG()).matched.length === 0);
   for (const e of [...new Set(deck)]) { const [i, j] = deck.map((d, k) => (d === e ? k : -1)).filter((k) => k >= 0); await x.click(`.memcard[data-i="${i}"]`); await x.click(`.memcard[data-i="${j}"]`); }
   await x.waitForSelector('#stampgain');
   const stamped = await state(x, 'son');
   ok('finishing gives one stamp and changes no word, star or gauge', /도장을 찍었어요/.test(await x.textContent('#stampgain')) && stamped.map.worlds['d1-01'].stamps.G1 === '2026-12-20' && JSON.stringify(stamped.words) === before10c);
+  await x.click('[data-act=game-again]'); await x.waitForSelector('.memgrid');
+  ok('GM1: playing a stamped playhouse again is the challenge: one level up (8 cards)', (await x.$$('.memcard')).length === 8 && /2단계 · 도전판/.test(await x.textContent('#glevel')));
+  const deck2 = (await peekG()).deck; for (const e of [...new Set(deck2)]) { const [i, j] = deck2.map((d, k) => (d === e ? k : -1)).filter((k) => k >= 0); await x.click(`.memcard[data-i="${i}"]`); await x.click(`.memcard[data-i="${j}"]`); }
+  await x.waitForSelector('#stampgain');
+  ok('GM2: winning the challenge adds a gold stamp once', /금 도장/.test(await x.textContent('#stampgain')) && (await state(x, 'son')).map.worlds['d1-01'].gold.G1 === '2026-12-20');
   await toMap(x); ok('the playhouse shows its stamp and can be played again', /\bdone\b/.test(await nodeStatus(x, 'G1')));
   for (const id of ['C1', 'C2']) { await startNode(x, id); await play(x); if (await x.$('[data-act=bat-go]')) { await x.click('[data-act=bat-go]'); await x.waitForSelector(READY); await play(x); await x.waitForSelector('.tiles'); } await toMap(x); }
   await x.click('[data-act=node][data-id=G2]'); await x.waitForSelector('.mailtrack');
-  await x.waitForFunction(() => { const g = window.__cards.game; if (g && !g.inZone()) { document.querySelector('[data-act=mail]').click(); return true; } return false; }, null, { polling: 'raf' });
+  const mailIn = 'const p = window.__cards.game.api.peek(); const inz = Math.abs(p.pos[0] - 50) <= p.zone / 2;';
+  await x.waitForFunction(new Function(`const g = window.__cards.game; if (!g) return false; ${mailIn} if (!inz) { document.querySelector('[data-mail]').click(); return true; } return false;`), null, { polling: 'raf' });
   ok('a letter dropped outside the yellow zone does not count', /0 \/ 3통/.test(await x.textContent('#gstatus')) && /조금만 더/.test(await x.textContent('#ghint')));
-  for (let k = 0; k < 3; k++) await x.waitForFunction((n) => { const g = window.__cards.game; if (!g) return true; if (g.done === n && g.inZone()) { document.querySelector('[data-act=mail]').click(); return true; } return false; }, k, { polling: 'raf' });
+  for (let k = 0; k < 3; k++) await x.waitForFunction(new Function('n', `const g = window.__cards.game; if (!g) return true; if (!new RegExp('^' + n + ' / 3').test(document.querySelector('#gstatus').textContent)) return false; ${mailIn} if (inz) { document.querySelector('[data-mail]').click(); return true; } return false;`), k, { polling: 'raf' });
   await x.waitForSelector('#stampgain');
   ok('three letters in the zone finish the mailbox game with a second stamp', Object.keys((await state(x, 'son')).map.worlds['d1-01'].stamps).sort().join() === 'G1,G2');
   await toMap(x);
@@ -1560,9 +1568,40 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // the mail game's mailbox is drawn (its moving box must not share the sprite's id)
   await fbp.evaluate(async () => { const g = window.__cards; const w = g.ix.byId['d1-01']; for (const n of w.map.nodes.filter((x) => x.id === 'C1' || x.id === 'C2')) for (const id of n.words) g.st.words[id] ||= { st: 'review', step: 1, due: '2026-12-05', firstDay: '2026-11-20', lastDay: '2026-11-21', lapses: 0 }; localStorage.setItem('cards.v0.p.son', JSON.stringify(g.st)); });
   await fbp.reload(); await fbp.waitForSelector('.profiles'); await fbp.click('[data-act=pick][data-id=son]'); await fbp.waitForSelector('.world');
-  await fbp.click('[data-act=node][data-id=G2]'); await fbp.waitForSelector('#mailmover');
-  ok('FB5: the mail game shows its mailbox (the sprite is drawn, not an empty box)', await fbp.evaluate(() => { const r = document.querySelector('#mailmover svg').getBoundingClientRect(); const use = document.querySelector('#mailmover use'); return r.width > 40 && document.querySelectorAll('[id=mailbox]').length === 1 && document.getElementById('mailbox').tagName.toLowerCase() === 'symbol' && !!use; }));
+  await fbp.click('[data-act=node][data-id=G2]'); await fbp.waitForSelector('.mailtrack .mover');
+  ok('FB5: the mail game shows its mailbox (the sprite is drawn, not an empty box)', await fbp.evaluate(() => { const r = document.querySelector('.mailtrack .mover svg').getBoundingClientRect(); const use = document.querySelector('.mailtrack .mover use'); return r.width > 40 && document.querySelectorAll('[id=mailbox]').length === 1 && document.getElementById('mailbox').tagName.toLowerCase() === 'symbol' && !!use; }));
   await fbpCtx.close();
+
+  // GM. the six new playhouse games (docs/MINIGAMES.md): each can be won at levels 1 and 4 (?gtest=type:level, test only);
+  // two failures in a row make the next game one level easier
+  const gmCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  // every tile of the first world has a record, so its playhouses are reachable; no stamp yet (a fresh level, not a challenge)
+  const gmReach = () => { const w = window.__cards.ix.byId['d1-01']; const words = {}; for (const n of w.map.nodes) for (const id of n.words || []) words[id] = { st: 'review', step: 1, due: '2026-12-05', firstDay: '2026-11-20', lastDay: '2026-11-21', lapses: 0 };
+    localStorage.setItem('cards.v0.p.son', JSON.stringify({ v: 3, id: 'son', words, verify: [], runs: [], log: [], bunches: {}, forms: {} })); };
+  const gmWin = async (type, level) => {
+    const pg = await open(gmCtx, `today=2026-12-01&triage=off&seed=7&sound=off&fast=1&gtest=${type}:${level}`); const errsBefore = errs.length;
+    await pg.evaluate(gmReach); await pg.click('[data-act=pick][data-id=son]'); await pg.waitForSelector('.world'); await pg.click('[data-act=node][data-id=G1]'); await pg.waitForSelector(`.gamebox[data-game="${type}"]`);
+    const levelShown = await pg.textContent('#glevel'); const t0 = Date.now();
+    while (!(await pg.$('#stampgain')) && Date.now() - t0 < 40000) {
+      await pg.evaluate((type) => { const g = window.__cards.game; if (!g) return; const p = g.api.peek(); const q = (s) => document.querySelector(s);
+        if (type === 'whack') { for (const [h, kind] of p.up) if (kind === 'bat' || kind === 'gold') { const e = q(`.hole[data-h="${h}"]`); if (e) e.click(); } }
+        else if (type === 'shell') { if (p.phase === 'pick') for (const b of p.letters) { const e = q(`.shellbox[data-b="${b}"]`); if (e && !e.classList.contains('picked')) e.click(); } }
+        else if (type === 'updown') { const mid = Math.floor((p.lo + p.hi) / 2); for (const d of String(mid)) q(`[data-k="${d}"]`).click(); q('[data-k="확인"]').click(); }
+        else if (type === 'simon') { if (p.phase === 'input') for (let i = p.pos; i < p.seq.length; i++) { const e = q(`.sbox[data-s="${p.seq[i]}"]`); if (e) e.click(); } }
+        else if (type === 'quick') { if (p.phase === 'go') q('#quickbtn').click(); }
+        else if (type === 'order') { const e = q(`.ord[data-v="${p.want}"]`); if (e) e.click(); } }, type);
+      await pg.waitForTimeout(40);
+    }
+    const won = /잘 놀았어요/.test((await pg.textContent('h1')) || ''); const clean = errs.length === errsBefore; await pg.close(); return { won, levelShown, clean };
+  };
+  for (const type of ['whack', 'shell', 'updown', 'simon', 'quick', 'order']) for (const level of [1, 4]) {
+    const r = await gmWin(type, level); ok(`GM3: ${type} at level ${level} can be played to a win, with no page error`, r.won && new RegExp(`${level}단계`).test(r.levelShown) && r.clean, JSON.stringify(r));
+  }
+  const gmFail = await open(gmCtx, 'today=2026-12-01&triage=off&seed=7&sound=off&fast=1&gtest=quick:3'); await gmFail.evaluate(gmReach); await gmFail.click('[data-act=pick][data-id=son]'); await gmFail.waitForSelector('.world');
+  for (let k = 0; k < 2; k++) { await gmFail.click(k ? '[data-act=game-again]' : '[data-act=node][data-id=G1]'); await gmFail.waitForSelector('#quickbtn'); await gmFail.waitForSelector('#stampgain', { timeout: 30000 }); }
+  const failText = await gmFail.textContent('#stampgain'); await gmFail.click('[data-act=game-again]'); await gmFail.waitForSelector('#glevel');
+  ok('GM4: two failures in a row: the end screen says so and the next game is one level easier; nothing is stamped', /한 단계 쉬워져요/.test(failText) && /2단계 · 한 단계 쉽게/.test(await gmFail.textContent('#glevel')) && !(await state(gmFail, 'son'))?.map?.worlds?.['d1-01']?.stamps?.G1, failText);
+  await gmCtx.close();
 
   // PO. the world's post office (user request 2026-11-18): the world's words 10 at a time before any tile run; tapped = can read
   const poCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });

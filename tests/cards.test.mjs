@@ -922,3 +922,61 @@ test('S3: a tile whose every word was called known still needs one run (open mar
 test('S4: with TRIAGE.on = false there is no post office: tiles start at once and new words are asked one card at a time', () => {
   TRIAGE.on = false; try { const s = newState('son'); const v = view(s); assert.equal(v.sort, null); const node = nodeRun(IX, v, 'A1', s, WORDS, mulberry32(1)); assert.deepEqual([node.kind, node.scope.teach, node.triage], ['tile', undefined, undefined]); } finally { TRIAGE.on = true; }
 });
+
+// ---- playhouse games: placement and levels (cards/js/games.js, docs/MINIGAMES.md) ----
+import { gamePlan, playLevel, LEVELS, GAME_TYPES, DEBUT, shellSwaps, shellFollow, updownHint, mailPos, inZone } from '../cards/js/games.js';
+const REAL = indexWorlds(JSON.parse(fs.readFileSync('cards/data/worlds.json', 'utf8')));
+test('G1: the real 30 worlds: 60 playhouses, the first four worlds bring in 8 games two by two at level 1, every game comes back, never the same pair twice in a row', () => {
+  const plan = gamePlan(REAL); const ws = REAL.worlds; const all = ws.flatMap((w) => Object.values(plan[w.id]));
+  assert.equal(all.length, 60);
+  ws.slice(0, 4).forEach((w, i) => assert.deepEqual(Object.values(plan[w.id]).map((e) => [e.type, e.base]), DEBUT[i].map((t) => [t, 1])));
+  for (const t of GAME_TYPES) assert.ok(all.filter((e) => e.type === t).length >= 6, t);
+  for (let i = 0; i < ws.length; i++) { const p = Object.values(plan[ws[i].id]).map((e) => e.type); assert.equal(new Set(p).size, p.length, ws[i].id);
+    if (i) assert.notDeepEqual(p.slice().sort(), Object.values(plan[ws[i - 1].id]).map((e) => e.type).sort(), ws[i].id); }
+  const byC = REAL.continents.map((c) => c.worlds.flatMap((w) => Object.values(plan[w.id]).map((e) => e.base)));
+  assert.deepEqual([Math.max(...byC[0]), Math.min(...byC[1]), Math.max(...byC[1]), Math.min(...byC[2])], [2, 2, 3, 4]);
+  assert.deepEqual(gamePlan(REAL), plan, 'deterministic');
+});
+test('G2: level: base, +1 as a challenge once stamped (5 at most), -1 after two failures in a row (1 at least); every game has 5 levels', () => {
+  assert.deepEqual([playLevel(1), playLevel(1, { stamped: true }), playLevel(5, { stamped: true }), playLevel(3, { fails: 1 }), playLevel(3, { fails: 2 }), playLevel(1, { fails: 5 }), playLevel(2, { stamped: true, fails: 2 })], [1, 2, 5, 3, 2, 1, 2]);
+  for (const t of GAME_TYPES) assert.equal(LEVELS[t].length, 5, t);
+  assert.deepEqual(LEVELS.memory.map((l) => l.pairs * 2), [6, 8, 12, 16, 20]);
+  assert.deepEqual(LEVELS.mail.map((l) => [l.boxes.length, !!l.together]), [[1, false], [1, false], [2, false], [2, true], [3, true]]);
+  for (const l of LEVELS.updown) assert.ok(l.tries >= Math.ceil(Math.log2(l.max + 1)), 'up-down can always be solved by halving: ' + l.max);
+});
+test('G3: game helpers: a followed box ends where the swaps take it; up-down hints; the mail zone', () => {
+  const sw = shellSwaps(4, 50, mulberry32(3)); assert.ok(sw.every(([a, b]) => a !== b && a < 4 && b < 4));
+  let slots = [0, 1, 2, 3]; for (const [a, b] of sw) { const i = slots.indexOf(a), j = slots.indexOf(b); slots[i] = b; slots[j] = a; }
+  for (let box = 0; box < 4; box++) assert.equal(shellFollow(box, sw), slots[box]);
+  assert.deepEqual([updownHint(40, 40), updownHint(40, 10), updownHint(40, 90)], [0, 1, -1]);
+  assert.ok(inZone(mailPos(0), 26) && !inZone(mailPos(Math.PI / 2), 26));
+});
+
+// ---- castle word games (cards/js/wordgames.js) ----
+import { Hangman, hangmanPick, spellable, buildCrossword, crossCells } from '../cards/js/wordgames.js';
+test('H1: hangman word: letters only, 5+ letters first, then 4; the castle exam words before other met words; none -> null', () => {
+  const W = (form) => ({ id: form, form });
+  assert.deepEqual([spellable('apple'), spellable('ice cream'), spellable('t-shirt'), spellable('cat'), spellable('Bread')], [true, false, false, false, true]);
+  for (let s = 1; s < 20; s++) assert.equal(hangmanPick([W('cat'), W('bird'), W('apple'), W('look at')], [W('banana')], mulberry32(s)).form, 'apple');
+  assert.equal(hangmanPick([W('cat'), W('bird')], [W('banana')], mulberry32(1)).form, 'bird', 'a 4-letter exam word comes before other met words');
+  assert.equal(hangmanPick([W('cat'), W('ox')], [W('dogs'), W('banana')], mulberry32(1)).form, 'banana', 'no exam word of 4+: a met word, 5+ first');
+  assert.equal(hangmanPick([W('cat')], [W('go on')], mulberry32(1)), null);
+});
+test('H2: hangman rules: hits, misses, repeats cost nothing, lives run out; several words share the lives; a reveal shows the first letter', () => {
+  const h = new Hangman(['apple']); assert.deepEqual([h.guess('p'), h.guess('p'), h.guess('z'), h.shown.join('')], ['hit', 'again', 'miss', 'pp']);
+  for (const c of 'qwxyv') h.guess(c); assert.equal(h.lost, true); assert.equal(h.guess('a'), 'again');
+  const m = new Hangman(['cat', 'dog'], 8); assert.deepEqual(['c', 'a', 't'].map((c) => m.guess(c)), ['hit', 'hit', 'next']); assert.equal(m.word, 'dog');
+  assert.deepEqual(['d', 'o', 'g'].map((c) => m.guess(c)), ['hit', 'hit', 'win']);
+  assert.deepEqual(new Hangman(['apple'], 6, 1).shown, ['a', '', '', '', '']);
+});
+test('H3: crossword: words cross on equal letters, never run side by side, ends free; numbers by position; null when too few fit', () => {
+  const words = ['apple', 'banana', 'grape', 'lemon', 'melon', 'orange', 'peach', 'plum'].map((f) => ({ id: f, form: f, ko: f }));
+  for (let s = 1; s < 30; s++) { const cw = buildCrossword(words, mulberry32(s)); assert.ok(cw && cw.entries.length >= 4, 'seed ' + s);
+    const cells = crossCells(cw); const used = new Map();
+    for (const e of cw.entries) for (let i = 0; i < e.word.length; i++) { const k = (e.row + (e.dir === 'd' ? i : 0)) + ',' + (e.col + (e.dir === 'a' ? i : 0)); assert.equal(cells[k], e.word[i]); used.set(k, (used.get(k) || 0) + 1); }
+    assert.ok([...used.values()].some((n) => n === 2), 'at least one crossing');
+    for (const e of cw.entries) { const before = e.dir === 'a' ? [e.row, e.col - 1] : [e.row - 1, e.col]; const after = e.dir === 'a' ? [e.row, e.col + e.word.length] : [e.row + e.word.length, e.col];
+      assert.ok(!cells[before.join(',')] && !cells[after.join(',')], 'ends free ' + e.word); }
+    for (let i = 1; i < cw.entries.length; i++) { const a = cw.entries[i - 1], b = cw.entries[i]; assert.ok(a.row < b.row || (a.row === b.row && a.col <= b.col)); assert.ok(b.num >= a.num); } }
+  assert.equal(buildCrossword(['cat', 'dog', 'ox'].map((f) => ({ id: f, form: f })), mulberry32(1)), null);
+});

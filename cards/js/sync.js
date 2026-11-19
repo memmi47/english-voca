@@ -37,6 +37,7 @@ function mergeWorlds(a = {}, b = {}, aLast = true) {
     const cleared = early(x.cleared, y.cleared), open = early(x.open, y.open); for (const k of Object.keys(cleared)) delete open[k];
     out[id] = { castle: minStr(x.castle, y.castle) ?? null, seen: minStr(x.seen, y.seen) ?? null, cleared, stamps: early(x.stamps, y.stamps) };
     if (Object.keys(open).length) out[id].open = open;
+    const gold = early(x.gold, y.gold); if (Object.keys(gold).length) out[id].gold = gold;                       // challenge stamps: union, earliest day
     const sorted = Math.max(x.sorted || 0, y.sorted || 0); if (sorted) out[id].sorted = sorted;   // words looked at in the post office: only grows
     const here = aLast ? x.here ?? y.here : y.here ?? x.here; if (here != null) out[id].here = here; }
   return out;

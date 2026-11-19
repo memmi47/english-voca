@@ -9,7 +9,7 @@ import { stormBlocks } from './storm.js';
 export const FREE = new Set(['start', 'junction', 'plaza']);          // nodes anyone can walk through
 export const CASTLE = { cards: 12, pass: 0.8 };                       // defaults when a world carries no castleRule
 export const FINALE = { cards: 40, pass: 0.75 };                       // continent castle defaults (the data file may set its own)
-export const GAMES = new Set(['memory', 'mail']);                     // minigames this build can play; others show "준비 중"
+export const GAMES = new Set(['memory', 'mail']);   // the world file's own kinds; which game a playhouse holds comes from games.gamePlan                     // minigames this build can play; others show "준비 중"
 
 // Kinds of side-activity houses left out of the learning path (units, crown, word counts, castle pools). Emptied = the old behaviour.
 let LEFT_OUT = new Set(['sight']);
@@ -212,6 +212,8 @@ export function finaleRun(ix, c, state, today, rng) {
 export function enterWorld(state, w, today) { const ws = wstate(state, w.id); const first = !ws.seen; if (first) ws.seen = today; ensureMap(state).at = w.id; return first; }
 // A finished minigame stamps the postcard once. Decoration only.
 export function stampGame(state, w, nodeId, today) { const ws = wstate(state, w.id); if (ws.stamps[nodeId]) return false; ws.stamps[nodeId] = today; return true; }
+// A challenge win (the playhouse was already stamped) adds a gold stamp once. Decoration only.
+export function goldStamp(state, w, nodeId, today) { const ws = wstate(state, w.id); const g = ws.gold || (ws.gold = {}); if (g[nodeId]) return false; g[nodeId] = today; return true; }
 
 // World-level results of a finished run (the gauge, stars and items are settled by map.settleRun).
 export function settleWorld(ix, state, node, rec, today) {

@@ -1,8 +1,9 @@
 // Flashcard game: screens. Rules live in deck.js (cards), map.js (review load, items), world.js (worlds, castles); audio in sound.js.
 import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG, firmCount } from './deck.js';
 import { Sound } from './sound.js';
+import { GAME_NAMES, gamePlan, playLevel, mountGame } from './games.js';
 import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope, setHardness } from './map.js';
-import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
+import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, goldStamp, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
 import { STORM, indexForms, formDone, hereOf, stormOf, stormBlocks, stormRelease, stormTick, StormRun, settleStorm } from './storm.js';
@@ -178,7 +179,7 @@ async function boot() {
     if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
     if (qs.get('triage') === 'tile') TRIAGE.sort = false;              // test-only: the tile word list instead of the world's post office
     if (qs.get('theme') === 'off') CFG.themeOption = false;            // test-only: wrong answers as before the same-theme choice
-    G.ix = indexWorlds(doc); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
+    G.ix = indexWorlds(doc); G.plan = gamePlan(G.ix); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
     G.dataNote = doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
     const lost = Object.keys(G.ix.wordWorld).filter((id) => !G.byId[id]); if (lost.length) throw new Error(`세계 파일의 카드 ${lost.length}장이 카드 목록에 없어요 (예: ${lost[0]})`);
   } catch (e) { $('#app').innerHTML = `<div class="page center"><h1 class="title">열 수 없어요</h1><p class="note" id="fatal">${esc(e.message)}</p></div>`; return; }
@@ -537,7 +538,7 @@ const GIFTS = [
 let presentationTimers = [], deviceMemory = {}, lookMemory = {};
 let giftObserver = null;
 function later(fn, ms) { const id = setTimeout(fn, FAST ? Math.min(ms, 20) : ms); presentationTimers.push(id); return id; }
-function clearPresentation() { cancelWalk(); presentationTimers.forEach(clearTimeout); presentationTimers = []; G.sound?.cancelFanfares(); G.door = null; closeWardrobe(); }
+function clearPresentation() { stopGame(); cancelWalk(); presentationTimers.forEach(clearTimeout); presentationTimers = []; G.sound?.cancelFanfares(); G.door = null; closeWardrobe(); }
 const motionOff = () => G.reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
 function deviceSeen() {
   const object = value => value && typeof value === 'object' && !Array.isArray(value) ? value : {};
@@ -1153,43 +1154,50 @@ function ltEnd() {
   G.lt = null;
 }
 
-// ---- playhouses: short games off the long paths. Pure play: they touch no word, star, gauge or key; one stamp each. ----
+// ---- playhouses (cards/js/games.js, docs/MINIGAMES.md). Pure play: they touch no word, star, gauge or key. A win stamps the
+// postcard once; a win at the challenge level (the playhouse already stamped) adds a gold stamp. Two failures in a row on
+// one playhouse make its next game one level easier (remembered on this device only, never in the child's record). ----
+const GAME_PICS = ['leaf-boss', 'cloud-boss', 'snail-boss', 'bat-friend', 'mushroom', 'fire-flower', 'star', 'key', 'crown', 'flowers', 'tree', 'stamp', 'envelope', 'mailbox'];
+function gameSpec(n) {
+  let e = (G.plan && G.plan[G.world.id] && G.plan[G.world.id][n.id]) || { type: n.gameType === 'memory' ? 'memory' : 'mail', base: 1 };
+  const forced = /^(\w+):([1-5])$/.exec(qs.get('gtest') || ''); if (forced && GAME_NAMES[forced[1]]) e = { type: forced[1], base: Number(forced[2]) };   // test-only: ?gtest=type:level
+  const ws = ensureMap(G.st).worlds[G.world.id] || {}; const key = `${G.world.id}|${n.id}`; const fails = (deviceSeen().gameFails || {})[key] || 0;
+  const stamped = !!(ws.stamps && ws.stamps[n.id]);
+  return { ...e, key, stamped, gold: !!(ws.gold && ws.gold[n.id]), fails, level: playLevel(e.base, { stamped, fails }) };
+}
+let toneCtx = null;
+function tone(i) {                                         // the playhouse songs (우체통 노래): one short square-wave note per box
+  if (!G.sound.sfx || FAST) return;
+  try { toneCtx = toneCtx || new (window.AudioContext || window.webkitAudioContext)(); const o = toneCtx.createOscillator(), gn = toneCtx.createGain(); const t = toneCtx.currentTime;
+    o.type = 'square'; o.frequency.value = [262, 330, 392, 523, 659, 784][i % 6]; gn.gain.setValueAtTime(0.06, t); gn.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(gn); gn.connect(toneCtx.destination); o.start(t); o.stop(t + 0.36); } catch { /* no sound: the game still plays */ }
+}
 async function startGame(n) {
-  await G.sound.unlock(); G.view = 'game'; band(false); G.sound.scene('play'); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 11);
-  const em = [0, 1, 2];                                    // three of the world's boss pictures, as pairs
-  G.game = n.gameType === 'memory' ? { node: n, type: 'memory', deck: shuffle([...em, ...em], rng), open: [], matched: new Set(), busy: false }
-    : { node: n, type: 'mail', done: 0, t0: performance.now(), pos() { return 50 + 38 * Math.sin((performance.now() - this.t0) / (FAST ? 90 : 900)); }, inZone() { return Math.abs(this.pos() - 50) <= 13; } };
-  paintGame();
-  if (G.game.type === 'mail') { const tick = () => { if (G.view !== 'game' || !G.game || G.game.type !== 'mail') return; const b = $('#mailmover'); if (b) b.style.left = G.game.pos() + '%'; requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
+  await G.sound.unlock(); clearPresentation(); G.view = 'game'; band(false); hideBanner(); G.sound.scene('play');
+  const spec = gameSpec(n); const rng = mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 11 + spec.level);
+  const pics = [...(G.world.bossSprites || []), ...GAME_PICS].filter((id, i, a) => a.indexOf(id) === i && document.getElementById(id));
+  $('#app').innerHTML = `<div class="page center game"><button class="back" data-act="today" aria-label="그만 놀고 지도로">‹</button><h1 class="title">${GAME_NAMES[spec.type]}</h1>
+  <p class="game-level" id="glevel"><b>${spec.level}단계</b>${spec.stamped ? ' · 도전판' : ''}${spec.fails >= 2 ? ' · 한 단계 쉽게' : ''}</p><p class="mut" id="gstatus"></p>
+  <div id="gamebox" class="gamebox" data-game="${spec.type}" data-level="${spec.level}"></div><p class="mut small" id="ghint"></p></div>`;
+  const g = (G.game = { node: n, spec, api: null }); const done = (won) => { if (G.game !== g) return; g.api.stop(); endGame(g, won); };
+  const text = (sel) => (t) => { const e = $(sel); if (e) e.textContent = t; };
+  g.api = mountGame(spec.type, { root: $('#gamebox'), level: spec.level, rng, fast: FAST, sfx: (x) => G.sound.sfxPlay(x), tone, spr, mbox: (px) => `<svg class="spr" width="${px}" height="${px}" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`,
+    pic: (i, px) => spr(pics[i % pics.length], px), win: () => done(true), fail: () => done(false), status: text('#gstatus'), hint: text('#ghint') });
 }
-function paintGame() {
-  const g = G.game; const head = `<button class="back" data-act="today" aria-label="그만 놀고 지도로">‹</button>`;
-  if (g.type === 'memory') {
-    $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">그림 짝 맞추기</h1><p class="mut" id="gstatus">${g.matched.size / 2} / 3쌍</p>
-    <div class="memgrid">${g.deck.map((e, i) => { const up = g.matched.has(i) || g.open.includes(i); return `<button class="memcard ${g.matched.has(i) ? 'matched' : ''}" data-act="mem" data-i="${i}" aria-label="${i + 1}번째 카드" ${g.matched.has(i) ? 'disabled' : ''}>${up ? bossPic(G.world, e).html(72) : spr('envelope', 64)}</button>`; }).join('')}</div>
-    <p class="mut small">두 장씩 뒤집어 같은 그림을 찾아요. 서두르지 않아도 돼요.</p></div>`;
-  } else {
-    $('#app').innerHTML = `<div class="page center game">${head}<h1 class="title">우체통에 편지 넣기</h1><p class="mut" id="gstatus">${g.done} / 3통</p>
-    <div class="mailtrack"><div class="mailzone"></div><div class="mailbox" id="mailmover" style="left:${g.pos()}%"><svg class="spr" width="96" height="96" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg></div></div>
-    <button class="go" data-act="mail">${spr('envelope', 40)} 넣기!</button><p class="mut small" id="ghint">우체통이 노란 칸에 왔을 때 눌러요. 틀려도 괜찮아요.</p></div>`;
-  }
-}
-function memPick(i) {
-  const g = G.game; if (!g || g.type !== 'memory' || g.busy || g.matched.has(i) || g.open.includes(i)) return; g.open.push(i); G.sound.sfxPlay('flip');
-  if (g.open.length < 2) return paintGame();
-  const [a, b] = g.open;
-  if (g.deck[a] === g.deck[b]) { g.matched.add(a); g.matched.add(b); g.open = []; G.sound.sfxPlay('correct'); paintGame(); if (g.matched.size === g.deck.length) setTimeout(endGame, FAST ? 30 : 500); }
-  else { g.busy = true; paintGame(); setTimeout(() => { if (G.game !== g) return; g.open = []; g.busy = false; paintGame(); }, FAST ? 30 : 800); }
-}
-function mailDrop() {
-  const g = G.game; if (!g || g.type !== 'mail') return;
-  if (g.inZone()) { g.done++; G.sound.sfxPlay('mail'); if (g.done >= 3) return endGame(); $('#gstatus').textContent = `${g.done} / 3통`; $('#ghint').textContent = '쏙! 잘 넣었어요.'; }
-  else { G.sound.sfxPlay('retry'); $('#ghint').textContent = '조금만 더 기다렸다가 눌러요.'; }
-}
-function endGame() {
-  const g = G.game; if (!g) return; const fresh = stampGame(G.st, G.world, g.node.id, todayISO()); if (fresh) save(); G.view = 'end'; G.game = null; G.sound.scene(musicOf(G.world), { worldId: G.world.id }); G.sound.sfxPlay('stamp'); if (fresh) setTimeout(() => G.sound.jingle('item'), 200);
-  $('#app').innerHTML = `<div class="page center"><h1 class="title">잘 놀았어요!</h1><div class="gain" id="stampgain">${spr('stamp', 40)} ${fresh ? '엽서에 놀이 도장을 찍었어요' : '이 도장은 이미 모았어요'}</div>
-  <p class="mut">놀이 도장은 카드 공부와는 상관없는 기념이에요.</p><button class="go" data-act="today">▶ 지도로</button></div>`;
+function stopGame() { if (G.game && G.game.api) G.game.api.stop(); G.game = null; }
+function endGame(g, won) {
+  G.game = null; const seen = deviceSeen(); const fails = seen.gameFails || (seen.gameFails = {});
+  if (won) delete fails[g.spec.key]; else fails[g.spec.key] = (fails[g.spec.key] || 0) + 1; writeDevice();
+  let fresh = false, gold = false;
+  if (won) { fresh = stampGame(G.st, G.world, g.node.id, todayISO()); if (!fresh && g.spec.stamped) gold = goldStamp(G.st, G.world, g.node.id, todayISO()); if (fresh || gold) save(); }
+  G.view = 'end'; G.sound.scene(musicOf(G.world), { worldId: G.world.id });
+  if (won) { G.sound.sfxPlay('stamp'); if (fresh || gold) setTimeout(() => G.sound.jingle('item'), 200); } else G.sound.sfxPlay('miss');
+  const easier = !won && fails[g.spec.key] >= 2 && g.spec.level > 1;
+  const line = won ? (gold ? `${spr('stamp', 40)} 도전 성공! 금 도장을 찍었어요` : fresh ? `${spr('stamp', 40)} 엽서에 놀이 도장을 찍었어요` : `${spr('stamp', 40)} ${g.spec.gold ? '금 도장도 이미 모았어요' : '이 도장은 이미 모았어요'}`)
+    : easier ? '괜찮아요! 다음 판은 한 단계 쉬워져요.' : '괜찮아요! 다시 해 봐요.';
+  $('#app').innerHTML = `<div class="page center"><h1 class="title">${won ? '잘 놀았어요!' : '아쉬워요!'}</h1><div class="gain" id="stampgain">${line}</div>
+  <p class="mut">${won && !g.spec.stamped ? '다시 하면 한 단계 어려운 도전판이 돼요. ' : ''}놀이 도장은 카드 공부와는 상관없는 기념이에요.</p>
+  <button class="sec" data-act="game-again" data-id="${esc(g.node.id)}">한 번 더</button> <button class="go" data-act="today">▶ 지도로</button></div>`;
 }
 
 // ---- album: the cards of this world ----
@@ -1299,8 +1307,7 @@ async function onClick(e) {
     case 'st-quit': return stormEnd('left');
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
-    case 'mem': return memPick(Number(b.dataset.i));
-    case 'mail': return mailDrop();
+    case 'game-again': { const n = worldView(G.ix, G.world, G.st, todayISO()).nodes.find((x) => x.id === b.dataset.id); return n && n.status !== 'locked' ? startGame(n) : today(G.pid); }
     case 'lt-yes': return ltAnswer(true);
     case 'lt-no': return ltAnswer(false);
     case 'lt-quit': clearInterval(G.timer); G.lt = null; return today(G.pid);

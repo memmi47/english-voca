@@ -249,3 +249,12 @@ test('S5: the post office pointer of a world only grows when two records are mer
   assert.equal(mergeCards(a, b).map.worlds.w.sorted, 40); assert.equal(mergeCards(b, a).map.worlds.w.sorted, 40);
   const c = structuredClone(b); delete c.map.worlds.w.sorted; assert.equal(mergeCards(c, b).map.worlds.w.sorted, 20); assert.equal('sorted' in mergeCards(c, c).map.worlds.w, false);
 });
+
+test('S6: gold playhouse stamps are united on merge, the earlier day kept', () => {
+  const base = { v: 3, id: 'son', words: {}, runs: [], log: [], verify: [], bunches: {}, forms: {} };
+  const a = { ...base, map: { worlds: { w: { castle: null, seen: null, cleared: {}, stamps: { g1: '2026-11-10' }, gold: { g1: '2026-11-12' } } } } };
+  const b = { ...base, map: { worlds: { w: { castle: null, seen: null, cleared: {}, stamps: { g1: '2026-11-10' }, gold: { g1: '2026-11-11', g2: '2026-11-13' } } } } };
+  assert.deepEqual(mergeCards(a, b).map.worlds.w.gold, { g1: '2026-11-11', g2: '2026-11-13' });
+  const c = { ...base, map: { worlds: { w: { castle: null, seen: null, cleared: {}, stamps: {} } } } };
+  assert.equal('gold' in mergeCards(c, c).map.worlds.w, false);
+});
