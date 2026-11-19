@@ -381,8 +381,9 @@ function today(id, msg = '', wid = null) {
     ${v.monster.present ? dock('monster', anim('monster-a', 'monster-b', 48), `복습 몬스터 ${v.monster.count}`, 'open', 'mon') : ''}
     ${v.review.present ? dock('review', spr('envelope', 48), `복습 ${v.review.count}장`, v.bat.full ? 'blocked' : 'open') : ''}
     ${dock('bonus', `<svg class="spr" width="48" height="48" viewBox="0 0 64 64" aria-hidden="true"><use href="#mailbox" width="64" height="64"/></svg>`, '번개 집', v.bonus.status === 'used' ? 'cleared' : v.bonus.status === 'open' ? 'open' : 'locked')}</div>
-  <div class="bag"><b class="bag-title">아이템 가방</b><button class="help-q" data-act="items-help" aria-label="아이템은 어떻게 써요?">?</button>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></button>`).join('')}
-    <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '아이템을 눌러 고르면 다음 판에서 저절로 써요'}</span></div>
+  <div class="bag"><b class="bag-title">아이템 가방</b><button class="help-q" data-act="items-help" aria-label="아이템은 어떻게 얻고 써요?">?</button>${Object.entries(ITEMS).map(([k, it]) => `<button class="item ${v.bag === k ? 'sel' : ''}" data-act="bag" data-item="${k}" ${m.items[k] < 1 ? 'disabled' : ''} title="${esc(it.info)}"><span class="item-pic">${spr(ITEM_SPR[k], 40)}<b>×${m.items[k]}</b></span><small class="item-what">${ITEM_SHORT[k]}</small></button>`).join('')}
+    <span class="mut small">${v.bag ? esc(ITEMS[v.bag].name + ': ' + ITEMS[v.bag].info) : '아이템을 눌러 고르면 다음 판에서 저절로 써요'}</span>
+    <p class="bag-how" id="baghow" hidden>얻는 법: 복습 몬스터를 물리치면 하나, 번개 집에서 3개 이상 맞히면 하나(하루 한 번). 쓰는 법: 눌러서 고르면 다음 판에서 저절로 써요. 안 쓴 방패 버섯은 돌아와요.</p></div>
   <div class="shelf"><div class="bar">${[3, 2, 1, 0].map((g) => `<i class="g${g}" style="flex:${c[g]}"></i>`).join('')}</div>
     <div class="legend"><span class="g3">${spr(MEDAL[3], 24)} 금 ${c[3]}</span><span class="g2">${spr(MEDAL[2], 24)} 은 ${c[2]}</span><span class="g1">${spr(MEDAL[1], 24)} 동 ${c[1]}</span><span class="g0">아직 ${c[0]}</span></div>
     <button class="sec" data-act="album">이 세계의 카드첩</button></div>
@@ -723,12 +724,12 @@ function gearArt(item, px=54) {
 // (eyes x15-16 and x25-26 at y14-16, mouth x19-23 at y19), so every outfit and both children can wear them.
 const FACE_PIX = (() => { const S = '#E8B78B', K = '#233F3A', M = '#98664B', W = '#FFF0CA', B = '#7FB7D6';
   const px = (list, c) => list.map(([x, y, w = 1, h = 1]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`).join('');
-  const clear = px([[13, 13, 6, 5], [23, 13, 6, 5], [18, 19, 7, 3]], S);
+  const clear = px([[13, 13, 6, 5], [23, 13, 6, 5], [18, 18, 7, 4]], S); const eyes = px([[15, 14, 2, 3], [25, 14, 2, 3]], K);   // the courier's own eyes
   const eyes2 = (x, y) => [[x, y, 2, 2]];
   return {
-    joy: clear + px([[14, 15], [15, 14], [16, 14], [17, 15], [24, 15], [25, 14], [26, 14], [27, 15], [19, 19], [23, 19], [20, 20, 3, 1]], K),
+    joy: clear + eyes + px([[20, 19, 3, 1], [19, 18], [23, 18]], M),                                     // user's pick 2026-11-20: own eyes, mouth corners up
     sad: clear + px([...eyes2(15, 15), ...eyes2(25, 15), [14, 13, 2, 1], [26, 13, 2, 1], [19, 21], [20, 20, 3, 1], [23, 21]], K) + px([[14, 17, 1, 2]], B),
-    scared: clear + px([[14, 13, 4, 5], [24, 13, 4, 5], [19, 20], [20, 19], [21, 20], [22, 19], [23, 20]], K) + px([[15, 14, 2, 3], [25, 14, 2, 3]], W) + px([[16, 15], [26, 15]], K),
+    scared: clear + eyes + px([[19, 20], [20, 19], [21, 20], [22, 19], [23, 20]], M) + px([[28, 13, 1, 2]], B),   // user's pick: own eyes, shaky mouth, sweat
     hurt: clear + px([[14, 14], [16, 14], [15, 15], [14, 16], [16, 16], [25, 14], [27, 14], [26, 15], [25, 16], [27, 16], [20, 19, 3, 3]], K) + px([[21, 20]], M),
   }; })();
 function addFaces() { const box = document.createElement('div'); box.setAttribute('aria-hidden', 'true'); box.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
@@ -1203,6 +1204,7 @@ function ltEnd() {
 // ---- playhouses (cards/js/games.js, docs/MINIGAMES.md). Pure play: they touch no word, star, gauge or key. A win stamps the
 // postcard once; a win at the challenge level (the playhouse already stamped) adds a gold stamp. Two failures in a row on
 // one playhouse make its next game one level easier (remembered on this device only, never in the child's record). ----
+const ITEM_SHORT = { shield: '틀려도 연속 정답 유지', flame: '보스 타격 2배' };   // under the bag's icons (user 2026-11-20)
 const GAME_PICS = ['leaf-boss', 'cloud-boss', 'snail-boss', 'bat-friend', 'mushroom', 'fire-flower', 'star', 'key', 'crown', 'flowers', 'tree', 'stamp', 'envelope', 'mailbox'];
 function gameSpec(n) {
   let e = (G.plan && G.plan[G.world.id] && G.plan[G.world.id][n.id]) || { type: n.gameType === 'memory' ? 'memory' : 'mail', base: 1 };
@@ -1518,8 +1520,7 @@ async function onClick(e) {
     case 'st-quit': return stormEnd('left');
     case 'bat-go': return start('bat');
     case 'bag': chooseBag(G.st, b.dataset.item); save(); return today(G.pid);
-    case 'items-help': return banner(`<div class="items-help"><b>아이템 가방</b>${Object.entries(ITEMS).map(([k, it]) => `<p>${spr(ITEM_SPR[k], 28)} <b>${esc(it.name)}</b>: ${esc(it.info)}</p>`).join('')}
-      <p><b>얻는 법</b>: 복습 몬스터를 물리치면 하나, 번개 집에서 3개 이상 맞히면 하나(하루 한 번).</p><p><b>쓰는 법</b>: 지도 아래 가방에서 아이템을 눌러 고르면, 다음에 시작하는 판에서 저절로 써요. 판 위쪽에 그림이 보이면 쓰는 중이에요. 쓰지 않은 방패 버섯은 가방으로 돌아와요.</p></div><button data-act="hide">알겠어요</button>`);
+    case 'items-help': { const h = $('#baghow'); if (h) h.hidden = !h.hidden; return; }
     case 'final-practice': { const n = G.finalPractice; G.finalPractice = null; if (!n) return today(G.pid); await G.sound.unlock(); return begin(n, mulberry32((Number(qs.get('seed')) || Date.now() % 1e9) + 31)); }
     case 'game-again': { const n = worldView(G.ix, G.world, G.st, todayISO()).nodes.find((x) => x.id === b.dataset.id); return n && n.status !== 'locked' ? startGame(n) : today(G.pid); }
     case 'lt-yes': return ltAnswer(true);
