@@ -487,9 +487,9 @@ function atlasWorld(w, illustrated) {
   const picture = illustrated ? spr('c015-village', 54) : '';
   const gift = worldGift(w.id);
   const earned = gift && unlocked(gift,G.st);
-  return `<button class="wcard ${w.open ? 'open' : 'locked'} ${here ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" aria-label="${esc(w.name)} · ${status}" ${w.open ? '' : 'disabled'}>
+  return `<button class="wcard ${w.open ? 'open' : 'locked'} ${here ? 'here' : ''}" data-act="goworld" data-id="${esc(w.id)}" aria-label="${esc(w.name)} · ${status} · 단어 ${w.met}/${w.total}" ${w.open ? '' : 'disabled'}>
     <span class="atlas-picture">${picture}${here && illustrated ? `<span class="atlas-courier">${courier('idle', 42)}</span>` : ''}<span class="atlas-badge">${badge}</span><span class="world-door">${spr(w.open && !unseen ? 'c011-door-open' : 'c011-door-locked', illustrated ? 27 : 48)}</span></span>
-    <b>${esc(w.name)}</b><i>${w.met}/${w.total}</i></button>
+    <b>${esc(w.name)}</b><i title="이 세계에서 만난 단어 / 전체 단어">단어 ${w.met}/${w.total}</i></button>
     ${gift ? `<button class="atlas-gift" data-act="atlas-gift" data-id="${esc(w.id)}" aria-label="${esc(w.name)} 선물${earned ? ' · 받음' : ''}"><span class="atlas-gift-icon">${gearArt(gift,24)}${earned ? '<svg class="gift-check" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8l3 3 7-7"/></svg>' : ''}</span></button>` : ''}
     ${unseen ? `<button class="world-door atlas-door-trigger unseen" data-act="door" data-id="${esc(w.id)}" aria-label="${esc(w.name)} 열쇠로 문 열기" title="열쇠로 문 열기">${spr('key', 24)}</button>` : ''}`;
 }
