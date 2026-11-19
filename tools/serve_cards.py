@@ -166,10 +166,17 @@ class H(SimpleHTTPRequestHandler):
         self.send_header('Accept-Ranges', 'bytes'); self.send_header('Cache-Control', 'no-cache'); super().end_headers()
     def log_message(self, *a): pass
 
+# The browser asks for a dozen game files at once, each on its own connection. Python's default waiting line holds 5: on
+# macOS a 6th connection is refused outright (Linux makes it wait), so a script failed on the Mac and the game did not
+# start (user screenshot 2026-11-20: main, deck, map, world, store loaded; sync, sound, storm "Failed to fetch").
+class Server(ThreadingHTTPServer):
+    request_queue_size = 128
+    daemon_threads = True
+
 if __name__ == '__main__':
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(); ap.add_argument('--port', type=int, default=8090); ap.add_argument('--host', default='127.0.0.1')
     ap.add_argument('--state-dir', default=os.environ.get('CARDS_STATE_DIR') or os.path.join(here, '..', 'state-cards'))
     a = ap.parse_args(); H.state_dir = os.path.abspath(a.state_dir); os.makedirs(H.state_dir, exist_ok=True)
     print(f'serving cards/ on http://{a.host}:{a.port}/  state in {H.state_dir}  (Ctrl+C to stop)')
-    ThreadingHTTPServer((a.host, a.port), partial(H, directory=os.path.join(here, '..', 'cards'))).serve_forever()
+    Server((a.host, a.port), partial(H, directory=os.path.join(here, '..', 'cards'))).serve_forever()

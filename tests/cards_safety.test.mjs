@@ -241,3 +241,8 @@ test('R4 (C-007): every address a push really goes to is checked: a public GitHu
   assert.throws(() => git(pubDir, 'rev-parse', '--verify', '-q', `refs/heads/${br}`), 'the pushRemote got nothing');
 });
 
+
+test('D10: the game server keeps a long waiting line for connections (a dozen game files load at once; macOS refuses beyond the line)', () => {
+  const out = spawnSync('python3', ['-I', '-c', 'import importlib.util,sys;s=importlib.util.spec_from_file_location("serve_cards","tools/serve_cards.py");m=importlib.util.module_from_spec(s);s.loader.exec_module(m);print(m.Server.request_queue_size, m.Server.daemon_threads)'], { encoding: 'utf8' });
+  assert.equal(out.status, 0, out.stderr); const [size, daemon] = out.stdout.trim().split(' '); assert.ok(Number(size) >= 64, size); assert.equal(daemon, 'True');
+});
