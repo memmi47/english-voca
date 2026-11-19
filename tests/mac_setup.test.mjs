@@ -77,8 +77,10 @@ function fixture() {
   f.env = { ...process.env, HOME: f.home, PATH: f.bin + path.delimiter + process.env.PATH, MAC_FAKE_LOG: f.log, MAC_FAKE_STATE: f.state, MAC_FAKE_GAME: f.game, MAC_FAKE_DATA: f.data };
   return f;
 }
+// Only install_mac.sh reads an answer (y, from the stdin it keeps on fd 3). The other scripts hand their stdin to python
+// (heredoc), so a line written to it could land after the pipe closed (EPIPE, seen once on CI 2026-11-19): they get none.
 function call(f, script, args = [], extra = {}) {
-  const result = spawnSync('bash', [path.join(f.game, 'tools', script), ...args], { env: { ...f.env, ...extra }, encoding: 'utf8', input: 'y\n', timeout: 30000 });
+  const result = spawnSync('bash', [path.join(f.game, 'tools', script), ...args], { env: { ...f.env, ...extra }, encoding: 'utf8', timeout: 30000, ...(script === 'install_mac.sh' ? { input: 'y\n' } : { stdio: ['ignore', 'pipe', 'pipe'] }) });
   assert.ifError(result.error); return { ...result, out: result.stdout + result.stderr };
 }
 const install = (f) => { const r = call(f, 'install_mac.sh', ['--data', f.data, '--backup-repo', f.backup]); assert.equal(r.status, 0, r.out); return r; };
