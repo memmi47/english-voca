@@ -1617,7 +1617,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('FN1: a passed castle exam gives no key yet: it keeps the right answers and points to the last gate', /성 시험 통과/.test(await fn.textContent('h1')) && !fnS1.map.worlds['d1-01'].castle && fnS1.map.worlds['d1-01'].exam.words.length >= 8 && fnS1.map.keys === 0);
   await fn.click('.go'); await fn.waitForSelector('.finalbox[data-final="hangman"]');
   const hw = await fn.evaluate(() => window.__cards.game.api.peek());
-  ok('FN2: the hangman word is one of the exam\'s right answers, letters only, 4+ letters (5+ when there is one)', fnS1.map.worlds['d1-01'].exam.words.some((id) => id.split(':')[0] === hw.word || id.startsWith(hw.word)) && /^[a-z]{4,}$/.test(hw.word), hw.word);
+  ok('FN2: the hangman word is one of the exam\'s right answers, letters only, 4+ letters (5+ when there is one)', (await fn.evaluate((ids) => ids.map((id) => window.__cards.byId[id].form.toLowerCase()), fnS1.map.worlds['d1-01'].exam.words)).includes(hw.word) && /^[a-z]{4,}$/.test(hw.word), hw.word);
   for (const c of 'zqxjvkwy'.split('').filter((c) => !hw.word.includes(c)).slice(0, 6)) await fn.click(`[data-key="${c}"]`);
   await fn.waitForSelector('[data-act=final-practice]');
   const fnS2 = await state(fn, 'son'); const lostId = Object.keys(fnS2.words).find((id) => fnS2.words[id].misses && fnS2.words[id].miss === '2026-12-01');
