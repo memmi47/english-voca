@@ -23,7 +23,8 @@ async function open(ctx, q, sync = false) {
   page.on('pageerror', (e) => errs.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errs.push(m.text()); });
   if (!/(^|&)storm=/.test(q)) q += '&storm=off';                       // whirlwinds (T-008) only in section 14
-  if (!/(^|&)final=/.test(q)) q += '&final=off';                       // castle word games only in section FN
+  if (!/(^|&)final=/.test(q)) q += '&final=off';
+  if (!/(^|&)pin=/.test(q)) q += '&pin=off';                           // the parent lock only in section PN                       // castle word games only in section FN
   await page.goto(BASE + '?set=demo&' + q); await page.waitForSelector('.profiles'); return page;
 }
 const state = (page, id) => page.evaluate((i) => JSON.parse(localStorage.getItem('cards.v0.p.' + i)), id);
@@ -262,7 +263,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await v1.waitForFunction(() => window.__cards.sound.music && window.__cards.sound.music.on, null, { timeout: 8000 });
   ok('music toggle plays the map loop and is remembered', await v1.evaluate(() => window.__cards.sound.music.track.id === 'meadow' && JSON.parse(localStorage.getItem('cards.v0.pref')).music === true));
   await v1.evaluate(() => window.__cards.sound.sfxPlay('hit')); ok('effects can play through the real synth without errors', await v1.evaluate(() => window.__cards.sound.ctx.state !== 'closed'));
-  await v1.goto(BASE + '?set=demo&triage=tile&final=off&today=2026-11-12&seed=9&fast=1&nosync=1&storm=off'); await v1.waitForSelector('.profiles');
+  await v1.goto(BASE + '?set=demo&triage=tile&final=off&pin=off&today=2026-11-12&seed=9&fast=1&nosync=1&storm=off'); await v1.waitForSelector('.profiles');
   await v1.click('[data-act=pick][data-id=son]'); await v1.waitForSelector('.world');
   ok('the music choice persists after a reload', await v1.evaluate(() => window.__cards.sound.musicOn));
   await v1.close(); await vctx.close();
@@ -383,7 +384,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // 10d. the full deck: 4,610 cards and 30 worlds load and a first tile can be played; a world file of another version is refused
   const fullctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const fp = await fullctx.newPage(); fp.on('pageerror', (e) => errs.push(String(e)));
-  const t0 = Date.now(); await fp.goto(BASE + '?final=off&today=2026-12-21&triage=off&seed=2&sound=off&fast=1&nosync=1&storm=off'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
+  const t0 = Date.now(); await fp.goto(BASE + '?final=off&pin=off&today=2026-12-21&triage=off&seed=2&sound=off&fast=1&nosync=1&storm=off'); await fp.waitForSelector('.profiles'); await fp.click('[data-act=pick][data-id=son]'); await fp.waitForSelector('.world'); const loadMs = Date.now() - t0;
   const full = await fp.evaluate(() => ({ words: window.__cards.words.length, worlds: window.__cards.ix.worlds.length, world: document.querySelector('#world').dataset.world, open: document.querySelectorAll('.node.open').length, nodes: document.querySelectorAll('.world .node').length, wide: document.scrollingElement.scrollWidth <= innerWidth + 1 }));
   ok('full deck: 4,610 cards, 30 worlds, the first world\'s map with open tiles, fits the screen width', full.words === 4610 && full.worlds === 30 && full.world === 'p1-01' && full.open >= 2 && full.nodes >= 15 && full.wide, JSON.stringify(full) + ' load ' + loadMs + ' ms');
   ok('the full deck opens from the real world file, with no stand-in note', !/세계 파일: 시험용/.test(await fp.textContent('#src')));
@@ -393,13 +394,13 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await fp.click('[data-act=yes]'); await fp.waitForFunction(() => window.__cards.run.i >= 1 || document.querySelector('.opt'), null, { timeout: 8000 });
   await fp.close();
   const bad = await fullctx.newPage(); await bad.route('**/data/worlds.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ schemaVersion: 9, continents: [] }) }));
-  await bad.goto(BASE + '?final=off&today=2026-12-21&sound=off&nosync=1&storm=off'); await bad.waitForSelector('#fatal');
+  await bad.goto(BASE + '?final=off&pin=off&today=2026-12-21&sound=off&nosync=1&storm=off'); await bad.waitForSelector('#fatal');
   ok('a world file of an unknown version is refused with a plain message', /버전/.test(await bad.textContent('#fatal')));
   await bad.close(); await fullctx.close();
   // 10d-2. worlds.json cannot be read (404): the "열 수 없어요" screen gives the reason; no stand-in world is asked for or opened; nothing is written to storage
   const nwctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true }); const nw = await nwctx.newPage(); const nwReq = []; nw.on('request', (r) => nwReq.push(r.url()));
   await nw.route('**/data/worlds.json', (r) => r.fulfill({ status: 404, contentType: 'text/plain', body: 'nope' }));
-  await nw.goto(BASE + '?final=off&today=2026-12-21&sound=off&nosync=1&storm=off'); await nw.waitForSelector('#fatal');
+  await nw.goto(BASE + '?final=off&pin=off&today=2026-12-21&sound=off&nosync=1&storm=off'); await nw.waitForSelector('#fatal');
   const nwState = await nw.evaluate(() => ({ title: document.querySelector('h1').textContent, keys: localStorage.length, world: !!document.querySelector('#world'), profiles: !!document.querySelector('.profiles') }));
   ok('worlds.json blocked (404): the "열 수 없어요" screen names the file, the stand-in world is not opened, nothing is written to localStorage',
     nwState.title === '열 수 없어요' && /worlds\.json/.test(await nw.textContent('#fatal')) && !nwState.world && !nwState.profiles && nwState.keys === 0 && !nwReq.some((u) => /fixture/.test(u)), JSON.stringify({ nwState, fatal: await nw.textContent('#fatal') }));
@@ -417,7 +418,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const up = await state(u, 'son');
   ok('after playing on, the record is in the new format and still holds the old words', up.v === 3 && Object.keys(up.words).length === 30 && Object.keys(JSON.parse(SAVE0).words).every((id) => up.words[id]) && !!up.map.legacy);
   await u.evaluate(() => localStorage.setItem('cards.v0.p.son', '{"v":1,"id":"son","words":{"W0122'));           // cut off in the middle of a write
-  await u.goto(BASE + '?set=demo&final=off&today=2026-12-22&triage=off&seed=4&sound=off&fast=1&nosync=1&storm=off'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
+  await u.goto(BASE + '?set=demo&final=off&pin=off&today=2026-12-22&triage=off&seed=4&sound=off&fast=1&nosync=1&storm=off'); await u.waitForSelector('.profiles'); await u.click('[data-act=pick][data-id=son]'); await u.waitForSelector('.world');
   const dmg = await u.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cards.v0.p.son.damaged.')).map((k) => localStorage.getItem(k)));
   ok('a damaged record is set aside (not overwritten) and the child is told', dmg.length === 1 && dmg[0].startsWith('{"v":1,"id":"son"') && /따로 보관/.test(await u.textContent('#banner')));
   await u.click('[data-act=hide]'); await u.click('[data-act=home]'); await u.click('[data-act=parent]'); await u.waitForSelector('#safety');
@@ -463,7 +464,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('its map shows the cleared tile and the next one open', /\bcleared\b/.test(await nodeStatus(ip, 'A1')) && /\bopen\b/.test(await nodeStatus(ip, 'A2')));
   ok('the other child\'s document was not created', !fs.existsSync(path.join(STATE, 'p.daughter.json')));
   await mc.evaluate(() => localStorage.clear());                                  // the browser threw its storage away
-  await mc.goto(BASE + '?set=demo&final=off&today=2026-12-12&triage=off&seed=5&sound=off&fast=1&storm=off'); await mc.waitForSelector('.profiles');
+  await mc.goto(BASE + '?set=demo&final=off&pin=off&today=2026-12-12&triage=off&seed=5&sound=off&fast=1&storm=off'); await mc.waitForSelector('.profiles');
   ok('a wiped browser gets everything back from the server', Object.keys((await state(mc, 'son')).words).length === 10);
 
   // server unreachable: the run still saves on the device, says so, and uploads later
@@ -863,7 +864,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const visual = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
   const vp = await visual.newPage();
   vp.on('pageerror', (e) => errs.push(String(e)));
-  await vp.goto(BASE + '?final=off&today=2026-11-18&fast=1&sound=off&nosync=1&triage=off&storm=off');
+  await vp.goto(BASE + '?final=off&pin=off&today=2026-11-18&fast=1&sound=off&nosync=1&triage=off&storm=off');
   await vp.waitForSelector('.profiles');
   await vp.evaluate(async () => {
     const { newState } = await import('./js/deck.js');
@@ -986,7 +987,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const gearCtx=await browser.newContext({viewport:{width:1180,height:820}});
   const gearPage=await gearCtx.newPage();
   gearPage.on('pageerror',e=>errs.push(String(e)));
-  await gearPage.goto(BASE+'/?final=off&today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+  await gearPage.goto(BASE+'/?final=off&pin=off&today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
   await gearPage.waitForSelector('.profiles');
   await gearPage.evaluate(async()=>{
     const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
@@ -1086,7 +1087,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   for (const [child,world] of [['son','p1-03'],['daughter','p1-01']]) {
     const page=await kids.newPage();
     page.on('pageerror',e=>errs.push(String(e)));
-    await page.goto(BASE+'?final=off&today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
+    await page.goto(BASE+'?final=off&pin=off&today=2026-11-18&triage=off&nosync=1&sound=off&storm=off');
     await page.waitForSelector('.profiles');
     await page.evaluate(async({child,world})=>{
       const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
@@ -1207,7 +1208,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const polish=await browser.newContext({viewport:{width:1180,height:820},hasTouch:true});
   const polishPage=await polish.newPage();
   polishPage.on('pageerror',e=>errs.push(String(e)));
-  await polishPage.goto(BASE+'?triage=tile&final=off&today=2026-11-18&fast=1&nosync=1&sound=off&storm=off');
+  await polishPage.goto(BASE+'?triage=tile&final=off&pin=off&today=2026-11-18&fast=1&nosync=1&sound=off&storm=off');
   await polishPage.waitForSelector('.profiles');
   await polishPage.evaluate(async()=>{
     const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
@@ -1308,7 +1309,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const tierGear=id=>tierPage.locator(`[data-act=gear][data-id=${id}]`);
   const leaveTiers=()=>tierPage.click('#wardrobe .sec[data-act=look-close]');
   async function tierProfile({pid='son',day=cutoff,at='p1-01',castles={},conts={},slots={},stars=0}) {
-    await tierPage.goto(BASE+`?triage=tile&final=off&today=${day}&nosync=1&sound=off&storm=off`);
+    await tierPage.goto(BASE+`?triage=tile&final=off&pin=off&today=${day}&nosync=1&sound=off&storm=off`);
     await tierPage.waitForSelector('.profiles');
     await tierPage.evaluate(async({pid,at,castles,conts,slots,stars,day})=>{
       const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
@@ -1476,7 +1477,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const giftCtx = await browser.newContext({ viewport:{width:1024,height:768}, hasTouch:true, reducedMotion:'reduce' });
   const giftPage = await giftCtx.newPage();
   giftPage.on('pageerror', e => errs.push(String(e)));
-  await giftPage.goto(BASE+'?triage=tile&final=off&today=2026-11-20&sound=off&storm=off&nosync=1&seed=5');
+  await giftPage.goto(BASE+'?triage=tile&final=off&pin=off&today=2026-11-20&sound=off&storm=off&nosync=1&seed=5');
   await giftPage.waitForSelector('.profiles');
   await giftPage.evaluate(async () => {
     const {newState} = await import('./js/deck.js'), {ensureMap} = await import('./js/map.js');
@@ -1556,7 +1557,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await fbp.mouse.click(30, 30); await fbp.waitForFunction(() => window.__cards.sound.ctx && !document.querySelector('#tapHint'), null, { timeout: 8000 });
   ok('FB2: the first touch anywhere on the title screen unlocks the sound and starts the title music, before a child is chosen',
     await fbp.evaluate(() => window.__cards.sound.seen.has('scene:' + window.__cards.sound.sceneId) && !!window.__cards.sound.ctx));
-  await fbp.goto(BASE + '?set=demo&final=off&today=2026-12-01&triage=off&seed=7&fast=1&nosync=1&storm=off&sound=off'); await fbp.waitForSelector('.profiles');   // cards wait for the word sound: no sound from here on
+  await fbp.goto(BASE + '?set=demo&final=off&pin=off&today=2026-12-01&triage=off&seed=7&fast=1&nosync=1&storm=off&sound=off'); await fbp.waitForSelector('.profiles');   // cards wait for the word sound: no sound from here on
   await fbp.click('[data-act=pick][data-id=son]'); await fbp.waitForSelector('.world');
   await fbp.evaluate(async () => { const { ensureMap } = await import('./js/map.js'); const g = window.__cards; const node = g.ix.byId['d1-01'].map.nodes.find((n) => n.id === 'A1');
     for (const id of node.words) g.st.words[id] = { st: 'review', step: 1, due: '2026-12-05', firstDay: '2026-11-20', lastDay: '2026-11-21', lapses: 0 }; ensureMap(g.st).worlds['d1-01'] ||= { castle: null, cleared: {}, stamps: {}, seen: '2026-11-20' }; ensureMap(g.st).worlds['d1-01'].cleared.A1 = '2026-11-21'; localStorage.setItem('cards.v0.p.son', JSON.stringify(g.st)); });
@@ -1658,6 +1659,23 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const dvServer = await dv.evaluate(async () => (await fetch('api/doc/p.dev')).status);
   ok('DV5: children\'s records are untouched and the playground record never reaches the Mac server', JSON.stringify(await dv.evaluate(() => [localStorage.getItem('cards.v0.p.son'), localStorage.getItem('cards.v0.p.daughter')])) === JSON.stringify(dvKids) && dvServer === 404, String(dvServer));
   await dvCtx.close();
+
+  // PN. the parent screen's 4-digit lock (user request 2026-11-19): set twice, then asked; stored as a hash on this device only
+  const pnCtx = await browser.newContext({ viewport: { width: 1180, height: 820 } });
+  const pn = await open(pnCtx, 'today=2026-12-01&seed=7&sound=off&fast=1&pin=on');
+  const pinType = async (code) => { for (const d of code) await pn.click(`[data-act=pin][data-k="${d}"]`); };
+  await pn.click('[data-act=parent]'); await pn.waitForSelector('.page.pin');
+  ok('PN1: the first time, the parent screen asks for a new code and shows no records', /새 암호/.test(await pn.textContent('h1')) && !(await pn.$('#nm-son')));
+  await pinType('1234'); await pinType('1235'); const mism = await pn.textContent('#pinmsg'); await pinType('1234'); await pinType('1234'); await pn.waitForSelector('#nm-son');
+  const pinStored = await pn.evaluate(() => localStorage.getItem('cards.v0.pin'));
+  ok('PN2: the code is set only when typed twice the same; it is kept as a hash, not the digits', /달라요/.test(mism) && !!pinStored && !pinStored.includes('1234'), pinStored);
+  await pn.click('[data-act=home]'); await pn.click('[data-act=parent]'); await pn.waitForSelector('.page.pin');
+  await pinType('0000'); const wrongMsg = await pn.textContent('#pinmsg'); const stillLocked = !(await pn.$('#nm-son'));
+  await pinType('1234'); await pn.waitForSelector('#nm-son');
+  ok('PN3: after the first screen it asks again: a wrong code keeps it closed, the right one opens it (and the playground inside)', /달라요/.test(wrongMsg) && stillLocked && !!(await pn.$('[data-act=dev]')));
+  await pn.click('[data-act=home]'); await pn.click('[data-act=parent]'); for (let k = 0; k < 5; k++) await pinType('9999'); await pinType('1');
+  ok('PN4: five wrong codes in a row make it wait 30 seconds', /잠시 뒤에/.test(await pn.textContent('#pinmsg')));
+  await pnCtx.close();
 
   // PO. the world's post office (user request 2026-11-18): the world's words 10 at a time before any tile run; tapped = can read
   const poCtx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });

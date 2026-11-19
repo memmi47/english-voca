@@ -460,3 +460,5 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .xkeys{grid-template-columns:repeat(10,1fr);max-width:720px}.xkeys .padfn{font:700 16px var(--pix);background:#ffe9a8}.xkeys .xcheck{grid-column:span 2;background:var(--go);color:#fff}
 .page.dev{max-width:980px}.page.dev h2{margin:18px 0 6px}.devgames{border-collapse:collapse;margin:0 auto}.devgames th{text-align:left;padding:4px 10px}.devgames td{padding:3px}.devgames .sec{padding:6px 10px;font-size:15px}
 .page.dev .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.page.dev select{font-size:16px;padding:4px}
+.pin-dots{display:flex;gap:14px;justify-content:center;margin:14px}.pin-dots i{width:22px;height:22px;border:4px solid var(--ink);background:var(--paper)}.pin-dots i.on{background:var(--ink)}
+.page.pin .numpad span{display:block}

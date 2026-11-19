@@ -182,7 +182,8 @@ async function boot() {
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
     if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
     if (qs.get('triage') === 'tile') TRIAGE.sort = false;
-    if (qs.get('final') === 'off') FINAL.on = false;                   // test-only: a castle exam alone passes, as before the word games              // test-only: the tile word list instead of the world's post office
+    if (qs.get('final') === 'off') FINAL.on = false;
+    try { if (qs.get('pinreset') === '1' && localStorage.getItem('cards.v0.pin') && confirm('이 기기의 부모 기록 암호를 지울까요? 다음에 부모 기록을 열 때 새로 정해요.')) localStorage.removeItem('cards.v0.pin'); } catch { /* no storage: no lock to clear */ }                   // test-only: a castle exam alone passes, as before the word games              // test-only: the tile word list instead of the world's post office
     if (qs.get('theme') === 'off') CFG.themeOption = false;            // test-only: wrong answers as before the same-theme choice
     G.ix = indexWorlds(doc); G.plan = gamePlan(G.ix); G.byId = Object.fromEntries(G.words.map((w) => [w.id, w])); G.pack = doc.assetPack?.sheet || null;
     G.dataNote = doc.status === 'draft' || doc.playable === false ? '세계 파일: 초안(뜻·소리 검토 전)' : '';
@@ -253,6 +254,7 @@ function armTitleMusic() {
   document.addEventListener('pointerdown', once, true);
 }
 function home() {
+  G.parentOk = false; G.pin = null;                       // the parent screen locks again on the first screen
   armTitleMusic();
   clearPresentation();
   G.view = 'home'; G.pid = null; G.st = null; G.run = null; G.srun = null; G.stormEv = null; G.world = null; hideBanner(); clearTimeout(G.timer); applyTheme(G.ix.worlds[0]); band(false); G.sound?.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id });
@@ -1345,6 +1347,40 @@ function album() {
 }
 
 // ---- parent ----
+// ---- the parent screen's lock: a 4-digit code against a child opening it (and the developer playground). Kept on this
+// device only, as a plain hash: a child lock, not a password store (the iPads open the game over plain http, where the
+// browser's crypto is not offered). Forgotten: open the game with ?pinreset=1 on that device. Unlocked until the first screen.
+const PIN_KEY = 'cards.v0.pin';
+const pinHash = (s) => { let h = 2166136261; for (const c of 'cards-pin:' + s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); };
+function pinGet() { try { const v = JSON.parse(localStorage.getItem(PIN_KEY) || 'null'); return v && typeof v.h === 'string' ? v : null; } catch { return null; } }
+function parentGate() {
+  if (qs.get('pin') === 'off' || G.parentOk) return parent();         // pin=off: test-only
+  const saved = pinGet(); G.pin = { mode: saved ? 'enter' : 'new', typed: '', saved };
+  return paintPin(saved ? '' : '처음이에요. 부모 기록을 잠글 암호를 정해요.');
+}
+function paintPin(msg = '') {
+  const P = G.pin; clearPresentation(); G.view = 'pin'; hideBanner(); band(false);
+  const title = P.mode === 'enter' ? '부모 기록 암호' : P.mode === 'again' ? '한 번 더 눌러요' : '새 암호 4자리';
+  $('#app').innerHTML = `<div class="page center pin"><button class="back" data-act="home" aria-label="처음으로">‹</button><h1 class="title">${title}</h1>
+  <p class="mut">${P.mode === 'enter' ? '부모님만 열 수 있어요.' : '부모님만 아는 숫자 4자리. 이 기기에만 저장돼요.'}</p>
+  <div class="pin-dots" aria-label="${P.typed.length}자리 입력">${[0, 1, 2, 3].map((i) => `<i class="${i < P.typed.length ? 'on' : ''}"></i>`).join('')}</div><p class="msg" id="pinmsg">${esc(msg)}</p>
+  <div class="numpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '지움'].map((k) => (k === '' ? '<span></span>' : `<button data-act="pin" data-k="${k}" class="${typeof k === 'string' ? 'padfn' : ''}">${k}</button>`)).join('')}</div></div>`;
+}
+function pinKey(k) {
+  const P = G.pin; if (!P || G.view !== 'pin') return;
+  if (P.until && Date.now() < P.until) return paintPin(`잠시 뒤에 다시 해요 (${Math.ceil((P.until - Date.now()) / 1000)}초)`);
+  if (k === '지움') { P.typed = P.typed.slice(0, -1); return paintPin(); }
+  P.typed += k; if (P.typed.length < 4) return paintPin();
+  const t = P.typed; P.typed = '';
+  if (P.mode === 'enter') {
+    if (pinHash(t) === P.saved.h) { G.parentOk = true; G.pin = null; G.pmsg = ''; return parent(); }
+    P.fails = (P.fails || 0) + 1; if (P.fails >= 5) { P.until = Date.now() + 30000; P.fails = 0; } return paintPin('암호가 달라요.');
+  }
+  if (P.mode === 'new') { P.first = t; P.mode = 'again'; return paintPin(); }
+  if (t !== P.first) { P.mode = 'new'; return paintPin('두 번 누른 숫자가 달라요. 처음부터 다시 정해요.'); }
+  try { localStorage.setItem(PIN_KEY, JSON.stringify({ h: pinHash(t) })); } catch { return paintPin('이 기기에 저장하지 못했어요.'); }
+  G.parentOk = true; G.pin = null; G.pmsg = '암호를 정했어요.'; return parent();
+}
 function parent() {
   clearPresentation(); G.view = 'parent'; hideBanner(); band(false); const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '-');
   const block = (id) => { const st = load(id); const c = gradeCounts(st, G.words); const R = st.runs; const m = ensureMap(st); const a = atlasView(G.ix, st); const all = a.flatMap((x) => x.worlds);
@@ -1365,6 +1401,7 @@ function parent() {
   <p class="msg small" id="pmsg">${esc(G.pmsg || '')}</p>
   ${PROFILES.map(block).join('')}
   <h2>이름</h2><p class="row"><input id="nm-son" value="${esc(name('son'))}" size="8"><input id="nm-daughter" value="${esc(name('daughter'))}" size="8"><button class="sec" data-act="names">저장</button></p>
+  <h2>잠금</h2><p class="small">부모 기록은 4자리 암호로 잠겨 있어요(이 기기에만 저장). 잊으면 주소 끝에 ?pinreset=1을 붙여 열고 지우면 돼요.</p><p><button class="sec" data-act="pin-change">암호 바꾸기</button></p>
   <h2>개발자 놀이터</h2><p class="small">모든 미니게임·단계, 성 마지막 관문, 아무 세계나 바로 해 볼 수 있어요. 아이들 기록과 따로 이 기기에만 저장돼요.</p><p><button class="sec" data-act="dev">개발자 놀이터 열기</button></p></div>`;
   paintSafety();
 }
@@ -1462,7 +1499,9 @@ async function onClick(e) {
     case 'quit': if (G.run) return endRun('left'); return today(G.pid);
     case 'album': return album();
     case 'peek': { const w = G.byId[b.dataset.id]; if (!w) return; const p = $('#peek'); if (p) p.innerHTML = `<b>${esc(w.form)}</b> ${esc(w.ko)} ${w.emoji || ''}`; await G.sound.unlock(); return G.sound.play(w.id, w.form); }
-    case 'parent': G.pmsg = ''; return parent();
+    case 'parent': G.pmsg = ''; return parentGate();
+    case 'pin': return pinKey(b.dataset.k);
+    case 'pin-change': G.pin = { mode: 'new', typed: '' }; return paintPin('새 암호를 정해요.');
     case 'dev': return devScreen();
     case 'dev-game': return devGame(b.dataset.type, Number(b.dataset.level));
     case 'dev-hang': case 'dev-cross': case 'dev-hang3': { const kind = b.dataset.act.slice(4); const id = b.dataset.id || (kind === 'hang' ? $('#dev-world').value : $('#dev-cont').value); return devFinal(kind, id, b.dataset.style || ($('#dev-style') ? $('#dev-style').value : 'B')); }
