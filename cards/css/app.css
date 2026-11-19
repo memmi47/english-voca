@@ -488,3 +488,10 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .result-face{margin:6px auto}.final-bat{display:flex;justify-content:center;align-items:flex-end;gap:12px}
 .xscene{display:flex;align-items:flex-end;justify-content:center;gap:24px;margin:2px auto 6px}.xhp{display:flex;gap:6px}.xhp i{width:18px;height:18px;background:var(--coral);border:3px solid var(--ink)}.xhp i.gone{background:#c9c2ad}
 .x-guard{display:inline-block}.x-guard.hit{animation:tremble .12s linear 4}.x-guard.down{transform:rotate(80deg) translateY(10px);opacity:.6;transition:all .6s}
+.home-help{max-width:620px;margin:4px auto;font-size:13px;color:var(--mut)}
+/* first-screen visitors (main.yardVisitors) */
+.yard-visitor{position:absolute;left:-60px;z-index:1;animation:yard-walk 13s linear forwards}.yard-visitor.ground{bottom:5px}.yard-visitor.hop{bottom:5px;animation-name:yard-hop}.yard-visitor.fly{top:14px;animation-name:yard-fly;animation-duration:10s}
+.yard-visitor.slow{animation-duration:24s}.yard-visitor.rtl{animation-direction:reverse}.yard-visitor.rtl>*{display:inline-block;transform:scaleX(-1)}
+@keyframes yard-walk{from{left:-60px}to{left:calc(100% + 10px)}}
+@keyframes yard-fly{0%{left:-60px;top:22px}25%{top:6px}50%{top:26px}75%{top:8px}100%{left:calc(100% + 10px);top:20px}}
+@keyframes yard-hop{0%{left:-60px;bottom:5px}10%{bottom:22px}20%{bottom:5px}30%{bottom:22px}40%{bottom:5px}50%{bottom:22px}60%{bottom:5px}70%{bottom:22px}80%{bottom:5px}90%{bottom:22px}100%{left:calc(100% + 10px);bottom:5px}}

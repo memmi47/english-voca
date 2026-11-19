@@ -214,6 +214,9 @@ async function boot() {
 
 // ---- home ----
 const dayNames = ['월','화','수','목','금','토','일'];
+// The big number is every word studied (met); "완전히 익힌" (firm, deck.firmOf) is smaller, with how a word gets there in
+// words a child can follow (user 2026-11-20: "why is it 0?" was hard to answer).
+const FIRM_HELP = '완전히 익힌 단어: 복습에서 다시 맞힌 단어예요. 배운 단어는 다음 날과 3일 뒤 복습을, 처음부터 안다고 한 단어는 일주일 뒤 확인을 맞히면 돼요.';
 const HOME_WORD_GOAL = 42; // Two children, three visits each, seven words in a small early village.
 function homeRecord(id) {
   try {
@@ -254,6 +257,18 @@ function armTitleMusic() {
   const once = async () => { document.removeEventListener('pointerdown', once, true); try { await G.sound.unlock(); if (G.view === 'home') G.sound.scene(musicOf(G.ix.worlds[0]), { worldId: G.ix.worlds[0].id }); } catch {} $('#tapHint')?.remove(); };
   document.addEventListener('pointerdown', once, true);
 }
+// Visitors of the first screen (user 2026-11-20): now and then one of the game's other characters crosses the yard
+// (a bat, the whirlwind, a monster, a boss). None when motion is reduced. The timers stop with the screen (later()).
+const VISITORS = [{ a: 'bat-a', b: 'bat-b', px: 48, path: 'fly' }, { a: 'fx-storm-a', b: 'fx-storm-b', px: 52, path: 'ground' }, { a: 'monster-a', b: 'monster-b', px: 48, path: 'ground' },
+  { a: 'snail-boss', px: 44, path: 'ground', slow: true }, { a: 'leaf-boss', px: 44, path: 'hop' }, { a: 'cloud-boss', px: 46, path: 'fly' }, { a: 'bat-friend', px: 44, path: 'fly' }];
+function yardVisitors() {
+  if (FAST || motionOff()) return; const yard = $('.home-yard'); if (!yard) return; let last = '';
+  const spawn = () => { const list = VISITORS.filter((v) => v.a !== last && document.getElementById(v.a)); if (!list.length) return; const v = list[Math.floor(Math.random() * list.length)]; last = v.a;
+    const el = document.createElement('span'); el.className = `yard-visitor ${v.path}${Math.random() < 0.5 ? ' rtl' : ''}${v.slow ? ' slow' : ''}`; el.dataset.visitor = v.a;
+    el.innerHTML = v.b ? anim(v.a, v.b, v.px, 'fast') : spr(v.a, v.px); el.addEventListener('animationend', () => el.remove()); yard.appendChild(el); };
+  const next = () => later(() => { if (G.view !== 'home' || !document.body.contains(yard)) return; spawn(); next(); }, 8000 + Math.random() * 9000);
+  later(() => { if (G.view === 'home' && document.body.contains(yard)) { spawn(); next(); } }, 2500);
+}
 function home() {
   G.parentOk = false; G.pin = null;                       // the parent screen locks again on the first screen
   armTitleMusic();
@@ -275,13 +290,15 @@ function home() {
     return `<button class="profile" data-act="pick" data-id="${id}">
       <span class="home-courier kid-idle ${id}">${courierFrame('idle', lookSelection(id, records[i]), 80, id)}</span><strong>${esc(name(id))}</strong>
       ${x ? `<span class="profile-world">${spr('flag-a',19)} ${esc(x.world.name)}</span>` : ''}
-      ${G.homeProgress ? x ? `<span class="home-count">익힌 단어 <b>${x.known}</b></span><span class="home-met">만난 단어 ${x.met}</span><span class="home-week">이번 주 새 단어 +${x.newThisWeek} · 익힌 +${x.week}</span>
+      ${G.homeProgress ? x ? `<span class="home-count">공부한 단어 <b>${x.met}</b></span><span class="home-met" title="${esc(FIRM_HELP)}">완전히 익힌 단어 ${x.known}</span><span class="home-week">이번 주 새 단어 +${x.newThisWeek} · 완전히 익힌 +${x.week}</span>
         <span class="week-dots" aria-label="이번 주 공부한 날">${dayNames.map((d, j) => `<span data-played="${x.played[j]}" aria-label="${d} ${x.played[j] ? '공부함' : '기록 없음'}">${d}</span>`).join('')}</span>
         ${stale ? `<small>${Number(x.lastDay.slice(5,7))}월 ${Number(x.lastDay.slice(8))}일 기록</small>` : ''}` : '<small>기록 확인 필요</small>' : ''}
     </button>`;
   }).join('')}</div>
   ${G.homeProgress && both ? `<p class="home-goal">이번 주 둘이 함께 새 단어 +${together} / 목표 ${HOME_WORD_GOAL}</p>` : ''}
+  ${G.homeProgress ? `<p class="home-help">${esc(FIRM_HELP)}</p>` : ''}
   <p><button class="link" data-act="parent">부모 기록</button></p><p class="mut small" id="syncline">${esc(syncLine())}</p></div>`;
+  yardVisitors();
 
 }
 

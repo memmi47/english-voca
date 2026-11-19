@@ -795,9 +795,9 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C014: firm words (all time and since Monday) and Monday-first activity match each child record; home is read-only', await hm.evaluate(expected => {
     return ['son','daughter'].every((id,i) => {
       const panel = document.querySelector(`.profile[data-id=${id}]`);
-      return panel.querySelector('.home-count b').textContent === String(3+i) &&
-        panel.querySelector('.home-met').textContent === '만난 단어 ' + (4+i) &&
-        panel.querySelector('.home-week').textContent === `이번 주 새 단어 +${3+i} · 익힌 +${2+i}` &&
+      return panel.querySelector('.home-count b').textContent === String(4+i) &&
+        panel.querySelector('.home-met').textContent === '완전히 익힌 단어 ' + (3+i) &&
+        panel.querySelector('.home-week').textContent === `이번 주 새 단어 +${3+i} · 완전히 익힌 +${2+i}` &&
         [...panel.querySelectorAll('.week-dots span')].map(x=>x.dataset.played).join(',') === 'true,false,false,false,false,false,false' &&
         expected[id] === localStorage.getItem('cards.v0.p.'+id);
     }) && document.querySelector('.home-goal').textContent.includes('새 단어 +7 / 목표 42') &&
@@ -1540,9 +1540,10 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await early.waitForSelector('.home-goal');
   const sonPanel = early.locator('.profile[data-id=son]');
   ok('C020: first week shows 0 firm, 20 met and +20 new, and the joint target sums only words first seen this week to date',
-    await sonPanel.locator('.home-count').textContent() === '익힌 단어 0' &&
-    await sonPanel.locator('.home-met').textContent() === '만난 단어 20' &&
-    await sonPanel.locator('.home-week').textContent() === '이번 주 새 단어 +20 · 익힌 +0' &&
+    await sonPanel.locator('.home-count').textContent() === '공부한 단어 20' &&
+    await sonPanel.locator('.home-met').textContent() === '완전히 익힌 단어 0' &&
+    await sonPanel.locator('.home-week').textContent() === '이번 주 새 단어 +20 · 완전히 익힌 +0' &&
+    /복습에서 다시 맞힌 단어/.test(await early.locator('.home-help').textContent()) &&
     await early.locator('.home-goal').textContent() === '이번 주 둘이 함께 새 단어 +22 / 목표 42' &&
     await early.locator('.office-post use').count() === 2 &&
     await early.evaluate(records => records.every(([id,record]) => localStorage.getItem('cards.v0.p.'+id) === record), firstRecords));
@@ -1600,7 +1601,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     const r = await gmWin(type, level); ok(`GM3: ${type} at level ${level} can be played to a win, with no page error`, r.won && new RegExp(`${level}단계`).test(r.levelShown) && r.clean, JSON.stringify(r));
   }
   const gmFail = await open(gmCtx, 'today=2026-12-01&triage=off&seed=7&sound=off&fast=1&gtest=quick:3'); await gmFail.evaluate(gmReach); await gmFail.click('[data-act=pick][data-id=son]'); await gmFail.waitForSelector('.world');
-  for (let k = 0; k < 2; k++) { await gmFail.click(k ? '[data-act=game-again]' : '[data-act=node][data-id=G1]'); await gmFail.waitForSelector('#quickbtn'); await gmFail.waitForSelector('#stampgain', { timeout: 30000 }); }
+  for (let k = 0; k < 2; k++) { await gmFail.click(k ? '[data-act=game-again]' : '[data-act=node][data-id=G1]'); await gmFail.waitForSelector('.gamebox[data-game=quick]'); await gmFail.waitForSelector('#stampgain', { timeout: 30000 }); }
   const failText = await gmFail.textContent('#stampgain'); await gmFail.click('[data-act=game-again]'); await gmFail.waitForSelector('#glevel');
   ok('GM4: two failures in a row: the end screen says so and the next game is one level easier; nothing is stamped', /한 단계 쉬워져요/.test(failText) && /2단계 · 한 단계 쉽게/.test(await gmFail.textContent('#glevel')) && !(await state(gmFail, 'son'))?.map?.worlds?.['d1-01']?.stamps?.G1, failText);
   await gmCtx.close();
