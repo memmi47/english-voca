@@ -1,0 +1,73 @@
+{
+  "version": "postal-gate-stamps-1",
+  "license": "Original project pixel artwork.",
+  "sheet": "sprites.svg",
+  "grid": 16,
+  "palette": {
+    "k": "#233F3A",
+    "t": "#387D74",
+    "l": "#77B4A0",
+    "g": "#EAB65C",
+    "y": "#F6DE9A",
+    "w": "#FBF7EA",
+    "c": "#FFF0CA",
+    "r": "#CC6651",
+    "p": "#E89AA8",
+    "b": "#98664B",
+    "u": "#927BAB",
+    "v": "#B4A0C8",
+    "a": "#7BC4D0",
+    "e": "#BDE4DD",
+    "n": "#A7B7AC"
+  },
+  "symbols": {
+    "c013-stamp-a": {
+      "role": "gate-stamp",
+      "label": "관문 우표 A",
+      "size": 16,
+      "grid": 16,
+      "pixels": [
+        ".kwkkkwkkkwkkkwk",
+        "kkkkkkkkkkkkkkkk",
+        "wkwwwwwwwwwwwwkw",
+        "kkwttttttttttwkk",
+        "kkwttttttttttwkk",
+        "kkwttttwwttttwkk",
+        "wkwtttwttwtttwkw",
+        "kkwtttwttwtttwkk",
+        "kkwtttwwwwtttwkk",
+        "kkwtttwttwtttwkk",
+        "wkwtttwttwtttwkw",
+        "kkwttttttttttwkk",
+        "kkwttttttttttwkk",
+        "kkwwwwwwwwwwwwkk",
+        "wkkkkkkkkkkkkkkw",
+        "kkwkkkwkkkwkkkwk"
+      ]
+    },
+    "c013-stamp-b": {
+      "role": "gate-stamp",
+      "label": "관문 우표 B",
+      "size": 16,
+      "grid": 16,
+      "pixels": [
+        ".kwkkkwkkkwkkkwk",
+        "kkkkkkkkkkkkkkkk",
+        "wkwwwwwwwwwwwwkw",
+        "kkwppppppppppwkk",
+        "kkwppppppppppwkk",
+        "kkwpppwwwppppwkk",
+        "wkwpppwppwpppwkw",
+        "kkwpppwwwppppwkk",
+        "kkwpppwppwpppwkk",
+        "kkwpppwppwpppwkk",
+        "wkwpppwwwppppwkw",
+        "kkwppppppppppwkk",
+        "kkwppppppppppwkk",
+        "kkwwwwwwwwwwwwkk",
+        "wkkkkkkkkkkkkkkw",
+        "kkwkkkwkkkwkkkwk"
+      ]
+    }
+  }
+}

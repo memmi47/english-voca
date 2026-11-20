@@ -1,0 +1,265 @@
+# 세계 데이터 계약 v3 — 돌아가는 길과 선택 놀이집
+
+상태: **2026-11-16 실제 어휘 배정 생성기 완료, 게임 연결 전 draft**. WORKLOG의 표현 일반 세계 배치·설정형 생성기·시제품 새 시작 결정을 반영했다. v3의 큰길·우회로·재합류와 선택 놀이집은 유지한다. 전체 배정은 [world_generation.md](research/world_generation.md), 실행 접점은 [WORLD_GENERATOR_HANDOFF.md](WORLD_GENERATOR_HANDOFF.md)에 정리했다.
+
+이야기: [WORLD_BIBLE.md](WORLD_BIBLE.md). 검사 결과: [world_map_routes.md](research/world_map_routes.md). 재현: `python3 -I tools/preview_world_maps.py --check --output /tmp/world-atlas-v3`, 다음 `node tools/check_world_map_preview.cjs /tmp/world-atlas-v3`.
+
+## 1. 확인한 원본과 범위
+
+[verified] `reference/weekly-tool/vocabulary.json`의 SHA-256은 `38b97c372feb8585eed6b9458194294039b4f8a62990ed44b6dfffb91e123130`이다. `stats.source_sha256`는 이전 입력 자료의 값이므로 현재 파일 해시 대신 쓰지 않는다.
+
+대상 집합은 `lemmas[].track in {vocab,sight}`와 `old_priority in {P1,P2,P3}`의 교집합이다. 각 표제어에 `cards[].lemma_link=lemma.id`, `kind=기본`, `sense_order=1`인 카드 한 장을 연결한다. 현재 4,610개 모두 하나씩 연결된다. ID는 철자나 배열 위치로 재생성하지 않고 원본 `card_id`를 그대로 쓴다.
+
+| 대역 | vocab (표현 포함) | sight | 카드 합계 |
+|---|---:|---:|---:|
+| P1 | 1,094 | 121 | 1,215 |
+| P2 | 2,310 | 0 | 2,310 |
+| P3 | 1,085 | 0 | 1,085 |
+
+교과 보류 57개, band 없는 패턴 4개, 과거형·감정 파생형·추가 뜻은 별도 범위다. `defer=true`만으로 제외하지 않는다. 학습 범위는 track/band로 결정하고 추가 제외는 검토 기록을 남긴다. 부모 승인 대표 뜻 교체는 `lemma_id → card_id`의 별도 override와 근거로 적용하며 같은 표제어를 중복 배정하지 않는다.
+
+## 2. 버전과 최상위
+
+UTF-8 JSON. `schemaVersion=3`, `contentVersion`, `status(draft|ready)`, `source{path,sha256,selection,overrideVersion}`, `counts{lemmas,cards,continents,worlds,byBand}`, `continents[]`를 둔다. 완성본은 4,489장 배정·121장 제외·3대륙·30세계, 부분 fixture는 실제 개수를 쓴다. 대륙은 `id,band,name,story,worlds,finale`, 순서는 P1→P2→P3, 세계 수는 8/15/7이다.
+
+**현재 파일 구분:** `cards/data/world-art.json`은 `contentScope=presentation-only`, 배정 0장의 표시 원본이다. `cards/data/worlds.json`은 `contentScope=learning-map`, 대표 카드 4,489개를 실제 map/words에 배정하고 기능어 121개를 최상위 excluded에 기록한 생성 결과다. 두 파일 모두 `status=draft`, `playable=false`이며, 전체 worlds는 `pending[]`에 실제 음원·부모 뜻 검토·iPad 확인 등을 명시한다. `world-art.source`는 WORLD_BIBLE, `worlds.source`는 어휘 원본을 가리킨다. 전체 words 카탈로그는 `catalogue.json`으로 별도 제공한다.
+
+`worlds.rules`는 `maxCardsPerTile`, `worldCastle{cards,passRate}`, `worldGate{targetTileRate:0.6,minExtraTiles:2,stampPlacement:"off-all-shortest-farthest-v1"}`, `continentCastle(null|{cards,passRate})`, `continentTileRate:0.7`, `continentGate:"all-world-castles-and-tiles-and-continent-castle"`, `expressionPlacement`, `expressionPrerequisites(null|none)` 설정이다. 현재 대륙 성은 40장·75%이며 `finale`는 `required=true`, `unlock="all-world-castles-and-tile-ratio"`, `minTileRate=0.7`, `status=draft`다. null 설정에서도 필수 관문은 유지한다. `configSha256`, `assignmentSha256`로 규칙/배정 변경을 구분한다. C-013은 관문 설정과 파생 configSha256만 바꾸고 실제 30세계의 노드·선·카드 배열과 assignmentSha256은 그대로 유지한다. `progressPolicy`의 fresh-start는 사용자 승인한 60단어 시제품에서 처음 옮길 때만 적용하며, 이후 배정 변경에는 다시 검토/이관이 필요하다.
+
+v3는 v2의 `stages`, `lane`, 고정 구간 구조를 제거하고 `minigame` 노드와 선택 장식 보상을 추가한 계약이다. 모르는 버전·게임 유형은 명시적으로 준비 중 처리한다. 현재 기존 게임은 여전히 시제품 v1이며 v3를 자동으로 해석하지 못한다. 발행 ID는 이름·좌표가 바뀌어도 유지하며 이후 배정이 달라지면 명시적 진도 이관을 한다. 60단어 시제품 w1 기록은 WORKLOG 사용자 결정에 따라 처음부터 시작하고 가져오지 않는다.
+
+## 3. World와 불규칙 연결망
+
+| 필드 | 계약 |
+|---|---|
+| `id,name,title,concept` | name=title, 장소 설명은 어휘 배정 기준이 아님. |
+| `palette{sky,ground,path}` | 길/땅 대비 3:1 이상. 바다·하늘 위에는 밝은 테두리로 길을 구분하고 실제 글자·노드·기기 검증 별도. |
+| `paletteVars` | `--w-ground/-d/-l`, `--w-path/-d/-l`, `--w-sky/-l`의 8개 CSS 변수. 기본색은 palette와 같고, 파생색은 어두운 청록/밝은 크림 22% 혼합. 전체 8개를 세계 컨테이너에 적용. |
+| `bossEmoji[],castle{name,emoji},key{name,emoji}` | 보스 6개 이상, 세계 간 중복 없음. 보상은 복습 일정·카드 등급에 영향 없음. |
+| `bossSprites[],routes[].spriteId,castle.spriteId,key.spriteId` | bossEmoji와 같은 순서의 고정 픽셀 도안 ID 6개. 길·성·열쇠는 그 세계의 ID를 참조한다. 로드 실패 시 이름 표시. |
+| `intro,outro,story` | 각 두 문장 이내. 입장·성 통과·다음 이야기. |
+| `routes[]` | `{id,name,icon}` 장소 분위기. 독립 레인·품사·완료 조건이 아님. |
+| `map` | `startNodeId,castleNodeId,landscape,nodes[],edges[]`. 이동과 해제의 유일한 원본. |
+| `castleRule` | `{type:"explore",nodeId:castleNodeId,cards:12,passRate:0.8,minTiles:K,stamps:[{id:"A",nodeId},{id:"B",nodeId}]}`. K와 우표 두 장은 아래 계약을 따른다. |
+| `sideActivities[]` | 현재 빈 배열. 기능어는 학습 경로에서 제외하며 표현은 map의 phrase 칸에 있다. |
+| `nextWorldId,status` | 같은 대륙 다음 세계 또는 null, draft/ready. |
+
+### 노드와 선
+
+공통 노드: `id,kind,x,y`. 좌표는 1000×600 viewBox 표시용이고 이동 판정에 쓰지 않는다. kind는 `start,tile,junction,plaza,castle,minigame`이다. tile은 `words:[card_id...]` 1~`rules.maxCardsPerTile`개와 `learningKind(vocab|phrase)`를 가진다. 최대값의 현재 기본은 10이며 설정 허용 범위는 1~10이다. 독립 stage/lane이나 모든 세계에 같은 구간 수를 요구하지 않는다. 모든 학습 칸과 필수 집을 합쳐 대표 card_id가 정확히 한 번씩 있어야 한다.
+
+edge는 `{from,to}` 무방향 연결이다. 중복·자기 연결·고립 노드는 오류다. 학습 길 선끼리 실제로 교차하면 그 자리에 명시적 연결 노드를 만들거나 표시 경로를 바꿔서 아이가 갈아탈 수 있는지 헷갈리지 않게 한다. 굽은 길의 모양과 그래프 연결을 혼동하지 않는다. 시안의 놀이집 점선은 그 길 옆의 방문 지점이며 새로운 성 지름길이 아니다.
+
+### 길 구성 원칙
+
+- 큰길·긴 우회로·중간에 다시 만나는 지점으로 구성한다. **짧게 갈 자유를 허용한다.** 다른 길의 거리·새 카드 수·예상 시간을 같게 만드는 검사는 없다.
+- 세계마다 들판 산책로, 섬과 다리, 마을 고리길, 계곡길, 숨은 정원, 하늘길 중 맞는 기본 지형을 쓰고 방향·축척·노드 배치를 조정한다. 시안은 여섯 기본 틀을 재사용한다는 한계를 명시하며, 30개가 완전히 다른 손그림이라고 부르지 않는다.
+- 미완료 학습 칸은 지나갈 수 없다. 짧은 길은 학습 생략 버그가 아니라 정식 경로다. 성까지 주 지도 카드의 일부만 만나도 되며, 남은 어휘는 지도의 미방문 칸으로 유지한다.
+- 일반어·표현을 각각 빈도순으로 정렬하고 대륙의 세계 수에 나눠 세계 멤버를 정한다. 표현을 여러 일반 세계에 섞기 위한 종류별 정렬이며 두 종류를 합친 단일 빈도순은 아니다. 세계 내부는 품사·주제를 섞고 동일 뜻·철자·자동 IPA 후보·명시 혼동 목록을 분리한다. 특정 장소를 골라 뜻을 미리 추측하게 하지 않는다.
+- 이전 시안은 카드 수 목표만 배분했다. 현재 생성기는 실제 card_id를 표현/일반어 칸으로 분리해 담고 전체 범위·중복·분리·접근성을 검사한다. 충돌 분리에 필요하면 칸 수를 늘리며 **경로 비용 균형을 다시 강제하지 않는다.**
+- 경로의 카드 수는 관측값이다. 오답·복습·박쥐 시험·기존 지식·놀이 시간이 달라져 실제 소요 시간을 예측하지 못한다.
+
+## 4. 이동과 성·왕관
+
+1. 시작점에서 완료 tile과 무료 노드만 통과하는 BFS로 도달 집합을 구한다. 미완료 tile 앞에서 멈추며 연결된 frontier 칸만 시작한다. 위치 좌표나 임의 단계 번호로 열지 않는다.
+2. 실제 게임은 기존 카드 첫 만남 완료·음성 조건을 충족해야 칸 완료다. 오디오 실패·판 중단 때 다음 지점으로 통과하지 않는다. 시안의 클릭 완료는 경로 체험만 위한 동작이다.
+3. 완료 칸은 무료로 되짚고 다른 갈림길·미방문 칸에 접근할 수 있다. 무료 이동은 별·게이지·복습 완료를 만들지 않는다.
+4. 세계 성 입장은 완료 칸을 따라 성 옆에 도달 AND 지도 마을 K개 완료 AND 우표 A·B 두 장 획득이다. 성 시험은 세계에서 이미 만난 카드 12장·80%를 유지한다. ‘모든 구간 한 번’, ‘두 길 완료’, ‘같은 거리’ 조건은 없다. 성 통과 뒤 다음 세계를 열고 남은 학습 칸에는 기존 2배 보너스 규칙을 적용한다.
+5. 세계 왕관은 모든 학습 칸+필수 학습 집+성 통과다. **놀이집 방문·게임 통과·놀이 도장은 왕관 조건이 아니다.** 왕관은 선택 수집 목표다. 대륙 성은 그 대륙 모든 세계의 성 통과 AND 지도 마을 70% 이상 완료를 요구하며 왕관을 요구하지 않는다. 대륙 시험을 통과해야 다음 대륙이 열린다.
+6. 복습 몬스터는 선택이다. 박쥐 게이지가 가득 차면 기존 박쥐 시험이 새 학습 판보다 우선한다. 실제 게임에서는 새 놀이집 세션도 박쥐 처리 후 시작하도록 제안하되 진행 중인 카드·놀이 도중에는 끊지 않는다. 시안은 학습 엔진·박쥐 게이지가 없다.
+
+### C-013 관문 데이터와 계산된 표시 자료
+
+- N은 해당 세계 map.nodes의 `kind=tile` 개수다. L은 시작점에서 성까지 최소 학습 칸 수다. **K=max(ceil(3N/5),L+2)**이고 `ceil(N/2) ≤ K ≤ floor(7N/10)`을 만족해야 한다. 새 설정에서 불가능하면 생성을 거부하며 비율을 묵시 완화하지 않는다. 집·무료 노드·놀이집은 N과 대륙 비율에서 제외하되 기존 왕관의 학습 집 조건은 유지한다.
+- 우표는 `castleRule.stamps`에 A/B 순서로 서로 다른 tile 두 개를 참조한다. 놀이집을 뺀 지도에서 학습 칸에 들어갈 때만 거리 1을 더한다. 모든 최단 길에 속하는 노드를 뺀 뒤 남은 연결 성분을 갈래로 본다.
+- 실제 지도는 출발 위치에서 가장 깊은 학습 칸의 깊이를 M이라 두고, A는 `max(3, ceil(0.5M))`, B는 `max(4, ceil(0.7M))` 이상의 깊이를 요구한다. 서로 다른 갈래에 두며 성을 통과하지 않고 두 우표 사이 학습 칸을 세었을 때 3칸 이상이어야 한다. 첫 우표 칸은 거리에서 제외한다. 후보가 없으면 세계 ID와 함께 생성을 중단한다.
+- 두 우표 중 가까운 쪽의 깊이, 두 우표 깊이의 합, 우표 사이 거리, B의 깊이를 순서대로 최대화한다. 마지막 동률은 (A ID, B ID) 코드 포인트 오름차순으로 결정한다. Demo 3곳은 기존 성에서 먼 칸 우선 배치를 유지한다. 설정의 `stampPlacement` 표시는 기존 갈래 분류를 가리키고, 실제 지도 생성기는 깊이 조건을 적용한다.
+- `type=explore`는 유효한 정수 minTiles, 시험 cards/passRate, castle nodeId 및 두 우표를 모두 요구한다. 명시된 explore 자료가 잘못되면 데이터 오류이며 reach로 조용히 되돌아가지 않는다. 별도 옛 fixture의 `type=reach` 또는 castleRule 없음은 기존 물리적 도달 조건을 유지한다. 이번 실제 30세계와 시험용 3세계는 모두 explore다.
+- 대륙 `finale`는 기존 cards/passRate/required/status/name/nextContinentId를 보존하고 `unlock:"all-world-castles-and-tile-ratio"`, `minTileRate:0.7`을 둔다. 필요 마을은 `ceil(minTileRate × 대륙 전체 tile 수)`다. 명시된 새 unlock에는 0.6…0.8의 유한한 minTileRate가 필수다. 옛 fixture에 새 unlock이 없으면 기존 모든 왕관 조건을 유지한다. pending-config 또는 null 시험 수치는 계속 준비 중이며 다음 대륙을 열지 않는다.
+- 마을 완료와 우표는 기존 `unitDone/tileDone`(모든 단어에 기록이 있고 미완료 open 표시가 없음)에서 계산한다. 우표를 아이 기록에 저장하지 않으며 놀이 도장 `ws.stamps`에도 쓰지 않는다. 단어 등급·복습 기한·학습 저장 형식/키는 바꾸지 않는다. 이미 통과한 세계·대륙 성 기록을 보존하고, 아직 못 깬 세계만 새 조건으로 판정한다.
+- `worldView.gate={tilesDone,totalTiles,minTiles,reachable,stamps:[{id,nodeId,collected}],ready}`, `continentView.gate={worldsPassed,totalWorlds,tilesDone,totalTiles,minTiles,minTileRate,ready}`는 저장하지 않는 화면 자료다. reach.castle은 물리적 도달 여부를 유지한다. 세계 성의 화면과 실제 시작은 같은 관문 계산을 쓰며 입장 직전에 현재 기록을 다시 검사한다. 대륙 성도 현재 조건으로 검사한다.
+- 시험용 지도만 사용자 승인에 따라 연결·좌표·추가 칸·같은 세계 안 카드 배정을 조정한다. 기존 세계/카드/칸 ID와 세계별 카드 집합, H1/H1-1은 유지한다. d1-01은 6칸/60장/K4/우표 B1·C1, d1-02와 d2-01은 각각 5칸/10장/K3/우표 T2·T4와 U2·U4다. 이 예외는 실제 30세계에 적용하지 않는다.
+
+## 5. 긴 길의 선택 놀이집
+
+놀이집은 큰길의 두 연결점 사이에서 학습 칸이 더 많은 우회로에 붙인다. 길 위의 필수 시험으로 만들지 않는다. 시안에는 세계마다 두 곳을 배치했으며 개수는 재미 검증 뒤 조정할 수 있다. 기능어 집과 같은 필수 학습 활동을 놀이집으로 숨기지 않는다.
+
+minigame 노드 추가 필드:
+
+| 필드 | 계약 |
+|---|---|
+| `gameType` | `memory`, `find`, `mail`. 기존 v3 지도 시안은 memory/find, 새 아트 두 세계 체험은 memory/mail이다. 실제 연결의 추천은 memory/mail. 모르는 값은 준비 중. |
+| `anchorNodeId` | 놀이집으로 들어가는 길의 학습 칸/무료 노드. |
+| `optional` | true. |
+| `reward` | `{type:"postcard-stamp",id}`. 순수 장식. |
+
+시안의 놀이집은 anchor에 붙는 막다른 무료 노드(degree=1)다. anchor까지 진행하면 들어갈 수 있고, 통과하지 않아도 원래 길은 열린다. 게임 도중 나가거나 실패·재시작해도 학습 진도·성·왕관을 잠그지 않는다.
+
+### 놀이 유형과 현재 체험
+
+- **그림 짝 맞추기:** 세계 이모지 3쌍·6장의 뒷면을 뒤집는다. 같은 두 그림이면 열린 채로 두고, 다르면 잠깐 보여 준 뒤 뒤집는다. 시간 제한·목숨·실패 벌점은 없다.
+- **반짝 찾기 (이전 지도 시안):** 3×3 그림 중 위에서 보여 주는 그림 하나를 찾는다. 5회 찾으면 완료, 틀리면 다시 고른다. 시간 제한이 없고 같은 한글 뜻·영어 정답을 제시하지 않는다.
+
+- **우체통에 편지 넣기 (새 아트 체험):** 움직이는 우체통이 노란 영역 안에 왔을 때 탭해 세 번 배달한다. 시간 상한·목숨·실패 벌점은 없고 다시 시도할 수 있다. reduced-motion에서는 우체통을 중앙에 두어 움직임 부담을 줄인다.
+
+학습 어휘의 뜻을 맞히는 추가 문항이 아니라 잠깐 쉬는 순수 놀이이다. 세계 이모지로 구성하며 아이 선호·재미는 실사용 전 가설이다. 부모가 놀이를 끌 수 있는 설정은 실제 연결 때 검토한다.
+
+### 보상과 반복
+
+완료하면 그 세계 엽서에 **놀이 도장 하나**를 찍는다. 실제 구현에서는 profile별 `(worldId,nodeId)`로 최초 완료만 기록하고 동기화 시 합집합으로 병합한다. 다시 놀 수 있지만 도장을 중복 지급하지 않는다. 점수 비교·연속 출석·별·아이템·열쇠·단어 등급·복습 간격·박쥐 게이지 변화는 없다. 도장 때문에 원래 학습 기록을 바꾸지 않는다.
+
+시안은 도장을 페이지 메모리에만 저장하고 새로고침 시 사라진다. ‘미니게임 먼저 체험’은 검토자가 길을 걷지 않고 게임만 보는 버튼이며 실제 아이 지도에는 넣지 않는다. 실제 게임 도구와 연결된 것으로 오해하게 하지 않는다.
+
+## 6. 어휘 집과 전체 범위
+
+기능어 121개는 카탈로그에 남기되 세계에 배정하지 않고 `excluded`의 `function-words` 항목에 기록한다. 빈 한글 뜻으로 뜻 문제를 만들지 않는다.
+
+표현 386개는 표현 전용 세계/집을 폐기하고 모든 P1/P2 세계와 P3 첫 두 세계의 `learningKind=phrase` 칸으로 배정한다. 구성어 선행 관문은 없으며 `rules.expressionPrerequisites=none`이다. 필수 학습 칸/집은 optional minigame과 다른 타입이다.
+
+## 7. 축소 예시
+
+아래 map은 짧은 길 두 칸과 긴 우회로, 선택 놀이집이 있는 이동 예시다. 실제 카드 ID 6개를 사용하지만 빈도·혼동 분리 완료를 주장하지 않는다. 놀이집이 별·복습·성 접근 조건을 소유하지 않는 것을 보인다.
+
+```json
+{
+  "startNodeId": "start",
+  "castleNodeId": "castle",
+  "landscape": "들판 산책로",
+  "nodes": [
+    {
+      "id": "start",
+      "kind": "start",
+      "x": 60,
+      "y": 320
+    },
+    {
+      "id": "castle",
+      "kind": "castle",
+      "x": 930,
+      "y": 100
+    },
+    {
+      "id": "main1",
+      "kind": "tile",
+      "x": 300,
+      "y": 320,
+      "words": [
+        "W0122:기본:animal:1"
+      ]
+    },
+    {
+      "id": "main2",
+      "kind": "tile",
+      "x": 730,
+      "y": 280,
+      "words": [
+        "W0184:기본:arrive:1"
+      ]
+    },
+    {
+      "id": "side1",
+      "kind": "tile",
+      "x": 100,
+      "y": 180,
+      "words": [
+        "W1818:기본:hungry:1"
+      ]
+    },
+    {
+      "id": "side2",
+      "kind": "tile",
+      "x": 240,
+      "y": 100,
+      "words": [
+        "W0488:기본:butterfly:1"
+      ]
+    },
+    {
+      "id": "side3",
+      "kind": "tile",
+      "x": 430,
+      "y": 120,
+      "words": [
+        "W1462:기본:forget:1"
+      ]
+    },
+    {
+      "id": "side4",
+      "kind": "tile",
+      "x": 590,
+      "y": 180,
+      "words": [
+        "W2910:기본:quiet:1"
+      ]
+    },
+    {
+      "id": "playhouse",
+      "kind": "minigame",
+      "x": 420,
+      "y": 220,
+      "gameType": "memory",
+      "anchorNodeId": "side3",
+      "optional": true,
+      "reward": {
+        "type": "postcard-stamp",
+        "id": "postcard-stamp-1"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "main1"
+    },
+    {
+      "from": "main1",
+      "to": "main2"
+    },
+    {
+      "from": "main2",
+      "to": "castle"
+    },
+    {
+      "from": "start",
+      "to": "side1"
+    },
+    {
+      "from": "side1",
+      "to": "side2"
+    },
+    {
+      "from": "side2",
+      "to": "side3"
+    },
+    {
+      "from": "side3",
+      "to": "side4"
+    },
+    {
+      "from": "side4",
+      "to": "main2"
+    },
+    {
+      "from": "side3",
+      "to": "playhouse"
+    }
+  ]
+}
+```
+
+## 8. 검사와 기존 게임 연결 요청
+
+생성기는 전체 원본 대표 카드 집합과 map tile/필수 집 words의 합집합이 정확히 같은지 검사한다. 동일 뜻은 NFC와 공백 정규화로 비교하고 검토한 동음·유사어 묶음은 같은 칸·오답 보기에서 분리한다. 빈도 정렬은 NDL→NGSL→Cambridge→무근거 주제 순환의 기존 기준을 유지한다.
+
+그래프 검사는 시작·성 연결, 모든 학습 칸의 재방문 가능성, 무료 노드만으로 성 우회 불가, 1~10장 칸, 고립·중복 선·표시상 모호한 교차 없음, 놀이집이 필수 게이트가 아님을 확인한다. 경로 수·최단/최장 칸·카드 수는 보고하되 균등 여부를 통과 기준으로 쓰지 않는다. 현재 지도 30개는 여섯 지형 틀에서 나온다. 실제 ID 배정 검증은 완료했고 기기·언어적 의미 전수 검증은 별도다.
+
+Claude 연결 요청:
+
+- 기존 POS/LINES·roadDone·castleNeeds를 v3 그래프 frontier와 성 reach로 교체한다. v2의 stages·lane·균등 경로 조건은 사용하지 않는다.
+- 무료 이동·미완료 칸·박쥐 우선·성 출제·남은 카드 수를 연결한다. 성 풀은 해당 세계에서 만난 카드, 일반 복습은 전체에서 유지한다. 실제 경로에서 설정 장수만큼 의미 카드가 확보되는지 생성기가 검사한다.
+- 놀이집은 학습 엔진과 분리한 화면이며 중단해도 학습 칸 완료를 만들지 않는다. profile별 장식 도장을 저장하고 오디오나 정답 기록을 조작하지 않는다.
+- 전체 카드 카탈로그는 catalogue.json으로 제공했다. 음원·세계별 진도·동기화는 Claude가 연결한다. 사용자 결정에 따라 시제품 w1은 새 시작이고 기존 카드/성/도장 기록을 새 진도로 자동 복사하지 않는다. 런타임 담당 `cards/js/*`, `cards/css/*`, `tests/*`는 이번 시안 작업에서 직접 수정하지 않는다.
+
+대륙 성은 모든 세계 성과 지도 마을 70%를 요구하는 필수 관문이며 현재 40장·75%다. 설정이 null이면 준비 중으로 표시하고 다음 대륙을 열지 않는다. 이미 만난 카드로 세계별 고르게 출제하고 실패해도 길·왕관을 빼앗지 않는 원칙은 유지한다. 두 아이 기록과 장식 도장은 분리하고 학습 일정·등급은 기존 엔진만 변경한다.
+
+시안 내부 graph.version=3, edges의 `[from,to]`, 목표 cardCount는 검토 도구 형식이다. 배포 schemaVersion=3은 위 Node.words·객체 edge 계약을 따르고 시안 JSON을 그대로 배포하지 않는다.

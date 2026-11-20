@@ -1,0 +1,74 @@
+{
+ "meadow": {
+  "title": "새싹 들판",
+  "loop": true,
+  "bpm": 112,
+  "seconds": 51.4
+ },
+ "sea": {
+  "title": "굽이굽이 바다",
+  "loop": true,
+  "bpm": 96,
+  "seconds": 60.0
+ },
+ "sky": {
+  "title": "별빛 하늘",
+  "loop": true,
+  "bpm": 88,
+  "seconds": 65.5
+ },
+ "study": {
+  "title": "카드 공부",
+  "loop": true,
+  "bpm": 80,
+  "seconds": 72.0
+ },
+ "castle": {
+  "title": "성 시험",
+  "loop": true,
+  "bpm": 124,
+  "seconds": 46.5
+ },
+ "play": {
+  "title": "놀이집",
+  "loop": true,
+  "bpm": 138,
+  "seconds": 41.7
+ },
+ "clear": {
+  "title": "칸 클리어",
+  "loop": false,
+  "bpm": 150,
+  "seconds": 2.2
+ },
+ "victory": {
+  "title": "성 통과",
+  "loop": false,
+  "bpm": 132,
+  "seconds": 5.5
+ },
+ "bat": {
+  "title": "박쥐 경고",
+  "loop": false,
+  "bpm": 120,
+  "seconds": 1.5
+ },
+ "item": {
+  "title": "아이템 획득",
+  "loop": false,
+  "bpm": 160,
+  "seconds": 0.6
+ },
+ "key": {
+  "title": "열쇠 획득",
+  "loop": false,
+  "bpm": 140,
+  "seconds": 0.8
+ },
+ "grade": {
+  "title": "등급 상승",
+  "loop": false,
+  "bpm": 150,
+  "seconds": 0.4
+ }
+}

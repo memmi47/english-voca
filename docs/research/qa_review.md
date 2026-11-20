@@ -1,3 +1,5 @@
+> 참고: 이 검수는 삭제된 옛 `game/` 프로토타입을 대상으로 한 기록이다(마지막 버전: 커밋 8acc013). 결함 유형은 새 `cards/` 설계 때 참고용으로만 남긴다.
+
 # QA 검토: Catch-up 어휘 게임 프로토타입 (game/)
 
 범위: js/srs.js, store.js, questions.js, session.js, audio.js, main.js, data/*.json, css. 기존 tests/unit.test.mjs, tests/e2e.cjs가 이미 덮는 항목(SRS 간격, 재가져오기 멱등, 아이 분리, 오답 재도전, 소리 실패 시 잠금, 시간 종료)은 제외했다.

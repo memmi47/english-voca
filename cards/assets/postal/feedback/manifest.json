@@ -1,0 +1,633 @@
+{
+  "version": "postal-feedback-1",
+  "license": "Original project pixel artwork; no external artwork or emoji rasterization.",
+  "sheet": "sprites.svg",
+  "grid": 16,
+  "palette": {
+    "k": "#233F3A",
+    "t": "#387D74",
+    "l": "#77B4A0",
+    "g": "#EAB65C",
+    "y": "#F6DE9A",
+    "w": "#FBF7EA",
+    "c": "#FFF0CA",
+    "r": "#CC6651",
+    "p": "#E89AA8",
+    "b": "#98664B",
+    "u": "#927BAB",
+    "v": "#B4A0C8",
+    "a": "#7BC4D0",
+    "e": "#BDE4DD",
+    "n": "#A7B7AC",
+    "s": "#E8B78B",
+    "h": "#D8D7BA"
+  },
+  "symbols": {
+    "c011-monster": {
+      "role": "boss",
+      "label": "편지길 몬스터",
+      "pixels": [
+        "................",
+        "....kk....kk....",
+        "...kvvkkkkvvk...",
+        "...kvvuuuuvvk...",
+        "...kuuuuuuuuk...",
+        "..kkuuuuuuuukk..",
+        ".kuuuwwuuwwuuuk.",
+        ".kuuuwkuukwuuuk.",
+        ".kuuuuuuuuuuuuk.",
+        ".kuuuuuuuuuuuuk.",
+        ".kuuuuukkuuuuuk.",
+        "..kkuuuuuuuukk..",
+        "...kvvvkkvvvk...",
+        "...kvvvkkvvvk...",
+        "....kkk..kkk....",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-monster"
+      ]
+    },
+    "c011-door-locked": {
+      "role": "door",
+      "label": "자물쇠 문",
+      "pixels": [
+        "................",
+        "...kkkkkkkkkk...",
+        "..kbbbbbbbbbbk..",
+        "..kbggggggggbk..",
+        "..kbgttttttgbk..",
+        "..kbgtttyttgbk..",
+        "..kbgttgygtgbk..",
+        "..kbgttgggtgbk..",
+        "..kbgttgkgtgbk..",
+        "..kbgttgggtgbk..",
+        "..kbgttttttgbk..",
+        "..kbgttttttgbk..",
+        "..kbgttttttgbk..",
+        "..kbbyyyyyyybk..",
+        "...kkkkkkkkkk...",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-door-locked"
+      ]
+    },
+    "c011-door-open": {
+      "role": "door",
+      "label": "열린 문",
+      "pixels": [
+        "................",
+        "...kkkkkkkkkk...",
+        "..kbbbbbbbbbbk..",
+        "..kbggggggggbk..",
+        "..kbgtttkkkgbk..",
+        "..kbgtttttkgbk..",
+        "..kbgtttttkgbk..",
+        "..kbgttyttkgbk..",
+        "..kbgttyttkgbk..",
+        "..kbgtttttkgbk..",
+        "..kbgtttttkgbk..",
+        "..kbgtttttkgbk..",
+        "..kbgttttkkgbk..",
+        "..kbbtyyyyyybk..",
+        "...kkkkkkkkkk...",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-door-open"
+      ]
+    },
+    "c011-gift-closed": {
+      "role": "gift",
+      "label": "배달부 선물",
+      "pixels": [
+        "................",
+        "................",
+        ".....kk..kk.....",
+        "....kyykkyyk....",
+        "....kyyggyyk....",
+        "..kkkyyggyykkk..",
+        ".kggggggggggggk.",
+        ".kggggggggggggk.",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "...kkkkkkkkkk...",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-gift-closed"
+      ]
+    },
+    "c011-gift-open": {
+      "role": "gift",
+      "label": "열린 선물",
+      "pixels": [
+        "................",
+        "..kkkkkkkkkkkk..",
+        ".kgggggyygggggk.",
+        ".kgggggyygggggk.",
+        "..kykwwwwwwkyk..",
+        "..kkkwwwwwwkkk..",
+        ".kgggwwwwwwgggk.",
+        ".kggggggggggggk.",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "..krrrryyrrrrk..",
+        "...kkkkkkkkkk...",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-gift-open"
+      ]
+    },
+    "c011-castle-world": {
+      "role": "castle",
+      "label": "편지길 성",
+      "pixels": [
+        "................",
+        "................",
+        "..kkk.k..k.kkk..",
+        ".kglgkgkkgkglgk.",
+        ".kglgkgkkgkglgk.",
+        ".klllneeeenlllk.",
+        ".klklneeeenlklk.",
+        ".klklneeeenlklk.",
+        ".klllneeeenlllk.",
+        ".klllneeeenlllk.",
+        ".klllnettenlllk.",
+        ".klllnettenlllk.",
+        ".klllnettenlllk.",
+        ".klllnettenlllk.",
+        "..kkkkkkkkkkkk..",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-castle-world"
+      ]
+    },
+    "c011-castle-continent": {
+      "role": "castle",
+      "label": "대륙의 큰 성",
+      "pixels": [
+        "......kbrrrk....",
+        "..k.k.kbrrrk.k..",
+        ".kgkgkgbkgkgkgk.",
+        ".kglgkgeegkglgk.",
+        ".klllkeeeeklllk.",
+        ".klllneeeenlllk.",
+        ".klklneeeenlklk.",
+        ".klklneeeenlklk.",
+        ".klllneeeenlllk.",
+        ".klllneeeenlllk.",
+        ".klllnettenlllk.",
+        ".klllnettenlllk.",
+        ".klllnettenlllk.",
+        ".klllnettenlllk.",
+        "..kkkkkkkkkkkk..",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-castle-continent"
+      ]
+    },
+    "c011-island-leaf": {
+      "role": "continent",
+      "label": "새싹 대륙",
+      "pixels": [
+        "................",
+        "........kk......",
+        ".......kggk.....",
+        ".....kkkggk.....",
+        "....kyytgglk....",
+        "...klyytllllk...",
+        "...kllltlllllk..",
+        "..klllltllllllk.",
+        ".kllllltlllllllk",
+        ".kblllllllllllbk",
+        ".kbblllllllllbk.",
+        "..kbblllllllbk..",
+        "...kbbbbbbbbbk..",
+        "...kbbbbbbbbk...",
+        "....kkkkkkkk....",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-island-leaf"
+      ]
+    },
+    "c011-island-wave": {
+      "role": "continent",
+      "label": "물결 대륙",
+      "pixels": [
+        "................",
+        "................",
+        "................",
+        ".....kkkkkk.....",
+        "....kaaaaaak....",
+        "...kaaaaaaaak...",
+        "...kaaawwwwaak..",
+        "..kawwwwaaaaaak.",
+        ".kaaaaaaaaaaaaak",
+        ".kbaaaeeeeeaaabk",
+        ".kbbaaaaaaaaabk.",
+        "..kbbaaaaaaabk..",
+        "...kbbbbbbbbbk..",
+        "...kbbbbbbbbk...",
+        "....kkkkkkkk....",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-island-wave"
+      ]
+    },
+    "c011-island-star": {
+      "role": "continent",
+      "label": "별빛 대륙",
+      "pixels": [
+        "................",
+        "................",
+        ".......kk.......",
+        "....kkkyykk.....",
+        "...kwuuyyuuk....",
+        "...kuyyyyyyuk...",
+        "...kuyyyyyyuuk..",
+        "..kuuuuyyuuuuuk.",
+        ".kuuuuuyyuuuwuuk",
+        ".kbuuuuuuuuuuubk",
+        ".kbbuuuuuuuuubk.",
+        "..kbbuuuuuuubk..",
+        "...kbbbbbbbbbk..",
+        "...kbbbbbbbbk...",
+        "....kkkkkkkk....",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-island-star"
+      ]
+    },
+    "c011-look-leaf-cap-idle": {
+      "role": "courier",
+      "label": "잎사귀 모자 · 서기",
+      "pixels": [
+        "................",
+        "....ktttttk.....",
+        "....ktccctk.....",
+        "...ttttttttt....",
+        "....ssssssk.....",
+        "....skssssk.....",
+        "....sssbssk.....",
+        "...kkbkkkkk.....",
+        "...sttcbbtc.....",
+        "...sttccckbbk...",
+        "...kkkkkkkbbk...",
+        ".....tt.tkbbk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-leaf-cap-idle",
+        "c011-look-leaf-cap-walk1"
+      ]
+    },
+    "c011-look-leaf-cap-walk1": {
+      "role": "courier",
+      "label": "잎사귀 모자 · 걷기",
+      "pixels": [
+        "................",
+        "....ktccctk.....",
+        "....ktccctk.....",
+        "...kkkkkkkkk....",
+        "....skssssk.....",
+        "....ssssssk.....",
+        "...kssssssk.....",
+        "...ktbccctc.....",
+        "...sttcbbtc.....",
+        "...sttccckbbk...",
+        "...kkkkkkkbbk...",
+        ".....tt.tkbbk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-leaf-cap-idle",
+        "c011-look-leaf-cap-walk1"
+      ]
+    },
+    "c011-look-sun-bag-idle": {
+      "role": "courier",
+      "label": "햇살 가방 · 서기",
+      "pixels": [
+        "................",
+        "....ktttttk.....",
+        "....ktccctk.....",
+        "...ttttttttt....",
+        "....ssssssk.....",
+        "....skssssk.....",
+        "....sssbssk.....",
+        "...kkbkkkkk.....",
+        "...sttcbbtc.....",
+        "...sttccckyyk...",
+        "...kkkkkkkyyk...",
+        ".....tt.tkggk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-sun-bag-idle",
+        "c011-look-sun-bag-walk1"
+      ]
+    },
+    "c011-look-sun-bag-walk1": {
+      "role": "courier",
+      "label": "햇살 가방 · 걷기",
+      "pixels": [
+        "................",
+        "....ktccctk.....",
+        "....ktccctk.....",
+        "...kkkkkkkkk....",
+        "....skssssk.....",
+        "....ssssssk.....",
+        "...kssssssk.....",
+        "...ktbccctc.....",
+        "...sttcbbtc.....",
+        "...sttccckyyk...",
+        "...kkkkkkkyyk...",
+        ".....tt.tkggk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-sun-bag-idle",
+        "c011-look-sun-bag-walk1"
+      ]
+    },
+    "c011-look-sea-coat-idle": {
+      "role": "courier",
+      "label": "물결 옷 · 서기",
+      "pixels": [
+        "................",
+        "....kaaaaak.....",
+        "....kacccak.....",
+        "...aaaaaaaaa....",
+        "....ssssssk.....",
+        "....skssssk.....",
+        "....sssbssk.....",
+        "...kkbkkkkk.....",
+        "...saacbbac.....",
+        "...saaccckbbk...",
+        "...kkkkkkkbbk...",
+        ".....aa.akbbk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-sea-coat-idle",
+        "c011-look-sea-coat-walk1"
+      ]
+    },
+    "c011-look-sea-coat-walk1": {
+      "role": "courier",
+      "label": "물결 옷 · 걷기",
+      "pixels": [
+        "................",
+        "....kacccak.....",
+        "....kacccak.....",
+        "...kkkkkkkkk....",
+        "....skssssk.....",
+        "....ssssssk.....",
+        "...kssssssk.....",
+        "...kabcccac.....",
+        "...saacbbac.....",
+        "...saaccckbbk...",
+        "...kkkkkkkbbk...",
+        ".....aa.akbbk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-sea-coat-idle",
+        "c011-look-sea-coat-walk1"
+      ]
+    },
+    "c011-look-night-cap-idle": {
+      "role": "courier",
+      "label": "밤하늘 모자 · 서기",
+      "pixels": [
+        "................",
+        "....kuuuuuk.....",
+        "....kucycuk.....",
+        "...uuuuuuuuu....",
+        "....ssssssk.....",
+        "....skssssk.....",
+        "....sssbssk.....",
+        "...kkbkkkkk.....",
+        "...suucbbuc.....",
+        "...suuccckbbk...",
+        "...kkkkkkkbbk...",
+        ".....uu.ukbbk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-night-cap-idle",
+        "c011-look-night-cap-walk1"
+      ]
+    },
+    "c011-look-night-cap-walk1": {
+      "role": "courier",
+      "label": "밤하늘 모자 · 걷기",
+      "pixels": [
+        "................",
+        "....kucccuk.....",
+        "....kucycuk.....",
+        "...kkkkkkkkk....",
+        "....skssssk.....",
+        "....ssssssk.....",
+        "...kssssssk.....",
+        "...kubcccuc.....",
+        "...suucbbuc.....",
+        "...suuccckbbk...",
+        "...kkkkkkkbbk...",
+        ".....uu.ukbbk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-night-cap-idle",
+        "c011-look-night-cap-walk1"
+      ]
+    },
+    "c011-look-letter-bag-idle": {
+      "role": "courier",
+      "label": "편지 가방 · 서기",
+      "pixels": [
+        "................",
+        "....ktttttk.....",
+        "....ktccctk.....",
+        "...ttttttttt....",
+        "....ssssssk.....",
+        "....skssssk.....",
+        "....sssbssk.....",
+        "...kkbkkkkk.....",
+        "...sttcbbtc.....",
+        "...sttccckuuk...",
+        "...kkkkkkkwwk...",
+        ".....tt.tkuuk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-letter-bag-idle",
+        "c011-look-letter-bag-walk1"
+      ]
+    },
+    "c011-look-letter-bag-walk1": {
+      "role": "courier",
+      "label": "편지 가방 · 걷기",
+      "pixels": [
+        "................",
+        "....ktccctk.....",
+        "....ktccctk.....",
+        "...kkkkkkkkk....",
+        "....skssssk.....",
+        "....ssssssk.....",
+        "...kssssssk.....",
+        "...ktbccctc.....",
+        "...sttcbbtc.....",
+        "...sttccckuuk...",
+        "...kkkkkkkwwk...",
+        ".....tt.tkuuk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-letter-bag-idle",
+        "c011-look-letter-bag-walk1"
+      ]
+    },
+    "c011-look-festival-coat-idle": {
+      "role": "courier",
+      "label": "축제 옷 · 서기",
+      "pixels": [
+        "................",
+        "....kpppppk.....",
+        "....kpcccpk.....",
+        "...ppppppppp....",
+        "....ssssssk.....",
+        "....skssssk.....",
+        "....sssbssk.....",
+        "...kkbkkkkk.....",
+        "...sppcbbpc.....",
+        "...sypccckggk...",
+        "...kkkkkkkggk...",
+        ".....pp.pkggk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-festival-coat-idle",
+        "c011-look-festival-coat-walk1"
+      ]
+    },
+    "c011-look-festival-coat-walk1": {
+      "role": "courier",
+      "label": "축제 옷 · 걷기",
+      "pixels": [
+        "................",
+        "....kpcccpk.....",
+        "....kpcccpk.....",
+        "...kkkkkkkkk....",
+        "....skssssk.....",
+        "....ssssssk.....",
+        "...kssssssk.....",
+        "...kpbcccpc.....",
+        "...sppcbbpc.....",
+        "...sypccckggk...",
+        "...kkkkkkkggk...",
+        ".....pp.pkggk...",
+        "....kk..kkk.....",
+        "...hhhhhhhhh....",
+        "................",
+        "................"
+      ],
+      "size": 16,
+      "grid": 16,
+      "frames": [
+        "c011-look-festival-coat-idle",
+        "c011-look-festival-coat-walk1"
+      ]
+    }
+  }
+}

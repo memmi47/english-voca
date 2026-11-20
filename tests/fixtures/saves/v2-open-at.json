@@ -1,0 +1,441 @@
+{
+ "v": 2,
+ "id": "son",
+ "words": {
+  "W0488:기본:butterfly:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819605000
+  },
+  "W4202:기본:wing:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819607500
+  },
+  "W1394:기본:finger:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819610000
+  },
+  "W3318:기본:shoulder:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819612500
+  },
+  "W4085:기본:voice:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819615000
+  },
+  "W0699:기본:clothes:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819617500
+  },
+  "W0425:기본:bread:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819622500
+  },
+  "W1500:기본:frog:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "A1",
+   "lastDay": "2026-11-16",
+   "at": 1794819632500
+  },
+  "W3424:기본:snake:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "review",
+   "due": "2026-11-17",
+   "lastDay": "2026-11-16",
+   "at": 1794819662500,
+   "step": 0
+  },
+  "W2008:기본:knee:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "review",
+   "due": "2026-11-17",
+   "lastDay": "2026-11-16",
+   "at": 1794819672500,
+   "step": 0
+  },
+  "W1850:기본:imagine:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819687500
+  },
+  "W2865:기본:protect:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819690000
+  },
+  "W2878:기본:pull:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819692500
+  },
+  "W0122:기본:animal:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819695000
+  },
+  "W0349:기본:bird:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819697500
+  },
+  "W1794:기본:horse:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819700000
+  },
+  "W1931:기본:island:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819702500
+  },
+  "W1462:기본:forget:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819707500
+  },
+  "W2820:기본:pretend:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "likely",
+   "lstep": 0,
+   "due": null,
+   "bunch": "B1",
+   "lastDay": "2026-11-16",
+   "at": 1794819717500
+  },
+  "W0184:기본:arrive:1": {
+   "firstDay": "2026-11-16",
+   "lapses": 0,
+   "st": "learn",
+   "due": "2026-11-17",
+   "lastDay": "2026-11-16",
+   "at": 1794819727500
+  }
+ },
+ "verify": [
+  true,
+  true,
+  true,
+  true
+ ],
+ "runs": [
+  {
+   "day": "2026-11-16",
+   "n": 1,
+   "reason": "done",
+   "tag": "A1",
+   "shieldBack": 0,
+   "cards": 6,
+   "claims": 0,
+   "verifies": 0,
+   "verifyOk": 0,
+   "fresh": 2,
+   "known": 0,
+   "unknown": 2,
+   "learned": 2,
+   "reviews": 0,
+   "reviewOk": 0,
+   "lapses": 0,
+   "bosses": 1,
+   "ms": 30000,
+   "stars": 6,
+   "castleOk": 0,
+   "castleMiss": 0,
+   "testOk": 0,
+   "testMiss": 0,
+   "spots": 2,
+   "spotOk": 2,
+   "bunchOk": 0,
+   "bunchDone": 0,
+   "wall": 77500,
+   "changed": 10,
+   "endedAt": "2026-11-16T09:01:22.500Z"
+  },
+  {
+   "day": "2026-11-16",
+   "n": 2,
+   "reason": "quit",
+   "tag": "B1",
+   "shieldBack": 0,
+   "cards": 3,
+   "claims": 0,
+   "verifies": 0,
+   "verifyOk": 0,
+   "fresh": 1,
+   "known": 0,
+   "unknown": 1,
+   "learned": 0,
+   "reviews": 0,
+   "reviewOk": 0,
+   "lapses": 0,
+   "bosses": 0,
+   "ms": 15000,
+   "stars": 6,
+   "castleOk": 0,
+   "castleMiss": 0,
+   "testOk": 0,
+   "testMiss": 0,
+   "spots": 2,
+   "spotOk": 2,
+   "bunchOk": 0,
+   "bunchDone": 0,
+   "wall": 50000,
+   "changed": 9,
+   "endedAt": "2026-11-16T09:02:17.500Z"
+  }
+ ],
+ "log": [
+  {
+   "t": "2026-11-16T09:00:27.500Z",
+   "day": "2026-11-16",
+   "id": "W0425:기본:bread:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:37.500Z",
+   "day": "2026-11-16",
+   "id": "W1500:기본:frog:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:47.500Z",
+   "day": "2026-11-16",
+   "id": "W3424:기본:snake:1",
+   "role": "new",
+   "form": "judge",
+   "ok": false,
+   "verified": false,
+   "said": "dontknow",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:00:57.500Z",
+   "day": "2026-11-16",
+   "id": "W2008:기본:knee:1",
+   "role": "new",
+   "form": "judge",
+   "ok": false,
+   "verified": false,
+   "said": "dontknow",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:01:07.500Z",
+   "day": "2026-11-16",
+   "id": "W3424:기본:snake:1",
+   "role": "relearn",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:01:17.500Z",
+   "day": "2026-11-16",
+   "id": "W2008:기본:knee:1",
+   "role": "relearn",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:01:52.500Z",
+   "day": "2026-11-16",
+   "id": "W1462:기본:forget:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:02:02.500Z",
+   "day": "2026-11-16",
+   "id": "W2820:기본:pretend:1",
+   "role": "spot",
+   "form": "check",
+   "ok": true,
+   "verified": true,
+   "said": "know",
+   "ms": 5000,
+   "sound": null
+  },
+  {
+   "t": "2026-11-16T09:02:12.500Z",
+   "day": "2026-11-16",
+   "id": "W0184:기본:arrive:1",
+   "role": "new",
+   "form": "judge",
+   "ok": false,
+   "verified": false,
+   "said": "dontknow",
+   "ms": 5000,
+   "sound": null
+  }
+ ],
+ "bunches": {
+  "A1": {
+   "due": "2026-12-16",
+   "done": null
+  },
+  "B1": {
+   "due": "2026-12-16",
+   "done": null
+  }
+ },
+ "map": {
+  "stars": 12,
+  "items": {
+   "shield": 0,
+   "flame": 0
+  },
+  "bag": null,
+  "monsterDay": null,
+  "bonusDay": null,
+  "best": 0,
+  "keys": 0,
+  "worlds": {
+   "d1-01": {
+    "castle": null,
+    "cleared": {
+     "A1": "2026-11-16"
+    },
+    "stamps": {},
+    "seen": "2026-11-16",
+    "open": {
+     "B1": "2026-11-16"
+    }
+   },
+   "d1-02": {
+    "castle": null,
+    "cleared": {},
+    "stamps": {},
+    "seen": null
+   }
+  },
+  "conts": {
+   "d1": {
+    "castle": null
+   }
+  },
+  "at": "d1-01",
+  "bat": {
+   "fill": 3,
+   "cap": 40,
+   "met": [
+    "W3424:기본:snake:1",
+    "W2008:기본:knee:1",
+    "W0184:기본:arrive:1"
+   ],
+   "last": null
+  }
+ }
+}

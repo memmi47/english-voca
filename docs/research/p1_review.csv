@@ -1,0 +1,1216 @@
+﻿lemma_id,form,current_card_id,current_ko,track,flags,alternative_cards,parent_decision
+E001,look at,E001:기본:look at:1,~을 보다,vocab,,,미확인
+E002,look for,E002:기본:look for:1,~을 찾다,vocab,,,미확인
+E003,look after,E003:기본:look after:1,~을 돌보다,vocab,,,미확인
+E004,look up,E004:기본:look up:1,찾아보다,vocab,multiple-senses,E004:기본:look up:2 = 올려다보다,미확인
+E005,look around,E005:기본:look around:1,주위를 둘러보다,vocab,,,미확인
+E006,look out,E006:기본:look out:1,조심하다,vocab,multiple-senses,E006:기본:look out:2 = 밖을 보다,미확인
+E007,look forward to,E007:기본:look forward to:1,~을 기대하다,vocab,,,미확인
+E008,look like,E008:기본:look like:1,~처럼 보이다,vocab,,,미확인
+E009,look into,E009:기본:look into:1,~을 조사하다,vocab,,,미확인
+E010,look back,E010:기본:look back:1,뒤돌아보다,vocab,multiple-senses,E010:기본:look back:2 = 회상하다,미확인
+E011,get up,E011:기본:get up:1,일어나다,vocab,,,미확인
+E012,get out,E012:기본:get out:1,나가다,vocab,,,미확인
+E013,get in,E013:기본:get in:1,안으로 들어가다,vocab,multiple-senses,E013:기본:get in:2 = 차에 타다,미확인
+E014,get on,E014:기본:get on:1,타다,vocab,,,미확인
+E015,get off,E015:기본:get off:1,내리다,vocab,,,미확인
+E016,get back,E016:기본:get back:1,돌아오다,vocab,multiple-senses,E016:기본:get back:2 = 되찾다,미확인
+E017,get along,E017:기본:get along:1,잘 지내다,vocab,,,미확인
+E018,get over,E018:기본:get over:1,극복하다,vocab,multiple-senses,E018:기본:get over:2 = 회복하다,미확인
+E019,get away,E019:기본:get away:1,벗어나다,vocab,multiple-senses,E019:기본:get away:2 = 달아나다,미확인
+E020,get ready,E020:기본:get ready:1,준비하다,vocab,,,미확인
+E021,get lost,E021:기본:get lost:1,길을 잃다,vocab,,,미확인
+E022,get dressed,E022:기본:get dressed:1,옷을 입다,vocab,,,미확인
+E023,give up,E023:기본:give up:1,포기하다,vocab,,,미확인
+E024,give back,E024:기본:give back:1,돌려주다,vocab,,,미확인
+E025,give away,E025:기본:give away:1,나누어 주다,vocab,multiple-senses,E025:기본:give away:2 = 비밀을 드러내다,미확인
+E026,give in,E026:기본:give in:1,양보하다,vocab,multiple-senses,E026:기본:give in:2 = 굴복하다,미확인
+E027,put on,E027:기본:put on:1,입다,vocab,multiple-senses,E027:기본:put on:2 = 착용하다,미확인
+E028,put off,E028:기본:put off:1,미루다,vocab,,,미확인
+E029,put away,E029:기본:put away:1,제자리에 치우다,vocab,,,미확인
+E030,put down,E030:기본:put down:1,내려놓다,vocab,multiple-senses,E030:기본:put down:2 = 적다,미확인
+E031,put out,E031:기본:put out:1,불을 끄다,vocab,,,미확인
+E032,put up,E032:기본:put up:1,세우다,vocab,multiple-senses,E032:기본:put up:2 = 붙이다,미확인
+E033,take off,E033:기본:take off:1,벗다,vocab,multiple-senses,E033:기본:take off:2 = 이륙하다,미확인
+E034,take out,E034:기본:take out:1,꺼내다,vocab,,,미확인
+E035,take away,E035:기본:take away:1,가져가다,vocab,,,미확인
+E036,take back,E036:기본:take back:1,돌려받다,vocab,multiple-senses,E036:기본:take back:2 = 말을 취소하다,미확인
+E037,take care of,E037:기본:take care of:1,~을 돌보다,vocab,,,미확인
+E038,take turns,E038:기본:take turns:1,번갈아 하다,vocab,,,미확인
+E039,take place,E039:기본:take place:1,일어나다,vocab,multiple-senses,E039:기본:take place:2 = 개최되다,미확인
+E040,take part in,E040:기본:take part in:1,~에 참여하다,vocab,,,미확인
+E041,take a look,E041:기본:take a look:1,한번 보다,vocab,,,미확인
+E042,come in,E042:기본:come in:1,들어오다,vocab,,,미확인
+E043,come out,E043:기본:come out:1,나오다,vocab,,,미확인
+E044,come back,E044:기본:come back:1,돌아오다,vocab,,,미확인
+E045,come on,E045:기본:come on:1,어서,vocab,multiple-senses,E045:기본:come on:2 = 힘내,미확인
+E046,come across,E046:기본:come across:1,우연히 발견하다,vocab,multiple-senses,E046:기본:come across:2 = 우연히 만나다,미확인
+E047,come up with,E047:기본:come up with:1,생각해 내다,vocab,,,미확인
+E048,come along,E048:기본:come along:1,함께 가다,vocab,,,미확인
+E049,come true,E049:기본:come true:1,이루어지다,vocab,,,미확인
+E050,go out,E050:기본:go out:1,밖에 나가다,vocab,multiple-senses,E050:기본:go out:2 = 불이 꺼지다,미확인
+E051,go back,E051:기본:go back:1,돌아가다,vocab,,,미확인
+E052,go on,E052:기본:go on:1,계속하다,vocab,multiple-senses,E052:기본:go on:2 = 일어나다,미확인
+E053,go away,E053:기본:go away:1,떠나다,vocab,,,미확인
+E054,go ahead,E054:기본:go ahead:1,먼저 하다,vocab,multiple-senses,E054:기본:go ahead:2 = 계속하다,미확인
+E055,go through,E055:기본:go through:1,겪다,vocab,multiple-senses,E055:기본:go through:2 = 통과하다,미확인
+E056,go over,E056:기본:go over:1,검토하다,vocab,multiple-senses,E056:기본:go over:2 = 복습하다,미확인
+E057,go to bed,E057:기본:go to bed:1,잠자리에 들다,vocab,,,미확인
+E058,go to sleep,E058:기본:go to sleep:1,잠들다,vocab,,,미확인
+E059,turn on,E059:기본:turn on:1,켜다,vocab,,,미확인
+E060,turn off,E060:기본:turn off:1,끄다,vocab,,,미확인
+E061,turn up,E061:기본:turn up:1,소리를 높이다,vocab,multiple-senses,E061:기본:turn up:2 = 나타나다,미확인
+E062,turn down,E062:기본:turn down:1,소리를 낮추다,vocab,multiple-senses,E062:기본:turn down:2 = 거절하다,미확인
+E063,turn around,E063:기본:turn around:1,뒤돌아보다,vocab,multiple-senses,E063:기본:turn around:2 = 방향을 바꾸다,미확인
+E064,turn into,E064:기본:turn into:1,~으로 변하다,vocab,,,미확인
+E065,turn over,E065:기본:turn over:1,뒤집다,vocab,,,미확인
+E066,pick up,E066:기본:pick up:1,집어 들다,vocab,multiple-senses,E066:기본:pick up:2 = 데리러 가다,미확인
+E067,pick out,E067:기본:pick out:1,골라내다,vocab,,,미확인
+E068,find out,E068:기본:find out:1,알아내다,vocab,,,미확인
+E069,figure out,E069:기본:figure out:1,이해하다,vocab,multiple-senses,E069:기본:figure out:2 = 해결하다,미확인
+E070,work out,E070:기본:work out:1,풀다,vocab,multiple-senses,E070:기본:work out:2 = 운동하다,미확인
+E071,try on,E071:기본:try on:1,입어 보다,vocab,,,미확인
+E072,try out,E072:기본:try out:1,시험해 보다,vocab,,,미확인
+E073,carry on,E073:기본:carry on:1,계속하다,vocab,,,미확인
+E074,carry out,E074:기본:carry out:1,수행하다,vocab,,,미확인
+E075,run away,E075:기본:run away:1,달아나다,vocab,,,미확인
+E076,run out of,E076:기본:run out of:1,~을 다 써 버리다,vocab,,,미확인
+E077,run into,E077:기본:run into:1,우연히 만나다,vocab,multiple-senses,E077:기본:run into:2 = 부딪치다,미확인
+E078,run after,E078:기본:run after:1,뒤쫓다,vocab,,,미확인
+E079,break down,E079:기본:break down:1,고장 나다,vocab,multiple-senses,E079:기본:break down:2 = 무너지다,미확인
+E080,break out,E080:기본:break out:1,갑자기 일어나다,vocab,,,미확인
+E081,break into,E081:기본:break into:1,침입하다,vocab,,,미확인
+E082,break up,E082:기본:break up:1,헤어지다,vocab,multiple-senses,E082:기본:break up:2 = 부서지다,미확인
+E083,wake up,E083:기본:wake up:1,잠에서 깨다,vocab,multiple-senses,E083:기본:wake up:2 = 깨우다,미확인
+E084,grow up,E084:기본:grow up:1,자라다,vocab,multiple-senses,E084:기본:grow up:2 = 어른이 되다,미확인
+E085,clean up,E085:기본:clean up:1,깨끗이 치우다,vocab,,,미확인
+E086,tidy up,E086:기본:tidy up:1,정리하다,vocab,,,미확인
+E087,dress up,E087:기본:dress up:1,차려입다,vocab,multiple-senses,E087:기본:dress up:2 = 분장하다,미확인
+E088,hurry up,E088:기본:hurry up:1,서두르다,vocab,,,미확인
+E089,slow down,E089:기본:slow down:1,속도를 줄이다,vocab,,,미확인
+E090,calm down,E090:기본:calm down:1,진정하다,vocab,,,미확인
+E091,sit down,E091:기본:sit down:1,앉다,vocab,,,미확인
+E092,stand up,E092:기본:stand up:1,일어서다,vocab,,,미확인
+E093,lie down,E093:기본:lie down:1,눕다,vocab,,,미확인
+E094,fall down,E094:기본:fall down:1,넘어지다,vocab,,,미확인
+E095,fall asleep,E095:기본:fall asleep:1,잠들다,vocab,,,미확인
+E096,fall apart,E096:기본:fall apart:1,산산조각 나다,vocab,,,미확인
+E097,fall behind,E097:기본:fall behind:1,뒤처지다,vocab,,,미확인
+E098,hang on,E098:기본:hang on:1,기다리다,vocab,multiple-senses,E098:기본:hang on:2 = 붙잡다,미확인
+E099,hold on,E099:기본:hold on:1,기다리다,vocab,multiple-senses,E099:기본:hold on:2 = 꼭 잡다,미확인
+E100,hold up,E100:기본:hold up:1,들어 올리다,vocab,multiple-senses,E100:기본:hold up:2 = 지연시키다,미확인
+E101,hold back,E101:기본:hold back:1,참다,vocab,multiple-senses,E101:기본:hold back:2 = 막다,미확인
+E102,keep on,E102:기본:keep on:1,계속하다,vocab,,,미확인
+E103,keep up,E103:기본:keep up:1,따라가다,vocab,multiple-senses,E103:기본:keep up:2 = 유지하다,미확인
+E104,keep away,E104:기본:keep away:1,가까이 가지 않다,vocab,,,미확인
+E105,keep out,E105:기본:keep out:1,들어가지 않다,vocab,,,미확인
+E106,bring back,E106:기본:bring back:1,돌려주다,vocab,multiple-senses,E106:기본:bring back:2 = 다시 떠올리게 하다,미확인
+E107,bring up,E107:기본:bring up:1,기르다,vocab,multiple-senses,E107:기본:bring up:2 = 화제를 꺼내다,미확인
+E108,set off,E108:기본:set off:1,출발하다,vocab,multiple-senses,E108:기본:set off:2 = 작동시키다,미확인
+E109,set up,E109:기본:set up:1,설치하다,vocab,multiple-senses,E109:기본:set up:2 = 준비하다,미확인
+E110,set out,E110:기본:set out:1,출발하다,vocab,multiple-senses,E110:기본:set out:2 = 시작하다,미확인
+E111,show up,E111:기본:show up:1,나타나다,vocab,,,미확인
+E112,show off,E112:기본:show off:1,뽐내다,vocab,,,미확인
+E113,make up,E113:기본:make up:1,지어내다,vocab,multiple-senses,E113:기본:make up:2 = 화해하다,미확인
+E114,make sure,E114:기본:make sure:1,확인하다,vocab,multiple-senses,E114:기본:make sure:2 = 확실히 하다,미확인
+E115,make sense,E115:기본:make sense:1,이해가 되다,vocab,multiple-senses,E115:기본:make sense:2 = 말이 되다,미확인
+E116,pay attention,E116:기본:pay attention:1,주의를 기울이다,vocab,,,미확인
+E117,be afraid of,E117:기본:be afraid of:1,~을 두려워하다,vocab,,,미확인
+E118,be proud of,E118:기본:be proud of:1,~을 자랑스러워하다,vocab,,,미확인
+E119,be interested in,E119:기본:be interested in:1,~에 관심이 있다,vocab,,,미확인
+E120,be good at,E120:기본:be good at:1,~을 잘하다,vocab,,,미확인
+E121,be supposed to,E121:기본:be supposed to:1,~하기로 되어 있다,vocab,multiple-senses,E121:기본:be supposed to:2 = ~해야 한다,미확인
+E122,belong to,E122:기본:belong to:1,~의 것이다,vocab,multiple-senses,E122:기본:belong to:2 = ~에 속하다,미확인
+E123,depend on,E123:기본:depend on:1,~에 달려 있다,vocab,multiple-senses,E123:기본:depend on:2 = ~에 의지하다,미확인
+E124,care about,E124:기본:care about:1,~을 중요하게 생각하다,vocab,,,미확인
+E125,agree with,E125:기본:agree with:1,~에 동의하다,vocab,,,미확인
+E126,deal with,E126:기본:deal with:1,~을 다루다,vocab,multiple-senses,E126:기본:deal with:2 = 처리하다,미확인
+E127,wait for,E127:기본:wait for:1,~을 기다리다,vocab,,,미확인
+E128,listen to,E128:기본:listen to:1,~에 귀 기울이다,vocab,,,미확인
+E129,ask for,E129:기본:ask for:1,~을 요청하다,vocab,,,미확인
+E130,search for,E130:기본:search for:1,~을 찾다,vocab,,,미확인
+E131,think about,E131:기본:think about:1,~에 관해 생각하다,vocab,,,미확인
+E132,think of,E132:기본:think of:1,~을 떠올리다,vocab,,,미확인
+E133,learn about,E133:기본:learn about:1,~에 관해 배우다,vocab,,,미확인
+E134,a lot of,E134:기본:a lot of:1,많은,vocab,,,미확인
+E135,lots of,E135:기본:lots of:1,많은,vocab,,,미확인
+E136,a little,E136:기본:a little:1,조금,vocab,multiple-senses,E136:기본:a little:2 = 약간의,미확인
+E137,a few,E137:기본:a few:1,몇 개의,vocab,multiple-senses,E137:기본:a few:2 = 몇 명의,미확인
+E138,a bit,E138:기본:a bit:1,조금,vocab,,,미확인
+E139,a couple of,E139:기본:a couple of:1,두어 개의,vocab,,,미확인
+E140,a pair of,E140:기본:a pair of:1,한 쌍의,vocab,,,미확인
+E141,a piece of,E141:기본:a piece of:1,한 조각의,vocab,,,미확인
+E142,a kind of,E142:기본:a kind of:1,일종의,vocab,,,미확인
+E143,all kinds of,E143:기본:all kinds of:1,온갖 종류의,vocab,,,미확인
+E144,as well,E144:기본:as well:1,또한,vocab,,,미확인
+E145,as well as,E145:기본:as well as:1,~뿐 아니라,vocab,multiple-senses,E145:기본:as well as:2 = ~도,미확인
+E146,as soon as,E146:기본:as soon as:1,~하자마자,vocab,,,미확인
+E147,as long as,E147:기본:as long as:1,~하는 한,vocab,multiple-senses,E147:기본:as long as:2 = ~하기만 하면,미확인
+E148,as if,E148:기본:as if:1,마치 ~인 것처럼,vocab,,,미확인
+E149,even if,E149:기본:even if:1,설령 ~일지라도,vocab,,,미확인
+E150,even though,E150:기본:even though:1,비록 ~이지만,vocab,,,미확인
+E151,so that,E151:기본:so that:1,~하도록,vocab,multiple-senses,E151:기본:so that:2 = 그래서 ~하다,미확인
+E152,in order to,E152:기본:in order to:1,~하기 위해,vocab,,,미확인
+E153,such as,E153:기본:such as:1,~와 같은,vocab,,,미확인
+E154,instead of,E154:기본:instead of:1,~대신에,vocab,,,미확인
+E155,because of,E155:기본:because of:1,~때문에,vocab,,,미확인
+E156,due to,E156:기본:due to:1,~때문에,vocab,,,미확인
+E157,according to,E157:기본:according to:1,~에 따르면,vocab,,,미확인
+E158,thanks to,E158:기본:thanks to:1,~덕분에,vocab,,,미확인
+E159,except for,E159:기본:except for:1,~을 제외하고,vocab,,,미확인
+E160,rather than,E160:기본:rather than:1,~보다는,vocab,,,미확인
+E161,no matter,E161:기본:no matter:1,~하더라도 상관없이,vocab,,,미확인
+E162,at first,E162:기본:at first:1,처음에는,vocab,,,미확인
+E163,at last,E163:기본:at last:1,마침내,vocab,,,미확인
+E164,at once,E164:기본:at once:1,즉시,vocab,multiple-senses,E164:기본:at once:2 = 동시에,미확인
+E165,at least,E165:기본:at least:1,적어도,vocab,,,미확인
+E166,at most,E166:기본:at most:1,많아야,vocab,,,미확인
+E167,at all,E167:기본:at all:1,전혀,vocab,multiple-senses,E167:기본:at all:2 = 조금이라도,미확인
+E168,at times,E168:기본:at times:1,때때로,vocab,,,미확인
+E169,at the same time,E169:기본:at the same time:1,동시에,vocab,,,미확인
+E170,in the end,E170:기본:in the end:1,결국,vocab,,,미확인
+E171,in fact,E171:기본:in fact:1,사실은,vocab,,,미확인
+E172,in case,E172:기본:in case:1,~할 경우에 대비하여,vocab,,,미확인
+E173,in time,E173:기본:in time:1,늦지 않게,vocab,,,미확인
+E174,on time,E174:기본:on time:1,정각에,vocab,multiple-senses,E174:기본:on time:2 = 제시간에,미확인
+E175,in front of,E175:기본:in front of:1,~앞에,vocab,,,미확인
+E176,next to,E176:기본:next to:1,~옆에,vocab,,,미확인
+E177,far from,E177:기본:far from:1,~에서 먼,vocab,multiple-senses,E177:기본:far from:2 = 결코 ~아닌,미확인
+E178,out of,E178:기본:out of:1,~밖으로,vocab,multiple-senses,E178:기본:out of:2 = ~이 떨어져,미확인
+E179,up to,E179:기본:up to:1,~까지,vocab,multiple-senses,E179:기본:up to:2 = ~에게 달린,미확인
+E180,along with,E180:기본:along with:1,~와 함께,vocab,,,미확인
+E181,all of a sudden,E181:기본:all of a sudden:1,갑자기,vocab,,,미확인
+E182,once upon a time,E182:기본:once upon a time:1,옛날 옛적에,vocab,,,미확인
+E183,from now on,E183:기본:from now on:1,지금부터,vocab,,,미확인
+E184,from time to time,E184:기본:from time to time:1,때때로,vocab,,,미확인
+E185,so far,E185:기본:so far:1,지금까지,vocab,,,미확인
+E186,right away,E186:기본:right away:1,즉시,vocab,,,미확인
+E187,by the way,E187:기본:by the way:1,그런데,vocab,,,미확인
+E188,after all,E188:기본:after all:1,결국,vocab,multiple-senses,E188:기본:after all:2 = 어쨌든,미확인
+E189,of course,E189:기본:of course:1,물론,vocab,,,미확인
+E190,for example,E190:기본:for example:1,예를 들어,vocab,,,미확인
+E191,for instance,E191:기본:for instance:1,예를 들어,vocab,,,미확인
+E192,in addition,E192:기본:in addition:1,게다가,vocab,,,미확인
+E193,on the other hand,E193:기본:on the other hand:1,반면에,vocab,,,미확인
+E194,in other words,E194:기본:in other words:1,다시 말해서,vocab,,,미확인
+E195,first of all,E195:기본:first of all:1,무엇보다 먼저,vocab,,,미확인
+E196,step by step,E196:기본:step by step:1,차근차근,vocab,,,미확인
+E197,one by one,E197:기본:one by one:1,하나씩,vocab,,,미확인
+E198,again and again,E198:기본:again and again:1,몇 번이고,vocab,,,미확인
+E199,more and more,E199:기본:more and more:1,점점 더,vocab,,,미확인
+E200,sooner or later,E200:기본:sooner or later:1,조만간,vocab,multiple-senses,E200:기본:sooner or later:2 = 언젠가는,미확인
+E201,little by little,E201:기본:little by little:1,조금씩,vocab,,,미확인
+E202,on purpose,E202:기본:on purpose:1,일부러,vocab,,,미확인
+E203,by accident,E203:기본:by accident:1,우연히,vocab,multiple-senses,E203:기본:by accident:2 = 실수로,미확인
+E204,by mistake,E204:기본:by mistake:1,실수로,vocab,,,미확인
+E205,for a while,E205:기본:for a while:1,잠시 동안,vocab,,,미확인
+E206,all the time,E206:기본:all the time:1,줄곧,vocab,,,미확인
+E207,most of the time,E207:기본:most of the time:1,대부분의 시간에,vocab,,,미확인
+E208,once in a while,E208:기본:once in a while:1,가끔,vocab,,,미확인
+E209,over and over,E209:기본:over and over:1,계속 반복해서,vocab,,,미확인
+E210,upside down,E210:기본:upside down:1,거꾸로,vocab,,,미확인
+E211,inside out,E211:기본:inside out:1,안팎이 뒤집힌,vocab,,,미확인
+E212,back and forth,E212:기본:back and forth:1,앞뒤로,vocab,multiple-senses,E212:기본:back and forth:2 = 왔다 갔다,미확인
+E213,side by side,E213:기본:side by side:1,나란히,vocab,,,미확인
+E214,face to face,E214:기본:face to face:1,얼굴을 마주하고,vocab,,,미확인
+E215,out of breath,E215:기본:out of breath:1,숨이 찬,vocab,,,미확인
+E216,out of sight,E216:기본:out of sight:1,눈에 보이지 않는,vocab,,,미확인
+E217,out of control,E217:기본:out of control:1,통제할 수 없는,vocab,,,미확인
+E218,in trouble,E218:기본:in trouble:1,곤란에 빠진,vocab,,,미확인
+E219,in danger,E219:기본:in danger:1,위험에 처한,vocab,,,미확인
+E220,in a hurry,E220:기본:in a hurry:1,서두르는,vocab,,,미확인
+E221,in a daze,E221:기본:in a daze:1,멍한 상태로,vocab,,,미확인
+E222,in tears,E222:기본:in tears:1,울면서,vocab,,,미확인
+E223,for sure,E223:기본:for sure:1,확실히,vocab,,,미확인
+E224,no longer,E224:기본:no longer:1,더 이상 ~않는,vocab,,,미확인
+E225,not yet,E225:기본:not yet:1,아직 ~않은,vocab,,,미확인
+E226,not only ... but also ...,E226:기본:not only ... but also ...:1,~뿐만 아니라,vocab,,,미확인
+E227,neither ... nor ...,E227:기본:neither ... nor ...:1,~도 아니고 ~도 아닌,vocab,,,미확인
+E228,either ... or ...,E228:기본:either ... or ...:1,~이거나 ~이거나,vocab,,,미확인
+E229,both ... and ...,E229:기본:both ... and ...:1,~도 ~도 둘 다,vocab,,,미확인
+E230,the rest of,E230:기본:the rest of:1,~의 나머지,vocab,,,미확인
+E231,each other,E231:기본:each other:1,서로,vocab,,,미확인
+E232,one another,E232:기본:one another:1,서로,vocab,,,미확인
+E233,any more,E233:기본:any more:1,더 이상,vocab,multiple-senses,E233:기본:any more:2 = 더 많은,미확인
+E234,how come,E234:기본:how come:1,왜,vocab,multiple-senses,E234:기본:how come:2 = 어째서,미확인
+E235,what if,E235:기본:what if:1,만약 ~라면 어떻게 될까,vocab,,,미확인
+E236,what about,E236:기본:what about:1,~은 어때,vocab,,,미확인
+E237,how about,E237:기본:how about:1,~은 어때,vocab,,,미확인
+E238,used to,E238:기본:used to:1,예전에 ~하곤 했다,vocab,,,미확인
+E239,have to,E239:기본:have to:1,~해야 한다,vocab,,,미확인
+E240,ought to,E240:기본:ought to:1,~해야 한다,vocab,,,미확인
+E241,would rather,E241:기본:would rather:1,차라리 ~하고 싶다,vocab,,,미확인
+E242,had better,E242:기본:had better:1,~하는 것이 좋겠다,vocab,,,미확인
+E243,be able to,E243:기본:be able to:1,~할 수 있다,vocab,,,미확인
+E244,be about to,E244:기본:be about to:1,막 ~하려고 하다,vocab,,,미확인
+W0001,a,W0001:기본:a:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0005,able,W0005:기본:able:1,~할 수 있는,vocab,,,미확인
+W0007,about,W0007:기본:about:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0008,above,W0008:기본:above:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0031,across,W0031:기본:across:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0032,act,W0032:기본:act:1,행동하다,vocab,multiple-senses,W0032:기본:act:2 = 연기하다; W0032:기본:act:3 = 행동,미확인
+W0033,action,W0033:기본:action:1,행동,vocab,multiple-senses,W0033:기본:action:2 = 움직임,미확인
+W0035,activity,W0035:기본:activity:1,활동,vocab,,,미확인
+W0041,add,W0041:기본:add:1,더하다,vocab,multiple-senses,W0041:기본:add:2 = 덧붙이다,미확인
+W0044,adjective,W0044:기본:adjective:1,형용사,vocab,,,미확인
+W0061,afraid,W0061:기본:afraid:1,두려워하는,vocab,,,미확인
+W0062,after,W0062:기본:after:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0063,afternoon,W0063:기본:afternoon:1,오후,vocab,,,미확인
+W0065,again,W0065:기본:again:1,다시,vocab,,,미확인
+W0068,ago,W0068:기본:ago:1,지금으로부터 ~전에,vocab,,,미확인
+W0069,agree,W0069:기본:agree:1,동의하다,vocab,,,미확인
+W0073,air,W0073:기본:air:1,공기,vocab,,,미확인
+W0080,alien,W0080:기본:alien:1,외계인,vocab,,,미확인
+W0083,all,W0083:기본:all:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0087,allow,W0087:기본:allow:1,허락하다,vocab,,,미확인
+W0090,almost,W0090:기본:almost:1,거의,vocab,,,미확인
+W0091,alone,W0091:기본:alone:1,혼자인,vocab,multiple-senses,W0091:기본:alone:2 = 혼자,미확인
+W0092,along,W0092:기본:along:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0093,aloud,W0093:기본:aloud:1,소리 내어,vocab,,,미확인
+W0095,alphabet,W0095:기본:alphabet:1,알파벳,vocab,,,미확인
+W0097,already,W0097:기본:already:1,이미,vocab,,,미확인
+W0098,also,W0098:기본:also:1,또한,vocab,,,미확인
+W0101,always,W0101:기본:always:1,항상,vocab,,,미확인
+W0102,amaze,W0102:기본:amaze:1,깜짝 놀라게 하다,vocab,,,미확인
+W0117,and,W0117:기본:and:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0121,angry,W0121:기본:angry:1,화난,vocab,,,미확인
+W0122,animal,W0122:기본:animal:1,동물,vocab,,,미확인
+W0129,another,W0129:기본:another:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0130,answer,W0130:기본:answer:1,대답하다,vocab,multiple-senses,W0130:기본:answer:2 = 대답; W0130:기본:answer:3 = 답,미확인
+W0131,ant,W0131:기본:ant:1,개미,vocab,,,미확인
+W0141,any,W0141:기본:any:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0143,anyone,W0143:기본:anyone:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0144,anything,W0144:기본:anything:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0148,apartment,W0148:기본:apartment:1,아파트,vocab,,,미확인
+W0158,apple,W0158:기본:apple:1,사과,vocab,,,미확인
+W0164,April,W0164:기본:April:1,4월,vocab,,,미확인
+W0171,area,W0171:기본:area:1,넓이,vocab,first-sense-proposal; multiple-senses,W0171:기본:area:2 = 지역,미확인
+W0175,arm,W0175:기본:arm:1,팔,vocab,,,미확인
+W0177,armchair,W0177:기본:armchair:1,안락의자,vocab,,,미확인
+W0180,around,W0180:기본:around:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0184,arrive,W0184:기본:arrive:1,도착하다,vocab,,,미확인
+W0186,art,W0186:기본:art:1,미술,vocab,multiple-senses,W0186:기본:art:2 = 예술,미확인
+W0188,artist,W0188:기본:artist:1,미술가,vocab,multiple-senses,W0188:기본:artist:2 = 예술가,미확인
+W0190,as,W0190:기본:as:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0193,ask,W0193:기본:ask:1,묻다,vocab,multiple-senses,W0193:기본:ask:2 = 부탁하다,미확인
+W0207,at,W0207:기본:at:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0216,attention,W0216:기본:attention:1,주의,vocab,multiple-senses,W0216:기본:attention:2 = 관심,미확인
+W0222,August,W0222:기본:August:1,8월,vocab,,,미확인
+W0223,aunt,W0223:기본:aunt:1,이모,vocab,multiple-senses,W0223:기본:aunt:2 = 고모; W0223:기본:aunt:3 = 숙모,미확인
+W0238,away,W0238:기본:away:1,떨어져,vocab,multiple-senses,W0238:기본:away:2 = 멀리,미확인
+W0245,baby,W0245:기본:baby:1,아기,vocab,,,미확인
+W0246,back,W0246:기본:back:1,뒤로,vocab,multiple-senses,W0246:기본:back:2 = 돌아와; W0246:기본:back:3 = 등,미확인
+W0251,bad,W0251:기본:bad:1,나쁜,vocab,,,미확인
+W0253,badminton,W0253:기본:badminton:1,배드민턴,vocab,,,미확인
+W0254,bag,W0254:기본:bag:1,가방,vocab,multiple-senses,W0254:기본:bag:2 = 봉지,미확인
+W0263,ball,W0263:기본:ball:1,공,vocab,multiple-senses,W0263:기본:ball:2 = 무도회,미확인
+W0265,balloon,W0265:기본:balloon:1,풍선,vocab,,,미확인
+W0268,banana,W0268:기본:banana:1,바나나,vocab,,,미확인
+W0277,bark,W0277:기본:bark:1,짖다,vocab,multiple-senses,W0277:기본:bark:2 = 나무껍질,미확인
+W0282,baseball,W0282:기본:baseball:1,야구,vocab,,,미확인
+W0286,basketball,W0286:기본:basketball:1,농구,vocab,,,미확인
+W0287,bat,W0287:기본:bat:1,박쥐,vocab,multiple-senses,W0287:기본:bat:2 = 방망이,미확인
+W0289,bath,W0289:기본:bath:1,목욕,vocab,multiple-senses,W0289:기본:bath:2 = 욕조,미확인
+W0290,bathroom,W0290:기본:bathroom:1,욕실,vocab,multiple-senses,W0290:기본:bathroom:2 = 화장실,미확인
+W0296,be,W0296:기본:be:1,~이다,vocab,multiple-senses,W0296:기본:be:2 = 있다,미확인
+W0297,beach,W0297:기본:beach:1,해변,vocab,,,미확인
+W0300,bean,W0300:기본:bean:1,콩,vocab,,,미확인
+W0301,bear,W0301:기본:bear:1,곰,vocab,multiple-senses,W0301:기본:bear:2 = 견디다,미확인
+W0303,beat,W0303:기본:beat:1,반복해서 치다,vocab,multiple-senses,W0303:기본:beat:2 = 이기다; W0303:기본:beat:3 = 박자,미확인
+W0304,beautiful,W0304:기본:beautiful:1,아름다운,vocab,,,미확인
+W0306,because,W0306:기본:because:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0308,become,W0308:기본:become:1,~이 되다,vocab,,,미확인
+W0309,bed,W0309:기본:bed:1,침대,vocab,,,미확인
+W0310,bedroom,W0310:기본:bedroom:1,침실,vocab,,,미확인
+W0312,bee,W0312:기본:bee:1,벌,vocab,,,미확인
+W0314,beep,W0314:기본:beep:1,삐 소리 나다,vocab,multiple-senses,W0314:기본:beep:2 = 삐 소리,미확인
+W0317,before,W0317:기본:before:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0319,begin,W0319:기본:begin:1,시작하다,vocab,,,미확인
+W0322,behind,W0322:기본:behind:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0324,believe,W0324:기본:believe:1,믿다,vocab,,,미확인
+W0325,bell,W0325:기본:bell:1,종,vocab,,,미확인
+W0329,below,W0329:기본:below:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0337,between,W0337:기본:between:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0340,bicycle,W0340:기본:bicycle:1,자전거,vocab,,,미확인
+W0341,big,W0341:기본:big:1,큰,vocab,,,미확인
+W0342,bike,W0342:기본:bike:1,자전거,vocab,,,미확인
+W0343,bill,W0343:기본:bill:1,새 부리,vocab,multiple-senses,W0343:기본:bill:2 = 청구서; W0343:기본:bill:3 = 지폐,미확인
+W0349,bird,W0349:기본:bird:1,새,vocab,,,미확인
+W0351,birthday,W0351:기본:birthday:1,생일,vocab,,,미확인
+W0354,bit,W0354:기본:bit:1,조금,vocab,multiple-senses,W0354:기본:bit:2 = 작은 조각,미확인
+W0357,black,W0357:기본:black:1,검은,vocab,,,미확인
+W0373,blow,W0373:기본:blow:1,불다,vocab,,,미확인
+W0374,blue,W0374:기본:blue:1,파란,vocab,multiple-senses,W0374:기본:blue:2 = 우울한,미확인
+W0379,board,W0379:기본:board:1,판자,vocab,multiple-senses,W0379:기본:board:2 = 게시판; W0379:기본:board:3 = 탑승하다; W0379:기본:board:4 = 게임판,미확인
+W0381,boat,W0381:기본:boat:1,배,vocab,,,미확인
+W0382,body,W0382:기본:body:1,몸,vocab,,,미확인
+W0386,bone,W0386:기본:bone:1,뼈,vocab,,,미확인
+W0388,book,W0388:기본:book:1,책,vocab,multiple-senses,W0388:기본:book:2 = 예약하다,미확인
+W0389,bookcase,W0389:기본:bookcase:1,책장,vocab,,,미확인
+W0391,bookshop,W0391:기본:bookshop:1,서점,vocab,,,미확인
+W0393,boom,W0393:기본:boom:1,쾅 소리 내다,vocab,multiple-senses,W0393:기본:boom:2 = 굉음,미확인
+W0401,both,W0401:기본:both:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0403,bottle,W0403:기본:bottle:1,병,vocab,,,미확인
+W0404,bottom,W0404:기본:bottom:1,엉덩이,vocab,multiple-senses,W0404:기본:bottom:2 = 맨 아래,미확인
+W0406,bounce,W0406:기본:bounce:1,튀다,vocab,multiple-senses,W0406:기본:bounce:2 = 튀기다,미확인
+W0411,bowl,W0411:기본:bowl:1,그릇,vocab,,,미확인
+W0413,box,W0413:기본:box:1,상자,vocab,multiple-senses,W0413:기본:box:2 = 권투하다,미확인
+W0414,boy,W0414:기본:boy:1,남자아이,vocab,,,미확인
+W0425,bread,W0425:기본:bread:1,빵,vocab,,,미확인
+W0426,break,W0426:기본:break:1,깨다,vocab,multiple-senses,W0426:기본:break:2 = 부서지다; W0426:기본:break:3 = 휴식,미확인
+W0427,breakfast,W0427:기본:breakfast:1,아침 식사,vocab,,,미확인
+W0429,breathe,W0429:기본:breathe:1,숨 쉬다,vocab,,,미확인
+W0434,bridge,W0434:기본:bridge:1,다리,vocab,,,미확인
+W0438,bright,W0438:기본:bright:1,밝은,vocab,multiple-senses,W0438:기본:bright:2 = 영리한,미확인
+W0440,bring,W0440:기본:bring:1,가져오다,vocab,,,미확인
+W0446,brother,W0446:기본:brother:1,남자 형제,vocab,,,미확인
+W0447,brown,W0447:기본:brown:1,갈색의,vocab,,,미확인
+W0449,brush,W0449:기본:brush:1,솔질하다,vocab,multiple-senses,W0449:기본:brush:2 = 솔; W0449:기본:brush:3 = 빗,미확인
+W0459,build,W0459:기본:build:1,짓다,vocab,multiple-senses,W0459:기본:build:2 = 만들다,미확인
+W0475,burger,W0475:기본:burger:1,버거,vocab,,,미확인
+W0480,bus,W0480:기본:bus:1,버스,vocab,,,미확인
+W0482,business,W0482:기본:business:1,사업,vocab,multiple-senses,W0482:기본:business:2 = 일,미확인
+W0484,busy,W0484:기본:busy:1,바쁜,vocab,,,미확인
+W0485,but,W0485:기본:but:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0488,butterfly,W0488:기본:butterfly:1,나비,vocab,,,미확인
+W0490,buy,W0490:기본:buy:1,사다,vocab,,,미확인
+W0492,by,W0492:기본:by:1,,sight,sight-empty-gloss-use-listening,,미확인
+W0502,cake,W0502:기본:cake:1,케이크,vocab,,,미확인
+W0507,call,W0507:기본:call:1,부르다,vocab,multiple-senses,W0507:기본:call:2 = 전화하다; W0507:기본:call:3 = 전화,미확인
+W0510,camera,W0510:기본:camera:1,카메라,vocab,,,미확인
+W0516,can,W0516:기본:can:1,~할 수 있다,vocab,,,미확인
+W0520,candy,W0520:기본:candy:1,사탕,vocab,,,미확인
+W0532,captain,W0532:기본:captain:1,선장,vocab,multiple-senses,W0532:기본:captain:2 = 주장,미확인
+W0535,car,W0535:기본:car:1,자동차,vocab,,,미확인
+W0538,card,W0538:기본:card:1,카드,vocab,,,미확인
+W0539,care,W0539:기본:care:1,신경 쓰다,vocab,multiple-senses,W0539:기본:care:2 = 돌봄,미확인
+W0541,careful,W0541:기본:careful:1,조심하는,vocab,multiple-senses,W0541:기본:careful:2 = 주의 깊은,미확인
+W0542,carefully,W0542:기본:carefully:1,조심스럽게,vocab,,,미확인
+W0550,carrot,W0550:기본:carrot:1,당근,vocab,,,미확인
+W0551,carry,W0551:기본:carry:1,나르다,vocab,multiple-senses,W0551:기본:carry:2 = 지니다,미확인
+W0558,castle,W0558:기본:castle:1,성,vocab,,,미확인
+W0559,cat,W0559:기본:cat:1,고양이,vocab,,,미확인
+W0560,catch,W0560:기본:catch:1,잡다,vocab,multiple-senses,W0560:기본:catch:2 = 붙잡다,미확인
+W0567,cause,W0567:기본:cause:1,원인,vocab,multiple-senses,W0567:기본:cause:2 = 일으키다,미확인
+W0569,cave,W0569:기본:cave:1,동굴,vocab,,,미확인
+W0582,center,W0582:기본:center:1,가운데,vocab,multiple-senses,W0582:기본:center:2 = 중심,미확인
+W0593,chair,W0593:기본:chair:1,의자,vocab,,,미확인
+W0598,chance,W0598:기본:chance:1,기회,vocab,multiple-senses,W0598:기본:chance:2 = 우연,미확인
+W0599,change,W0599:기본:change:1,바꾸다,vocab,multiple-senses,W0599:기본:change:2 = 변화; W0599:기본:change:3 = 거스름돈,미확인
+W0600,chant,W0600:기본:chant:1,리듬에 맞춰 외치다,vocab,,,미확인
+W0603,chapter,W0603:기본:chapter:1,장,vocab,,,미확인
+W0616,check,W0616:기본:check:1,확인하다,vocab,multiple-senses,W0616:기본:check:2 = 점검,미확인
+W0619,cheer,W0619:기본:cheer:1,응원하다,vocab,multiple-senses,W0619:기본:cheer:2 = 환호,미확인
+W0621,cheese,W0621:기본:cheese:1,치즈,vocab,,,미확인
+W0631,chicken,W0631:기본:chicken:1,닭고기,vocab,multiple-senses,W0631:기본:chicken:2 = 닭,미확인
+W0633,child,W0633:기본:child:1,아이,vocab,,,미확인
+W0643,chocolate,W0643:기본:chocolate:1,초콜릿,vocab,,,미확인
+W0647,choose,W0647:기본:choose:1,선택하다,vocab,,,미확인
+W0650,chorus,W0650:기본:chorus:1,합창,vocab,multiple-senses,W0650:기본:chorus:2 = 후렴,미확인
+W0657,circle,W0657:기본:circle:1,동그라미 치다,vocab,first-sense-proposal; multiple-senses,W0657:기본:circle:2 = 원,미확인
+W0663,city,W0663:기본:city:1,도시,vocab,,,미확인
+W0667,clap,W0667:기본:clap:1,박수를 치다,vocab,,,미확인
+W0670,class,W0670:기본:class:1,수업,vocab,multiple-senses,W0670:기본:class:2 = 반; W0670:기본:class:3 = 종류,미확인
+W0673,classmate,W0673:기본:classmate:1,반 친구,vocab,,,미확인
+W0674,classroom,W0674:기본:classroom:1,교실,vocab,,,미확인
+W0678,clean,W0678:기본:clean:1,청소하다,vocab,multiple-senses,W0678:기본:clean:2 = 깨끗한,미확인
+W0679,clear,W0679:기본:clear:1,맑은,vocab,multiple-senses,W0679:기본:clear:2 = 분명한; W0679:기본:clear:3 = 치우다; W0679:기본:clear:4 = 명확한,미확인
+W0688,climb,W0688:기본:climb:1,오르다,vocab,,,미확인
+W0694,clock,W0694:기본:clock:1,시계,vocab,,,미확인
+W0695,close,W0695:기본:close:1,닫다,vocab,multiple-senses,W0695:기본:close:2 = 가까운,미확인
+W0699,clothes,W0699:기본:clothes:1,옷,vocab,,,미확인
+W0706,clue,W0706:기본:clue:1,단서,vocab,,,미확인
+W0711,coat,W0711:기본:coat:1,외투,vocab,multiple-senses,W0711:기본:coat:2 = 동물의 털,미확인
+W0716,coconut,W0716:기본:coconut:1,코코넛,vocab,,,미확인
+W0723,cold,W0723:기본:cold:1,차가운,vocab,multiple-senses,W0723:기본:cold:2 = 추운; W0723:기본:cold:3 = 감기,미확인
+W0731,color,W0731:기본:color:1,색칠하다,vocab,first-sense-proposal; multiple-senses,W0731:기본:color:2 = 색,미확인
+W0737,come,W0737:기본:come:1,오다,vocab,,,미확인
+W0749,company,W0749:기본:company:1,회사,vocab,multiple-senses,W0749:기본:company:2 = 함께 있는 사람들,미확인
+W0758,complete,W0758:기본:complete:1,완전한,vocab,multiple-senses,W0758:기본:complete:2 = 완료하다,미확인
+W0763,computer,W0763:기본:computer:1,컴퓨터,vocab,,,미확인
+W0804,continue,W0804:기본:continue:1,계속하다,vocab,,,미확인
+W0815,cook,W0815:기본:cook:1,요리하다,vocab,multiple-senses,W0815:기본:cook:2 = 요리사,미확인
+W0816,cookie,W0816:기본:cookie:1,쿠키,vocab,,,미확인
+W0817,cool,W0817:기본:cool:1,시원한,vocab,multiple-senses,W0817:기본:cool:2 = 멋진,미확인
+W0822,copy,W0822:기본:copy:1,베끼다,vocab,multiple-senses,W0822:기본:copy:2 = 복사본,미확인
+W0828,correct,W0828:기본:correct:1,고치다,vocab,first-sense-proposal; multiple-senses,W0828:기본:correct:2 = 올바른,미확인
+W0839,count,W0839:기본:count:1,세다,vocab,multiple-senses,W0839:기본:count:2 = 중요하다,미확인
+W0841,country,W0841:기본:country:1,나라,vocab,multiple-senses,W0841:기본:country:2 = 시골,미확인
+W0845,course,W0845:기본:course:1,강좌,vocab,multiple-senses,W0845:기본:course:2 = 과정; W0845:기본:course:3 = 경로,미확인
+W0849,cousin,W0849:기본:cousin:1,사촌,vocab,,,미확인
+W0851,cover,W0851:기본:cover:1,덮다,vocab,multiple-senses,W0851:기본:cover:2 = 덮개,미확인
+W0852,cow,W0852:기본:cow:1,암소,vocab,,,미확인
+W0866,crayon,W0866:기본:crayon:1,크레용,vocab,,,미확인
+W0871,create,W0871:기본:create:1,창조하다,vocab,multiple-senses,W0871:기본:create:2 = 만들다,미확인
+W0885,crocodile,W0885:기본:crocodile:1,악어,vocab,,,미확인
+W0887,cross,W0887:기본:cross:1,건너다,vocab,multiple-senses,W0887:기본:cross:2 = 십자가; W0887:기본:cross:3 = 화난,미확인
+W0891,crowd,W0891:기본:crowd:1,군중,vocab,multiple-senses,W0891:기본:crowd:2 = 빽빽하게 모이다,미확인
+W0903,cry,W0903:기본:cry:1,울다,vocab,multiple-senses,W0903:기본:cry:2 = 외치다,미확인
+W0911,culture,W0911:기본:culture:1,문화,vocab,,,미확인
+W0912,cup,W0912:기본:cup:1,컵,vocab,,,미확인
+W0913,cupboard,W0913:기본:cupboard:1,찬장,vocab,,,미확인
+W0927,cut,W0927:기본:cut:1,자르다,vocab,,,미확인
+W0932,dad,W0932:기본:dad:1,아빠,vocab,,,미확인
+W0940,dance,W0940:기본:dance:1,춤추다,vocab,multiple-senses,W0940:기본:dance:2 = 춤,미확인
+W0944,dangerous,W0944:기본:dangerous:1,위험한,vocab,,,미확인
+W0946,dark,W0946:기본:dark:1,어두운,vocab,multiple-senses,W0946:기본:dark:2 = 짙은,미확인
+W0953,daughter,W0953:기본:daughter:1,딸,vocab,,,미확인
+W0955,day,W0955:기본:day:1,하루,vocab,multiple-senses,W0955:기본:day:2 = 낮,미확인
+W0957,dead,W0957:기본:dead:1,죽은,vocab,,,미확인
+W0962,dear,W0962:기본:dear:1,사랑하는,vocab,multiple-senses,W0962:기본:dear:2 = 소중한,미확인
+W0968,December,W0968:기본:December:1,12월,vocab,,,미확인
+W0969,decide,W0969:기본:decide:1,결정하다,vocab,,,미확인
+W0980,deep,W0980:기본:deep:1,깊은,vocab,,,미확인
+W0992,delicious,W0992:기본:delicious:1,아주 맛있는,vocab,,,미확인
+W1009,describe,W1009:기본:describe:1,묘사하다,vocab,multiple-senses,W1009:기본:describe:2 = 설명하다,미확인
+W1016,desk,W1016:기본:desk:1,책상,vocab,,,미확인
+W1034,dialogue,W1034:기본:dialogue:1,대화,vocab,,,미확인
+W1039,die,W1039:기본:die:1,죽다,vocab,multiple-senses,W1039:기본:die:2 = 주사위 한 개,미확인
+W1043,different,W1043:기본:different:1,다른,vocab,,,미확인
+W1045,difficult,W1045:기본:difficult:1,어려운,vocab,,,미확인
+W1050,dinner,W1050:기본:dinner:1,저녁 식사,vocab,,,미확인
+W1051,dinosaur,W1051:기본:dinosaur:1,공룡,vocab,,,미확인
+W1057,dirty,W1057:기본:dirty:1,더러운,vocab,,,미확인
+W1089,do,W1089:기본:do:1,하다,vocab,,,미확인
+W1091,doctor,W1091:기본:doctor:1,의사,vocab,,,미확인
+W1093,dog,W1093:기본:dog:1,개,vocab,,,미확인
+W1094,doll,W1094:기본:doll:1,인형,vocab,,,미확인
+W1101,donkey,W1101:기본:donkey:1,당나귀,vocab,,,미확인
+W1103,door,W1103:기본:door:1,문,vocab,,,미확인
+W1108,double,W1108:기본:double:1,두 배로 하다,vocab,multiple-senses,W1108:기본:double:2 = 두 배의,미확인
+W1112,down,W1112:기본:down:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1122,draw,W1122:기본:draw:1,그리다,vocab,multiple-senses,W1122:기본:draw:2 = 당기다; W1122:기본:draw:3 = 무승부,미확인
+W1127,dream,W1127:기본:dream:1,꿈,vocab,multiple-senses,W1127:기본:dream:2 = 꿈꾸다,미확인
+W1128,dress,W1128:기본:dress:1,옷을 입다,vocab,multiple-senses,W1128:기본:dress:2 = 원피스,미확인
+W1130,drink,W1130:기본:drink:1,마시다,vocab,multiple-senses,W1130:기본:drink:2 = 음료,미확인
+W1132,drive,W1132:기본:drive:1,운전하다,vocab,,,미확인
+W1136,drop,W1136:기본:drop:1,떨어뜨리다,vocab,multiple-senses,W1136:기본:drop:2 = 방울,미확인
+W1139,drum,W1139:기본:drum:1,북,vocab,,,미확인
+W1140,dry,W1140:기본:dry:1,말리다,vocab,multiple-senses,W1140:기본:dry:2 = 마른,미확인
+W1142,duck,W1142:기본:duck:1,오리,vocab,multiple-senses,W1142:기본:duck:2 = 몸을 숙이다; W1142:기본:duck:3 = 머리를 숙이다,미확인
+W1148,during,W1148:기본:during:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1154,each,W1154:기본:each:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1158,ear,W1158:기본:ear:1,귀,vocab,,,미확인
+W1159,early,W1159:기본:early:1,일찍,vocab,multiple-senses,W1159:기본:early:2 = 이른,미확인
+W1163,earth,W1163:기본:earth:1,지구,vocab,multiple-senses,W1163:기본:earth:2 = 흙,미확인
+W1170,easy,W1170:기본:easy:1,쉬운,vocab,,,미확인
+W1171,eat,W1171:기본:eat:1,먹다,vocab,,,미확인
+W1184,egg,W1184:기본:egg:1,달걀,vocab,,,미확인
+W1186,eight,W1186:기본:eight:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1198,elephant,W1198:기본:elephant:1,코끼리,vocab,,,미확인
+W1203,else,W1203:기본:else:1,그 밖에,vocab,multiple-senses,W1203:기본:else:2 = 다른,미확인
+W1223,end,W1223:기본:end:1,끝나다,vocab,multiple-senses,W1223:기본:end:2 = 끝,미확인
+W1228,energy,W1228:기본:energy:1,기운,vocab,multiple-senses,W1228:기본:energy:2 = 에너지,미확인
+W1231,English,W1231:기본:English:1,영어,vocab,multiple-senses,W1231:기본:English:2 = 영어의,미확인
+W1232,enjoy,W1232:기본:enjoy:1,즐기다,vocab,,,미확인
+W1234,enough,W1234:기본:enough:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1249,eraser,W1249:기본:eraser:1,지우개,vocab,,,미확인
+W1261,even,W1261:기본:even:1,심지어,vocab,multiple-senses,W1261:기본:even:2 = 평평한,미확인
+W1262,evening,W1262:기본:evening:1,저녁,vocab,,,미확인
+W1263,event,W1263:기본:event:1,사건,vocab,multiple-senses,W1263:기본:event:2 = 행사,미확인
+W1265,ever,W1265:기본:ever:1,언젠가,vocab,multiple-senses,W1265:기본:ever:2 = 지금까지,미확인
+W1267,every,W1267:기본:every:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1268,everybody,W1268:기본:everybody:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1269,everyone,W1269:기본:everyone:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1270,everything,W1270:기본:everything:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1271,everywhere,W1271:기본:everywhere:1,어디에나,vocab,,,미확인
+W1280,example,W1280:기본:example:1,예,vocab,,,미확인
+W1285,excite,W1285:기본:excite:1,신나게 하다,vocab,,,미확인
+W1300,experience,W1300:기본:experience:1,경험,vocab,multiple-senses,W1300:기본:experience:2 = 경험하다,미확인
+W1302,explain,W1302:기본:explain:1,설명하다,vocab,,,미확인
+W1314,eye,W1314:기본:eye:1,눈,vocab,,,미확인
+W1320,face,W1320:기본:face:1,마주하다,vocab,first-sense-proposal; multiple-senses,W1320:기본:face:2 = 얼굴,미확인
+W1321,fact,W1321:기본:fact:1,사실,vocab,,,미확인
+W1334,fall,W1334:기본:fall:1,떨어지다,vocab,multiple-senses,W1334:기본:fall:2 = 넘어지다; W1334:기본:fall:3 = 가을,미확인
+W1337,family,W1337:기본:family:1,가족,vocab,,,미확인
+W1338,famous,W1338:기본:famous:1,유명한,vocab,,,미확인
+W1342,fantastic,W1342:기본:fantastic:1,환상적인,vocab,multiple-senses,W1342:기본:fantastic:2 = 아주 좋은,미확인
+W1343,far,W1343:기본:far:1,멀리,vocab,multiple-senses,W1343:기본:far:2 = 먼,미확인
+W1345,farm,W1345:기본:farm:1,농장,vocab,multiple-senses,W1345:기본:farm:2 = 농사를 짓다,미확인
+W1346,farmer,W1346:기본:farmer:1,농부,vocab,,,미확인
+W1347,fast,W1347:기본:fast:1,빠르게,vocab,multiple-senses,W1347:기본:fast:2 = 빠른,미확인
+W1352,father,W1352:기본:father:1,아버지,vocab,,,미확인
+W1354,favorite,W1354:기본:favorite:1,가장 좋아하는,vocab,,,미확인
+W1362,February,W1362:기본:February:1,2월,vocab,,,미확인
+W1366,feel,W1366:기본:feel:1,느끼다,vocab,multiple-senses,W1366:기본:feel:2 = 만져 보다,미확인
+W1374,festival,W1374:기본:festival:1,축제,vocab,,,미확인
+W1376,few,W1376:기본:few:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1384,fight,W1384:기본:fight:1,싸우다,vocab,multiple-senses,W1384:기본:fight:2 = 싸움,미확인
+W1385,figure,W1385:기본:figure:1,숫자,vocab,multiple-senses,W1385:기본:figure:2 = 모습; W1385:기본:figure:3 = 인물; W1385:기본:figure:4 = 알아내다,미확인
+W1387,fill,W1387:기본:fill:1,채우다,vocab,,,미확인
+W1391,finally,W1391:기본:finally:1,마침내,vocab,multiple-senses,W1391:기본:finally:2 = 마지막으로,미확인
+W1392,find,W1392:기본:find:1,찾다,vocab,multiple-senses,W1392:기본:find:2 = 발견하다,미확인
+W1393,fine,W1393:기본:fine:1,괜찮은,vocab,multiple-senses,W1393:기본:fine:2 = 고운; W1393:기본:fine:3 = 벌금,미확인
+W1394,finger,W1394:기본:finger:1,손가락,vocab,,,미확인
+W1396,finish,W1396:기본:finish:1,끝내다,vocab,,,미확인
+W1398,fire,W1398:기본:fire:1,불,vocab,multiple-senses,W1398:기본:fire:2 = 발사하다,미확인
+W1403,first,W1403:기본:first:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1404,fish,W1404:기본:fish:1,물고기,vocab,multiple-senses,W1404:기본:fish:2 = 생선; W1404:기본:fish:3 = 낚시하다,미확인
+W1407,five,W1407:기본:five:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1412,flap,W1412:기본:flap:1,날개를 퍼덕이다,vocab,multiple-senses,W1412:기본:flap:2 = 펄럭이다,미확인
+W1414,flashcard,W1414:기본:flashcard:1,학습 카드,vocab,,,미확인
+W1416,flat,W1416:기본:flat:1,평평한,vocab,,,미확인
+W1427,floor,W1427:기본:floor:1,바닥,vocab,multiple-senses,W1427:기본:floor:2 = 층,미확인
+W1433,flower,W1433:기본:flower:1,꽃,vocab,,,미확인
+W1439,fly,W1439:기본:fly:1,날다,vocab,picture-sense-review; multiple-senses,W1439:기본:fly:2 = 파리,미확인
+W1448,follow,W1448:기본:follow:1,따라가다,vocab,multiple-senses,W1448:기본:follow:2 = 따르다,미확인
+W1450,food,W1450:기본:food:1,음식,vocab,,,미확인
+W1453,foot,W1453:기본:foot:1,발,vocab,multiple-senses,W1453:기본:foot:2 = 길이 단위 피트,미확인
+W1454,football,W1454:기본:football:1,미식축구,vocab,multiple-senses,W1454:기본:football:2 = 영국식 축구,미확인
+W1455,for,W1455:기본:for:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1460,foreign,W1460:기본:foreign:1,외국의,vocab,multiple-senses,W1460:기본:foreign:2 = 낯선,미확인
+W1461,forest,W1461:기본:forest:1,숲,vocab,,,미확인
+W1462,forget,W1462:기본:forget:1,잊다,vocab,,,미확인
+W1467,form,W1467:기본:form:1,형태,vocab,multiple-senses,W1467:기본:form:2 = 양식; W1467:기본:form:3 = 형성하다,미확인
+W1474,forward,W1474:기본:forward:1,앞으로,vocab,,,미확인
+W1476,four,W1476:기본:four:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1485,free,W1485:기본:free:1,풀어주다,vocab,first-sense-proposal; multiple-senses,W1485:기본:free:2 = 자유로운; W1485:기본:free:3 = 무료의,미확인
+W1494,Friday,W1494:기본:Friday:1,금요일,vocab,,,미확인
+W1495,friend,W1495:기본:friend:1,친구,vocab,,,미확인
+W1500,frog,W1500:기본:frog:1,개구리,vocab,,,미확인
+W1501,from,W1501:기본:from:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1502,front,W1502:기본:front:1,앞쪽의,vocab,multiple-senses,W1502:기본:front:2 = 앞,미확인
+W1507,fruit,W1507:기본:fruit:1,과일,vocab,,,미확인
+W1511,full,W1511:기본:full:1,가득 찬,vocab,multiple-senses,W1511:기본:full:2 = 배부른,미확인
+W1512,fun,W1512:기본:fun:1,재미,vocab,multiple-senses,W1512:기본:fun:2 = 재미있는,미확인
+W1515,funny,W1515:기본:funny:1,웃기는,vocab,multiple-senses,W1515:기본:funny:2 = 이상한,미확인
+W1521,future,W1521:기본:future:1,미래의,vocab,multiple-senses,W1521:기본:future:2 = 미래,미확인
+W1529,game,W1529:기본:game:1,게임,vocab,multiple-senses,W1529:기본:game:2 = 놀이; W1529:기본:game:3 = 경기,미확인
+W1532,garden,W1532:기본:garden:1,정원,vocab,,,미확인
+W1536,gasp,W1536:기본:gasp:1,헉 하고 숨을 들이쉬다,vocab,,,미확인
+W1558,get,W1558:기본:get:1,얻다,vocab,multiple-senses,W1558:기본:get:2 = ~이 되다,미확인
+W1560,giant,W1560:기본:giant:1,거대한,vocab,multiple-senses,W1560:기본:giant:2 = 거인,미확인
+W1563,giggle,W1563:기본:giggle:1,킥킥 웃다,vocab,,,미확인
+W1565,giraffe,W1565:기본:giraffe:1,기린,vocab,,,미확인
+W1566,girl,W1566:기본:girl:1,여자아이,vocab,,,미확인
+W1567,give,W1567:기본:give:1,주다,vocab,,,미확인
+W1572,glass,W1572:기본:glass:1,유리,vocab,multiple-senses,W1572:기본:glass:2 = 유리잔,미확인
+W1584,go,W1584:기본:go:1,가다,vocab,,,미확인
+W1586,goat,W1586:기본:goat:1,염소,vocab,,,미확인
+W1590,gold,W1590:기본:gold:1,금,vocab,multiple-senses,W1590:기본:gold:2 = 금빛의,미확인
+W1594,good,W1594:기본:good:1,좋은,vocab,,,미확인
+W1595,goodbye,W1595:기본:goodbye:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1610,grandfather,W1610:기본:grandfather:1,할아버지,vocab,,,미확인
+W1611,grandmother,W1611:기본:grandmother:1,할머니,vocab,,,미확인
+W1613,grape,W1613:기본:grape:1,포도,vocab,,,미확인
+W1627,gray,W1627:기본:gray:1,회색의,vocab,,,미확인
+W1630,great,W1630:기본:great:1,아주 좋은,vocab,multiple-senses,W1630:기본:great:2 = 위대한,미확인
+W1633,green,W1633:기본:green:1,초록색의,vocab,multiple-senses,W1633:기본:green:2 = 환경을 생각하는,미확인
+W1641,ground,W1641:기본:ground:1,땅,vocab,multiple-senses,W1641:기본:ground:2 = 지면,미확인
+W1642,group,W1642:기본:group:1,무리,vocab,multiple-senses,W1642:기본:group:2 = 집단,미확인
+W1643,grow,W1643:기본:grow:1,자라다,vocab,multiple-senses,W1643:기본:grow:2 = 기르다,미확인
+W1649,guess,W1649:기본:guess:1,추측하다,vocab,multiple-senses,W1649:기본:guess:2 = 추측,미확인
+W1655,guitar,W1655:기본:guitar:1,기타,vocab,,,미확인
+W1659,gun,W1659:기본:gun:1,총,vocab,,,미확인
+W1660,guy,W1660:기본:guy:1,사람,vocab,multiple-senses,W1660:기본:guy:2 = 남자,미확인
+W1667,hair,W1667:기본:hair:1,머리카락,vocab,multiple-senses,W1667:기본:hair:2 = 털,미확인
+W1669,half,W1669:기본:half:1,절반의,vocab,multiple-senses,W1669:기본:half:2 = 절반,미확인
+W1670,hall,W1670:기본:hall:1,현관 홀,vocab,multiple-senses,W1670:기본:hall:2 = 복도,미확인
+W1677,hand,W1677:기본:hand:1,손,vocab,,,미확인
+W1678,handbag,W1678:기본:handbag:1,핸드백,vocab,,,미확인
+W1682,hang,W1682:기본:hang:1,걸다,vocab,multiple-senses,W1682:기본:hang:2 = 매달리다,미확인
+W1684,happen,W1684:기본:happen:1,일어나다,vocab,,,미확인
+W1687,happy,W1687:기본:happy:1,행복한,vocab,,,미확인
+W1689,hard,W1689:기본:hard:1,열심히,vocab,multiple-senses,W1689:기본:hard:2 = 단단한; W1689:기본:hard:3 = 어려운,미확인
+W1699,hat,W1699:기본:hat:1,모자,vocab,,,미확인
+W1704,have,W1704:기본:have:1,가지다,vocab,multiple-senses,W1704:기본:have:2 = 먹다; W1704:기본:have:3 = ~해 본 적이 있다,미확인
+W1706,he,W1706:기본:he:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1707,head,W1707:기본:head:1,머리,vocab,multiple-senses,W1707:기본:head:2 = 우두머리,미확인
+W1714,healthy,W1714:기본:healthy:1,건강한,vocab,,,미확인
+W1716,hear,W1716:기본:hear:1,듣다,vocab,multiple-senses,W1716:기본:hear:2 = 들리다,미확인
+W1718,heart,W1718:기본:heart:1,심장,vocab,multiple-senses,W1718:기본:heart:2 = 마음,미확인
+W1722,heavy,W1722:기본:heavy:1,무거운,vocab,,,미확인
+W1726,helicopter,W1726:기본:helicopter:1,헬리콥터,vocab,,,미확인
+W1727,hello,W1727:기본:hello:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1729,help,W1729:기본:help:1,돕다,vocab,multiple-senses,W1729:기본:help:2 = 도움,미확인
+W1737,here,W1737:기본:here:1,여기,vocab,,,미확인
+W1746,hide,W1746:기본:hide:1,숨다,vocab,multiple-senses,W1746:기본:hide:2 = 숨기다,미확인
+W1748,high,W1748:기본:high:1,높은,vocab,multiple-senses,W1748:기본:high:2 = 높이,미확인
+W1752,hill,W1752:기본:hill:1,언덕,vocab,,,미확인
+W1756,hippopotamus,W1756:기본:hippopotamus:1,하마,vocab,,,미확인
+W1762,hit,W1762:기본:hit:1,치다,vocab,multiple-senses,W1762:기본:hit:2 = 맞히다,미확인
+W1765,hockey,W1765:기본:hockey:1,하키,vocab,,,미확인
+W1767,hold,W1767:기본:hold:1,잡고 있다,vocab,multiple-senses,W1767:기본:hold:2 = 개최하다,미확인
+W1768,hole,W1768:기본:hole:1,구멍,vocab,,,미확인
+W1771,home,W1771:기본:home:1,집,vocab,multiple-senses,W1771:기본:home:2 = 고향,미확인
+W1773,homework,W1773:기본:homework:1,숙제,vocab,,,미확인
+W1785,hop,W1785:기본:hop:1,깡충 뛰다,vocab,,,미확인
+W1786,hope,W1786:기본:hope:1,바라다,vocab,multiple-senses,W1786:기본:hope:2 = 희망,미확인
+W1794,horse,W1794:기본:horse:1,말,vocab,,,미확인
+W1799,hot,W1799:기본:hot:1,뜨거운,vocab,multiple-senses,W1799:기본:hot:2 = 더운,미확인
+W1801,hour,W1801:기본:hour:1,시간,vocab,,,미확인
+W1802,house,W1802:기본:house:1,집,vocab,,,미확인
+W1804,how,W1804:기본:how:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1805,however,W1805:기본:however:1,그러나,vocab,multiple-senses,W1805:기본:however:2 = 아무리 ~해도,미확인
+W1809,huge,W1809:기본:huge:1,아주 큰,vocab,,,미확인
+W1812,human,W1812:기본:human:1,인간의,vocab,multiple-senses,W1812:기본:human:2 = 인간,미확인
+W1817,hundred,W1817:기본:hundred:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1818,hungry,W1818:기본:hungry:1,배고픈,vocab,,,미확인
+W1822,hurrah,W1822:기본:hurrah:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1824,hurry,W1824:기본:hurry:1,서두르다,vocab,,,미확인
+W1825,hurt,W1825:기본:hurt:1,다치게 하다,vocab,multiple-senses,W1825:기본:hurt:2 = 아프다,미확인
+W1832,I,W1832:기본:I:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1833,ice,W1833:기본:ice:1,얼음,vocab,,,미확인
+W1838,idea,W1838:기본:idea:1,생각,vocab,,,미확인
+W1841,if,W1841:기본:if:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1850,imagine,W1850:기본:imagine:1,상상하다,vocab,,,미확인
+W1860,important,W1860:기본:important:1,중요한,vocab,,,미확인
+W1866,in,W1866:기본:in:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1868,include,W1868:기본:include:1,포함하다,vocab,,,미확인
+W1884,information,W1884:기본:information:1,정보,vocab,,,미확인
+W1895,inside,W1895:기본:inside:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1903,instruction,W1903:기본:instruction:1,지시,vocab,multiple-senses,W1903:기본:instruction:2 = 설명,미확인
+W1910,interest,W1910:기본:interest:1,흥미를 끌다,vocab,first-sense-proposal; multiple-senses,W1910:기본:interest:2 = 관심,미확인
+W1918,into,W1918:기본:into:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1931,island,W1931:기본:island:1,섬,vocab,,,미확인
+W1933,it,W1933:기본:it:1,,sight,sight-empty-gloss-use-listening,,미확인
+W1935,item,W1935:기본:item:1,항목,vocab,multiple-senses,W1935:기본:item:2 = 물건,미확인
+W1940,jacket,W1940:기본:jacket:1,재킷,vocab,,,미확인
+W1944,January,W1944:기본:January:1,1월,vocab,,,미확인
+W1949,jeans,W1949:기본:jeans:1,청바지,vocab,,,미확인
+W1951,jellyfish,W1951:기본:jellyfish:1,해파리,vocab,,,미확인
+W1956,job,W1956:기본:job:1,일,vocab,multiple-senses,W1956:기본:job:2 = 직업,미확인
+W1958,join,W1958:기본:join:1,참여하다,vocab,multiple-senses,W1958:기본:join:2 = 연결하다,미확인
+W1972,juice,W1972:기본:juice:1,주스,vocab,,,미확인
+W1974,July,W1974:기본:July:1,7월,vocab,,,미확인
+W1975,jump,W1975:기본:jump:1,뛰다,vocab,multiple-senses,W1975:기본:jump:2 = 점프,미확인
+W1977,June,W1977:기본:June:1,6월,vocab,,,미확인
+W1979,just,W1979:기본:just:1,방금,vocab,multiple-senses,W1979:기본:just:2 = 그저; W1979:기본:just:3 = 꼭,미확인
+W1985,keep,W1985:기본:keep:1,계속하다,vocab,multiple-senses,W1985:기본:keep:2 = 보관하다,미확인
+W1990,keyboard,W1990:기본:keyboard:1,키보드,vocab,,,미확인
+W1991,kick,W1991:기본:kick:1,발로 차다,vocab,,,미확인
+W1992,kid,W1992:기본:kid:1,아이,vocab,,,미확인
+W1993,kill,W1993:기본:kill:1,죽이다,vocab,,,미확인
+W1996,kind,W1996:기본:kind:1,친절한,vocab,multiple-senses,W1996:기본:kind:2 = 종류,미확인
+W1999,king,W1999:기본:king:1,왕,vocab,,,미확인
+W2001,kiss,W2001:기본:kiss:1,입 맞추다,vocab,multiple-senses,W2001:기본:kiss:2 = 입맞춤,미확인
+W2003,kitchen,W2003:기본:kitchen:1,부엌,vocab,,,미확인
+W2004,kite,W2004:기본:kite:1,연,vocab,,,미확인
+W2006,kiwi,W2006:기본:kiwi:1,키위,vocab,,,미확인
+W2008,knee,W2008:기본:knee:1,무릎,vocab,,,미확인
+W2012,knock,W2012:기본:knock:1,두드리다,vocab,multiple-senses,W2012:기본:knock:2 = 부딪치다,미확인
+W2013,know,W2013:기본:know:1,알다,vocab,,,미확인
+W2022,lady,W2022:기본:lady:1,여성,vocab,multiple-senses,W2022:기본:lady:2 = 숙녀,미확인
+W2027,lamp,W2027:기본:lamp:1,램프,vocab,,,미확인
+W2028,land,W2028:기본:land:1,땅,vocab,multiple-senses,W2028:기본:land:2 = 육지; W2028:기본:land:3 = 착륙하다,미확인
+W2033,language,W2033:기본:language:1,언어,vocab,,,미확인
+W2036,large,W2036:기본:large:1,큰,vocab,multiple-senses,W2036:기본:large:2 = 넓은,미확인
+W2038,last,W2038:기본:last:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2040,late,W2040:기본:late:1,늦게,vocab,multiple-senses,W2040:기본:late:2 = 늦은,미확인
+W2043,laugh,W2043:기본:laugh:1,웃다,vocab,multiple-senses,W2043:기본:laugh:2 = 웃음,미확인
+W2050,lay,W2050:기본:lay:1,놓다,vocab,multiple-senses,W2050:기본:lay:2 = 알을 낳다,미확인
+W2053,lead,W2053:기본:lead:1,이끌다,vocab,,,미확인
+W2059,learn,W2059:기본:learn:1,배우다,vocab,,,미확인
+W2062,leave,W2062:기본:leave:1,떠나다,vocab,multiple-senses,W2062:기본:leave:2 = 남겨 두다,미확인
+W2064,left,W2064:기본:left:1,왼쪽의,vocab,multiple-senses,W2064:기본:left:2 = 왼쪽,미확인
+W2066,leg,W2066:기본:leg:1,다리,vocab,,,미확인
+W2069,lemon,W2069:기본:lemon:1,레몬,vocab,,,미확인
+W2070,lemonade,W2070:기본:lemonade:1,레모네이드,vocab,,,미확인
+W2076,lesson,W2076:기본:lesson:1,수업,vocab,multiple-senses,W2076:기본:lesson:2 = 교훈,미확인
+W2078,let,W2078:기본:let:1,~하게 하다,vocab,multiple-senses,W2078:기본:let:2 = 허락하다,미확인
+W2079,letter,W2079:기본:letter:1,글자,vocab,multiple-senses,W2079:기본:letter:2 = 편지,미확인
+W2087,lie,W2087:기본:lie:1,눕다,vocab,multiple-senses,W2087:기본:lie:2 = 거짓말하다; W2087:기본:lie:3 = 거짓말,미확인
+W2088,life,W2088:기본:life:1,생명,vocab,multiple-senses,W2088:기본:life:2 = 삶,미확인
+W2093,light,W2093:기본:light:1,불을 붙이다,vocab,first-sense-proposal; multiple-senses,W2093:기본:light:2 = 빛; W2093:기본:light:3 = 가벼운,미확인
+W2097,like,W2097:기본:like:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2101,lime,W2101:기본:lime:1,라임,vocab,,,미확인
+W2104,line,W2104:기본:line:1,선,vocab,multiple-senses,W2104:기본:line:2 = 줄,미확인
+W2107,lion,W2107:기본:lion:1,사자,vocab,,,미확인
+W2109,list,W2109:기본:list:1,목록,vocab,multiple-senses,W2109:기본:list:2 = 목록에 적다,미확인
+W2110,listen,W2110:기본:listen:1,귀 기울여 듣다,vocab,,,미확인
+W2114,little,W2114:기본:little:1,작은,vocab,multiple-senses,W2114:기본:little:2 = 조금의,미확인
+W2115,live,W2115:기본:live:1,살다,vocab,multiple-senses,W2115:기본:live:2 = 살아 있는; W2115:기본:live:3 = 생방송의,미확인
+W2119,lizard,W2119:기본:lizard:1,도마뱀,vocab,,,미확인
+W2135,long,W2135:기본:long:1,긴,vocab,multiple-senses,W2135:기본:long:2 = 간절히 바라다,미확인
+W2136,look,W2136:기본:look:1,보다,vocab,multiple-senses,W2136:기본:look:2 = 모습,미확인
+W2140,lorry,W2140:기본:lorry:1,영국식 트럭,vocab,,,미확인
+W2141,lose,W2141:기본:lose:1,잃어버리다,vocab,multiple-senses,W2141:기본:lose:2 = 지다,미확인
+W2144,lot,W2144:기본:lot:1,많음,vocab,multiple-senses,W2144:기본:lot:2 = 부지,미확인
+W2146,loud,W2146:기본:loud:1,소리가 큰,vocab,,,미확인
+W2149,love,W2149:기본:love:1,사랑하다,vocab,multiple-senses,W2149:기본:love:2 = 사랑,미확인
+W2151,low,W2151:기본:low:1,낮은,vocab,multiple-senses,W2151:기본:low:2 = 낮게,미확인
+W2162,lunch,W2162:기본:lunch:1,점심 식사,vocab,,,미확인
+W2168,machine,W2168:기본:machine:1,기계,vocab,,,미확인
+W2172,magic,W2172:기본:magic:1,마법,vocab,multiple-senses,W2172:기본:magic:2 = 마법의,미확인
+W2185,make,W2185:기본:make:1,만들다,vocab,multiple-senses,W2185:기본:make:2 = ~하게 하다,미확인
+W2189,man,W2189:기본:man:1,남자,vocab,multiple-senses,W2189:기본:man:2 = 성인 남성,미확인
+W2194,mango,W2194:기본:mango:1,망고,vocab,,,미확인
+W2198,many,W2198:기본:many:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2199,map,W2199:기본:map:1,지도,vocab,,,미확인
+W2202,March,W2202:기본:March:1,3월,vocab,,,미확인
+W2203,march,W2203:기본:march:1,행진하다,vocab,,,미확인
+W2205,mark,W2205:기본:mark:1,표시하다,vocab,multiple-senses,W2205:기본:mark:2 = 표시,미확인
+W2208,marry,W2208:기본:marry:1,결혼하다,vocab,,,미확인
+W2219,mat,W2219:기본:mat:1,매트,vocab,multiple-senses,W2219:기본:mat:2 = 깔개,미확인
+W2220,match,W2220:기본:match:1,짝을 맞추다,vocab,multiple-senses,W2220:기본:match:2 = 경기; W2220:기본:match:3 = 성냥,미확인
+W2221,material,W2221:기본:material:1,재료,vocab,multiple-senses,W2221:기본:material:2 = 자료,미확인
+W2223,matter,W2223:기본:matter:1,일,vocab,multiple-senses,W2223:기본:matter:2 = 물질; W2223:기본:matter:3 = 중요하다,미확인
+W2227,May,W2227:기본:May:1,5월,vocab,,,미확인
+W2228,may,W2228:기본:may:1,~해도 된다,vocab,multiple-senses,W2228:기본:may:2 = ~일지도 모른다,미확인
+W2229,maybe,W2229:기본:maybe:1,아마,vocab,,,미확인
+W2235,mean,W2235:기본:mean:1,뜻하다,vocab,multiple-senses,W2235:기본:mean:2 = 심술궂은,미확인
+W2239,meat,W2239:기본:meat:1,고기,vocab,,,미확인
+W2246,meet,W2246:기본:meet:1,만나다,vocab,,,미확인
+W2250,member,W2250:기본:member:1,구성원,vocab,,,미확인
+W2268,meter,W2268:기본:meter:1,미터,vocab,multiple-senses,W2268:기본:meter:2 = 계량기,미확인
+W2273,middle,W2273:기본:middle:1,가운데,vocab,,,미확인
+W2280,milk,W2280:기본:milk:1,우유,vocab,multiple-senses,W2280:기본:milk:2 = 젖을 짜다,미확인
+W2284,mind,W2284:기본:mind:1,꺼리다,vocab,first-sense-proposal; multiple-senses,W2284:기본:mind:2 = 마음; W2284:기본:mind:3 = 정신,미확인
+W2292,minute,W2292:기본:minute:1,분,vocab,,,미확인
+W2294,mirror,W2294:기본:mirror:1,거울,vocab,,,미확인
+W2297,miss,W2297:기본:miss:1,그리워하다,vocab,multiple-senses,W2297:기본:miss:2 = 놓치다,미확인
+W2301,mister,W2301:기본:mister:1,성인 남성을 공손하게 부르는 말,vocab,,,미확인
+W2308,model,W2308:기본:model:1,모형,vocab,multiple-senses,W2308:기본:model:2 = 모범; W2308:기본:model:3 = 모델,미확인
+W2311,mom,W2311:기본:mom:1,엄마,vocab,,,미확인
+W2312,moment,W2312:기본:moment:1,순간,vocab,,,미확인
+W2315,Monday,W2315:기본:Monday:1,월요일,vocab,,,미확인
+W2316,money,W2316:기본:money:1,돈,vocab,,,미확인
+W2317,monkey,W2317:기본:monkey:1,원숭이,vocab,,,미확인
+W2318,monster,W2318:기본:monster:1,괴물,vocab,,,미확인
+W2319,month,W2319:기본:month:1,달,vocab,multiple-senses,W2319:기본:month:2 = 월,미확인
+W2323,moon,W2323:기본:moon:1,달,vocab,,,미확인
+W2328,more,W2328:기본:more:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2330,morning,W2330:기본:morning:1,아침,vocab,,,미확인
+W2335,most,W2335:기본:most:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2339,mother,W2339:기본:mother:1,어머니,vocab,,,미확인
+W2342,motorbike,W2342:기본:motorbike:1,오토바이,vocab,,,미확인
+W2345,mountain,W2345:기본:mountain:1,산,vocab,,,미확인
+W2346,mouse,W2346:기본:mouse:1,생쥐,vocab,multiple-senses,W2346:기본:mouse:2 = 컴퓨터 마우스; W2346:기본:mouse:3 = 마우스,미확인
+W2347,mouth,W2347:기본:mouth:1,입,vocab,,,미확인
+W2348,move,W2348:기본:move:1,움직이다,vocab,multiple-senses,W2348:기본:move:2 = 이사하다; W2348:기본:move:3 = 수를 두기; W2348:기본:move:4 = 움직임,미확인
+W2349,movie,W2349:기본:movie:1,영화,vocab,,,미확인
+W2350,much,W2350:기본:much:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2365,museum,W2365:기본:museum:1,박물관,vocab,,,미확인
+W2367,music,W2367:기본:music:1,음악,vocab,,,미확인
+W2371,must,W2371:기본:must:1,반드시 ~해야 한다,vocab,,,미확인
+W2380,name,W2380:기본:name:1,이름을 붙이다,vocab,first-sense-proposal; multiple-senses,W2380:기본:name:2 = 이름,미확인
+W2393,near,W2393:기본:near:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2400,need,W2400:기본:need:1,필요하다,vocab,multiple-senses,W2400:기본:need:2 = 필요,미확인
+W2414,never,W2414:기본:never:1,결코 ~않다,vocab,,,미확인
+W2416,new,W2416:기본:new:1,새로운,vocab,,,미확인
+W2417,news,W2417:기본:news:1,소식,vocab,multiple-senses,W2417:기본:news:2 = 뉴스,미확인
+W2418,newspaper,W2418:기본:newspaper:1,신문,vocab,,,미확인
+W2421,next,W2421:기본:next:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2423,nice,W2423:기본:nice:1,좋은,vocab,multiple-senses,W2423:기본:nice:2 = 친절한,미확인
+W2425,night,W2425:기본:night:1,밤,vocab,,,미확인
+W2427,nine,W2427:기본:nine:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2431,no,W2431:기본:no:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2435,noise,W2435:기본:noise:1,소음,vocab,,,미확인
+W2448,nose,W2448:기본:nose:1,코,vocab,,,미확인
+W2451,not,W2451:기본:not:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2452,note,W2452:기본:note:1,음표,vocab,first-sense-proposal; multiple-senses,W2452:기본:note:2 = 메모; W2452:기본:note:3 = 주목하다; W2452:기본:note:4 = 지폐,미확인
+W2454,nothing,W2454:기본:nothing:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2455,notice,W2455:기본:notice:1,알아차리다,vocab,multiple-senses,W2455:기본:notice:2 = 안내문,미확인
+W2458,November,W2458:기본:November:1,11월,vocab,,,미확인
+W2459,now,W2459:기본:now:1,지금,vocab,,,미확인
+W2462,number,W2462:기본:number:1,수,vocab,multiple-senses,W2462:기본:number:2 = 번호,미확인
+W2477,object,W2477:기본:object:1,물건,vocab,multiple-senses,W2477:기본:object:2 = 목적; W2477:기본:object:3 = 반대하다,미확인
+W2486,ocean,W2486:기본:ocean:1,대양,vocab,,,미확인
+W2488,October,W2488:기본:October:1,10월,vocab,,,미확인
+W2492,of,W2492:기본:of:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2493,off,W2493:기본:off:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2495,office,W2495:기본:office:1,사무실,vocab,,,미확인
+W2499,often,W2499:기본:often:1,자주,vocab,,,미확인
+W2501,oh,W2501:기본:oh:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2504,okay,W2504:기본:okay:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2505,old,W2505:기본:old:1,오래된,vocab,multiple-senses,W2505:기본:old:2 = 나이 든,미확인
+W2507,on,W2507:기본:on:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2508,once,W2508:기본:once:1,한 번,vocab,multiple-senses,W2508:기본:once:2 = 옛날에,미확인
+W2509,one,W2509:기본:one:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2510,onion,W2510:기본:onion:1,양파,vocab,,,미확인
+W2511,only,W2511:기본:only:1,오직,vocab,multiple-senses,W2511:기본:only:2 = 유일한,미확인
+W2512,onto,W2512:기본:onto:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2513,open,W2513:기본:open:1,열다,vocab,multiple-senses,W2513:기본:open:2 = 열린,미확인
+W2520,optional,W2520:기본:optional:1,선택할 수 있는,vocab,,,미확인
+W2521,or,W2521:기본:or:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2522,orange,W2522:기본:orange:1,주황색의,vocab,first-sense-proposal; picture-sense-review; multiple-senses,W2522:기본:orange:2 = 오렌지,미확인
+W2528,order,W2528:기본:order:1,주문하다,vocab,multiple-senses,W2528:기본:order:2 = 명령; W2528:기본:order:3 = 순서; W2528:기본:order:4 = 질서,미확인
+W2537,other,W2537:기본:other:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2541,out,W2541:기본:out:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2546,outside,W2546:기본:outside:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2549,over,W2549:기본:over:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2556,own,W2556:기본:own:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2565,page,W2565:기본:page:1,쪽,vocab,,,미확인
+W2569,paint,W2569:기본:paint:1,칠하다,vocab,multiple-senses,W2569:기본:paint:2 = 물감,미확인
+W2572,pair,W2572:기본:pair:1,한 쌍,vocab,,,미확인
+W2583,pant,W2583:기본:pant:1,헐떡거리다,vocab,,,미확인
+W2586,paper,W2586:기본:paper:1,종이,vocab,,,미확인
+W2588,paragraph,W2588:기본:paragraph:1,문단,vocab,,,미확인
+W2593,parent,W2593:기본:parent:1,부모,vocab,,,미확인
+W2595,park,W2595:기본:park:1,공원,vocab,multiple-senses,W2595:기본:park:2 = 주차하다,미확인
+W2597,part,W2597:기본:part:1,부분,vocab,multiple-senses,W2597:기본:part:2 = 역할,미확인
+W2603,partner,W2603:기본:partner:1,짝,vocab,multiple-senses,W2603:기본:partner:2 = 동료,미확인
+W2604,party,W2604:기본:party:1,파티,vocab,multiple-senses,W2604:기본:party:2 = 일행; W2604:기본:party:3 = 정당,미확인
+W2605,pass,W2605:기본:pass:1,지나가다,vocab,multiple-senses,W2605:기본:pass:2 = 건네다; W2605:기본:pass:3 = 통과하다,미확인
+W2611,past,W2611:기본:past:1,과거의,vocab,multiple-senses,W2611:기본:past:2 = 과거; W2611:기본:past:3 = ~을 지나,미확인
+W2615,pat,W2615:기본:pat:1,가볍게 토닥이다,vocab,,,미확인
+W2622,pause,W2622:기본:pause:1,잠시 멈추다,vocab,multiple-senses,W2622:기본:pause:2 = 중단,미확인
+W2626,pay,W2626:기본:pay:1,지불하다,vocab,,,미확인
+W2627,pea,W2627:기본:pea:1,완두콩,vocab,,,미확인
+W2633,pear,W2633:기본:pear:1,배,vocab,,,미확인
+W2640,peek,W2640:기본:peek:1,살짝 엿보다,vocab,,,미확인
+W2646,pen,W2646:기본:pen:1,펜,vocab,multiple-senses,W2646:기본:pen:2 = 동물 우리,미확인
+W2648,pencil,W2648:기본:pencil:1,연필,vocab,,,미확인
+W2649,penguin,W2649:기본:penguin:1,펭귄,vocab,,,미확인
+W2657,perfect,W2657:기본:perfect:1,완벽한,vocab,,,미확인
+W2661,perhaps,W2661:기본:perhaps:1,아마,vocab,,,미확인
+W2669,person,W2669:기본:person:1,사람,vocab,,,미확인
+W2674,pet,W2674:기본:pet:1,애완동물,vocab,multiple-senses,W2674:기본:pet:2 = 쓰다듬다,미확인
+W2679,phone,W2679:기본:phone:1,전화,vocab,multiple-senses,W2679:기본:phone:2 = 전화하다,미확인
+W2681,photo,W2681:기본:photo:1,사진,vocab,,,미확인
+W2686,piano,W2686:기본:piano:1,피아노,vocab,,,미확인
+W2687,pick,W2687:기본:pick:1,고르다,vocab,multiple-senses,W2687:기본:pick:2 = 따다,미확인
+W2689,picture,W2689:기본:picture:1,그림,vocab,multiple-senses,W2689:기본:picture:2 = 사진,미확인
+W2690,pie,W2690:기본:pie:1,파이,vocab,,,미확인
+W2691,piece,W2691:기본:piece:1,한 조각,vocab,multiple-senses,W2691:기본:piece:2 = 작품; W2691:기본:piece:3 = 게임 말,미확인
+W2694,pig,W2694:기본:pig:1,돼지,vocab,,,미확인
+W2705,pineapple,W2705:기본:pineapple:1,파인애플,vocab,,,미확인
+W2707,pink,W2707:기본:pink:1,분홍색의,vocab,,,미확인
+W2714,pizza,W2714:기본:pizza:1,피자,vocab,,,미확인
+W2715,place,W2715:기본:place:1,장소,vocab,multiple-senses,W2715:기본:place:2 = 놓다,미확인
+W2717,plan,W2717:기본:plan:1,계획하다,vocab,first-sense-proposal; multiple-senses,W2717:기본:plan:2 = 계획,미확인
+W2718,plane,W2718:기본:plane:1,비행기,vocab,multiple-senses,W2718:기본:plane:2 = 평면,미확인
+W2720,plant,W2720:기본:plant:1,심다,vocab,first-sense-proposal; multiple-senses,W2720:기본:plant:2 = 식물; W2720:기본:plant:3 = 공장,미확인
+W2725,play,W2725:기본:play:1,놀다,vocab,multiple-senses,W2725:기본:play:2 = 연주하다; W2725:기본:play:3 = 연극,미확인
+W2726,player,W2726:기본:player:1,선수,vocab,multiple-senses,W2726:기본:player:2 = 연주자,미확인
+W2728,playground,W2728:기본:playground:1,놀이터,vocab,,,미확인
+W2730,please,W2730:기본:please:1,,sight,sight-empty-gloss-use-listening,,미확인
+W2743,pocket,W2743:기본:pocket:1,주머니,vocab,,,미확인
+W2747,point,W2747:기본:point:1,가리키다,vocab,multiple-senses,W2747:기본:point:2 = 요점; W2747:기본:point:3 = 점; W2747:기본:point:4 = 점수,미확인
+W2751,police,W2751:기본:police:1,경찰,vocab,,,미확인
+W2764,poor,W2764:기본:poor:1,가난한,vocab,multiple-senses,W2764:기본:poor:2 = 좋지 못한,미확인
+W2767,popular,W2767:기본:popular:1,인기 있는,vocab,,,미확인
+W2781,possible,W2781:기본:possible:1,가능한,vocab,,,미확인
+W2785,poster,W2785:기본:poster:1,포스터,vocab,,,미확인
+W2788,potato,W2788:기본:potato:1,감자,vocab,,,미확인
+W2797,power,W2797:기본:power:1,힘,vocab,multiple-senses,W2797:기본:power:2 = 전력,미확인
+W2800,practice,W2800:기본:practice:1,연습하다,vocab,multiple-senses,W2800:기본:practice:2 = 연습,미확인
+W2813,prepare,W2813:기본:prepare:1,준비하다,vocab,,,미확인
+W2816,present,W2816:기본:present:1,선물,vocab,multiple-senses,W2816:기본:present:2 = 현재의; W2816:기본:present:3 = 출석한; W2816:기본:present:4 = 제시하다,미확인
+W2820,pretend,W2820:기본:pretend:1,~인 척하다,vocab,,,미확인
+W2821,pretty,W2821:기본:pretty:1,꽤,vocab,multiple-senses,W2821:기본:pretty:2 = 예쁜,미확인
+W2840,probably,W2840:기본:probably:1,아마도,vocab,,,미확인
+W2841,problem,W2841:기본:problem:1,문제,vocab,,,미확인
+W2849,program,W2849:기본:program:1,프로그램,vocab,multiple-senses,W2849:기본:program:2 = 계획,미확인
+W2853,promise,W2853:기본:promise:1,약속하다,vocab,multiple-senses,W2853:기본:promise:2 = 약속,미확인
+W2865,protect,W2865:기본:protect:1,보호하다,vocab,,,미확인
+W2870,provide,W2870:기본:provide:1,제공하다,vocab,,,미확인
+W2878,pull,W2878:기본:pull:1,당기다,vocab,,,미확인
+W2890,purple,W2890:기본:purple:1,보라색의,vocab,,,미확인
+W2895,push,W2895:기본:push:1,밀다,vocab,,,미확인
+W2896,put,W2896:기본:put:1,놓다,vocab,multiple-senses,W2896:기본:put:2 = 넣다,미확인
+W2900,quack,W2900:기본:quack:1,꽥꽥 울다,vocab,,,미확인
+W2908,question,W2908:기본:question:1,질문하다,vocab,first-sense-proposal; multiple-senses,W2908:기본:question:2 = 질문,미확인
+W2909,quickly,W2909:기본:quickly:1,빠르게,vocab,,,미확인
+W2910,quiet,W2910:기본:quiet:1,조용한,vocab,,,미확인
+W2915,quite,W2915:기본:quite:1,꽤,vocab,multiple-senses,W2915:기본:quite:2 = 아주,미확인
+W2922,race,W2922:기본:race:1,경주하다,vocab,multiple-senses,W2922:기본:race:2 = 경주,미확인
+W2925,radio,W2925:기본:radio:1,라디오,vocab,,,미확인
+W2934,rain,W2934:기본:rain:1,비,vocab,multiple-senses,W2934:기본:rain:2 = 비가 오다,미확인
+W2939,raise,W2939:기본:raise:1,들어 올리다,vocab,multiple-senses,W2939:기본:raise:2 = 기르다,미확인
+W2962,reach,W2962:기본:reach:1,도달하다,vocab,multiple-senses,W2962:기본:reach:2 = 손을 뻗다,미확인
+W2963,read,W2963:기본:read:1,읽다,vocab,,,미확인
+W2964,ready,W2964:기본:ready:1,준비된,vocab,,,미확인
+W2965,real,W2965:기본:real:1,실제의,vocab,multiple-senses,W2965:기본:real:2 = 진짜의,미확인
+W2966,realize,W2966:기본:realize:1,깨닫다,vocab,,,미확인
+W2967,really,W2967:기본:really:1,정말로,vocab,,,미확인
+W2969,reason,W2969:기본:reason:1,추론하다,vocab,first-sense-proposal; multiple-senses,W2969:기본:reason:2 = 이유,미확인
+W2987,red,W2987:기본:red:1,빨간,vocab,,,미확인
+W3025,remember,W3025:기본:remember:1,기억하다,vocab,,,미확인
+W3033,repeat,W3033:기본:repeat:1,반복하다,vocab,multiple-senses,W3033:기본:repeat:2 = 되풀이하다,미확인
+W3037,reply,W3037:기본:reply:1,대답하다,vocab,multiple-senses,W3037:기본:reply:2 = 대답,미확인
+W3038,report,W3038:기본:report:1,보고하다,vocab,multiple-senses,W3038:기본:report:2 = 보고서; W3038:기본:report:3 = 보고,미확인
+W3065,rest,W3065:기본:rest:1,쉬다,vocab,multiple-senses,W3065:기본:rest:2 = 휴식; W3065:기본:rest:3 = 나머지,미확인
+W3066,restaurant,W3066:기본:restaurant:1,식당,vocab,,,미확인
+W3073,return,W3073:기본:return:1,돌아오다,vocab,multiple-senses,W3073:기본:return:2 = 돌려주다,미확인
+W3076,review,W3076:기본:review:1,복습하다,vocab,multiple-senses,W3076:기본:review:2 = 검토하다; W3076:기본:review:3 = 후기,미확인
+W3086,rice,W3086:기본:rice:1,쌀,vocab,multiple-senses,W3086:기본:rice:2 = 밥,미확인
+W3087,rich,W3087:기본:rich:1,부유한,vocab,multiple-senses,W3087:기본:rich:2 = 풍부한,미확인
+W3090,ride,W3090:기본:ride:1,타다,vocab,,,미확인
+W3092,right,W3092:기본:right:1,옳은,vocab,multiple-senses,W3092:기본:right:2 = 오른쪽의; W3092:기본:right:3 = 권리,미확인
+W3093,ring,W3093:기본:ring:1,울리다,vocab,picture-sense-review; multiple-senses,W3093:기본:ring:2 = 반지; W3093:기본:ring:3 = 고리,미확인
+W3103,river,W3103:기본:river:1,강,vocab,,,미확인
+W3104,road,W3104:기본:road:1,도로,vocab,,,미확인
+W3113,robot,W3113:기본:robot:1,로봇,vocab,,,미확인
+W3114,rock,W3114:기본:rock:1,바위,vocab,multiple-senses,W3114:기본:rock:2 = 흔들다,미확인
+W3119,roll,W3119:기본:roll:1,구르다,vocab,multiple-senses,W3119:기본:roll:2 = 굴리다; W3119:기본:roll:3 = 두루마리; W3119:기본:roll:4 = 작은 둥근 빵,미확인
+W3121,room,W3121:기본:room:1,방,vocab,multiple-senses,W3121:기본:room:2 = 공간,미확인
+W3124,rope,W3124:기본:rope:1,밧줄,vocab,,,미확인
+W3131,round,W3131:기본:round:1,둥근,vocab,multiple-senses,W3131:기본:round:2 = 한 차례; W3131:기본:round:3 = 경기의 한 차례,미확인
+W3135,row,W3135:기본:row:1,노를 젓다,vocab,multiple-senses,W3135:기본:row:2 = 줄; W3135:기본:row:3 = 좌석의 줄,미확인
+W3143,rug,W3143:기본:rug:1,작은 깔개,vocab,,,미확인
+W3147,ruler,W3147:기본:ruler:1,자,vocab,multiple-senses,W3147:기본:ruler:2 = 통치자,미확인
+W3150,run,W3150:기본:run:1,달리다,vocab,multiple-senses,W3150:기본:run:2 = 운영하다,미확인
+W3157,sad,W3157:기본:sad:1,슬픈,vocab,,,미확인
+W3160,safe,W3160:기본:safe:1,안전한,vocab,,,미확인
+W3174,same,W3174:기본:same:1,같은,vocab,,,미확인
+W3177,sand,W3177:기본:sand:1,모래,vocab,,,미확인
+W3180,sandwich,W3180:기본:sandwich:1,샌드위치,vocab,,,미확인
+W3188,Saturday,W3188:기본:Saturday:1,토요일,vocab,,,미확인
+W3191,sausage,W3191:기본:sausage:1,소시지,vocab,,,미확인
+W3193,save,W3193:기본:save:1,구하다,vocab,multiple-senses,W3193:기본:save:2 = 저축하다,미확인
+W3196,say,W3196:기본:say:1,말하다,vocab,,,미확인
+W3202,scare,W3202:기본:scare:1,겁주다,vocab,multiple-senses,W3202:기본:scare:2 = 놀람,미확인
+W3204,scary,W3204:기본:scary:1,무서운,vocab,,,미확인
+W3209,school,W3209:기본:school:1,학교,vocab,,,미확인
+W3213,scientist,W3213:기본:scientist:1,과학자,vocab,,,미확인
+W3214,scissors,W3214:기본:scissors:1,가위,vocab,,,미확인
+W3225,scream,W3225:기본:scream:1,비명을 지르다,vocab,multiple-senses,W3225:기본:scream:2 = 비명,미확인
+W3236,sea,W3236:기본:sea:1,바다,vocab,,,미확인
+W3246,second,W3246:기본:second:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3247,secret,W3247:기본:secret:1,비밀의,vocab,multiple-senses,W3247:기본:secret:2 = 비밀,미확인
+W3252,see,W3252:기본:see:1,보다,vocab,multiple-senses,W3252:기본:see:2 = 이해하다,미확인
+W3256,seem,W3256:기본:seem:1,~처럼 보이다,vocab,,,미확인
+W3263,sell,W3263:기본:sell:1,팔다,vocab,,,미확인
+W3265,send,W3265:기본:send:1,보내다,vocab,,,미확인
+W3269,sentence,W3269:기본:sentence:1,문장,vocab,multiple-senses,W3269:기본:sentence:2 = 판결; W3269:기본:sentence:3 = 형벌,미확인
+W3272,September,W3272:기본:September:1,9월,vocab,,,미확인
+W3274,servant,W3274:기본:servant:1,하인,vocab,,,미확인
+W3277,set,W3277:기본:set:1,한 벌,vocab,multiple-senses,W3277:기본:set:2 = 놓다; W3277:기본:set:3 = 정하다,미확인
+W3280,seven,W3280:기본:seven:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3283,several,W3283:기본:several:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3286,shake,W3286:기본:shake:1,흔들다,vocab,multiple-senses,W3286:기본:shake:2 = 떨다,미확인
+W3287,shall,W3287:기본:shall:1,~할까요,vocab,multiple-senses,W3287:기본:shall:2 = ~하겠다,미확인
+W3291,shape,W3291:기본:shape:1,모양,vocab,multiple-senses,W3291:기본:shape:2 = 형태를 만들다,미확인
+W3292,share,W3292:기본:share:1,나누다,vocab,multiple-senses,W3292:기본:share:2 = 함께 쓰다,미확인
+W3293,shark,W3293:기본:shark:1,상어,vocab,,,미확인
+W3296,she,W3296:기본:she:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3297,sheep,W3297:기본:sheep:1,양,vocab,,,미확인
+W3300,shell,W3300:기본:shell:1,껍데기,vocab,multiple-senses,W3300:기본:shell:2 = 조개껍데기,미확인
+W3305,ship,W3305:기본:ship:1,큰 배,vocab,multiple-senses,W3305:기본:ship:2 = 운송하다,미확인
+W3306,shirt,W3306:기본:shirt:1,셔츠,vocab,,,미확인
+W3310,shoe,W3310:기본:shoe:1,신발,vocab,,,미확인
+W3312,shop,W3312:기본:shop:1,가게,vocab,multiple-senses,W3312:기본:shop:2 = 쇼핑하다,미확인
+W3315,short,W3315:기본:short:1,짧은,vocab,multiple-senses,W3315:기본:short:2 = 키가 작은,미확인
+W3316,shorts,W3316:기본:shorts:1,반바지,vocab,,,미확인
+W3317,should,W3317:기본:should:1,~해야 한다,vocab,,,미확인
+W3318,shoulder,W3318:기본:shoulder:1,어깨,vocab,,,미확인
+W3319,shout,W3319:기본:shout:1,소리치다,vocab,,,미확인
+W3322,show,W3322:기본:show:1,보여 주다,vocab,multiple-senses,W3322:기본:show:2 = 공연,미확인
+W3336,sick,W3336:기본:sick:1,아픈,vocab,multiple-senses,W3336:기본:sick:2 = 메스꺼운,미확인
+W3337,side,W3337:기본:side:1,옆면,vocab,multiple-senses,W3337:기본:side:2 = 쪽,미확인
+W3343,sign,W3343:기본:sign:1,기호,vocab,multiple-senses,W3343:기본:sign:2 = 표지판; W3343:기본:sign:3 = 서명하다,미확인
+W3350,silly,W3350:기본:silly:1,우스꽝스러운,vocab,multiple-senses,W3350:기본:silly:2 = 어리석은,미확인
+W3355,simple,W3355:기본:simple:1,단순한,vocab,multiple-senses,W3355:기본:simple:2 = 간단한,미확인
+W3357,since,W3357:기본:since:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3359,sing,W3359:기본:sing:1,노래하다,vocab,,,미확인
+W3365,sir,W3365:기본:sir:1,남성을 공손하게 부르는 말,vocab,,,미확인
+W3366,sister,W3366:기본:sister:1,여자 형제,vocab,,,미확인
+W3367,sit,W3367:기본:sit:1,앉다,vocab,,,미확인
+W3370,six,W3370:기본:six:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3373,size,W3373:기본:size:1,크기,vocab,,,미확인
+W3375,skateboard,W3375:기본:skateboard:1,스케이트보드,vocab,,,미확인
+W3379,skill,W3379:기본:skill:1,기술,vocab,multiple-senses,W3379:기본:skill:2 = 능력,미확인
+W3381,skin,W3381:기본:skin:1,피부,vocab,multiple-senses,W3381:기본:skin:2 = 껍질,미확인
+W3384,skirt,W3384:기본:skirt:1,치마,vocab,,,미확인
+W3387,sky,W3387:기본:sky:1,하늘,vocab,,,미확인
+W3392,sleep,W3392:기본:sleep:1,자다,vocab,multiple-senses,W3392:기본:sleep:2 = 잠,미확인
+W3406,slow,W3406:기본:slow:1,느린,vocab,multiple-senses,W3406:기본:slow:2 = 늦추다,미확인
+W3407,slowly,W3407:기본:slowly:1,천천히,vocab,,,미확인
+W3411,small,W3411:기본:small:1,작은,vocab,,,미확인
+W3415,smell,W3415:기본:smell:1,냄새 맡다,vocab,multiple-senses,W3415:기본:smell:2 = 냄새,미확인
+W3417,smile,W3417:기본:smile:1,미소 짓다,vocab,multiple-senses,W3417:기본:smile:2 = 미소,미확인
+W3422,snack,W3422:기본:snack:1,간식,vocab,,,미확인
+W3424,snake,W3424:기본:snake:1,뱀,vocab,,,미확인
+W3436,snow,W3436:기본:snow:1,눈,vocab,multiple-senses,W3436:기본:snow:2 = 눈이 오다,미확인
+W3442,so,W3442:기본:so:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3446,soccer,W3446:기본:soccer:1,축구,vocab,,,미확인
+W3449,sock,W3449:기본:sock:1,양말,vocab,,,미확인
+W3452,sofa,W3452:기본:sofa:1,소파,vocab,,,미확인
+W3458,soldier,W3458:기본:soldier:1,군인,vocab,,,미확인
+W3463,some,W3463:기본:some:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3466,someone,W3466:기본:someone:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3467,something,W3467:기본:something:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3468,sometimes,W3468:기본:sometimes:1,때때로,vocab,,,미확인
+W3470,son,W3470:기본:son:1,아들,vocab,,,미확인
+W3471,song,W3471:기본:song:1,노래,vocab,,,미확인
+W3472,soon,W3472:기본:soon:1,곧,vocab,,,미확인
+W3475,sorry,W3475:기본:sorry:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3477,sound,W3477:기본:sound:1,소리,vocab,multiple-senses,W3477:기본:sound:2 = ~하게 들리다,미확인
+W3483,space,W3483:기본:space:1,우주,vocab,multiple-senses,W3483:기본:space:2 = 공간,미확인
+W3494,speak,W3494:기본:speak:1,말하다,vocab,,,미확인
+W3497,special,W3497:기본:special:1,특별한,vocab,,,미확인
+W3502,spell,W3502:기본:spell:1,철자를 말하거나 쓰다,vocab,multiple-senses,W3502:기본:spell:2 = 주문; W3502:기본:spell:3 = 철자를 말하다; W3502:기본:spell:4 = 마법의 주문,미확인
+W3503,spend,W3503:기본:spend:1,쓰다,vocab,multiple-senses,W3503:기본:spend:2 = 시간을 보내다,미확인
+W3506,spider,W3506:기본:spider:1,거미,vocab,,,미확인
+W3522,sport,W3522:기본:sport:1,운동,vocab,multiple-senses,W3522:기본:sport:2 = 스포츠,미확인
+W3535,square,W3535:기본:square:1,정사각형의,vocab,multiple-senses,W3535:기본:square:2 = 정사각형; W3535:기본:square:3 = 광장,미확인
+W3538,squeak,W3538:기본:squeak:1,찍찍거리다,vocab,multiple-senses,W3538:기본:squeak:2 = 삐걱거리다,미확인
+W3558,stand,W3558:기본:stand:1,서다,vocab,multiple-senses,W3558:기본:stand:2 = 받침대,미확인
+W3561,star,W3561:기본:star:1,별,vocab,,,미확인
+W3565,start,W3565:기본:start:1,시작하다,vocab,multiple-senses,W3565:기본:start:2 = 시작,미확인
+W3570,station,W3570:기본:station:1,역,vocab,multiple-senses,W3570:기본:station:2 = 기지,미확인
+W3572,stay,W3572:기본:stay:1,머무르다,vocab,multiple-senses,W3572:기본:stay:2 = 그대로 있다,미확인
+W3583,step,W3583:기본:step:1,발을 내딛다,vocab,first-sense-proposal; multiple-senses,W3583:기본:step:2 = 걸음; W3583:기본:step:3 = 계단 한 칸,미확인
+W3586,stick,W3586:기본:stick:1,붙이다,vocab,first-sense-proposal; multiple-senses,W3586:기본:stick:2 = 달라붙다; W3586:기본:stick:3 = 막대기,미확인
+W3590,still,W3590:기본:still:1,여전히,vocab,multiple-senses,W3590:기본:still:2 = 가만히,미확인
+W3597,stomp,W3597:기본:stomp:1,쿵쿵 발을 구르다,vocab,,,미확인
+W3598,stone,W3598:기본:stone:1,돌,vocab,,,미확인
+W3601,stop,W3601:기본:stop:1,멈추다,vocab,multiple-senses,W3601:기본:stop:2 = 멈춤,미확인
+W3602,store,W3602:기본:store:1,가게,vocab,multiple-senses,W3602:기본:store:2 = 저장하다,미확인
+W3606,story,W3606:기본:story:1,이야기,vocab,multiple-senses,W3606:기본:story:2 = 층,미확인
+W3608,straight,W3608:기본:straight:1,똑바로,vocab,multiple-senses,W3608:기본:straight:2 = 곧은,미확인
+W3610,strange,W3610:기본:strange:1,이상한,vocab,multiple-senses,W3610:기본:strange:2 = 낯선,미확인
+W3617,street,W3617:기본:street:1,거리,vocab,,,미확인
+W3626,strong,W3626:기본:strong:1,강한,vocab,,,미확인
+W3630,student,W3630:기본:student:1,학생,vocab,,,미확인
+W3631,study,W3631:기본:study:1,공부하다,vocab,multiple-senses,W3631:기본:study:2 = 연구; W3631:기본:study:3 = 서재,미확인
+W3649,such,W3649:기본:such:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3651,suddenly,W3651:기본:suddenly:1,갑자기,vocab,,,미확인
+W3663,summer,W3663:기본:summer:1,여름,vocab,,,미확인
+W3664,sun,W3664:기본:sun:1,해,vocab,,,미확인
+W3665,Sunday,W3665:기본:Sunday:1,일요일,vocab,,,미확인
+W3679,sure,W3679:기본:sure:1,확신하는,vocab,multiple-senses,W3679:기본:sure:2 = 확실한,미확인
+W3685,surprise,W3685:기본:surprise:1,놀라게 하다,vocab,first-sense-proposal; multiple-senses,W3685:기본:surprise:2 = 놀라움; W3685:기본:surprise:3 = 깜짝 선물; W3685:기본:surprise:4 = 뜻밖의 일,미확인
+W3705,sweet,W3705:기본:sweet:1,달콤한,vocab,multiple-senses,W3705:기본:sweet:2 = 다정한,미확인
+W3709,swim,W3709:기본:swim:1,수영하다,vocab,,,미확인
+W3710,swing,W3710:기본:swing:1,흔들리다,vocab,multiple-senses,W3710:기본:swing:2 = 그네; W3710:기본:swing:3 = 흔들다,미확인
+W3711,swish,W3711:기본:swish:1,휙 움직이다,vocab,multiple-senses,W3711:기본:swish:2 = 휙 소리,미확인
+W3721,T-shirt,W3721:기본:T-shirt:1,티셔츠,vocab,,,미확인
+W3722,table,W3722:기본:table:1,탁자,vocab,multiple-senses,W3722:기본:table:2 = 표,미확인
+W3724,tablet,W3724:기본:tablet:1,알약,vocab,multiple-senses,W3724:기본:tablet:2 = 태블릿,미확인
+W3728,tail,W3728:기본:tail:1,꼬리,vocab,,,미확인
+W3730,take,W3730:기본:take:1,가지고 가다,vocab,multiple-senses,W3730:기본:take:2 = 잡다; W3730:기본:take:3 = 시간이 걸리다,미확인
+W3734,talk,W3734:기본:talk:1,이야기하다,vocab,multiple-senses,W3734:기본:talk:2 = 대화,미확인
+W3736,tall,W3736:기본:tall:1,키가 큰,vocab,multiple-senses,W3736:기본:tall:2 = 높이가 높은,미확인
+W3749,teach,W3749:기본:teach:1,가르치다,vocab,,,미확인
+W3750,teacher,W3750:기본:teacher:1,선생님,vocab,,,미확인
+W3751,team,W3751:기본:team:1,팀,vocab,,,미확인
+W3755,teddy,W3755:기본:teddy:1,곰 인형,vocab,,,미확인
+W3758,television,W3758:기본:television:1,텔레비전,vocab,,,미확인
+W3759,tell,W3759:기본:tell:1,말해 주다,vocab,,,미확인
+W3764,ten,W3764:기본:ten:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3766,tennis,W3766:기본:tennis:1,테니스,vocab,,,미확인
+W3773,terrible,W3773:기본:terrible:1,끔찍한,vocab,multiple-senses,W3773:기본:terrible:2 = 아주 나쁜,미확인
+W3778,test,W3778:기본:test:1,시험하다,vocab,first-sense-proposal; multiple-senses,W3778:기본:test:2 = 시험,미확인
+W3779,text,W3779:기본:text:1,글,vocab,multiple-senses,W3779:기본:text:2 = 본문; W3779:기본:text:3 = 문자 메시지,미확인
+W3782,than,W3782:기본:than:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3783,thank,W3783:기본:thank:1,감사하다,vocab,,,미확인
+W3785,thanks,W3785:기본:thanks:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3786,that,W3786:기본:that:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3788,the,W3788:기본:the:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3792,then,W3792:기본:then:1,그때,vocab,multiple-senses,W3792:기본:then:2 = 그러고 나서,미확인
+W3793,there,W3793:기본:there:1,거기,vocab,multiple-senses,W3793:기본:there:2 = 저기,미확인
+W3796,they,W3796:기본:they:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3801,thing,W3801:기본:thing:1,것,vocab,multiple-senses,W3801:기본:thing:2 = 물건,미확인
+W3802,think,W3802:기본:think:1,생각하다,vocab,,,미확인
+W3807,this,W3807:기본:this:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3811,though,W3811:기본:though:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3813,thousand,W3813:기본:thousand:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3817,three,W3817:기본:three:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3819,through,W3819:기본:through:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3820,throw,W3820:기본:throw:1,던지다,vocab,,,미확인
+W3826,Thursday,W3826:기본:Thursday:1,목요일,vocab,,,미확인
+W3828,tick,W3828:기본:tick:1,진드기,vocab,multiple-senses,W3828:기본:tick:2 = 똑딱 소리,미확인
+W3834,tiger,W3834:기본:tiger:1,호랑이,vocab,,,미확인
+W3839,time,W3839:기본:time:1,시간,vocab,multiple-senses,W3839:기본:time:2 = 때,미확인
+W3846,tire,W3846:기본:tire:1,타이어,vocab,multiple-senses,W3846:기본:tire:2 = 지치게 하다,미확인
+W3849,to,W3849:기본:to:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3853,today,W3853:기본:today:1,오늘,vocab,,,미확인
+W3855,toe,W3855:기본:toe:1,발가락,vocab,,,미확인
+W3857,together,W3857:기본:together:1,함께,vocab,,,미확인
+W3862,tomato,W3862:기본:tomato:1,토마토,vocab,,,미확인
+W3864,tomorrow,W3864:기본:tomorrow:1,내일,vocab,,,미확인
+W3867,too,W3867:기본:too:1,또한,vocab,multiple-senses,W3867:기본:too:2 = 너무,미확인
+W3869,tooth,W3869:기본:tooth:1,이,vocab,,,미확인
+W3873,top,W3873:기본:top:1,팽이,vocab,first-sense-proposal; multiple-senses,W3873:기본:top:2 = 꼭대기,미확인
+W3882,touch,W3882:기본:touch:1,만지다,vocab,multiple-senses,W3882:기본:touch:2 = 접촉,미확인
+W3886,toward,W3886:기본:toward:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3889,town,W3889:기본:town:1,소도시,vocab,multiple-senses,W3889:기본:town:2 = 읍내,미확인
+W3890,toy,W3890:기본:toy:1,장난감,vocab,,,미확인
+W3899,train,W3899:기본:train:1,기차,vocab,multiple-senses,W3899:기본:train:2 = 훈련하다,미확인
+W3912,travel,W3912:기본:travel:1,여행하다,vocab,multiple-senses,W3912:기본:travel:2 = 이동하다,미확인
+W3916,treat,W3916:기본:treat:1,치료하다,vocab,multiple-senses,W3916:기본:treat:2 = 대하다; W3916:기본:treat:3 = 특별한 즐거움,미확인
+W3918,tree,W3918:기본:tree:1,나무,vocab,,,미확인
+W3924,trick,W3924:기본:trick:1,속이다,vocab,multiple-senses,W3924:기본:trick:2 = 속임수,미확인
+W3928,trip,W3928:기본:trip:1,발이 걸리다,vocab,multiple-senses,W3928:기본:trip:2 = 여행,미확인
+W3934,trouble,W3934:기본:trouble:1,곤란,vocab,multiple-senses,W3934:기본:trouble:2 = 문제; W3934:기본:trouble:3 = 괴롭히다,미확인
+W3935,trousers,W3935:기본:trousers:1,바지,vocab,,,미확인
+W3936,truck,W3936:기본:truck:1,트럭,vocab,,,미확인
+W3938,true,W3938:기본:true:1,참인,vocab,multiple-senses,W3938:기본:true:2 = 사실인,미확인
+W3945,try,W3945:기본:try:1,시도하다,vocab,multiple-senses,W3945:기본:try:2 = 해 보다,미확인
+W3946,Tuesday,W3946:기본:Tuesday:1,화요일,vocab,,,미확인
+W3956,turn,W3956:기본:turn:1,돌다,vocab,multiple-senses,W3956:기본:turn:2 = 돌리다; W3956:기본:turn:3 = 차례,미확인
+W3963,twenty,W3963:기본:twenty:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3971,two,W3971:기본:two:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3972,type,W3972:기본:type:1,타자를 치다,vocab,first-sense-proposal; multiple-senses,W3972:기본:type:2 = 종류,미확인
+W3974,ugly,W3974:기본:ugly:1,못생긴,vocab,,,미확인
+W3978,uncle,W3978:기본:uncle:1,삼촌,vocab,multiple-senses,W3978:기본:uncle:2 = 외삼촌; W3978:기본:uncle:3 = 이모부,미확인
+W3982,under,W3982:기본:under:1,,sight,sight-empty-gloss-use-listening,,미확인
+W3986,understand,W3986:기본:understand:1,이해하다,vocab,,,미확인
+W4004,unit,W4004:기본:unit:1,단원,vocab,multiple-senses,W4004:기본:unit:2 = 단위,미확인
+W4022,until,W4022:기본:until:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4026,up,W4026:기본:up:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4027,upbeat,W4027:기본:upbeat:1,낙관적이고 활기찬,vocab,,,미확인
+W4034,use,W4034:기본:use:1,사용하다,vocab,multiple-senses,W4034:기본:use:2 = 쓰임,미확인
+W4039,usually,W4039:기본:usually:1,보통,vocab,,,미확인
+W4054,vegetable,W4054:기본:vegetable:1,채소,vocab,,,미확인
+W4062,very,W4062:기본:very:1,매우,vocab,,,미확인
+W4068,video,W4068:기본:video:1,영상,vocab,,,미확인
+W4070,village,W4070:기본:village:1,마을,vocab,,,미확인
+W4082,visit,W4082:기본:visit:1,방문하다,vocab,multiple-senses,W4082:기본:visit:2 = 방문,미확인
+W4085,voice,W4085:기본:voice:1,목소리,vocab,,,미확인
+W4100,wait,W4100:기본:wait:1,기다리다,vocab,,,미확인
+W4103,wake,W4103:기본:wake:1,잠에서 깨다,vocab,multiple-senses,W4103:기본:wake:2 = 깨우다,미확인
+W4104,walk,W4104:기본:walk:1,걷다,vocab,multiple-senses,W4104:기본:walk:2 = 산책,미확인
+W4105,wall,W4105:기본:wall:1,벽,vocab,,,미확인
+W4112,want,W4112:기본:want:1,원하다,vocab,,,미확인
+W4116,warm,W4116:기본:warm:1,따뜻한,vocab,,,미확인
+W4118,wash,W4118:기본:wash:1,씻다,vocab,,,미확인
+W4121,watch,W4121:기본:watch:1,지켜보다,vocab,picture-sense-review; multiple-senses,W4121:기본:watch:2 = 손목시계,미확인
+W4122,water,W4122:기본:water:1,물을 주다,vocab,first-sense-proposal; multiple-senses,W4122:기본:water:2 = 물,미확인
+W4124,watermelon,W4124:기본:watermelon:1,수박,vocab,,,미확인
+W4125,wave,W4125:기본:wave:1,손을 흔들다,vocab,multiple-senses,W4125:기본:wave:2 = 파도,미확인
+W4126,way,W4126:기본:way:1,방법,vocab,multiple-senses,W4126:기본:way:2 = 길,미확인
+W4127,we,W4127:기본:we:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4132,wear,W4132:기본:wear:1,입고 있다,vocab,multiple-senses,W4132:기본:wear:2 = 착용하다,미확인
+W4134,weather,W4134:기본:weather:1,날씨,vocab,,,미확인
+W4138,Wednesday,W4138:기본:Wednesday:1,수요일,vocab,,,미확인
+W4140,week,W4140:기본:week:1,주,vocab,,,미확인
+W4141,weekend,W4141:기본:weekend:1,주말,vocab,,,미확인
+W4148,welcome,W4148:기본:welcome:1,환영하다,vocab,multiple-senses,W4148:기본:welcome:2 = 환영; W4148:기본:welcome:3 = 환영받는,미확인
+W4149,well,W4149:기본:well:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4156,whale,W4156:기본:whale:1,고래,vocab,,,미확인
+W4157,what,W4157:기본:what:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4160,wheel,W4160:기본:wheel:1,바퀴,vocab,,,미확인
+W4163,when,W4163:기본:when:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4165,where,W4165:기본:where:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4168,which,W4168:기본:which:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4170,while,W4170:기본:while:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4177,white,W4177:기본:white:1,흰,vocab,multiple-senses,W4177:기본:white:2 = 달걀흰자,미확인
+W4179,who,W4179:기본:who:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4181,whole,W4181:기본:whole:1,전체의,vocab,multiple-senses,W4181:기본:whole:2 = 온전한,미확인
+W4183,whose,W4183:기본:whose:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4184,why,W4184:기본:why:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4188,wife,W4188:기본:wife:1,아내,vocab,,,미확인
+W4189,wild,W4189:기본:wild:1,야생의,vocab,multiple-senses,W4189:기본:wild:2 = 거친,미확인
+W4192,will,W4192:기본:will:1,~할 것이다,vocab,multiple-senses,W4192:기본:will:2 = ~하겠다,미확인
+W4196,win,W4196:기본:win:1,이기다,vocab,,,미확인
+W4197,wind,W4197:기본:wind:1,바람,vocab,multiple-senses,W4197:기본:wind:2 = 감다,미확인
+W4198,window,W4198:기본:window:1,창문,vocab,,,미확인
+W4202,wing,W4202:기본:wing:1,날개,vocab,,,미확인
+W4205,winter,W4205:기본:winter:1,겨울,vocab,,,미확인
+W4210,wish,W4210:기본:wish:1,바라다,vocab,multiple-senses,W4210:기본:wish:2 = 소원,미확인
+W4211,witch,W4211:기본:witch:1,마녀,vocab,,,미확인
+W4212,with,W4212:기본:with:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4215,without,W4215:기본:without:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4219,woman,W4219:기본:woman:1,여자,vocab,multiple-senses,W4219:기본:woman:2 = 성인 여성,미확인
+W4221,wonder,W4221:기본:wonder:1,궁금해하다,vocab,multiple-senses,W4221:기본:wonder:2 = 놀라움; W4221:기본:wonder:3 = 경이로운 것,미확인
+W4222,wonderful,W4222:기본:wonderful:1,멋진,vocab,multiple-senses,W4222:기본:wonderful:2 = 놀라운,미확인
+W4223,wood,W4223:기본:wood:1,나무,vocab,multiple-senses,W4223:기본:wood:2 = 목재; W4223:기본:wood:3 = 숲,미확인
+W4229,word,W4229:기본:word:1,단어,vocab,multiple-senses,W4229:기본:word:2 = 말,미확인
+W4230,work,W4230:기본:work:1,일하다,vocab,multiple-senses,W4230:기본:work:2 = 작동하다; W4230:기본:work:3 = 일,미확인
+W4234,world,W4234:기본:world:1,세계,vocab,multiple-senses,W4234:기본:world:2 = 세상,미확인
+W4236,worry,W4236:기본:worry:1,걱정하다,vocab,multiple-senses,W4236:기본:worry:2 = 걱정,미확인
+W4240,wow,W4240:기본:wow:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4247,write,W4247:기본:write:1,쓰다,vocab,,,미확인
+W4250,wrong,W4250:기본:wrong:1,틀린,vocab,multiple-senses,W4250:기본:wrong:2 = 잘못된,미확인
+W4258,year,W4258:기본:year:1,해,vocab,multiple-senses,W4258:기본:year:2 = 년,미확인
+W4263,yellow,W4263:기본:yellow:1,노란,vocab,,,미확인
+W4264,yes,W4264:기본:yes:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4265,yesterday,W4265:기본:yesterday:1,어제,vocab,,,미확인
+W4266,yet,W4266:기본:yet:1,아직,vocab,multiple-senses,W4266:기본:yet:2 = 벌써,미확인
+W4271,you,W4271:기본:you:1,,sight,sight-empty-gloss-use-listening,,미확인
+W4272,young,W4272:기본:young:1,어린,vocab,,,미확인
+W4275,zebra,W4275:기본:zebra:1,얼룩말,vocab,,,미확인
+W4279,zoo,W4279:기본:zoo:1,동물원,vocab,,,미확인
