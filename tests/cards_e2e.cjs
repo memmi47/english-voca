@@ -1036,7 +1036,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
       const rider=document.querySelector('#rider');
       return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
         rider.querySelector('.rider-body').dataset.frames==='4'&&rider.querySelector('.rider-pet').dataset.frames==='2'&&
-        !!rider.querySelector('use[href="#c016-ride-c1-idle"]')&&getComputedStyle(rider).pointerEvents==='none';
+        !!rider.querySelector('.rider-unit.riding.ride-c1 .ride-back')&&getComputedStyle(rider).pointerEvents==='none';   // 2026-11-20: the ride is drawn with the courier
     },beforeGear));
   await gearPage.screenshot({path:out016+'/rider-ride-pet.png',animations:'disabled'});
   await gearPage.evaluate(()=>{
@@ -1066,7 +1066,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
       animation.currentTime = animation.effect.getTiming().duration * .6;
     }
     const follows = pet.effect.getKeyframes().some(frame => frame.transform !== 'translate(0px, 0px)');
-    const mountedArt = !!rider.querySelector('use[href="#c016-ride-c1-move"]') &&
+    const mountedArt = !!rider.querySelector('.rider-unit.riding.ride-c1 .ride-back') &&
       !!rider.querySelector('use[href="#c016-body-teal-walk3"]') && rider.classList.contains('mounted');
     return { id: choice.dataset.id, follows, mountedArt };
   });

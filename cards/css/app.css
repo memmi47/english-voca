@@ -501,3 +501,12 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .items-help{text-align:left;max-width:560px}.items-help p{margin:4px 0;display:block}.items-help p .spr{vertical-align:middle}
 .bag .item{display:inline-flex;flex-direction:column;align-items:center;gap:2px}.item-pic{display:inline-flex;align-items:center;gap:4px}.item-what{font-size:12px;line-height:1.2;color:var(--teal-d)}
 .bag-how{flex-basis:100%;margin:2px auto;max-width:640px;font-size:13px;color:var(--ink)}
+/* rides and pets together with the courier (main.riderLook, 2026-11-20) */
+.rider-unit{position:absolute;inset:0;display:block}.rider-unit .ride-back,.rider-unit .ride-front{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+.rider-unit.riding .rider-body{transform:translateY(-10%)}.rider-unit.ride-c3{animation:float 2.4s ease-in-out infinite}@keyframes float{50%{transform:translateY(-6%)}}
+.rider-unit.ride-c2{animation:bob 1.6s steps(2) infinite}@keyframes bob{50%{transform:translateY(3%)}}
+.rider-unit.color-1 :is(.ride-back,.ride-front){filter:hue-rotate(38deg)}.rider-unit.color-2 :is(.ride-back,.ride-front){filter:hue-rotate(138deg)}
+.rider .rider-pet{width:72%;height:72%;left:auto;top:auto;right:-52%;bottom:-6%}.rider .rider-pet.pet-moth{bottom:40%;right:-34%;animation:float 1.2s ease-in-out infinite}
+.pet-shadow{position:absolute;right:-40%;bottom:6%;width:44%;height:6%;background:#233f3a44;border-radius:50%}.pet-shadow.pet-moth{opacity:.5}
+.motion-quiet .rider-unit,.motion-quiet .rider-pet{animation:none!important}
+@media(prefers-reduced-motion:reduce){.rider-unit,.rider-pet{animation:none!important}}

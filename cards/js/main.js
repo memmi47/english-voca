@@ -637,7 +637,7 @@ function wardrobeItems(st=G.st) {
   const pets = ['우표 더듬이 달팽이','소인 꼬리 도마뱀','봉투 날개 나방'].map((name,i) => ({slot:'pet', id:['snail','lizard','moth'][i], name, tier:i+1}));
   const active = itemTiersActive();
   const archives = active ? FIELD_COATS.filter(item=>G.ix.byId[item.id] && oldCastle(st,item.id)) : [];
-  return [...worlds, ...archives, ...rides.filter(r=>r.continent?.id===r.id), ...pets, ...(active ? tierStarGifts : GIFTS)];
+  return [...worlds, ...archives, ...rides.filter(r=>r.continent?.id===r.id || G.pid===DEV), ...pets, ...(active ? tierStarGifts : GIFTS)];
 }
 const lookKey = id => 'cards.v0.look.' + id;
 function readLook(id, migrate = false) {
@@ -679,6 +679,7 @@ function rememberPetUnlock(st = G.st, id = G.pid) {
   if (tier > look.petTier) writeLook(id,{...look,petTier:tier});
 }
 function unlocked(item, st, look, seen = {}) {
+  if (G.pid === DEV) return true;                          // the developer playground tries everything (user 2026-11-20)
   if (item.legacy) return !!seen[item.id] || look.slots[item.slot]?.id === item.id || look.outfit === item.id || (st?.map?.stars || 0) >= item.stars;
   if (item.previous) return !!st?.map?.worlds?.[item.worldId]?.castle || item.previous.some(id=>oldCastle(st,id));
   if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
@@ -766,14 +767,31 @@ function courier(frame, px, pid=G.pid, st=G.st, face='') {
   if (!pid || pid === DEV || !st) return courierFrame(frame, {}, px, 'son', 0, false, false, face);   // the playground: the plain courier
   return courierFrame(frame, lookSelection(pid,st), px, pid, 0, frame==='idle' && !face, frame==='idle' && !face, face);
 }
+// Rides on the courier's own 48-pixel grid (user 2026-11-20: parked rides beside the courier read as litter). `back` is
+// drawn behind the courier, `front` over the legs; the courier is lifted 5 pixels to sit or stand in it. The balloon
+// reaches above the 48 box (the svg shows overflow). Colour choices (color-1/2) tint the whole ride as before.
+const RIDE_ART = (() => { const K = '#233F3A', C = '#FFF0CA', R = '#CC6651', G = '#EAB65C', T = '#387D74', W = '#7FB7D6', Bn = '#98664B', Bl = '#B07A46';
+  const r = (x, y, w, h, f) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`;
+  const wheel = (cx) => `<circle cx="${cx}" cy="41" r="6" fill="${C}" stroke="${K}" stroke-width="2"/><circle cx="${cx}" cy="41" r="1.2" fill="${K}"/>`;
+  return {
+    c1: { back: wheel(11) + wheel(37) + `<path d="M11 41L20 35H32L37 41M20 35L23 41M32 35L34 30" stroke="${R}" stroke-width="2.4" fill="none" stroke-linejoin="round"/>` + r(16, 33, 7, 2, K) + r(32, 29, 6, 2, K) + r(37, 31, 7, 5, G) + r(37, 31, 7, 1, K) + r(39, 33, 3, 1, R), front: '' },
+    c2: { back: r(0, 44, 48, 4, W) + r(4, 45, 6, 1, '#fff') + r(30, 46, 7, 1, '#fff') + r(40, 12, 2, 26, Bn) + `<path d="M42 13L42 30L48 30Z" fill="${C}" stroke="${K}" stroke-width="1"/>` + r(43, 22, 3, 3, R),
+          front: `<path d="M2 37H46L42 46H6Z" fill="${Bn}" stroke="${K}" stroke-width="1.6"/>` + r(4, 40, 40, 2, Bl) + r(2, 36, 44, 2, K) + `<path d="M18 41h6l-3 2z" fill="${C}"/>` },
+    c3: { back: `<line x1="15" y1="-1" x2="13" y2="34" stroke="${K}" stroke-width="1"/><line x1="33" y1="-1" x2="35" y2="34" stroke="${K}" stroke-width="1"/>`
+            + `<ellipse cx="24" cy="-17" rx="16" ry="14" fill="${R}" stroke="${K}" stroke-width="2"/><path d="M18 -30Q14 -17 18 -4M30 -30Q34 -17 30 -4" stroke="${G}" stroke-width="3" fill="none"/><ellipse cx="18" cy="-23" rx="3" ry="5" fill="#fff" opacity=".55"/>` + r(19, -4, 10, 3, K),
+          front: r(11, 33, 26, 2, K) + `<rect x="12" y="35" width="24" height="11" fill="${Bl}" stroke="${K}" stroke-width="1.4"/>` + r(12, 38, 24, 1, Bn) + r(12, 42, 24, 1, Bn) + r(18, 35, 1, 11, Bn) + r(29, 35, 1, 11, Bn) },
+  }; })();
+const rideLayer = (id, part, px, cls) => (RIDE_ART[id] && RIDE_ART[id][part] ? `<svg class="ride-${part} ${cls}" width="${px}" height="${px}" viewBox="0 0 48 48" overflow="visible" shape-rendering="crispEdges" aria-hidden="true">${RIDE_ART[id][part]}</svg>` : '');
 function riderLook(moving=false) {
   const selection=lookSelection(G.pid,G.st);
   const stack=(frames,kind)=>`<span class="rider-frames ${kind}" data-frames="${frames.length}">${frames.map((html,i)=>`<span class="frame" style="--frame:${i}">${html}</span>`).join('')}</span>`;
   const frames=Array.from({length:4},(_,i)=>courierFrame(moving?'walk1':'idle',selection,80,G.pid,i,false,true));
   const ride=selection.ride;
   const pet=selection.pet;
-  return `<span class="rider-shadow"></span>${ride ? wardrobeArt(`c016-ride-${ride.id}-${moving?'move':'idle'}`,64,`rider-ride ${moving?'mounted':'parked'} color-${ride.color}`):''}
-    ${stack(frames, moving ? 'rider-body' : `rider-body kid-idle ${G.pid}`)}${pet ? stack([0,1].map(i=>wardrobeArt(`c016-pet-${pet.id}-${i}`,34,`color-${pet.color}`)),'rider-pet'):''}`;
+  // The pet keeps to the courier's feet (the moth flies at the shoulder), the same size class, with its own shadow.
+  const rideCls = ride ? ` riding ride-${ride.id} color-${ride.color}` : '';
+  return `<span class="rider-shadow"></span><span class="rider-unit${rideCls}">${ride ? rideLayer(ride.id, 'back', 80, 'rider-ride') : ''}
+    ${stack(frames, moving ? 'rider-body' : `rider-body kid-idle ${G.pid}`)}${ride ? rideLayer(ride.id, 'front', 80, 'rider-ride') : ''}</span>${pet ? `<span class="pet-shadow pet-${pet.id}"></span>` + stack([0,1].map(i=>wardrobeArt(`c016-pet-${pet.id}-${i}`,44,`color-${pet.color}`)),`rider-pet pet-${pet.id}`):''}`;
 }
 function renderRider(moving=false) {
   const rider=$('#rider');
