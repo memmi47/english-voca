@@ -489,12 +489,18 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .xscene{display:flex;align-items:flex-end;justify-content:center;gap:24px;margin:2px auto 6px}.xhp{display:flex;gap:6px}.xhp i{width:18px;height:18px;background:var(--coral);border:3px solid var(--ink)}.xhp i.gone{background:#c9c2ad}
 .x-guard{display:inline-block}.x-guard.hit{animation:tremble .12s linear 4}.x-guard.down{transform:rotate(80deg) translateY(10px);opacity:.6;transition:all .6s}
 .home-help{max-width:620px;margin:4px auto;font-size:13px;color:var(--mut)}
-/* first-screen visitors (main.yardVisitors) */
-.yard-visitor{position:absolute;left:-60px;z-index:1;animation:yard-walk 13s linear forwards}.yard-visitor.ground{bottom:5px}.yard-visitor.hop{bottom:5px;animation-name:yard-hop}.yard-visitor.fly{top:14px;animation-name:yard-fly;animation-duration:10s}
-.yard-visitor.slow{animation-duration:24s}.yard-visitor.rtl{animation-direction:reverse}.yard-visitor.rtl>*{display:inline-block;transform:scaleX(-1)}
-@keyframes yard-walk{from{left:-60px}to{left:calc(100% + 10px)}}
-@keyframes yard-fly{0%{left:-60px;top:22px}25%{top:6px}50%{top:26px}75%{top:8px}100%{left:calc(100% + 10px);top:20px}}
-@keyframes yard-hop{0%{left:-60px;bottom:5px}10%{bottom:22px}20%{bottom:5px}30%{bottom:22px}40%{bottom:5px}50%{bottom:22px}60%{bottom:5px}70%{bottom:22px}80%{bottom:5px}90%{bottom:22px}100%{left:calc(100% + 10px);bottom:5px}}
+/* first-screen visitors (main.yardVisitors): depth layers and one way of moving per character */
+.home-yard .cloud-back{z-index:1}.home-yard .home-office{z-index:3}.home-yard .home-mailbox,.home-yard .office-post{z-index:4}.home-yard .cloud-front{z-index:6}
+.yard-visitor{position:absolute;left:-60px;bottom:5px;animation-timing-function:linear;animation-fill-mode:forwards}.yard-visitor.rtl{animation-direction:reverse}.yard-visitor.rtl>*{display:inline-block;transform:scaleX(-1)}
+.way-swoop{animation-name:v-swoop}@keyframes v-swoop{0%{left:-10%;bottom:80%}30%{left:30%;bottom:88%}45%{left:46%;bottom:58%;transform:rotate(180deg)}75%{left:46%;bottom:58%;transform:rotate(180deg)}85%{transform:rotate(0)}100%{left:110%;bottom:95%}}
+.way-spin{animation-name:v-spin}@keyframes v-spin{0%{left:-10%}50%{left:58%;transform:rotate(0)}55%{left:62%;transform:rotate(-12deg)}60%{left:66%;transform:rotate(0)}100%{left:110%}}
+.home-mailbox.shaken{animation:tremble .1s linear 8!important}
+.way-peek{animation-name:v-peek;left:46%;opacity:0}@keyframes v-peek{0%{left:46%;bottom:5px;opacity:0}8%{opacity:1}22%,42%{left:35%;bottom:5px}55%{left:46%;bottom:5px}62%{left:47%;bottom:5px}72%,88%{left:47%;bottom:98px}96%{left:47%;bottom:5px;opacity:1}100%{opacity:0}}
+.way-crawl{animation-name:v-crawl}@keyframes v-crawl{0%{left:-10%}45%,60%{left:42%}100%{left:110%}}
+.way-hop{animation-name:v-hop}@keyframes v-hop{0%{left:-10%;bottom:5px}10%{bottom:24px}20%{bottom:5px}30%{bottom:24px}40%,60%{left:64%;bottom:5px}70%{bottom:24px}80%{bottom:5px}90%{bottom:24px}100%{left:110%;bottom:5px}}
+.way-drizzle{animation-name:v-drizzle;bottom:auto;top:4px}@keyframes v-drizzle{0%{left:-12%}40%,60%{left:44%}100%{left:110%}}
+.way-drizzle .drops{position:absolute;left:20%;right:20%;top:70%;height:60px;background:repeating-linear-gradient(90deg,#7fb7d6 0 2px,transparent 2px 9px),repeating-linear-gradient(transparent 0 6px,#dff1fb 6px 12px);background-blend-mode:normal;opacity:.75;animation:rain .5s steps(3) infinite;-webkit-mask:linear-gradient(#000,transparent);mask:linear-gradient(#000,transparent)}@keyframes rain{to{background-position:0 0,0 9px;transform:translateY(6px)}}
+.way-loop{animation-name:v-loop;bottom:auto}@keyframes v-loop{0%{left:-10%;top:40%}25%{left:30%;top:10%}35%{left:38%;top:-2%}45%{left:46%;top:10%}55%{left:38%;top:30%}65%{left:30%;top:12%}100%{left:110%;top:20%}}
 /* dressing-up button and item bag help (2026-11-20) */
 .wardrobe-btn{display:inline-flex;align-items:center;gap:6px;padding:2px 10px}.wardrobe-btn b{font-size:16px}.wardrobe-btn small{display:inline-flex;align-items:center;gap:2px;font-size:12px;color:var(--mut)}
 .bag-title{font-size:16px}.help-q{width:30px;height:30px;border-radius:50%;border:3px solid var(--ink);background:#ffe9a8;font:800 16px var(--pix);padding:0}

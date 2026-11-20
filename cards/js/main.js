@@ -259,16 +259,31 @@ function armTitleMusic() {
 }
 // Visitors of the first screen (user 2026-11-20): now and then one of the game's other characters crosses the yard
 // (a bat, the whirlwind, a monster, a boss). None when motion is reduced. The timers stop with the screen (later()).
-const VISITORS = [{ a: 'bat-a', b: 'bat-b', px: 48, path: 'fly' }, { a: 'fx-storm-a', b: 'fx-storm-b', px: 52, path: 'ground' }, { a: 'monster-a', b: 'monster-b', px: 48, path: 'ground' },
-  { a: 'snail-boss', px: 44, path: 'ground', slow: true }, { a: 'leaf-boss', px: 44, path: 'hop' }, { a: 'cloud-boss', px: 46, path: 'fly' }, { a: 'bat-friend', px: 44, path: 'fly' }];
-// On hold (user 2026-11-20: the same walk across from either side was not fun). Kept for a later, livelier version.
-const YARD_VISITORS = false;
+// Visitors of the first screen, each with its own way (user 2026-11-20: "not one walk across for all"): the bat swoops in
+// from behind a cloud and hangs from the post office roof; the whirlwind spins past in front and shakes the mailbox; a
+// monster peeks out from behind the house, left then right; the snail crawls very slowly and rests; the leaf hops to the
+// mailbox and back; the rain cloud drifts between the clouds and drizzles over the house; the friendly bat loops once.
+// Depth: behind the house (layer 2), between the clouds (5), in front of everything (7). One at a time, every 12-20 s.
+// None when motion is reduced. The timers stop with the screen (later()).
+const VISITORS = [
+  { a: 'bat-a', b: 'bat-b', px: 46, way: 'swoop', z: 5, s: 9, flip: true },
+  { a: 'fx-storm-a', b: 'fx-storm-b', px: 52, way: 'spin', z: 7, s: 7, flip: true, shake: 0.5 },
+  { a: 'monster-a', b: 'monster-b', px: 46, way: 'peek', z: 2, s: 8 },
+  { a: 'snail-boss', px: 42, way: 'crawl', z: 7, s: 24, flip: true },
+  { a: 'leaf-boss', px: 42, way: 'hop', z: 7, s: 8, flip: true },
+  { a: 'cloud-boss', px: 52, way: 'drizzle', z: 5, s: 16, flip: true, rain: true },
+  { a: 'bat-friend', px: 42, way: 'loop', z: 7, s: 8, flip: true },
+];
+const YARD_VISITORS = true;
 function yardVisitors() {
   if (!YARD_VISITORS || FAST || motionOff()) return; const yard = $('.home-yard'); if (!yard) return; let last = '';
   const spawn = () => { const list = VISITORS.filter((v) => v.a !== last && document.getElementById(v.a)); if (!list.length) return; const v = list[Math.floor(Math.random() * list.length)]; last = v.a;
-    const el = document.createElement('span'); el.className = `yard-visitor ${v.path}${Math.random() < 0.5 ? ' rtl' : ''}${v.slow ? ' slow' : ''}`; el.dataset.visitor = v.a;
-    el.innerHTML = v.b ? anim(v.a, v.b, v.px, 'fast') : spr(v.a, v.px); el.addEventListener('animationend', () => el.remove()); yard.appendChild(el); };
-  const next = () => later(() => { if (G.view !== 'home' || !document.body.contains(yard)) return; spawn(); next(); }, 8000 + Math.random() * 9000);
+    const rtl = v.flip && Math.random() < 0.5; const el = document.createElement('span');
+    el.className = `yard-visitor way-${v.way}${rtl ? ' rtl' : ''}`; el.dataset.visitor = v.a; el.style.zIndex = v.z; el.style.animationDuration = v.s + 's';
+    el.innerHTML = (v.b ? anim(v.a, v.b, v.px, 'fast') : spr(v.a, v.px)) + (v.rain ? '<i class="drops"></i>' : '');
+    el.addEventListener('animationend', () => el.remove()); yard.appendChild(el);
+    if (v.shake) later(() => { const m = $('.home-mailbox'); if (m) { m.classList.add('shaken'); later(() => m.classList.remove('shaken'), 900); } }, v.s * 1000 * v.shake); };
+  const next = () => later(() => { if (G.view !== 'home' || !document.body.contains(yard)) return; spawn(); next(); }, 12000 + Math.random() * 8000);
   later(() => { if (G.view === 'home' && document.body.contains(yard)) { spawn(); next(); } }, 2500);
 }
 function home() {
