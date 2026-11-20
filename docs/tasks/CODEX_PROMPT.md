@@ -260,3 +260,19 @@ C-022는 구현보다 설계 논의가 중요합니다. 카드의 초안을 출�
 C-023은 아이템 목록과 시안 한 장을 만들고 제 확인을 기다려 주세요. 개발자 놀이터(부모 기록 → 개발자 놀이터)에서 모든 아이템을 입어 볼 수 있습니다.
 각 카드의 "바꾸면 안 되는 것"과 완료 기준을 지키고, 결과를 카드에 적고, BOARD.md를 고쳐 주세요. 막히면 추측하지 말고 카드에 질문을 적고 멈춰 주세요.
 ```
+
+## C-022 수정 (2026-11-20, Sol에게)
+
+```text
+저장소 memmi47/english-voca. PR #27(브랜치 codex/learning-forms, base claude/modest-mccarthy-3gadjk)에 이어서 커밋한다.
+먼저 base 브랜치의 최신 커밋을 이 브랜치로 merge 한다(rebase·force push 금지).
+docs/reviews/C-022.md 의 R1~R4 를 고친다.
+- R1: 뜻이 겹치는 비교 짝(hear/listen)을 빼고, 한쪽 뜻이 다른 쪽을 포함하는 짝은 쓰지 않는 검사를 넣는다.
+- R2: 새 형식으로 물은 답 기록에만 fmt 필드를 덧붙인다. 이를 위해 cards/js/deck.js 의 답 기록 한 줄만 고쳐도 된다(채점·일정·등급은 그대로). DATA_SAFETY.md 2절 표에 한 줄.
+- R3: 새 형식 카드의 소리 표시를 'none' 대신 다른 값('after')으로.
+- R4: docs/WORKLOG.md 3절 첫 줄에 C-022 승인 예외를 한 문장 덧붙인다.
+- C-023(꾸미기)은 Claude가 이미 구현했다. 손대지 않는다.
+- 각 항목에 검사를 하나씩 더한다. 기존 검사는 지우거나 약하게 하지 않는다. node tools/check_sim_baseline.mjs 의 --update 는 쓰지 않는다.
+- 완료 기준(node --test tests/*.test.mjs, node tests/cards_e2e.cjs, node tools/check_sim_baseline.mjs)을 실제로 돌려 docs/tasks/C-022.md 결과에 적고, docs/WORKLOG.md 8절에 한 줄 덧붙인다. 유료 도구는 쓰지 않는다. 파일을 지우거나 git 기록을 다시 쓰지 않는다.
+끝난 뒤 보고: 추가 커밋, 각 명령의 통과 수, R1~R4 각각의 검사 이름, 확인하지 못한 것.
+```
