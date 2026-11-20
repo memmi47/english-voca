@@ -60,6 +60,9 @@ function mergeMap(a, b, aLast = true) {
   // Whirlwinds of the day: the same rule as the monsters. The whirlwind itself: the side that played last (keys only when present).
   if (a.stormDay || b.stormDay) { out.stormDay = maxStr(a.stormDay, b.stormDay); out.stormN = Math.max(a.stormDay === out.stormDay ? a.stormN || 1 : 0, b.stormDay === out.stormDay ? b.stormN || 1 : 0); }
   if ('storm' in a || 'storm' in b) { const p = aLast ? a : b, o = aLast ? b : a; out.storm = ('storm' in p ? p.storm : o.storm) ?? null; }
+  // 왕짐 bought with stars (map.js buyItem): union; the same item bought on both devices keeps the earlier purchase.
+  if (a.bought || b.bought) { out.bought = { ...(b.bought || {}) };
+    for (const [id, x] of Object.entries(a.bought || {})) { const y = out.bought[id]; out.bought[id] = !y || String(x.day) < String(y.day) || (x.day === y.day && (x.price || 0) > (y.price || 0)) ? x : y; } }
   return out;
 }
 // After a merge, a rider or a whirlwind on a node the world file does not have is dropped (nobody gets stuck on a missing

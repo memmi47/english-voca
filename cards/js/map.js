@@ -153,3 +153,22 @@ export function settleLightning(state, lt, today) {
   if (first) { m.bonusDay = today; item = lt.score >= 3 ? (lt.score % 2 ? 'shield' : 'flame') : null; if (item) m.items[item]++; }
   return { item, newBest, first };
 }
+
+// ---- 왕짐 shop (C-023, user 2026-11-20): a 왕짐 shows once its skill goal is met and is then bought with stars; each
+// purchase costs more than the last, so a child ends up with one or two. `map.stars` stays the running total (colours and
+// star gifts still count every star ever earned); what can be spent is that total minus what was paid (`map.bought`:
+// id -> { day, price }). The record keeps no balance of its own: devices merge stars by the larger total, which would
+// bring spent stars back. Nothing here touches a word's schedule or grade.
+// first: price of the first purchase; factor: each later one costs this much more. [estimate] first ~ 5 weeks of the
+// base child's stars in tools/sim_learning.mjs (about 150 cards a day, 6 days); 5,000 -> 15,000 -> 45,000.
+export const SHOP = { first: 5000, factor: 3 };
+export function spentStars(state) { return Object.values(state?.map?.bought || {}).reduce((n, b) => n + (Number(b?.price) || 0), 0); }
+export function walletStars(state) { return Math.max(0, (state?.map?.stars || 0) - spentStars(state)); }
+export function nextPrice(state) { return SHOP.first * SHOP.factor ** Object.keys(state?.map?.bought || {}).length; }
+// -> the price paid, or 0 when it was already bought or there are not enough stars.
+export function buyItem(state, id, today) {
+  const m = ensureMap(state), price = nextPrice(state);
+  if (m.bought?.[id] || walletStars(state) < price) return 0;
+  (m.bought || (m.bought = {}))[id] = { day: today, price };
+  return price;
+}

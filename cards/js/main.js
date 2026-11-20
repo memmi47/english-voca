@@ -3,7 +3,7 @@ import { Run, newState, gradeOf, gradeCounts, mulberry32, shuffle, isSight, CFG,
 import { Sound } from './sound.js';
 import { GAME_NAMES, GAME_TYPES, gamePlan, playLevel, mountGame } from './games.js';
 import { HANG, hangmanPick, spellable, buildCrossword, mountHangman, mountCrossword } from './wordgames.js';
-import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope, setHardness } from './map.js';
+import { ensureMap, dueCount, settleRun, chooseBag, takeBag, Lightning, settleLightning, ITEMS, LIGHTNING_MIN, TRIAGE, triagePlan, triageScope, setHardness, buyItem, nextPrice, walletStars } from './map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, goldStamp, finishCastle, finishFinale, FINAL, worldWords, worldOpen, reach, setLeftOutKinds, startTile, sortView, sortPage } from './world.js';
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
@@ -605,13 +605,23 @@ const RIDES_ON = false;
 // The pet slot is now 왕짐 (user 2026-11-20): big carries and creatures that ride on the courier. The slot key stays
 // 'pet' so saved choices and the unlock tier (`petTier`) keep their place. A 왕짐 and a bag can be worn together (user 2026-11-20).
 const SLOTS = RIDES_ON ? { hat:'모자', bag:'가방', coat:'옷', ride:'탈것', pet:'왕짐' } : { hat:'모자', bag:'가방', coat:'옷', pet:'왕짐' };
-// C-023 왕짐 (art: tools/carry_recipes.py). `tier` opens with known words (PET_GOALS) like the old pets; `pending` ones have
-// no way to open yet and show only in the developer playground until one is chosen.
+// C-023 왕짐 (art: tools/carry_recipes.py). Skill only, never the continent (user 2026-11-20): each has a goal read from the
+// child's own record (all of them only grow and merge safely). Before the goal: a silhouette with the goal. After it: the
+// 왕짐 shows and can be bought with stars (map.js buyItem; each purchase costs more). Bought ones are kept for good.
+// [estimate] the numbers for the lightning round and gold cards are first guesses; change them here.
+const CARRY_GOALS = {
+  firm: { text: n => `익힌 단어 ${n.toLocaleString('ko-KR')}개`, have: st => firmCount(st) },
+  gold: { text: n => `놀이집 도전판 금 도장 ${n}개`, have: st => Object.values(st?.map?.worlds || {}).reduce((k, w) => k + Object.keys(w?.gold || {}).length, 0) },
+  best: { text: n => `번개 라운드 최고 ${n}개`, have: st => st?.map?.best || 0 },
+  perfect: { text: n => `세계 성 시험 만점 ${n}번`, have: st => Object.values(st?.map?.worlds || {}).filter(w => (w?.exam?.words?.length || 0) >= 12).length },
+  golden: { text: n => `금 등급 카드 ${n}장`, have: st => Object.values(st?.words || {}).filter(r => gradeOf(r) === 3).length },
+};
 const CARRIES = [
-  ['letter','우표보다 큰 편지',1], ['goose','가방인 척 거위',2], ['octopus','업힌 도장 문어',3],
-  ['hourglass','모래시계 가방',0], ['cake','흔들지 마세요 케이크',0], ['shark','편지 삼키는 상어',0],
-  ['puffer','투덜이 복어 풍선',0], ['fishbowl','주인 행세 금붕어 어항',0],
-].map(([art,name,tier])=>({slot:'pet', id:'w-'+art, art, name, carry:true, ...(tier ? {tier} : {pending:true})}));
+  ['letter','우표보다 큰 편지','firm',300], ['goose','가방인 척 거위','gold',3], ['octopus','업힌 도장 문어','gold',8],
+  ['hourglass','모래시계 가방','best',20], ['cake','흔들지 마세요 케이크','perfect',3], ['shark','편지 삼키는 상어','golden',200],
+  ['puffer','투덜이 복어 풍선','best',30], ['fishbowl','주인 행세 금붕어 어항','firm',2000],
+].map(([art,name,goal,n])=>({slot:'pet', id:'w-'+art, art, name, carry:true, goal, n}));
+const carryGoal = (item, st) => { const g = CARRY_GOALS[item.goal], have = g.have(st); return { have, met: have >= item.n, text: g.text(item.n) }; };
 const WORLD_GIFT_NAMES = ['꽃씨 챙모자','과일 주머니','풀잎 조끼','나무결 모자','연잎 가방','굴마을 외투','언덕 베레모','종방울 가방','항구 셔츠','조개 테두리 모자','빵바구니 가방','시계 조끼','풍선 캡','빗방울 가방','물감 앞치마','승차표 모자','공구 가방','눈꽃 외투','단추 모자','사진 가방','모래빛 셔츠','유리구슬 모자','책등 가방','구름 조끼','달조각 모자','별가루 주머니','깃털 외투','바람개비 모자','망원경 가방','창문빛 셔츠'];
 const PET_GOALS = [500, 1500, 3000];
 const COLOR_GOALS = [0, 3, 40];
@@ -664,7 +674,7 @@ function worldGift(id) {
 function wardrobeItems(st=G.st) {
   const worlds = G.ix.worlds.map(w => worldGift(w.id)).filter(Boolean);
   const rides = ['우편 자전거','봉투 나룻배','편지 열기구'].map((name,i) => ({slot:'ride', id:'c'+(i+1), name, continent:G.ix.continents[i]}));
-  const carries = CARRIES.filter(item => !item.pending || G.pid === DEV);
+  const carries = CARRIES;
   const active = itemTiersActive();
   const archives = active ? FIELD_COATS.filter(item=>G.ix.byId[item.id] && oldCastle(st,item.id)) : [];
   return [...worlds, ...archives, ...(RIDES_ON ? rides.filter(r=>r.continent?.id===r.id || G.pid===DEV) : []), ...carries, ...(active ? tierStarGifts : GIFTS)];
@@ -714,7 +724,7 @@ function unlocked(item, st, look, seen = {}) {
   if (item.previous) return !!st?.map?.worlds?.[item.worldId]?.castle || item.previous.some(id=>oldCastle(st,id));
   if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
   if (item.continent) return !!st?.map?.conts?.[item.id]?.castle;
-  if (item.pending) return false;
+  if (item.carry) return !!st?.map?.bought?.[item.id];
   return look.petTier >= item.tier;
 }
 function lookSelection(pid,st) {
@@ -854,8 +864,17 @@ function wardrobe(slot='hat', targetId=null) {
   const isNew=item=>seen.newGifts[item.id] && !seen.viewedGifts[item.id] && unlocked(item,G.st,look,seen.gifts);
   const newSlots=new Set(catalogue.filter(isNew).map(item=>item.slot));
   const items=catalogue.filter(item=>item.slot===slot);
+  const wallet=walletStars(G.st), price=nextPrice(G.st);
   const cards=items.map(item=>{
     const enabled=unlocked(item,G.st,look,seen.gifts), active=selection[slot]?.id===item.id;
+    if (item.carry && !enabled) {
+      const goal=carryGoal(item,G.st);
+      if (!goal.met) return `<button class="gear silhouette" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="false" disabled>${gearArt(item)}<b>${esc(item.name)}</b><small>${esc(goal.text)}</small><small class="goal-now">지금 ${goal.have.toLocaleString('ko-KR')}</small></button>`;
+      const asking=G.buyAsk===item.id, short=wallet<price;
+      const act=asking?`<button class="buy" data-act="gear-buy-ok" data-id="${item.id}">★ ${price.toLocaleString('ko-KR')} 내고 사기</button><button class="sec buy-no" data-act="gear-buy-no">그만두기</button>`
+        :`<button class="buy" data-act="gear-buy" data-id="${item.id}" ${short||G.readonly?'disabled':''}>★ ${price.toLocaleString('ko-KR')}에 사기</button>${short?`<small>별이 ${(price-wallet).toLocaleString('ko-KR')}개 더 필요해요</small>`:''}`;
+      return `<div class="gear shop${asking?' asking':''}" data-id="${item.id}" data-slot="${slot}">${gearArt(item)}<b>${esc(item.name)}</b><small>${esc(goal.text)} 달성</small>${act}</div>`;
+    }
     const fresh=isNew(item);
     const why=item.legacy?`★ ${item.stars}에 열려요`:item.world?(item.rank?`${REWARD_RANKS[item.rank]} 대륙에서 열려요 · ${item.world.name} 성`:`${item.world.name} 성을 깨면`):item.continent?`${item.continent.name} 큰 성을 깨면`:item.pending?'여는 방법을 정하는 중':`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
     const tag=item.legacy?'<span class="star-gift">별 선물</span>':item.rank?`<span class="gear-tier">${item.archive?'예전 보상':REWARD_RANKS[item.rank]}</span>`:'';
@@ -863,7 +882,7 @@ function wardrobe(slot='hat', targetId=null) {
   }).join('');
   const active=selection[slot];
   const colors=active?`<div class="gear-colors" aria-label="색 고르기">${COLOR_GOALS.map((goal,i)=>`<button class="sec" data-act="gear-color" data-slot="${slot}" data-color="${i}" aria-pressed="${active.color===i}" ${stars<goal?'disabled':''}>${['기본색','색 2','색 3'][i]}${goal?` · ★ ${goal}`:''}</button>`).join('')}</div>`:'';
-  box.innerHTML=`<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars} · 별은 줄어들지 않아요</p>
+  box.innerHTML=`<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars.toLocaleString('ko-KR')} · 쓸 수 있는 별 ★ ${wallet.toLocaleString('ko-KR')}</p>
   <div class="gear-preview">${courier('idle',80)}</div><nav class="gear-tabs" aria-label="꾸미기 종류">${Object.entries(SLOTS).map(([key,label])=>`<button class="sec" data-act="gear-tab" data-slot="${key}" aria-pressed="${key===slot}">${label}${newSlots.has(key)?newBadge:''}</button>`).join('')}</nav>
   ${colors}<div class="looks"><button class="gear" data-act="gear" data-id="default" data-slot="${slot}" aria-pressed="${!active}">기본</button>${cards}</div>
   <button class="sec" data-act="look-close">닫기</button></section>`;
@@ -897,6 +916,17 @@ function wear(id,slot='coat',color=null) {
   writeLook(G.pid,look);
   renderRider();
   wardrobe(slot);
+}
+// A 왕짐 is bought after a second tap (the price is large). The purchase is kept in the child's record and synced.
+function buyCarry(id) {
+  G.buyAsk=null;
+  const item=CARRIES.find(c=>c.id===id);
+  if (!item || G.pid===DEV || G.readonly || !carryGoal(item,G.st).met) return wardrobe('pet');
+  if (!buyItem(G.st,id,todayISO())) return wardrobe('pet');
+  if (!save()) return;
+  G.sync?.flush().catch(()=>{});
+  G.sound?.sfxPlay?.('stamp');
+  return wear(id,'pet');
 }
 function ownedGear() {
   const look = readLook(G.pid), {gifts} = deviceSeen();
@@ -1529,6 +1559,9 @@ async function onClick(e) {
     case 'wardrobe': return wardrobe(b.dataset.slot,b.dataset.id);
     case 'gear-tab': return wardrobe(b.dataset.slot);
     case 'gear': return wear(b.dataset.id,b.dataset.slot);
+    case 'gear-buy': G.buyAsk=b.dataset.id; return wardrobe('pet', b.dataset.id);
+    case 'gear-buy-no': G.buyAsk=null; return wardrobe('pet');
+    case 'gear-buy-ok': return buyCarry(b.dataset.id);
     case 'gear-color': { const choice=lookSelection(G.pid,G.st)[b.dataset.slot]; if (choice) return wear(choice.id,b.dataset.slot,Number(b.dataset.color)); return; }
     case 'look-close': return closeWardrobe();
     case 'celebration-atlas': return atlas(G.celebrationDoor);

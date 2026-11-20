@@ -516,3 +516,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .pet-shadow{position:absolute;right:-40%;bottom:6%;width:44%;height:6%;background:#233f3a44;border-radius:50%}.pet-shadow.pet-moth{opacity:.5}
 .motion-quiet .rider-unit,.motion-quiet .rider-pet{animation:none!important}
 @media(prefers-reduced-motion:reduce){.rider-unit,.rider-pet{animation:none!important}}
+/* C-023 왕짐 shop: the goal is met, the 왕짐 shows in colour and is bought with stars after a second tap */
+.gear.shop{background:#fff4d5;border-color:#c99a3b}.gear.shop .buy{margin-top:2px;padding:4px 8px;font-size:13px;font-weight:700;background:var(--paper);border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+.gear.shop .buy:disabled{opacity:.55;box-shadow:none}.gear.shop.asking .buy{background:#ffe08a}.gear.shop .buy-no{font-size:12px;min-height:0;padding:2px 8px}
+.gear .goal-now{opacity:.75}

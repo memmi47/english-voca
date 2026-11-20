@@ -995,6 +995,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     m.at='p1-01';m.stars=12;
     m.worlds['p1-01']={castle:'2026-11-17',seen:'2026-11-17',cleared:{},stamps:{}};
     m.conts.c1={castle:'2026-11-17'};
+    m.bought={'w-letter':{day:'2026-11-17',price:5000}};   // C-023: a 왕짐 bought with stars earlier
     for(const w of g.words.slice(0,500))s.words[w.id]={st:'done'};
     localStorage.setItem('cards.v0.p.son',JSON.stringify(s));
     localStorage.setItem('cards.v0.look.son',JSON.stringify({outfit:'sea-coat'}));
@@ -1029,11 +1030,12 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await gearPage.click('[data-act=gear-tab][data-slot=pet]');
   const carryTab=await gearPage.locator('[data-act=gear-tab][data-slot=pet]').textContent();
   const carryIds=await gearPage.locator('.looks .gear:not([data-id=default])').evaluateAll(b=>b.map(x=>x.dataset.id));
-  const carryLocked=await gearPage.locator('[data-act=gear][data-id=w-goose]').isDisabled();
+  const carryLocked=await gearPage.locator('[data-act=gear][data-id=w-goose]').isDisabled()&&
+    /놀이집 도전판 금 도장 3개/.test(await gearPage.locator('[data-act=gear][data-id=w-goose]').textContent());
   await gearPage.click('[data-act=gear][data-id=w-letter]');
   await gearPage.click('#wardrobe .sec[data-act=look-close]');
-  ok('C016/C023: no ride tab; the 왕짐 tab holds the known-word carries (not the old pets), drawn behind and over the courier; 4 rider frames, without writing child progress',
-    rideTab===0&&carryTab.trim()==='왕짐'&&JSON.stringify(carryIds)==='["w-letter","w-goose","w-octopus"]'&&carryLocked&&await gearPage.evaluate(before=>{
+  ok('C016/C023: no ride tab; the 왕짐 tab holds the eight 왕짐 (not the old pets), unmet ones as silhouettes with their goal, a bought one drawn behind and over the courier; 4 rider frames, without writing child progress',
+    rideTab===0&&carryTab.trim()==='왕짐'&&JSON.stringify(carryIds)==='["w-letter","w-goose","w-octopus","w-hourglass","w-cake","w-shark","w-puffer","w-fishbowl"]'&&carryLocked&&await gearPage.evaluate(before=>{
       const rider=document.querySelector('#rider'), look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
       const layers=[...rider.querySelectorAll('.rider-body .frame:first-child use')].map(u=>u.dataset.layer).join(',');
       return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
@@ -1053,7 +1055,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await gearPage.waitForSelector('#rider');
   await gearPage.click('[data-act=wardrobe]');
   await gearPage.click('[data-act=gear-tab][data-slot=pet]');
-  ok('C016: the earned 왕짐 stays unlocked after the known-word count drops and the page reloads',
+  ok('C016: a bought 왕짐 stays after the known-word count drops and the page reloads',
     await gearPage.locator('[data-act=gear][data-id=w-letter]').isEnabled()&&
     await gearPage.$eval('#rider use[href="#c023-carry-letter-back-0"]',e=>!!e));
   await gearPage.click('#wardrobe .sec[data-act=look-close]');
@@ -1078,6 +1080,43 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C016: the courier walks (no ride while rides are off), the 왕짐 moves with it, and a second tap still opens the tile',
     mounted?.follows && mounted.mountedArt && await gearPage.evaluate(id=>window.__cards.node?.unit===id,mounted.id));
   await gearCtx.close();
+
+  // C-023 왕짐 shop (user 2026-11-20): skill goals, then bought with stars after a second tap; each purchase costs more.
+  const shopCtx=await browser.newContext({viewport:{width:1180,height:820}});
+  const shop=await shopCtx.newPage();
+  shop.on('pageerror',e=>errs.push(String(e)));
+  await shop.goto(BASE+'/?final=off&pin=off&today=2026-11-20&triage=off&nosync=1&sound=off&storm=off');
+  await shop.waitForSelector('.profiles');
+  await shop.evaluate(async()=>{
+    const {newState}=await import('./js/deck.js'), {ensureMap}=await import('./js/map.js');
+    const g=window.__cards, s=newState('daughter'), m=ensureMap(s);
+    m.at='p1-01'; m.stars=21000; m.best=24;
+    m.worlds['p1-01']={castle:'2026-11-19',seen:'2026-11-19',cleared:{},stamps:{},gold:{a:'2026-11-19',b:'2026-11-19'}};
+    for(const w of g.words.slice(0,300))s.words[w.id]={st:'done'};
+    localStorage.setItem('cards.v0.p.daughter',JSON.stringify(s));
+  });
+  await shop.click('[data-act=pick][data-id=daughter]'); await shop.waitForSelector('#rider');
+  const shopWords=await shop.evaluate(()=>JSON.stringify(JSON.parse(localStorage.getItem('cards.v0.p.daughter')).words));
+  await shop.click('[data-act=wardrobe]'); await shop.click('[data-act=gear-tab][data-slot=pet]');
+  const shopStart=await shop.evaluate(()=>({
+    goose:(()=>{const b=document.querySelector('[data-act=gear][data-id=w-goose]');return !!b&&b.disabled&&b.classList.contains('silhouette')&&/금 도장 3개/.test(b.textContent)&&/지금 2/.test(b.textContent);})(),
+    hourglass:!!document.querySelector('.gear.shop[data-id=w-hourglass] [data-act=gear-buy]:not([disabled])')&&/5,000/.test(document.querySelector('.gear.shop[data-id=w-hourglass]').textContent),
+    letter:!!document.querySelector('.gear.shop[data-id=w-letter]'),
+    head:document.querySelector('#wardrobe p').textContent}));
+  await shop.click('[data-act=gear-buy][data-id=w-hourglass]'); await shop.click('[data-act=gear-buy-no]');
+  const notYet=await shop.evaluate(()=>!JSON.parse(localStorage.getItem('cards.v0.p.daughter')).map.bought);
+  await shop.click('[data-act=gear-buy][data-id=w-hourglass]'); await shop.click('[data-act=gear-buy-ok][data-id=w-hourglass]');
+  const shopAfter=await shop.evaluate(()=>{const s=JSON.parse(localStorage.getItem('cards.v0.p.daughter')), look=JSON.parse(localStorage.getItem('cards.v0.look.daughter'));
+    return {stars:s.map.stars, bought:s.map.bought, words:JSON.stringify(s.words), wearing:look.slots.pet?.id, head:document.querySelector('#wardrobe p').textContent,
+      next:document.querySelector('.gear.shop[data-id=w-letter] [data-act=gear-buy]')?.textContent||'', rider:!!document.querySelector('#rider use[href="#c023-carry-hourglass-back-0"]')};});
+  await shop.reload(); await shop.waitForSelector('.profiles'); await shop.click('[data-act=pick][data-id=daughter]'); await shop.waitForSelector('#rider');
+  const shopKept=await shop.evaluate(()=>!!document.querySelector('#rider use[href="#c023-carry-hourglass-back-0"]'));
+  ok('C023: a met goal shows the 왕짐 for sale, unmet ones show their goal; a second tap buys it, the star total stays, the next one costs 3x, words untouched, kept after reload',
+    shopStart.goose&&shopStart.hourglass&&shopStart.letter&&/모은 별 ★ 21,000 · 쓸 수 있는 별 ★ 21,000/.test(shopStart.head)&&notYet&&
+    shopAfter.stars===21000&&shopAfter.bought?.['w-hourglass']?.price===5000&&shopAfter.words===shopWords&&shopAfter.wearing==='w-hourglass'&&
+    /쓸 수 있는 별 ★ 16,000/.test(shopAfter.head)&&/15,000/.test(shopAfter.next)&&shopAfter.rider&&shopKept,
+    JSON.stringify({shopStart,notYet,shopAfter:{...shopAfter,words:undefined},shopKept}));
+  await shopCtx.close();
 
   // C-017 identity overlays and measured idle movement.
   const kidsOut='/tmp/c017-screens';
@@ -1259,7 +1298,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
           art.width>=10&&art.height>=8&&art.height/art.width>=.25&&art.x>=view.x&&art.y>=view.y&&
           art.x+art.width<=view.x+view.width&&art.y+art.height<=view.y+view.height&&b.querySelector('small').textContent.length>0;
       });
-      return {layout:buttons.length===(legacy.length?12:3)&&artIds&&starNames,silhouettes};
+      return {layout:buttons.length===(legacy.length?12:slot==='pet'?8:3)&&artIds&&starNames,silhouettes};
     },{slot,legacy});
     layout018.push(checked.layout);silhouettes018.push(checked.silhouettes);
     if(slot==='coat') await polishPage.screenshot({path:out018+'/locked-items.png',animations:'disabled'});
