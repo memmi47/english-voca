@@ -1713,7 +1713,16 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await dv.click('[data-act=dev-game][data-type=shell][data-level="5"]'); await dv.waitForSelector('.gamebox[data-game=shell]');
   ok('DV2: a game starts at the chosen level', /5단계 · 놀이터/.test(await dv.textContent('#glevel')));
   await dv.click('[data-act=dev]'); await dv.click('[data-act=dev-hang]'); await dv.waitForSelector('.finalbox[data-final=hang]');
-  const dvWord = await dv.evaluate(() => window.__cards.game.api.peek().word); for (const c of [...new Set(dvWord)]) await dv.click(`[data-key="${c}"]`);
+  const dvWord = await dv.evaluate(() => window.__cards.game.api.peek().word);
+  // Hangman hints open a little at a time (user 2026-11-20): nothing at first, the shape after two misses, all with two chances left.
+  const clueNow = () => dv.evaluate(() => { const c = document.querySelector('.hclue'); return { stage: c.dataset.stage, meaning: c.querySelector('b').textContent }; });
+  const misses = [...'zqxjvkwy'].filter((c) => !dvWord.includes(c));
+  const clue0 = await clueNow(); for (const c of misses.slice(0, 2)) await dv.click(`[data-key="${c}"]`);
+  const clue1 = await clueNow(); for (const c of misses.slice(2, 4)) await dv.click(`[data-key="${c}"]`);
+  const clue3 = await clueNow();
+  ok('DV3b: hangman shows no meaning at first, part of it after two misses and all of it with two chances left', clue0.stage === '0' && clue0.meaning === '???' &&
+    clue1.stage === '1' && /○/.test(clue1.meaning) && clue3.stage === '3' && !/○/.test(clue3.meaning) && clue3.meaning !== '???', JSON.stringify({ clue0, clue1, clue3 }));
+  for (const c of [...new Set(dvWord)]) await dv.click(`[data-key="${c}"]`);
   await dv.waitForFunction(() => /관문을 넘었어요/.test(document.querySelector('h1').textContent));
   ok('DV3: a world\'s hangman can be played straight from the playground', /^[a-z]{4,}$/.test(dvWord), dvWord);
   await dv.click('[data-act=dev]'); await dv.selectOption('#dev-goto', 'd2-01'); await dv.check('#dev-all'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#world[data-world="d2-01"]');

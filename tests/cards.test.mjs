@@ -987,7 +987,7 @@ test('G3: game helpers: a followed box ends where the swaps take it; up-down hin
 });
 
 // ---- castle word games (cards/js/wordgames.js) ----
-import { Hangman, hangmanPick, spellable, buildCrossword, crossCells } from '../cards/js/wordgames.js';
+import { Hangman, hangmanClue, hangmanPick, spellable, buildCrossword, crossCells } from '../cards/js/wordgames.js';
 test('H1: hangman word: letters only, 5+ letters first, then 4; the castle exam words before other met words; none -> null', () => {
   const W = (form) => ({ id: form, form });
   assert.deepEqual([spellable('apple'), spellable('ice cream'), spellable('t-shirt'), spellable('cat'), spellable('Bread')], [true, false, false, false, true]);
@@ -1002,6 +1002,18 @@ test('H2: hangman rules: hits, misses, repeats cost nothing, lives run out; seve
   const m = new Hangman(['cat', 'dog'], 8); assert.deepEqual(['c', 'a', 't'].map((c) => m.guess(c)), ['hit', 'hit', 'next']); assert.equal(m.word, 'dog');
   assert.deepEqual(['d', 'o', 'g'].map((c) => m.guess(c)), ['hit', 'hit', 'win']);
   assert.deepEqual(new Hangman(['apple'], 6, 1).shown, ['a', '', '', '', '']);
+});
+test('H4: hangman meaning opens bit by bit: nothing with 5+ chances, kind and first syllable at 4, half at 3, all at 2 (user 2026-11-20)', () => {
+  const lend = { form: 'lend', ko: '빌려주다', pos: '동사' }, dog = { form: 'dog', ko: '개', pos: '명사' }, ear = { form: 'listen', ko: '귀 기울여 듣다', pos: '동사' };
+  assert.deepEqual([6, 5].map((n) => hangmanClue(lend, n).meaning), ['', '']);
+  assert.deepEqual(hangmanClue(lend, 4), { stage: 1, pos: '움직임을 나타내는 말', meaning: '빌○○○' });
+  assert.equal(hangmanClue(lend, 3).meaning, '빌려○○');
+  assert.equal(hangmanClue(lend, 2).meaning, '빌려주다');
+  assert.equal(hangmanClue(dog, 4).meaning, '○');                 // a one-syllable meaning never opens before the end
+  assert.equal(hangmanClue(dog, 3).meaning, '○');
+  assert.equal(hangmanClue(dog, 1).meaning, '개');
+  assert.equal(hangmanClue(ear, 4).meaning, '귀 ○○○ ○○');          // spaces keep the shape
+  assert.equal(hangmanClue(ear, 3).meaning, '귀 기울○ ○○');
 });
 test('H3: crossword: words cross on equal letters, never run side by side, ends free; numbers by position; null when too few fit', () => {
   const words = ['apple', 'banana', 'grape', 'lemon', 'melon', 'orange', 'peach', 'plum'].map((f) => ({ id: f, form: f, ko: f }));

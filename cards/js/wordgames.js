@@ -107,7 +107,20 @@ function danger(style, wrong, lives, ctx) {
     <span class="d-courier ${close ? 'tremble' : ''}" style="left:${8 + (at + 0.5) * step}%">${ctx.courier(face, 72)}${close ? '<i class="sweat"></i>' : ''}${lost ? '<i class="splash"></i>' : ''}</span>${warn}${lost ? '<b class="d-say">퐁당! 헤엄쳐 나왔어요</b>' : ''}</div>`;
 }
 
-// words: [{ id, form, ko }]. Several words share the lives (continent fallback).
+// The meaning opens a little at a time (user 2026-11-20: showing it from the start made hangman too easy). By chances left:
+// 5 or more nothing; 4 the kind of word and the meaning's shape with its first syllable (a 1-2 syllable meaning shows
+// only its length); 3 half the syllables; 2 or fewer the whole meaning (and the one-time sound, as before).
+const POS_HINT = { 명사: '이름을 나타내는 말', 동사: '움직임을 나타내는 말', 형용사: '모습을 나타내는 말', 부사: '어떻게를 나타내는 말' };
+export function hangmanClue(word, left) {
+  const ko = word.ko || '', syll = [...ko].filter((c) => /[가-힣]/.test(c)).length;
+  const stage = left >= 5 ? 0 : left === 4 ? 1 : left === 3 ? 2 : 3;
+  if (stage === 3 || !ko) return { stage, pos: POS_HINT[(word.pos || '').split('·')[0]] || '', meaning: ko || '?' };
+  if (stage === 0) return { stage, pos: '', meaning: '' };
+  const open = stage === 1 ? (syll >= 3 ? 1 : 0) : (syll >= 2 ? Math.ceil(syll / 2) : 0);
+  let n = 0; const meaning = [...ko].map((c) => (/[가-힣]/.test(c) ? (n++ < open ? c : '○') : c)).join('');
+  return { stage, pos: POS_HINT[(word.pos || '').split('·')[0]] || '', meaning };
+}
+// words: [{ id, form, ko, pos }]. Several words share the lives (continent fallback).
 export function mountHangman(ctx, words, lives) {
   const h = new Hangman(words.map((w) => w.form), lives, ctx.reveal ? 1 : 0); const style = ctx.style || 'B'; const timers = []; let heard = false;
   // The sound is no free help (user 2026-11-20): it is offered once, only when two chances or fewer are left.
@@ -117,7 +130,7 @@ export function mountHangman(ctx, words, lives) {
     ctx.root.innerHTML = `${danger(style, h.wrong.length, h.lives, ctx)}
       ${words.length > 1 ? `<p class="mut">단어 ${h.at + 1} / ${words.length}</p>` : ''}
       <div class="hword">${h.shown.map((c) => `<span class="hslot">${c}</span>`).join('')}</div>
-      <p class="hclue">뜻: <b>${cur().ko || '?'}</b>${canHear() ? ` <button class="sec small hear-once" data-say="1">${ctx.spr('sound', 20)} 한 번만 듣기</button>` : ''}</p>
+      ${(() => { const c = hangmanClue(cur(), h.lives - h.wrong.length); return `<p class="hclue" data-stage="${c.stage}">${c.stage ? `${c.pos ? `<span class="hpos">${c.pos}</span> · ` : ''}뜻: <b>${c.meaning}</b>` : '뜻: <b>???</b> <small>틀리면 힌트가 조금씩 열려요</small>'}${canHear() ? ` <button class="sec small hear-once" data-say="1">${ctx.spr('sound', 20)} 한 번만 듣기</button>` : ''}</p>`; })()}
       <p class="hleft">남은 기회 <b>${h.lives - h.wrong.length}</b>${h.wrong.length ? ` · 틀린 글자 ${h.wrong.join(' ')}` : ''}</p>
       <p class="hmsg">${msg}</p>${keyboard()}`;
     for (const b of ctx.root.querySelectorAll('[data-key]')) { const k = b.dataset.key; if (h.right.has(k)) b.classList.add('hit'); if (h.wrong.includes(k)) b.classList.add('miss'); if (h.right.has(k) || h.wrong.includes(k)) b.disabled = true; }
@@ -127,9 +140,10 @@ export function mountHangman(ctx, words, lives) {
     const b = ev.target.closest('[data-key]'); if (!b || h.over) return; const before = cur(); const r = h.guess(b.dataset.key);
     if (r === 'again') return;
     ctx.sfx(r === 'miss' || r === 'lose' ? 'miss' : 'correct');
-    if (r === 'next') { ctx.say(before); return paint(`${before.form}! 다음 단어예요.`); }
-    if (r === 'win') { paint(`${before.form}! 편지를 지켰어요.`); ctx.say(before); return void timers.push(setTimeout(ctx.win, ctx.fast ? 30 : 1200)); }
-    if (r === 'lose') { const missed = words.slice(h.at).map((w) => w.id); paint(`정답은 ${before.form}였어요.`); ctx.root.querySelector('.hword').innerHTML = [...before.form].map((c) => `<span class="hslot show">${c}</span>`).join(''); return void timers.push(setTimeout(() => ctx.lose(missed), ctx.fast ? 30 : 1800)); }
+    const said = `${before.form}${before.ko ? ` (${before.ko})` : ''}`;   // the meaning in full once the word is done
+    if (r === 'next') { ctx.say(before); return paint(`${said}! 다음 단어예요.`); }
+    if (r === 'win') { paint(`${said}! 편지를 지켰어요.`); ctx.say(before); return void timers.push(setTimeout(ctx.win, ctx.fast ? 30 : 1200)); }
+    if (r === 'lose') { const missed = words.slice(h.at).map((w) => w.id); paint(`정답은 ${said}였어요.`); ctx.root.querySelector('.hword').innerHTML = [...before.form].map((c) => `<span class="hslot show">${c}</span>`).join(''); return void timers.push(setTimeout(() => ctx.lose(missed), ctx.fast ? 30 : 1800)); }
     paint();
   };
   paint(words.length > 1 ? '세 단어를 이어서 맞혀요. 기회는 함께 써요.' : '알파벳을 눌러 단어를 맞혀요.');
