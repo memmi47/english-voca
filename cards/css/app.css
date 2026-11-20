@@ -380,7 +380,14 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .gift-check{position:absolute;right:-6px;bottom:-5px;width:15px;height:15px;background:#24564a;border:1px solid var(--paper);fill:none;stroke:var(--paper);stroke-width:3}
 :is(.atlas-stop,.atlas-list-stop)[data-act=atlas-gift]{cursor:pointer}
 :is(.atlas-stop,.atlas-list-stop)[data-act=atlas-gift] .wcard:disabled{pointer-events:none}
-.gear-preview{margin-top:-10px;line-height:0}
+/* Wardrobe (user 2026-11-20): a large fitting stage on the left, the tabs, colours and items on the right; stacked on narrow
+   screens. The stage leaves room for what reaches past the courier: tall hats, wide capes, big 왕짐. */
+.wardrobe{max-width:960px}
+.wardrobe-body{display:grid;grid-template-columns:266px minmax(0,1fr);gap:20px;align-items:start;text-align:left}
+.wardrobe-main{min-width:0}.wardrobe-main .gear-tabs,.wardrobe-main .gear-colors{justify-content:flex-start}.wardrobe-main .looks{margin-top:12px}
+.gear-preview{position:sticky;top:0;width:266px;height:232px;line-height:0;background:linear-gradient(#dcecef 0 70%,#c9dfa9 70%);border:4px solid var(--ink);box-shadow:4px 4px 0 var(--ink);overflow:hidden}
+.gear-preview>.spr{position:absolute;left:46px;top:62px;width:144px;height:144px}
+@media(max-width:680px){.wardrobe-body{grid-template-columns:minmax(0,1fr)}.gear-preview{position:relative;justify-self:center;width:220px;height:200px}.gear-preview>.spr{left:40px;top:58px;width:120px;height:120px}.wardrobe-main .gear-tabs,.wardrobe-main .gear-colors{justify-content:center}}
 .gear-tabs,.gear-colors{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:8px 0}
 .gear-tabs .sec,.gear-colors .sec{font-size:13px;min-height:44px;padding:4px 8px}
 .gear-tabs [aria-pressed=true],.gear-colors [aria-pressed=true]{background:#ffe9a8}
