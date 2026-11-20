@@ -907,8 +907,9 @@ function wardrobe(slot='hat', targetId=null) {
   const active=selection[slot];
   const colors=active?`<div class="gear-colors" aria-label="색 고르기">${COLOR_GOALS.map((goal,i)=>`<button class="sec" data-act="gear-color" data-slot="${slot}" data-color="${i}" aria-pressed="${active.color===i}" ${stars<goal?'disabled':''}>${['기본색','색 2','색 3'][i]}${goal?` · ★ ${goal}`:''}</button>`).join('')}</div>`:'';
   box.innerHTML=`<section class="wardrobe" role="dialog" aria-modal="true" aria-labelledby="wardrobe-title"><button class="back" data-act="look-close" aria-label="닫기">×</button><h2 id="wardrobe-title">배달부 꾸미기</h2><p>모은 별 ★ ${stars.toLocaleString('ko-KR')} · 쓸 수 있는 별 ★ ${wallet.toLocaleString('ko-KR')}</p>
-  <div class="gear-preview">${courier('idle',80)}</div><nav class="gear-tabs" aria-label="꾸미기 종류">${Object.entries(SLOTS).map(([key,label])=>`<button class="sec" data-act="gear-tab" data-slot="${key}" aria-pressed="${key===slot}">${label}${newSlots.has(key)?newBadge:''}</button>`).join('')}</nav>
-  ${colors}<div class="looks"><button class="gear" data-act="gear" data-id="default" data-slot="${slot}" aria-pressed="${!active}">기본</button>${cards}</div>
+  <div class="wardrobe-body"><div class="gear-preview" aria-hidden="true">${courier('idle',144)}</div>
+  <div class="wardrobe-main"><nav class="gear-tabs" aria-label="꾸미기 종류">${Object.entries(SLOTS).map(([key,label])=>`<button class="sec" data-act="gear-tab" data-slot="${key}" aria-pressed="${key===slot}">${label}${newSlots.has(key)?newBadge:''}</button>`).join('')}</nav>
+  ${colors}<div class="looks"><button class="gear" data-act="gear" data-id="default" data-slot="${slot}" aria-pressed="${!active}">기본</button>${cards}</div></div></div>
   <button class="sec" data-act="look-close">닫기</button></section>`;
   $('#app').append(box);
   const pending=box.querySelectorAll('.gear.new-gift');
