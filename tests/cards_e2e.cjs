@@ -1661,6 +1661,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('DV3: a world\'s hangman can be played straight from the playground', /^[a-z]{4,}$/.test(dvWord), dvWord);
   await dv.click('[data-act=dev]'); await dv.selectOption('#dev-goto', 'd2-01'); await dv.check('#dev-all'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#world[data-world="d2-01"]');
   ok('DV4: jumping to a later world opens its map with earlier castles passed; with "all villages" its castle is open', /open/.test(await dv.$eval('.node.castle', (e) => e.className)));
+  await dv.click('.page.map > .back'); await dv.waitForSelector('.devgames'); ok('DV4b: the back button of a playground world returns to the playground', true);
   await dv.waitForTimeout(1200);
   const dvServer = await dv.evaluate(async () => (await fetch('api/doc/p.dev')).status);
   ok('DV5: children\'s records are untouched and the playground record never reaches the Mac server', JSON.stringify(await dv.evaluate(() => [localStorage.getItem('cards.v0.p.son'), localStorage.getItem('cards.v0.p.daughter')])) === JSON.stringify(dvKids) && dvServer === 404, String(dvServer));
