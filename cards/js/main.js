@@ -621,6 +621,10 @@ const CARRIES = [
   ['hourglass','모래시계 가방','best',20], ['cake','흔들지 마세요 케이크','perfect',3], ['shark','편지 삼키는 상어','golden',200],
   ['puffer','투덜이 복어 풍선','best',30], ['fishbowl','주인 행세 금붕어 어항','firm',2000],
 ].map(([art,name,goal,n])=>({slot:'pet', id:'w-'+art, art, name, carry:true, goal, n}));
+// C-023 first hats and coats (art: tools/carry_recipes.py GEAR). How they open is not decided yet: until then they show
+// only in the developer playground.
+const C023_GEAR = [['hat','fish','낚인 생선 모자'],['hat','plant','편지 먹는 화분'],['hat','globe','눈 내리는 마을 모자'],
+  ['coat','office','우체국째 배달 옷'],['coat','map','반 접힌 지도 망토']].map(([slot,key,name])=>({slot, id:`c023-${slot}-${key}`, c023:key, name, pending:true}));
 const carryGoal = (item, st) => { const g = CARRY_GOALS[item.goal], have = g.have(st); return { have, met: have >= item.n, text: g.text(item.n) }; };
 const WORLD_GIFT_NAMES = ['꽃씨 챙모자','과일 주머니','풀잎 조끼','나무결 모자','연잎 가방','굴마을 외투','언덕 베레모','종방울 가방','항구 셔츠','조개 테두리 모자','빵바구니 가방','시계 조끼','풍선 캡','빗방울 가방','물감 앞치마','승차표 모자','공구 가방','눈꽃 외투','단추 모자','사진 가방','모래빛 셔츠','유리구슬 모자','책등 가방','구름 조끼','달조각 모자','별가루 주머니','깃털 외투','바람개비 모자','망원경 가방','창문빛 셔츠'];
 const PET_GOALS = [500, 1500, 3000];
@@ -674,10 +678,10 @@ function worldGift(id) {
 function wardrobeItems(st=G.st) {
   const worlds = G.ix.worlds.map(w => worldGift(w.id)).filter(Boolean);
   const rides = ['우편 자전거','봉투 나룻배','편지 열기구'].map((name,i) => ({slot:'ride', id:'c'+(i+1), name, continent:G.ix.continents[i]}));
-  const carries = CARRIES;
+  const carries = CARRIES, firstGear = G.pid === DEV ? C023_GEAR : [];
   const active = itemTiersActive();
   const archives = active ? FIELD_COATS.filter(item=>G.ix.byId[item.id] && oldCastle(st,item.id)) : [];
-  return [...worlds, ...archives, ...(RIDES_ON ? rides.filter(r=>r.continent?.id===r.id || G.pid===DEV) : []), ...carries, ...(active ? tierStarGifts : GIFTS)];
+  return [...worlds, ...archives, ...(RIDES_ON ? rides.filter(r=>r.continent?.id===r.id || G.pid===DEV) : []), ...firstGear, ...carries, ...(active ? tierStarGifts : GIFTS)];
 }
 const lookKey = id => 'cards.v0.look.' + id;
 function readLook(id, migrate = false) {
@@ -725,6 +729,7 @@ function unlocked(item, st, look, seen = {}) {
   if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
   if (item.continent) return !!st?.map?.conts?.[item.id]?.castle;
   if (item.carry) return !!st?.map?.bought?.[item.id];
+  if (item.pending) return false;
   return look.petTier >= item.tier;
 }
 function lookSelection(pid,st) {
@@ -746,6 +751,7 @@ function wardrobeArt(id, px=48, extra='', viewBox='0 0 48 48') {
 }
 function layerId(item, slot, color) {
   if (!item) return `c016-${slot}-default-${color}`;
+  if (item.c023) return `c023-${slot}-${item.c023}-${item.color}`;
   if (item.art) return `c019-${slot}-${item.art}-${item.color}`;
   return `c016-${slot}-${item.legacy?'legacy-':''}${item.id}-${item.color}`;
 }
@@ -759,6 +765,7 @@ function gearGlints(item, sized=false) {
 function gearArt(item, px=54) {
   const {slot,id} = item;
   if (item.carry) return wardrobeArt(`c023-carry-${item.art}-icon`,px,'gear-art');
+  if (item.c023) return wardrobeArt(`c023-${item.slot}-${item.c023}-icon`,px,'gear-art');
   const sprite = slot==='ride' ? `c016-ride-${id}-idle` : slot==='pet' ? `c016-pet-${id}-0` : layerId({...item,color:0},slot,'teal');
   if (item.art) return `<svg class="spr gear-art" width="${px}" height="${px}" viewBox="${TIER_VIEWBOX[slot]}" aria-hidden="true"><use href="#${sprite}" width="48" height="48"/>${gearGlints(item,true)}</svg>`;
   return wardrobeArt(sprite,px,'gear-art',GEAR_VIEWBOX[slot]);
@@ -799,7 +806,8 @@ function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, show
   } else {
     const hasPose = ['throw','happy','wave'].includes(frame) && document.getElementById(pose);
     const body = hasPose ? pose : `c016-body-${color}-${action}${index}`;
-    layers = carryLayer('back') + use('body',body) + use('coat',layerId(coat,'coat',color)) + use('bag',layerId(bag,'bag',color)) + carryLayer('front') +
+    const coatBack = coat?.c023 && document.getElementById(`c023-coat-${coat.c023}-back-${coat.color}`) ? use('coat-back',`c023-coat-${coat.c023}-back-${coat.color}`) : '';
+    layers = carryLayer('back') + coatBack + use('body',body) + use('coat',layerId(coat,'coat',color)) + use('bag',layerId(bag,'bag',color)) + carryLayer('front') +
       use('head',`c016-head-${color}-${action}${index}`,raised) + use('hair',hair,raised) +
       use('hat',layerId(hat,'hat',color),raised) +
       (showGlints ? [coat,bag,hat].map(item=>gearGlints(item)).join('') : '') + use('identity',badge,raised && child==='daughter');

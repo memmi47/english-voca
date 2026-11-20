@@ -48,7 +48,7 @@ def carry_mask_at_map_size(drawn):
 
 def check_carries():
     sheet = sprites(ASSETS / "carry/sprites.svg")
-    keys = sorted({name.split("-")[2] for name in sheet})
+    keys = sorted({name.split("-")[2] for name in sheet if name.startswith("c023-carry-")})
     assert len(keys) == 8, keys
     measured = []
     for key in keys:
@@ -109,6 +109,7 @@ def main():
     items["ride"] = {name: svg for name, svg in prior.items() if name.startswith("c016-ride-") and name.endswith("-idle")}
     items["pet"] = {name: svg for name, svg in prior.items() if name.startswith("c016-pet-") and name.endswith("-0")}
     assert [len(group) for group in items.values()] == [7, 6, 9, 3, 3]
+    c023 = sprites(ASSETS / "carry/sprites.svg")   # C-023 hats and coats: front (and a coat's back) may leave the 48 box
     expected = {f"c019-glint-{key}-{pose}" for key in ("h-plume", "b-dawn", "c-cloud", "c-star") for pose in (0, 1)}
     assert {name for name in new if name.startswith("c019-glint-")} == expected
     for name in expected:
@@ -124,6 +125,17 @@ def main():
                 for tone in (1, 2):
                     variant = pixels(new[f"{name[:-1]}{tone}"])
                     assert variant.keys() == drawn.keys() and variant != drawn, (name, tone)
+        if slot in ("hat", "coat"):
+            for name in sorted(n for n in c023 if n.startswith(f"c023-{slot}-") and n.endswith("-0") and "-back-" not in n):
+                drawn = carry_pixels(c023[name])
+                back = c023.get(name[:-2] + "-back-0")
+                drawn = {**(carry_pixels(back) if back is not None else {}), **drawn}
+                for tone in (1, 2):   # a star colour keeps the shape and changes the colour (front and back together)
+                    tback = c023.get(name[:-2] + f"-back-{tone}")
+                    variant = {**(carry_pixels(tback) if tback is not None else {}), **carry_pixels(c023[f"{name[:-1]}{tone}"])}
+                    assert variant.keys() == drawn.keys() and variant != drawn, (name, tone)
+                colors = Counter(c for c in drawn.values() if c != INK)
+                measured.append((name, carry_mask_at_map_size(drawn), oklab(colors.most_common(1)[0][0])))
         pairs = compare(measured, .09 if slot in ("ride", "pet") else .12)
         total += len(pairs)
         shape = min(pairs, key=lambda pair: pair[0])

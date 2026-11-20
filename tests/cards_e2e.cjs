@@ -1103,6 +1103,9 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     hourglass:!!document.querySelector('.gear.shop[data-id=w-hourglass] [data-act=gear-buy]:not([disabled])')&&/5,000/.test(document.querySelector('.gear.shop[data-id=w-hourglass]').textContent),
     letter:!!document.querySelector('.gear.shop[data-id=w-letter]'),
     head:document.querySelector('#wardrobe p').textContent}));
+  await shop.click('[data-act=gear-tab][data-slot=hat]'); const hatsHidden=!(await shop.locator('.looks [data-id^=c023-hat]').count());
+  await shop.click('[data-act=gear-tab][data-slot=coat]'); shopStart.hidden=hatsHidden&&!(await shop.locator('.looks [data-id^=c023-coat]').count());
+  await shop.click('[data-act=gear-tab][data-slot=pet]');
   await shop.click('[data-act=gear-buy][data-id=w-hourglass]'); await shop.click('[data-act=gear-buy-no]');
   const notYet=await shop.evaluate(()=>!JSON.parse(localStorage.getItem('cards.v0.p.daughter')).map.bought);
   await shop.click('[data-act=gear-buy][data-id=w-hourglass]'); await shop.click('[data-act=gear-buy-ok][data-id=w-hourglass]');
@@ -1112,7 +1115,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await shop.reload(); await shop.waitForSelector('.profiles'); await shop.click('[data-act=pick][data-id=daughter]'); await shop.waitForSelector('#rider');
   const shopKept=await shop.evaluate(()=>!!document.querySelector('#rider use[href="#c023-carry-hourglass-back-0"]'));
   ok('C023: a met goal shows the 왕짐 for sale, unmet ones show their goal; a second tap buys it, the star total stays, the next one costs 3x, words untouched, kept after reload',
-    shopStart.goose&&shopStart.hourglass&&shopStart.letter&&/모은 별 ★ 21,000 · 쓸 수 있는 별 ★ 21,000/.test(shopStart.head)&&notYet&&
+    shopStart.goose&&shopStart.hourglass&&shopStart.letter&&shopStart.hidden&&/모은 별 ★ 21,000 · 쓸 수 있는 별 ★ 21,000/.test(shopStart.head)&&notYet&&
     shopAfter.stars===21000&&shopAfter.bought?.['w-hourglass']?.price===5000&&shopAfter.words===shopWords&&shopAfter.wearing==='w-hourglass'&&
     /쓸 수 있는 별 ★ 16,000/.test(shopAfter.head)&&/15,000/.test(shopAfter.next)&&shopAfter.rider&&shopKept,
     JSON.stringify({shopStart,notYet,shopAfter:{...shopAfter,words:undefined},shopKept}));
@@ -1705,6 +1708,13 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await dv.selectOption('#dev-goto', 'd2-01'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#rider');
   await dv.click('[data-act=wardrobe]'); await dv.click('[data-act=gear-tab][data-slot=pet]');
   const dvCarries = await dv.locator('.looks .gear:not([data-id=default]):not([disabled])').evaluateAll(b => b.map(x => x.dataset.id));
+  // C-023 first hats and coats: playground only until their way to open is chosen; worn as layers (a coat may have a back layer)
+  await dv.click('[data-act=gear-tab][data-slot=hat]'); await dv.click('[data-act=gear][data-slot=hat][data-id=c023-hat-fish]');
+  await dv.click('[data-act=gear-tab][data-slot=coat]'); await dv.click('[data-act=gear][data-slot=coat][data-id=c023-coat-map]');
+  const dvGear = await dv.evaluate(() => !!document.querySelector('#rider use[data-layer=hat][href="#c023-hat-fish-0"]') && !!document.querySelector('#rider use[data-layer=coat-back][href="#c023-coat-map-back-0"]') &&
+    !!document.querySelector('#rider use[data-layer=coat][href="#c023-coat-map-0"]') && !!document.querySelector('[data-act=gear][data-id=c023-coat-office]:not([disabled])'));
+  await dv.click('[data-act=gear][data-slot=coat][data-id=default]'); await dv.click('[data-act=gear-tab][data-slot=hat]'); await dv.click('[data-act=gear][data-slot=hat][data-id=default]');
+  await dv.click('[data-act=gear-tab][data-slot=pet]');
   await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=sun-bag]');
   await dv.click('[data-act=gear-tab][data-slot=pet]'); await dv.click('[data-act=gear][data-slot=pet][data-id=w-octopus]');
   const dvCarryOn = await dv.evaluate(() => { const l = JSON.parse(localStorage.getItem('cards.v0.look.dev')).slots;
@@ -1712,8 +1722,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=default]');
   const dvBagOn = await dv.evaluate(() => { const l = JSON.parse(localStorage.getItem('cards.v0.look.dev')).slots;
     return l.bag === null && l.pet.id === 'w-octopus' && !!document.querySelector('#rider use[data-layer=carry-back]'); });
-  ok('DV C023: the playground offers all eight 왕짐; a 왕짐 and a bag are worn together and taking the bag off keeps the 왕짐',
-    dvCarries.length === 8 && dvCarries.every(id => id.startsWith('w-')) && dvCarryOn && dvBagOn, JSON.stringify({ dvCarries, dvCarryOn, dvBagOn }));
+  ok('DV C023: the playground offers all eight 왕짐 and the new hats and coats; a 왕짐 and a bag are worn together and taking the bag off keeps the 왕짐',
+    dvCarries.length === 8 && dvCarries.every(id => id.startsWith('w-')) && dvCarryOn && dvBagOn && dvGear, JSON.stringify({ dvCarries, dvCarryOn, dvBagOn, dvGear }));
   await dv.click('#wardrobe .sec[data-act=look-close]'); await dv.click('.page.map > .back'); await dv.waitForSelector('.devgames');
   await dv.waitForTimeout(1200);
   const dvServer = await dv.evaluate(async () => (await fetch('api/doc/p.dev')).status);
