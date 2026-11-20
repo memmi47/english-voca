@@ -261,8 +261,10 @@ function armTitleMusic() {
 // (a bat, the whirlwind, a monster, a boss). None when motion is reduced. The timers stop with the screen (later()).
 const VISITORS = [{ a: 'bat-a', b: 'bat-b', px: 48, path: 'fly' }, { a: 'fx-storm-a', b: 'fx-storm-b', px: 52, path: 'ground' }, { a: 'monster-a', b: 'monster-b', px: 48, path: 'ground' },
   { a: 'snail-boss', px: 44, path: 'ground', slow: true }, { a: 'leaf-boss', px: 44, path: 'hop' }, { a: 'cloud-boss', px: 46, path: 'fly' }, { a: 'bat-friend', px: 44, path: 'fly' }];
+// On hold (user 2026-11-20: the same walk across from either side was not fun). Kept for a later, livelier version.
+const YARD_VISITORS = false;
 function yardVisitors() {
-  if (FAST || motionOff()) return; const yard = $('.home-yard'); if (!yard) return; let last = '';
+  if (!YARD_VISITORS || FAST || motionOff()) return; const yard = $('.home-yard'); if (!yard) return; let last = '';
   const spawn = () => { const list = VISITORS.filter((v) => v.a !== last && document.getElementById(v.a)); if (!list.length) return; const v = list[Math.floor(Math.random() * list.length)]; last = v.a;
     const el = document.createElement('span'); el.className = `yard-visitor ${v.path}${Math.random() < 0.5 ? ' rtl' : ''}${v.slow ? ' slow' : ''}`; el.dataset.visitor = v.a;
     el.innerHTML = v.b ? anim(v.a, v.b, v.px, 'fast') : spr(v.a, v.px); el.addEventListener('animationend', () => el.remove()); yard.appendChild(el); };
