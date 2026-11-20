@@ -41,3 +41,12 @@ test('SH3: merging two devices keeps every purchase; the same item keeps the ear
   assert.equal(mergeCards(d, c).map.bought['w-letter'].day, '2026-11-20');
   assert.equal('bought' in mergeCards(withStars(3), withStars(4)).map, false);   // records without purchases keep their shape
 });
+
+test('SH4: a fixed-price item (effort hat or coat) does not raise the 왕짐 price', () => {
+  const s = withStars(SHOP.first + 1500);
+  assert.equal(buyItem(s, 'c023-hat-fish', '2026-11-20', 1500), 1500);
+  assert.equal(nextPrice(s), SHOP.first);
+  assert.equal(walletStars(s), SHOP.first);
+  assert.equal(buyItem(s, 'w-letter', '2026-11-20'), SHOP.first);
+  assert.equal(nextPrice(s), SHOP.first * SHOP.factor);
+});

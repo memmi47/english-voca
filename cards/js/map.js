@@ -164,10 +164,11 @@ export function settleLightning(state, lt, today) {
 export const SHOP = { first: 5000, factor: 3 };
 export function spentStars(state) { return Object.values(state?.map?.bought || {}).reduce((n, b) => n + (Number(b?.price) || 0), 0); }
 export function walletStars(state) { return Math.max(0, (state?.map?.stars || 0) - spentStars(state)); }
-export function nextPrice(state) { return SHOP.first * SHOP.factor ** Object.keys(state?.map?.bought || {}).length; }
+// The rising price is for 왕짐 only (ids "w-..."); the effort hats and coats have a fixed price (main.js GEAR_PRICE).
+export function nextPrice(state) { return SHOP.first * SHOP.factor ** Object.keys(state?.map?.bought || {}).filter((id) => id.startsWith('w-')).length; }
 // -> the price paid, or 0 when it was already bought or there are not enough stars.
-export function buyItem(state, id, today) {
-  const m = ensureMap(state), price = nextPrice(state);
+export function buyItem(state, id, today, price = nextPrice(state)) {
+  const m = ensureMap(state);
   if (m.bought?.[id] || walletStars(state) < price) return 0;
   (m.bought || (m.bought = {}))[id] = { day: today, price };
   return price;

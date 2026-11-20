@@ -621,10 +621,20 @@ const CARRIES = [
   ['hourglass','모래시계 가방','best',20], ['cake','흔들지 마세요 케이크','perfect',3], ['shark','편지 삼키는 상어','golden',200],
   ['puffer','투덜이 복어 풍선','best',30], ['fishbowl','주인 행세 금붕어 어항','firm',2000],
 ].map(([art,name,goal,n])=>({slot:'pet', id:'w-'+art, art, name, carry:true, goal, n}));
-// C-023 first hats and coats (art: tools/carry_recipes.py GEAR). How they open is not decided yet: until then they show
-// only in the developer playground.
-const C023_GEAR = [['hat','fish','낚인 생선 모자'],['hat','plant','편지 먹는 화분'],['hat','globe','눈 내리는 마을 모자'],
-  ['coat','office','우체국째 배달 옷'],['coat','map','반 접힌 지도 망토']].map(([slot,key,name])=>({slot, id:`c023-${slot}-${key}`, c023:key, name, pending:true}));
+// C-023 special hats and coats (art: tools/carry_recipes.py GEAR): effort, not skill (user 2026-11-20). Each opens by itself
+// once the child has studied enough (words met, days studied, hours studied: all only grow and merge safely); the goal is
+// not spelled out ("열심히 공부하면 열려요"). Then it can be bought for a modest fixed price that does not raise the 왕짐 price.
+// [estimate] goals ~2-12 weeks for the simulator's base child; GEAR_PRICE ~1.5 weeks of its stars.
+const GEAR_PRICE = 1500;
+const EFFORT = {
+  words: st => Object.keys(st?.words || {}).length,
+  days: st => (st?.past?.days || 0) + new Set((st?.runs || []).map(r => r.day)).size,
+  hours: st => (totals(st || {}).wall || 0) / 3600000,
+};
+const C023_GEAR = [['hat','fish','낚인 생선 모자','words',200],['hat','plant','편지 먹는 화분','days',15],['hat','globe','눈 내리는 마을 모자','hours',10],
+  ['coat','office','우체국째 배달 옷','words',1000],['coat','map','반 접힌 지도 망토','days',60]]
+  .map(([slot,key,name,effort,n])=>({slot, id:`c023-${slot}-${key}`, c023:key, name, effort, n}));
+const effortMet = (item, st) => EFFORT[item.effort](st) >= item.n;
 const carryGoal = (item, st) => { const g = CARRY_GOALS[item.goal], have = g.have(st); return { have, met: have >= item.n, text: g.text(item.n) }; };
 const WORLD_GIFT_NAMES = ['꽃씨 챙모자','과일 주머니','풀잎 조끼','나무결 모자','연잎 가방','굴마을 외투','언덕 베레모','종방울 가방','항구 셔츠','조개 테두리 모자','빵바구니 가방','시계 조끼','풍선 캡','빗방울 가방','물감 앞치마','승차표 모자','공구 가방','눈꽃 외투','단추 모자','사진 가방','모래빛 셔츠','유리구슬 모자','책등 가방','구름 조끼','달조각 모자','별가루 주머니','깃털 외투','바람개비 모자','망원경 가방','창문빛 셔츠'];
 const PET_GOALS = [500, 1500, 3000];
@@ -678,7 +688,7 @@ function worldGift(id) {
 function wardrobeItems(st=G.st) {
   const worlds = G.ix.worlds.map(w => worldGift(w.id)).filter(Boolean);
   const rides = ['우편 자전거','봉투 나룻배','편지 열기구'].map((name,i) => ({slot:'ride', id:'c'+(i+1), name, continent:G.ix.continents[i]}));
-  const carries = CARRIES, firstGear = G.pid === DEV ? C023_GEAR : [];
+  const carries = CARRIES, firstGear = C023_GEAR;
   const active = itemTiersActive();
   const archives = active ? FIELD_COATS.filter(item=>G.ix.byId[item.id] && oldCastle(st,item.id)) : [];
   return [...worlds, ...archives, ...(RIDES_ON ? rides.filter(r=>r.continent?.id===r.id || G.pid===DEV) : []), ...firstGear, ...carries, ...(active ? tierStarGifts : GIFTS)];
@@ -728,8 +738,7 @@ function unlocked(item, st, look, seen = {}) {
   if (item.previous) return !!st?.map?.worlds?.[item.worldId]?.castle || item.previous.some(id=>oldCastle(st,id));
   if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
   if (item.continent) return !!st?.map?.conts?.[item.id]?.castle;
-  if (item.carry) return !!st?.map?.bought?.[item.id];
-  if (item.pending) return false;
+  if (item.carry || item.c023) return !!st?.map?.bought?.[item.id];
   return look.petTier >= item.tier;
 }
 function lookSelection(pid,st) {
@@ -872,16 +881,18 @@ function wardrobe(slot='hat', targetId=null) {
   const isNew=item=>seen.newGifts[item.id] && !seen.viewedGifts[item.id] && unlocked(item,G.st,look,seen.gifts);
   const newSlots=new Set(catalogue.filter(isNew).map(item=>item.slot));
   const items=catalogue.filter(item=>item.slot===slot);
-  const wallet=walletStars(G.st), price=nextPrice(G.st);
+  const wallet=walletStars(G.st), carryPrice=nextPrice(G.st);
   const cards=items.map(item=>{
     const enabled=unlocked(item,G.st,look,seen.gifts), active=selection[slot]?.id===item.id;
-    if (item.carry && !enabled) {
-      const goal=carryGoal(item,G.st);
+    if ((item.carry || item.c023) && !enabled) {
+      const goal=item.carry?carryGoal(item,G.st):{met:effortMet(item,G.st),text:'열심히 공부하면 열려요',have:null};
+      const price=item.carry?carryPrice:GEAR_PRICE;
+      if (!goal.met && item.c023) return `<button class="gear silhouette" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="false" disabled>${gearArt(item)}<b>${esc(item.name)}</b><small>${goal.text}</small></button>`;
       if (!goal.met) return `<button class="gear silhouette" data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="false" disabled>${gearArt(item)}<b>${esc(item.name)}</b><small>${esc(goal.text)}</small><small class="goal-now">지금 ${goal.have.toLocaleString('ko-KR')}</small></button>`;
       const asking=G.buyAsk===item.id, short=wallet<price;
       const act=asking?`<button class="buy" data-act="gear-buy-ok" data-id="${item.id}">★ ${price.toLocaleString('ko-KR')} 내고 사기</button><button class="sec buy-no" data-act="gear-buy-no">그만두기</button>`
         :`<button class="buy" data-act="gear-buy" data-id="${item.id}" ${short||G.readonly?'disabled':''}>★ ${price.toLocaleString('ko-KR')}에 사기</button>${short?`<small>별이 ${(price-wallet).toLocaleString('ko-KR')}개 더 필요해요</small>`:''}`;
-      return `<div class="gear shop${asking?' asking':''}" data-id="${item.id}" data-slot="${slot}">${gearArt(item)}<b>${esc(item.name)}</b><small>${esc(goal.text)} 달성</small>${act}</div>`;
+      return `<div class="gear shop${asking?' asking':''}" data-id="${item.id}" data-slot="${slot}">${gearArt(item)}<b>${esc(item.name)}</b><small>${item.carry?esc(goal.text)+' 달성':'열렸어요'}</small>${act}</div>`;
     }
     const fresh=isNew(item);
     const why=item.legacy?`★ ${item.stars}에 열려요`:item.world?(item.rank?`${REWARD_RANKS[item.rank]} 대륙에서 열려요 · ${item.world.name} 성`:`${item.world.name} 성을 깨면`):item.continent?`${item.continent.name} 큰 성을 깨면`:item.pending?'여는 방법을 정하는 중':`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
@@ -925,16 +936,18 @@ function wear(id,slot='coat',color=null) {
   renderRider();
   wardrobe(slot);
 }
-// A 왕짐 is bought after a second tap (the price is large). The purchase is kept in the child's record and synced.
+// A 왕짐 or a special hat/coat is bought after a second tap. The purchase is kept in the child's record and synced.
 function buyCarry(id) {
   G.buyAsk=null;
-  const item=CARRIES.find(c=>c.id===id);
-  if (!item || G.pid===DEV || G.readonly || !carryGoal(item,G.st).met) return wardrobe('pet');
-  if (!buyItem(G.st,id,todayISO())) return wardrobe('pet');
+  const item=CARRIES.find(c=>c.id===id) || C023_GEAR.find(c=>c.id===id);
+  if (!item) return wardrobe('pet');
+  const ready=item.carry?carryGoal(item,G.st).met:effortMet(item,G.st);
+  if (G.pid===DEV || G.readonly || !ready) return wardrobe(item.slot);
+  if (!buyItem(G.st,id,todayISO(),item.carry?nextPrice(G.st):GEAR_PRICE)) return wardrobe(item.slot);
   if (!save()) return;
   G.sync?.flush().catch(()=>{});
   G.sound?.sfxPlay?.('stamp');
-  return wear(id,'pet');
+  return wear(id,item.slot);
 }
 function ownedGear() {
   const look = readLook(G.pid), {gifts} = deviceSeen();
@@ -1567,8 +1580,8 @@ async function onClick(e) {
     case 'wardrobe': return wardrobe(b.dataset.slot,b.dataset.id);
     case 'gear-tab': return wardrobe(b.dataset.slot);
     case 'gear': return wear(b.dataset.id,b.dataset.slot);
-    case 'gear-buy': G.buyAsk=b.dataset.id; return wardrobe('pet', b.dataset.id);
-    case 'gear-buy-no': G.buyAsk=null; return wardrobe('pet');
+    case 'gear-buy': G.buyAsk=b.dataset.id; return wardrobe(b.closest('.gear')?.dataset.slot || 'pet', b.dataset.id);
+    case 'gear-buy-no': G.buyAsk=null; return wardrobe(b.closest('.gear')?.dataset.slot || 'pet');
     case 'gear-buy-ok': return buyCarry(b.dataset.id);
     case 'gear-color': { const choice=lookSelection(G.pid,G.st)[b.dataset.slot]; if (choice) return wear(choice.id,b.dataset.slot,Number(b.dataset.color)); return; }
     case 'look-close': return closeWardrobe();

@@ -1103,19 +1103,28 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     hourglass:!!document.querySelector('.gear.shop[data-id=w-hourglass] [data-act=gear-buy]:not([disabled])')&&/5,000/.test(document.querySelector('.gear.shop[data-id=w-hourglass]').textContent),
     letter:!!document.querySelector('.gear.shop[data-id=w-letter]'),
     head:document.querySelector('#wardrobe p').textContent}));
-  await shop.click('[data-act=gear-tab][data-slot=hat]'); const hatsHidden=!(await shop.locator('.looks [data-id^=c023-hat]').count());
-  await shop.click('[data-act=gear-tab][data-slot=coat]'); shopStart.hidden=hatsHidden&&!(await shop.locator('.looks [data-id^=c023-coat]').count());
-  await shop.click('[data-act=gear-tab][data-slot=pet]');
   await shop.click('[data-act=gear-buy][data-id=w-hourglass]'); await shop.click('[data-act=gear-buy-no]');
   const notYet=await shop.evaluate(()=>!JSON.parse(localStorage.getItem('cards.v0.p.daughter')).map.bought);
   await shop.click('[data-act=gear-buy][data-id=w-hourglass]'); await shop.click('[data-act=gear-buy-ok][data-id=w-hourglass]');
   const shopAfter=await shop.evaluate(()=>{const s=JSON.parse(localStorage.getItem('cards.v0.p.daughter')), look=JSON.parse(localStorage.getItem('cards.v0.look.daughter'));
     return {stars:s.map.stars, bought:s.map.bought, words:JSON.stringify(s.words), wearing:look.slots.pet?.id, head:document.querySelector('#wardrobe p').textContent,
       next:document.querySelector('.gear.shop[data-id=w-letter] [data-act=gear-buy]')?.textContent||'', rider:!!document.querySelector('#rider use[href="#c023-carry-hourglass-back-0"]')};});
+  // C-023 effort hats and coats: open by themselves after enough study (goal not spelled out), fixed price, no effect on the 왕짐 price
+  await shop.click('[data-act=gear-tab][data-slot=hat]');
+  const effortStart=await shop.evaluate(()=>({fish:/1,500/.test(document.querySelector('.gear.shop[data-id=c023-hat-fish]')?.textContent||''),
+    plant:(()=>{const b=document.querySelector('[data-act=gear][data-id=c023-hat-plant]');return !!b&&b.disabled&&/열심히 공부하면 열려요/.test(b.textContent)&&!/\d/.test(b.querySelector('small').textContent);})()}));
+  await shop.click('[data-act=gear-buy][data-id=c023-hat-fish]'); await shop.click('[data-act=gear-buy-ok][data-id=c023-hat-fish]');
+  const effortAfter=await shop.evaluate(()=>{const s=JSON.parse(localStorage.getItem('cards.v0.p.daughter'));
+    return {price:s.map.bought?.['c023-hat-fish']?.price, head:document.querySelector('#wardrobe p').textContent, hat:!!document.querySelector('#rider use[data-layer=hat][href="#c023-hat-fish-0"]')};});
+  await shop.click('[data-act=gear-tab][data-slot=pet]');
+  effortAfter.letter=await shop.locator('.gear.shop[data-id=w-letter] [data-act=gear-buy]').textContent();
+  ok('C023: effort hats open by themselves without a spelled-out goal, cost a fixed 1,500 and leave the 왕짐 price as it was',
+    effortStart.fish&&effortStart.plant&&effortAfter.price===1500&&/쓸 수 있는 별 ★ 14,500/.test(effortAfter.head)&&effortAfter.hat&&/15,000/.test(effortAfter.letter),
+    JSON.stringify({effortStart,effortAfter}));
   await shop.reload(); await shop.waitForSelector('.profiles'); await shop.click('[data-act=pick][data-id=daughter]'); await shop.waitForSelector('#rider');
   const shopKept=await shop.evaluate(()=>!!document.querySelector('#rider use[href="#c023-carry-hourglass-back-0"]'));
   ok('C023: a met goal shows the 왕짐 for sale, unmet ones show their goal; a second tap buys it, the star total stays, the next one costs 3x, words untouched, kept after reload',
-    shopStart.goose&&shopStart.hourglass&&shopStart.letter&&shopStart.hidden&&/모은 별 ★ 21,000 · 쓸 수 있는 별 ★ 21,000/.test(shopStart.head)&&notYet&&
+    shopStart.goose&&shopStart.hourglass&&shopStart.letter&&/모은 별 ★ 21,000 · 쓸 수 있는 별 ★ 21,000/.test(shopStart.head)&&notYet&&
     shopAfter.stars===21000&&shopAfter.bought?.['w-hourglass']?.price===5000&&shopAfter.words===shopWords&&shopAfter.wearing==='w-hourglass'&&
     /쓸 수 있는 별 ★ 16,000/.test(shopAfter.head)&&/15,000/.test(shopAfter.next)&&shopAfter.rider&&shopKept,
     JSON.stringify({shopStart,notYet,shopAfter:{...shopAfter,words:undefined},shopKept}));
@@ -1290,7 +1299,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     const checked=await polishPage.locator('.looks .gear:not([data-id=default])').evaluateAll((buttons,{slot,legacy})=>{
       const starred=buttons.filter(b=>b.querySelector('.star-gift'));
       const locked=buttons.filter(b=>b.disabled);
-      const artIds=buttons.every(b=>b.dataset.slot===slot&&b.querySelector('use').getAttribute('href').startsWith(slot==='pet'?'#c023-carry-':`#c016-${slot}-`));   // C-023: the pet slot holds 왕짐
+      const artIds=buttons.every(b=>b.dataset.slot===slot&&(b.dataset.id.startsWith('c023-')?b.querySelector('use').getAttribute('href').startsWith(`#c023-${slot}-`):b.querySelector('use').getAttribute('href').startsWith(slot==='pet'?'#c023-carry-':`#c016-${slot}-`)));   // C-023: the pet slot holds 왕짐; effort hats and coats
       const starNames=starred.length===legacy.length&&legacy.every(([id,name,stars])=>starred.some(b=>b.dataset.id===id&&
         b.querySelector('b').textContent===name&&(!b.disabled||b.querySelector('small').textContent===`★ ${stars}에 열려요`)));
       const silhouettes=locked.length>0&&locked.every(b=>{
@@ -1301,7 +1310,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
           art.width>=10&&art.height>=8&&art.height/art.width>=.25&&art.x>=view.x&&art.y>=view.y&&
           art.x+art.width<=view.x+view.width&&art.y+art.height<=view.y+view.height&&b.querySelector('small').textContent.length>0;
       });
-      return {layout:buttons.length===(legacy.length?12:slot==='pet'?8:3)&&artIds&&starNames,silhouettes};
+      return {layout:buttons.length===({hat:15,bag:12,coat:14,pet:8})[slot]&&artIds&&starNames,silhouettes};   // C-023: +3 effort hats, +2 coats
     },{slot,legacy});
     layout018.push(checked.layout);silhouettes018.push(checked.silhouettes);
     if(slot==='coat') await polishPage.screenshot({path:out018+'/locked-items.png',animations:'disabled'});
