@@ -444,7 +444,13 @@ function nodeClick(id) {
   if (n.kind === 'castle' && n.status === 'cleared') return out('이 성은 이미 클리어했어요.');
   if (n.status === 'locked') return out(MSG.locked);
   if (n.status === 'blocked') return out(MSG.blocked);
-  if (n.status === 'cleared') return n.kind === 'tile' ? walkTo(n) : start(id);   // a cleared tile or house: practice again (world.nodeRun)
+  // A cleared tile or house is practised only on a second tap (user 2026-11-20): a child passing by is not sent into a
+  // replay. New villages anywhere on the map are played with one tap; the courier walks straight there.
+  if (n.status === 'cleared') {
+    if (G.replayAsk !== id) { G.replayAsk = id; return out('이미 깬 곳이에요. 다시 연습하려면 한 번 더 눌러요.'); }
+    G.replayAsk = null; return n.kind === 'tile' ? walkTo(n) : start(id);   // practice again (world.nodeRun)
+  }
+  G.replayAsk = null;
   return n.kind === 'tile' ? walkTo(n) : start(id);
 }
 let walking = null;
@@ -503,7 +509,7 @@ function walkTo(target) {
   };
 }
 
-// Only immediate choices from the rider glow. Other legal frontiers remain clickable.
+// Open villages next to the rider get an outline; every open village anywhere is shown and played the same way.
 function localFrontier(w, st, view) {
   const here = hereOf(st,w), root = w._nodes[here] ? here : w.map.startNodeId;
   const seen = new Set([root]), q = [root], near = new Set(), open = new Set(view.nodes.filter((n) => n.kind === 'tile' && n.status === 'open').map((n) => n.id));

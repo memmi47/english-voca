@@ -254,7 +254,9 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 /* C-013 exploration gates: stamps are derived from tile completion, never saved. */
 .world-stamps{display:flex;justify-content:center;gap:12px;min-height:40px;margin:4px auto 8px}.stamp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--paper);border:3px solid var(--ink);padding:2px 8px;font-size:14px;font-weight:700}.stamp-chip.missing{background:#e7e0d1}.stamp-chip.collected{box-shadow:3px 3px var(--ink)}
 .gate-stamp{position:absolute;top:30px;right:0;display:flex;align-items:center;background:var(--paper);border:2px solid var(--ink);pointer-events:none;z-index:3}.gate-stamp.collected{background:#fff0bf}.gate-stamp b{color:#244d44;font-size:18px}.gate-stamp .spr{filter:none;width:28px;height:28px}
-.node.open.distant{opacity:.48}.node.open.distant .big{animation:none}.node.open.nearby .big{outline:3px solid #fff5db;outline-offset:2px}.node.open.distant:focus-visible,.node.open.distant:hover{opacity:1}
+/* Every open village is a choice (user 2026-11-20: jump straight to new stages, no walking back through cleared ones);
+   the ones next to the courier keep a light outline. */
+.node.open.nearby .big{outline:3px solid #fff5db;outline-offset:2px}
 .castle-gate{position:absolute;z-index:4;width:214px;background:var(--paper);border:3px solid var(--ink);padding:5px 8px;display:grid;gap:2px;font-size:12px;pointer-events:none;box-shadow:3px 3px var(--ink)}.castle-gate.ready{background:#d8efc9}.castle-gate>b{font-size:14px}.gate-stamps{display:flex;gap:8px}.gate-stamps>span{display:inline-flex;align-items:center;gap:1px;font-size:11px}.castle-gate small{font-size:11px}.continent-gate{display:block;font-size:11px;line-height:1.5;max-width:170px}.continent-gate[data-ready=true]{color:#244d44;font-weight:700}
 @media(max-width:680px){.castle-gate{width:168px;font-size:10px;box-shadow:2px 2px var(--ink);padding:3px 5px}.castle-gate>b{font-size:12px}.gate-stamps{gap:2px}.gate-stamps>span{font-size:9px}.gate-stamps .spr{width:18px;height:18px}.castle-gate small{font-size:9px}.world-stamps{margin-top:0}.stamp-chip{font-size:12px}}
 
