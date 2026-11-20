@@ -1038,7 +1038,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
       const layers=[...rider.querySelectorAll('.rider-body .frame:first-child use')].map(u=>u.dataset.layer).join(',');
       return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
         rider.querySelector('.rider-body').dataset.frames==='4'&&!rider.querySelector('.rider-pet')&&!rider.querySelector('.rider-unit.riding')&&
-        look.slots.pet.id==='w-letter'&&layers==='carry-back,body,coat,carry-front,head,hair,hat,identity'&&
+        look.slots.pet.id==='w-letter'&&layers==='carry-back,body,coat,bag,carry-front,head,hair,hat,identity'&&
         !!rider.querySelector('use[href="#c023-carry-letter-back-0"]')&&getComputedStyle(rider).pointerEvents==='none';
     },beforeGear));
   await gearPage.screenshot({path:out016+'/rider-carry.png',animations:'disabled'});
@@ -1662,18 +1662,18 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await dv.click('[data-act=dev]'); await dv.selectOption('#dev-goto', 'd2-01'); await dv.check('#dev-all'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#world[data-world="d2-01"]');
   ok('DV4: jumping to a later world opens its map with earlier castles passed; with "all villages" its castle is open', /open/.test(await dv.$eval('.node.castle', (e) => e.className)));
   await dv.click('.page.map > .back'); await dv.waitForSelector('.devgames'); ok('DV4b: the back button of a playground world returns to the playground', true);
-  // C-023: every 왕짐 can be tried in the playground; a 왕짐 and a bag are never worn together (user 2026-11-20).
+  // C-023: every 왕짐 can be tried in the playground; a 왕짐 and a bag can be worn together (user 2026-11-20, second decision).
   await dv.selectOption('#dev-goto', 'd2-01'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#rider');
   await dv.click('[data-act=wardrobe]'); await dv.click('[data-act=gear-tab][data-slot=pet]');
   const dvCarries = await dv.locator('.looks .gear:not([data-id=default]):not([disabled])').evaluateAll(b => b.map(x => x.dataset.id));
   await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=sun-bag]');
   await dv.click('[data-act=gear-tab][data-slot=pet]'); await dv.click('[data-act=gear][data-slot=pet][data-id=w-octopus]');
   const dvCarryOn = await dv.evaluate(() => { const l = JSON.parse(localStorage.getItem('cards.v0.look.dev')).slots;
-    return l.bag === null && l.pet.id === 'w-octopus' && !!document.querySelector('#rider use[href="#c023-carry-octopus-back-0"]') && !document.querySelector('#rider use[data-layer=bag]'); });
-  await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=sun-bag]');
+    return l.bag.id === 'sun-bag' && l.pet.id === 'w-octopus' && !!document.querySelector('#rider use[href="#c023-carry-octopus-back-0"]') && !!document.querySelector('#rider use[data-layer=bag][href*="sun-bag"]'); });
+  await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=default]');
   const dvBagOn = await dv.evaluate(() => { const l = JSON.parse(localStorage.getItem('cards.v0.look.dev')).slots;
-    return l.pet === null && l.bag.id === 'sun-bag' && !document.querySelector('#rider use[data-layer^=carry]'); });
-  ok('DV C023: the playground offers all eight 왕짐; choosing one takes the bag off and choosing a bag takes the 왕짐 off',
+    return l.bag === null && l.pet.id === 'w-octopus' && !!document.querySelector('#rider use[data-layer=carry-back]'); });
+  ok('DV C023: the playground offers all eight 왕짐; a 왕짐 and a bag are worn together and taking the bag off keeps the 왕짐',
     dvCarries.length === 8 && dvCarries.every(id => id.startsWith('w-')) && dvCarryOn && dvBagOn, JSON.stringify({ dvCarries, dvCarryOn, dvBagOn }));
   await dv.click('#wardrobe .sec[data-act=look-close]'); await dv.click('.page.map > .back'); await dv.waitForSelector('.devgames');
   await dv.waitForTimeout(1200);

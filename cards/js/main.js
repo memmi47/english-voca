@@ -603,7 +603,7 @@ function nextGift(stars) { const g = GIFTS.find((x) => stars < x.stars); return 
 // choice stay; with this true they come back as before.
 const RIDES_ON = false;
 // The pet slot is now 왕짐 (user 2026-11-20): big carries and creatures that ride on the courier. The slot key stays
-// 'pet' so saved choices and the unlock tier (`petTier`) keep their place. A 왕짐 and a bag are never worn together.
+// 'pet' so saved choices and the unlock tier (`petTier`) keep their place. A 왕짐 and a bag can be worn together (user 2026-11-20).
 const SLOTS = RIDES_ON ? { hat:'모자', bag:'가방', coat:'옷', ride:'탈것', pet:'왕짐' } : { hat:'모자', bag:'가방', coat:'옷', pet:'왕짐' };
 // C-023 왕짐 (art: tools/carry_recipes.py). `tier` opens with known words (PET_GOALS) like the old pets; `pending` ones have
 // no way to open yet and show only in the developer playground until one is chosen.
@@ -729,7 +729,6 @@ function lookSelection(pid,st) {
       selected[item.slot]={...item,color};
     }
   }
-  if (selected.pet && selected.bag) delete selected.pet;   // one carry at a time; wear() keeps them apart
   return selected;
 }
 function wardrobeArt(id, px=48, extra='', viewBox='0 0 48 48') {
@@ -790,7 +789,7 @@ function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, show
   } else {
     const hasPose = ['throw','happy','wave'].includes(frame) && document.getElementById(pose);
     const body = hasPose ? pose : `c016-body-${color}-${action}${index}`;
-    layers = carryLayer('back') + use('body',body) + use('coat',layerId(coat,'coat',color)) + (carry ? carryLayer('front') : use('bag',layerId(bag,'bag',color))) +
+    layers = carryLayer('back') + use('body',body) + use('coat',layerId(coat,'coat',color)) + use('bag',layerId(bag,'bag',color)) + carryLayer('front') +
       use('head',`c016-head-${color}-${action}${index}`,raised) + use('hair',hair,raised) +
       use('hat',layerId(hat,'hat',color),raised) +
       (showGlints ? [coat,bag,hat].map(item=>gearGlints(item)).join('') : '') + use('identity',badge,raised && child==='daughter');
@@ -895,7 +894,6 @@ function wear(id,slot='coat',color=null) {
   if (color!==null && (!Number.isInteger(color)||!(COLOR_GOALS[color]<=G.st.map.stars))) return;
   look.slots[slot]=id==='default'?null:{id,color:color??0};
   if (slot==='coat') look.outfit=item?.legacy?id:'default';
-  if (id!=='default' && (slot==='pet' || slot==='bag')) look.slots[slot==='pet'?'bag':'pet']=null;   // a 왕짐 or a bag, not both
   writeLook(G.pid,look);
   renderRider();
   wardrobe(slot);
