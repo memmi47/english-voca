@@ -1024,21 +1024,24 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
         !!document.querySelector('#rider use[href="#c016-coat-legacy-sea-coat-0"]');
     }));
   await gearPage.screenshot({path:out016+'/wardrobe.png',animations:'disabled'});
-  await gearPage.click('[data-act=gear-tab][data-slot=ride]');
-  const rideLocked=await gearPage.locator('[data-act=gear][data-id=c2]').isDisabled();
-  await gearPage.click('[data-act=gear][data-id=c1]');
+  // 2026-11-20 (C-023): rides are off the wardrobe for now, the pet slot is 왕짐 and a 왕짐 is never worn with a bag.
+  const rideTab=await gearPage.locator('[data-act=gear-tab][data-slot=ride]').count();
   await gearPage.click('[data-act=gear-tab][data-slot=pet]');
-  const petLocked=await gearPage.locator('[data-act=gear][data-id=lizard]').isDisabled();
-  await gearPage.click('[data-act=gear][data-id=snail]');
+  const carryTab=await gearPage.locator('[data-act=gear-tab][data-slot=pet]').textContent();
+  const carryIds=await gearPage.locator('.looks .gear:not([data-id=default])').evaluateAll(b=>b.map(x=>x.dataset.id));
+  const carryLocked=await gearPage.locator('[data-act=gear][data-id=w-goose]').isDisabled();
+  await gearPage.click('[data-act=gear][data-id=w-letter]');
   await gearPage.click('#wardrobe .sec[data-act=look-close]');
-  ok('C016: ride and pet use separate slots, 4 rider frames and 2 pet frames, without writing child progress',
-    rideLocked&&petLocked&&await gearPage.evaluate(before=>{
-      const rider=document.querySelector('#rider');
+  ok('C016/C023: no ride tab; the 왕짐 tab holds the known-word carries (not the old pets), drawn behind and over the courier; 4 rider frames, without writing child progress',
+    rideTab===0&&carryTab.trim()==='왕짐'&&JSON.stringify(carryIds)==='["w-letter","w-goose","w-octopus"]'&&carryLocked&&await gearPage.evaluate(before=>{
+      const rider=document.querySelector('#rider'), look=JSON.parse(localStorage.getItem('cards.v0.look.son'));
+      const layers=[...rider.querySelectorAll('.rider-body .frame:first-child use')].map(u=>u.dataset.layer).join(',');
       return localStorage.getItem('cards.v0.p.son')===before&&rider.getBoundingClientRect().width===80&&
-        rider.querySelector('.rider-body').dataset.frames==='4'&&rider.querySelector('.rider-pet').dataset.frames==='2'&&
-        !!rider.querySelector('.rider-unit.riding.ride-c1 .ride-back')&&getComputedStyle(rider).pointerEvents==='none';   // 2026-11-20: the ride is drawn with the courier
+        rider.querySelector('.rider-body').dataset.frames==='4'&&!rider.querySelector('.rider-pet')&&!rider.querySelector('.rider-unit.riding')&&
+        look.slots.pet.id==='w-letter'&&layers==='carry-back,body,coat,carry-front,head,hair,hat,identity'&&
+        !!rider.querySelector('use[href="#c023-carry-letter-back-0"]')&&getComputedStyle(rider).pointerEvents==='none';
     },beforeGear));
-  await gearPage.screenshot({path:out016+'/rider-ride-pet.png',animations:'disabled'});
+  await gearPage.screenshot({path:out016+'/rider-carry.png',animations:'disabled'});
   await gearPage.evaluate(()=>{
     const key='cards.v0.p.son',s=JSON.parse(localStorage.getItem(key));
     s.words[Object.keys(s.words)[0]].st='learn';
@@ -1050,24 +1053,21 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await gearPage.waitForSelector('#rider');
   await gearPage.click('[data-act=wardrobe]');
   await gearPage.click('[data-act=gear-tab][data-slot=pet]');
-  ok('C016: the earned pet stays unlocked after the known-word count drops and the page reloads',
-    await gearPage.locator('[data-act=gear][data-id=snail]').isEnabled()&&
-    await gearPage.$eval('#rider use[href="#c016-pet-snail-0"]',e=>!!e));
+  ok('C016: the earned 왕짐 stays unlocked after the known-word count drops and the page reloads',
+    await gearPage.locator('[data-act=gear][data-id=w-letter]').isEnabled()&&
+    await gearPage.$eval('#rider use[href="#c023-carry-letter-back-0"]',e=>!!e));
   await gearPage.click('#wardrobe .sec[data-act=look-close]');
   const mounted = await gearPage.evaluate(() => {
     const choice = document.querySelector('#world .node.open.nearby');
     const rider = document.querySelector('#rider');
     choice.click();
     const move = rider.getAnimations()[0];
-    const pet = rider.querySelector('.rider-pet').getAnimations()[0];
-    if (!move || !pet) return null;
-    for (const animation of [move, pet]) {
-      animation.pause();
-      animation.currentTime = animation.effect.getTiming().duration * .6;
-    }
-    const follows = pet.effect.getKeyframes().some(frame => frame.transform !== 'translate(0px, 0px)');
-    const mountedArt = !!rider.querySelector('.rider-unit.riding.ride-c1 .ride-back') &&
-      !!rider.querySelector('use[href="#c016-body-teal-walk3"]') && rider.classList.contains('mounted');
+    if (!move) return null;
+    move.pause();
+    move.currentTime = move.effect.getTiming().duration * .6;
+    const follows = !!rider.querySelector('use[href="#c023-carry-letter-back-0"]');   // the 왕짐 walks with the courier
+    const mountedArt = !rider.querySelector('.rider-unit.riding') && !rider.classList.contains('mounted') &&
+      !!rider.querySelector('use[href="#c016-body-teal-walk3"]');
     return { id: choice.dataset.id, follows, mountedArt };
   });
   if (mounted) {
@@ -1075,7 +1075,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     await gearPage.locator(`[data-act=node][data-id="${mounted.id}"]`).evaluate(button => button.click());
     await gearPage.waitForSelector(READY);
   }
-  ok('C016: the courier rides while moving, the pet follows the previous stop, and a second tap still opens the tile',
+  ok('C016: the courier walks (no ride while rides are off), the 왕짐 moves with it, and a second tap still opens the tile',
     mounted?.follows && mounted.mountedArt && await gearPage.evaluate(id=>window.__cards.node?.unit===id,mounted.id));
   await gearCtx.close();
 
@@ -1241,14 +1241,14 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
       localStorage.getItem('cards.v0.p.son')===before&&!!document.querySelector('#rider use[data-layer=hat][href="#c016-hat-legacy-leaf-cap-0"]'),beforePolish));
 
   const slots018={hat:[['leaf-cap','잎사귀 모자',12],['night-cap','밤하늘 모자',240]],
-    bag:[['sun-bag','햇살 가방',40],['letter-bag','편지 가방',500]],coat:[['sea-coat','물결 옷',100],['festival-coat','축제 옷',1000]],ride:[],pet:[]};
+    bag:[['sun-bag','햇살 가방',40],['letter-bag','편지 가방',500]],coat:[['sea-coat','물결 옷',100],['festival-coat','축제 옷',1000]],pet:[]};
   const layout018=[], silhouettes018=[];
   for(const [slot,legacy] of Object.entries(slots018)){
     await polishPage.click(`[data-act=gear-tab][data-slot=${slot}]`);
     const checked=await polishPage.locator('.looks .gear:not([data-id=default])').evaluateAll((buttons,{slot,legacy})=>{
       const starred=buttons.filter(b=>b.querySelector('.star-gift'));
       const locked=buttons.filter(b=>b.disabled);
-      const artIds=buttons.every(b=>b.dataset.slot===slot&&b.querySelector('use').getAttribute('href').startsWith(`#c016-${slot}-`));
+      const artIds=buttons.every(b=>b.dataset.slot===slot&&b.querySelector('use').getAttribute('href').startsWith(slot==='pet'?'#c023-carry-':`#c016-${slot}-`));   // C-023: the pet slot holds 왕짐
       const starNames=starred.length===legacy.length&&legacy.every(([id,name,stars])=>starred.some(b=>b.dataset.id===id&&
         b.querySelector('b').textContent===name&&(!b.disabled||b.querySelector('small').textContent===`★ ${stars}에 열려요`)));
       const silhouettes=locked.length>0&&locked.every(b=>{
@@ -1662,6 +1662,20 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await dv.click('[data-act=dev]'); await dv.selectOption('#dev-goto', 'd2-01'); await dv.check('#dev-all'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#world[data-world="d2-01"]');
   ok('DV4: jumping to a later world opens its map with earlier castles passed; with "all villages" its castle is open', /open/.test(await dv.$eval('.node.castle', (e) => e.className)));
   await dv.click('.page.map > .back'); await dv.waitForSelector('.devgames'); ok('DV4b: the back button of a playground world returns to the playground', true);
+  // C-023: every 왕짐 can be tried in the playground; a 왕짐 and a bag are never worn together (user 2026-11-20).
+  await dv.selectOption('#dev-goto', 'd2-01'); await dv.click('[data-act=dev-world]'); await dv.waitForSelector('#rider');
+  await dv.click('[data-act=wardrobe]'); await dv.click('[data-act=gear-tab][data-slot=pet]');
+  const dvCarries = await dv.locator('.looks .gear:not([data-id=default]):not([disabled])').evaluateAll(b => b.map(x => x.dataset.id));
+  await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=sun-bag]');
+  await dv.click('[data-act=gear-tab][data-slot=pet]'); await dv.click('[data-act=gear][data-slot=pet][data-id=w-octopus]');
+  const dvCarryOn = await dv.evaluate(() => { const l = JSON.parse(localStorage.getItem('cards.v0.look.dev')).slots;
+    return l.bag === null && l.pet.id === 'w-octopus' && !!document.querySelector('#rider use[href="#c023-carry-octopus-back-0"]') && !document.querySelector('#rider use[data-layer=bag]'); });
+  await dv.click('[data-act=gear-tab][data-slot=bag]'); await dv.click('[data-act=gear][data-slot=bag][data-id=sun-bag]');
+  const dvBagOn = await dv.evaluate(() => { const l = JSON.parse(localStorage.getItem('cards.v0.look.dev')).slots;
+    return l.pet === null && l.bag.id === 'sun-bag' && !document.querySelector('#rider use[data-layer^=carry]'); });
+  ok('DV C023: the playground offers all eight 왕짐; choosing one takes the bag off and choosing a bag takes the 왕짐 off',
+    dvCarries.length === 8 && dvCarries.every(id => id.startsWith('w-')) && dvCarryOn && dvBagOn, JSON.stringify({ dvCarries, dvCarryOn, dvBagOn }));
+  await dv.click('#wardrobe .sec[data-act=look-close]'); await dv.click('.page.map > .back'); await dv.waitForSelector('.devgames');
   await dv.waitForTimeout(1200);
   const dvServer = await dv.evaluate(async () => (await fetch('api/doc/p.dev')).status);
   ok('DV5: children\'s records are untouched and the playground record never reaches the Mac server', JSON.stringify(await dv.evaluate(() => [localStorage.getItem('cards.v0.p.son'), localStorage.getItem('cards.v0.p.daughter')])) === JSON.stringify(dvKids) && dvServer === 404, String(dvServer));

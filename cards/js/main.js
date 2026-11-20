@@ -199,6 +199,7 @@ async function boot() {
   if (G.hard) setHardness((id) => G.hard[id]);                       // the world's checks take the hardest passed words
   step('그림'); await loadSprites(); await loadSprites('assets/postal/motion/sprites.svg'); await loadSprites('assets/postal/atlas/sprites.svg'); await loadSprites('assets/postal/wardrobe/sprites.svg'); await loadSprites('assets/postal/kids/sprites.svg'); await loadSprites('assets/postal/feedback/sprites.svg'); await loadSprites('assets/postal/stamps/sprites.svg'); if (G.pack) await loadSprites(G.pack); if (STORM.on) await loadStormSprites(); G.meta = loadMeta();   // the world file may bring its own boss sprites
   if (ITEM_TIERS_FROM) await loadSprites('assets/postal/item-tiers/sprites.svg');
+  await loadSprites('assets/postal/carry/sprites.svg');
   addFaces();
   step('소리 목록'); G.sound = new Sound({ off: qs.get('sound') === 'off' }); await G.sound.init(); step('첫 화면');
   const pref = loadPref(); G.reduceMotion = pref.reduceMotion; G.homeProgress = pref.homeProgress; document.body.classList.toggle('motion-quiet', FAST || G.reduceMotion); G.sound.musicOn = pref.music; G.sound.sfx = pref.sfx;
@@ -598,7 +599,19 @@ function deviceSeen() {
 }
 function writeDevice() { try { localStorage.setItem('cards.v0.seen', JSON.stringify(deviceMemory)); } catch {} }
 function nextGift(stars) { const g = GIFTS.find((x) => stars < x.stars); return g ? `다음 선물까지 ★ ${g.stars-stars}` : '선물을 모두 열었어요'; }
-const SLOTS = { hat:'모자', bag:'가방', coat:'옷', ride:'탈것', pet:'반려동물' };
+// Rides are off the wardrobe for now (user 2026-11-20: decide later, made properly). Their art, unlock rule and any saved
+// choice stay; with this true they come back as before.
+const RIDES_ON = false;
+// The pet slot is now 왕짐 (user 2026-11-20): big carries and creatures that ride on the courier. The slot key stays
+// 'pet' so saved choices and the unlock tier (`petTier`) keep their place. A 왕짐 and a bag are never worn together.
+const SLOTS = RIDES_ON ? { hat:'모자', bag:'가방', coat:'옷', ride:'탈것', pet:'왕짐' } : { hat:'모자', bag:'가방', coat:'옷', pet:'왕짐' };
+// C-023 왕짐 (art: tools/carry_recipes.py). `tier` opens with known words (PET_GOALS) like the old pets; `pending` ones have
+// no way to open yet and show only in the developer playground until one is chosen.
+const CARRIES = [
+  ['letter','우표보다 큰 편지',1], ['goose','가방인 척 거위',2], ['octopus','업힌 도장 문어',3],
+  ['hourglass','모래시계 가방',0], ['cake','흔들지 마세요 케이크',0], ['shark','편지 삼키는 상어',0],
+  ['puffer','투덜이 복어 풍선',0], ['fishbowl','주인 행세 금붕어 어항',0],
+].map(([art,name,tier])=>({slot:'pet', id:'w-'+art, art, name, carry:true, ...(tier ? {tier} : {pending:true})}));
 const WORLD_GIFT_NAMES = ['꽃씨 챙모자','과일 주머니','풀잎 조끼','나무결 모자','연잎 가방','굴마을 외투','언덕 베레모','종방울 가방','항구 셔츠','조개 테두리 모자','빵바구니 가방','시계 조끼','풍선 캡','빗방울 가방','물감 앞치마','승차표 모자','공구 가방','눈꽃 외투','단추 모자','사진 가방','모래빛 셔츠','유리구슬 모자','책등 가방','구름 조끼','달조각 모자','별가루 주머니','깃털 외투','바람개비 모자','망원경 가방','창문빛 셔츠'];
 const PET_GOALS = [500, 1500, 3000];
 const COLOR_GOALS = [0, 3, 40];
@@ -651,10 +664,10 @@ function worldGift(id) {
 function wardrobeItems(st=G.st) {
   const worlds = G.ix.worlds.map(w => worldGift(w.id)).filter(Boolean);
   const rides = ['우편 자전거','봉투 나룻배','편지 열기구'].map((name,i) => ({slot:'ride', id:'c'+(i+1), name, continent:G.ix.continents[i]}));
-  const pets = ['우표 더듬이 달팽이','소인 꼬리 도마뱀','봉투 날개 나방'].map((name,i) => ({slot:'pet', id:['snail','lizard','moth'][i], name, tier:i+1}));
+  const carries = CARRIES.filter(item => !item.pending || G.pid === DEV);
   const active = itemTiersActive();
   const archives = active ? FIELD_COATS.filter(item=>G.ix.byId[item.id] && oldCastle(st,item.id)) : [];
-  return [...worlds, ...archives, ...rides.filter(r=>r.continent?.id===r.id || G.pid===DEV), ...pets, ...(active ? tierStarGifts : GIFTS)];
+  return [...worlds, ...archives, ...(RIDES_ON ? rides.filter(r=>r.continent?.id===r.id || G.pid===DEV) : []), ...carries, ...(active ? tierStarGifts : GIFTS)];
 }
 const lookKey = id => 'cards.v0.look.' + id;
 function readLook(id, migrate = false) {
@@ -701,6 +714,7 @@ function unlocked(item, st, look, seen = {}) {
   if (item.previous) return !!st?.map?.worlds?.[item.worldId]?.castle || item.previous.some(id=>oldCastle(st,id));
   if (item.world) return !!st?.map?.worlds?.[item.id]?.castle;
   if (item.continent) return !!st?.map?.conts?.[item.id]?.castle;
+  if (item.pending) return false;
   return look.petTier >= item.tier;
 }
 function lookSelection(pid,st) {
@@ -715,6 +729,7 @@ function lookSelection(pid,st) {
       selected[item.slot]={...item,color};
     }
   }
+  if (selected.pet && selected.bag) delete selected.pet;   // one carry at a time; wear() keeps them apart
   return selected;
 }
 function wardrobeArt(id, px=48, extra='', viewBox='0 0 48 48') {
@@ -734,6 +749,7 @@ function gearGlints(item, sized=false) {
 }
 function gearArt(item, px=54) {
   const {slot,id} = item;
+  if (item.carry) return wardrobeArt(`c023-carry-${item.art}-icon`,px,'gear-art');
   const sprite = slot==='ride' ? `c016-ride-${id}-idle` : slot==='pet' ? `c016-pet-${id}-0` : layerId({...item,color:0},slot,'teal');
   if (item.art) return `<svg class="spr gear-art" width="${px}" height="${px}" viewBox="${TIER_VIEWBOX[slot]}" aria-hidden="true"><use href="#${sprite}" width="48" height="48"/>${gearGlints(item,true)}</svg>`;
   return wardrobeArt(sprite,px,'gear-art',GEAR_VIEWBOX[slot]);
@@ -761,18 +777,20 @@ function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, show
   const motion = idleMotion ? ' kid-idle ' + child : '';
   const use = (layer, id, lift=false) => `<use data-layer="${layer}" href="#${id}"${lift?' transform="translate(0 -1)"':''}/>`;
   const {coat,bag,hat} = selection;
+  const carry = selection.pet?.carry ? selection.pet : null;
+  const carryLayer = part => carry && document.getElementById(`c023-carry-${carry.art}-${part}-${carry.color}`) ? use('carry-'+part,`c023-carry-${carry.art}-${part}-${carry.color}`) : '';
   const action = frame === 'run' || frame.startsWith('walk') ? 'walk' : 'idle';
   const pose = ['run','throw'].includes(frame) ? `c014-courier-${color}-${frame}` : `courier-${color}-${frame}`;
   let layers;
-  if (!hat && !bag && !coat && index===0) {
+  if (!hat && !bag && !coat && !carry && index===0) {
     const body = document.getElementById(pose) ? pose : `courier-${color}-idle`;
     layers = use('body',body) + use('hair',hair,raised) + use('identity',badge,raised && child==='daughter');
-  } else if (!hat && !bag && coat?.legacy && !coat.art && !coat.color && index===0 && ['idle','walk1','walk2'].includes(frame)) {
+  } else if (!hat && !bag && !carry && coat?.legacy && !coat.art && !coat.color && index===0 && ['idle','walk1','walk2'].includes(frame)) {
     layers = use('body',`c011-look-${coat.id}-${action==='walk'?'walk1':'idle'}`) + use('hair',hair) + use('identity',badge);
   } else {
     const hasPose = ['throw','happy','wave'].includes(frame) && document.getElementById(pose);
     const body = hasPose ? pose : `c016-body-${color}-${action}${index}`;
-    layers = use('body',body) + use('coat',layerId(coat,'coat',color)) + use('bag',layerId(bag,'bag',color)) +
+    layers = carryLayer('back') + use('body',body) + use('coat',layerId(coat,'coat',color)) + (carry ? carryLayer('front') : use('bag',layerId(bag,'bag',color))) +
       use('head',`c016-head-${color}-${action}${index}`,raised) + use('hair',hair,raised) +
       use('hat',layerId(hat,'hat',color),raised) +
       (showGlints ? [coat,bag,hat].map(item=>gearGlints(item)).join('') : '') + use('identity',badge,raised && child==='daughter');
@@ -804,11 +822,9 @@ function riderLook(moving=false) {
   const stack=(frames,kind)=>`<span class="rider-frames ${kind}" data-frames="${frames.length}">${frames.map((html,i)=>`<span class="frame" style="--frame:${i}">${html}</span>`).join('')}</span>`;
   const frames=Array.from({length:4},(_,i)=>courierFrame(moving?'walk1':'idle',selection,80,G.pid,i,false,true));
   const ride=selection.ride;
-  const pet=selection.pet;
-  // The pet keeps to the courier's feet (the moth flies at the shoulder), the same size class, with its own shadow.
   const rideCls = ride ? ` riding ride-${ride.id} color-${ride.color}` : '';
   return `<span class="rider-shadow"></span><span class="rider-unit${rideCls}">${ride ? rideLayer(ride.id, 'back', 80, 'rider-ride') : ''}
-    ${stack(frames, moving ? 'rider-body' : `rider-body kid-idle ${G.pid}`)}${ride ? rideLayer(ride.id, 'front', 80, 'rider-ride') : ''}</span>${pet ? `<span class="pet-shadow pet-${pet.id}"></span>` + stack([0,1].map(i=>wardrobeArt(`c016-pet-${pet.id}-${i}`,44,`color-${pet.color}`)),`rider-pet pet-${pet.id}`):''}`;
+    ${stack(frames, moving ? 'rider-body' : `rider-body kid-idle ${G.pid}`)}${ride ? rideLayer(ride.id, 'front', 80, 'rider-ride') : ''}</span>`;
 }
 function renderRider(moving=false) {
   const rider=$('#rider');
@@ -842,7 +858,7 @@ function wardrobe(slot='hat', targetId=null) {
   const cards=items.map(item=>{
     const enabled=unlocked(item,G.st,look,seen.gifts), active=selection[slot]?.id===item.id;
     const fresh=isNew(item);
-    const why=item.legacy?`★ ${item.stars}에 열려요`:item.world?(item.rank?`${REWARD_RANKS[item.rank]} 대륙에서 열려요 · ${item.world.name} 성`:`${item.world.name} 성을 깨면`):item.continent?`${item.continent.name} 큰 성을 깨면`:`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
+    const why=item.legacy?`★ ${item.stars}에 열려요`:item.world?(item.rank?`${REWARD_RANKS[item.rank]} 대륙에서 열려요 · ${item.world.name} 성`:`${item.world.name} 성을 깨면`):item.continent?`${item.continent.name} 큰 성을 깨면`:item.pending?'여는 방법을 정하는 중':`익힌 단어 ${PET_GOALS[item.tier-1]}개`;
     const tag=item.legacy?'<span class="star-gift">별 선물</span>':item.rank?`<span class="gear-tier">${item.archive?'예전 보상':REWARD_RANKS[item.rank]}</span>`:'';
     return `<button class="gear ${enabled?'':'silhouette'}${fresh?' new-gift':''}${item.id===targetId?' gift-target':''}" ${item.rank?`data-rank="${item.rank}"`:''} data-act="gear" data-id="${item.id}" data-slot="${slot}" aria-pressed="${active}" ${enabled?'':'disabled'}>${gearArt(item)}<b>${esc(item.name)}</b>${tag}${fresh?newBadge:''}<small>${enabled?(active?'선택했어요':'고르기'):esc(why)}</small></button>`;
   }).join('');
@@ -879,6 +895,7 @@ function wear(id,slot='coat',color=null) {
   if (color!==null && (!Number.isInteger(color)||!(COLOR_GOALS[color]<=G.st.map.stars))) return;
   look.slots[slot]=id==='default'?null:{id,color:color??0};
   if (slot==='coat') look.outfit=item?.legacy?id:'default';
+  if (id!=='default' && (slot==='pet' || slot==='bag')) look.slots[slot==='pet'?'bag':'pet']=null;   // a 왕짐 or a bag, not both
   writeLook(G.pid,look);
   renderRider();
   wardrobe(slot);

@@ -1,4 +1,4 @@
-"""Check the default silhouettes and primary colors from the generated C-019 sprites."""
+"""Check the default silhouettes and primary colors from the generated C-019 and C-023 (왕짐) sprites."""
 from collections import Counter
 from itertools import combinations
 from math import dist
@@ -28,6 +28,51 @@ def pixels(symbol):
 def mask_at_map_size(drawn):
     return {(x, y) for y in range(80) for x in range(80)
             if ((2*x+1)*48//160, (2*y+1)*48//160) in drawn}
+
+
+def carry_pixels(symbol):
+    # 왕짐 reach past the 48 box on purpose (the symbols show overflow); keep them near the courier.
+    drawn = {}
+    for rect in symbol:
+        x, y, w, h = (int(rect.attrib[k]) for k in ("x", "y", "width", "height"))
+        assert -16 <= x and x+w <= 72 and -16 <= y and y+h <= 48, symbol.attrib
+        for col in range(x, x+w):
+            drawn[col, y] = rect.attrib["fill"].upper()
+    return drawn
+
+
+def carry_mask_at_map_size(drawn):
+    return {(x, y) for y in range(-30, 80) for x in range(-30, 125)
+            if ((2*x+1)*48//160, (2*y+1)*48//160) in drawn}
+
+
+def check_carries():
+    sheet = sprites(ASSETS / "carry/sprites.svg")
+    keys = sorted({name.split("-")[2] for name in sheet})
+    assert len(keys) == 8, keys
+    measured = []
+    for key in keys:
+        drawn = {}
+        for part in ("back", "front"):
+            base = sheet.get(f"c023-carry-{key}-{part}-0")
+            if base is None:
+                continue
+            layer = carry_pixels(base)
+            for tone in (1, 2):
+                variant = carry_pixels(sheet[f"c023-carry-{key}-{part}-{tone}"])
+                assert variant.keys() == layer.keys(), (key, part, tone)
+            drawn.update(layer)
+        assert any(carry_pixels(sheet[f"c023-carry-{key}-{part}-{tone}"]) != carry_pixels(sheet[f"c023-carry-{key}-{part}-0"])
+                   for part in ("back", "front") if f"c023-carry-{key}-{part}-0" in sheet for tone in (1, 2)), key
+        assert f"c023-carry-{key}-icon" in sheet, key
+        colors = Counter(c for c in drawn.values() if c != INK)
+        measured.append((key, carry_mask_at_map_size(drawn), oklab(colors.most_common(1)[0][0])))
+    pairs = compare(measured, .12)
+    shape = min(pairs, key=lambda pair: pair[0])
+    color = min(pairs, key=lambda pair: pair[1])
+    print(f"carry: {len(pairs)} pairs, min shape {shape[0]:.2%} ({shape[2]}, {shape[3]}), "
+          f"min color {color[1]:.4f} ({color[2]}, {color[3]})")
+    return len(pairs)
 
 
 def oklab(hex_color):
@@ -85,6 +130,7 @@ def main():
         color = min(pairs, key=lambda pair: pair[1])
         print(f"{slot}: {len(pairs)} pairs, min shape {shape[0]:.2%} ({shape[2]}, {shape[3]}), "
               f"min color {color[1]:.4f} ({color[2]}, {color[3]})")
+    total += check_carries()
     print(f"{total}/{total} item pairs and {len(expected)}/8 glint frames passed")
 
 
