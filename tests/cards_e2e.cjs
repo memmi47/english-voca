@@ -1720,7 +1720,8 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   // C-023 first hats and coats: playground only until their way to open is chosen; worn as layers (a coat may have a back layer)
   await dv.click('[data-act=gear-tab][data-slot=hat]'); await dv.click('[data-act=gear][data-slot=hat][data-id=c023-hat-fish]');
   await dv.click('[data-act=gear-tab][data-slot=coat]'); await dv.click('[data-act=gear][data-slot=coat][data-id=c023-coat-map]');
-  const dvGear = await dv.evaluate(() => !!document.querySelector('#rider use[data-layer=hat][href="#c023-hat-fish-0"]') && !!document.querySelector('#rider use[data-layer=coat-back][href="#c023-coat-map-back-0"]') &&
+  const dvGear = await dv.evaluate(() => !!document.querySelector('#rider use[data-layer=hat][href="#c023-hat-fish-0"]') &&
+    !!document.querySelector('.gear-preview use[data-layer=hat][href="#c023-hat-fish-0"]') && !!document.querySelector('.gear-preview use[data-layer=coat][href="#c023-coat-map-0"]') &&   // the wardrobe preview wears it too !!document.querySelector('#rider use[data-layer=coat-back][href="#c023-coat-map-back-0"]') &&
     !!document.querySelector('#rider use[data-layer=coat][href="#c023-coat-map-0"]') && !!document.querySelector('[data-act=gear][data-id=c023-coat-office]:not([disabled])'));
   await dv.click('[data-act=gear][data-slot=coat][data-id=default]'); await dv.click('[data-act=gear-tab][data-slot=hat]'); await dv.click('[data-act=gear][data-slot=hat][data-id=default]');
   await dv.click('[data-act=gear-tab][data-slot=pet]');

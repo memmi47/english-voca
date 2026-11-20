@@ -825,7 +825,8 @@ function courierFrame(frame, selection, px, pid, index=0, idleMotion=false, show
   return `<svg class="spr${motion}" width="${px}" height="${px}" viewBox="0 0 48 48" aria-hidden="true">${layers}</svg>`;
 }
 function courier(frame, px, pid=G.pid, st=G.st, face='') {
-  if (!pid || pid === DEV || !st) return courierFrame(frame, {}, px, 'son', 0, false, false, face);   // the playground: the plain courier
+  if (!pid || !st) return courierFrame(frame, {}, px, 'son', 0, false, false, face);
+  // The playground draws the son's courier in what it wears there, so its wardrobe preview shows each choice (user 2026-11-20).
   return courierFrame(frame, lookSelection(pid,st), px, pid, 0, frame==='idle' && !face, frame==='idle' && !face, face);
 }
 // Rides on the courier's own 48-pixel grid (user 2026-11-20: parked rides beside the courier read as litter). `back` is
