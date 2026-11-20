@@ -8,6 +8,7 @@ import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, se
 import { Sync, mergeCards } from './sync.js';
 import { loadRecord, compact, totals, readBackup, migrate, setAside } from './store.js';
 import { STORM, indexForms, formDone, hereOf, stormOf, stormBlocks, stormRelease, stormTick, StormRun, settleStorm } from './storm.js';
+import { ORIGINALS_BETWEEN_PROMPTS, reviewPrompt } from './study_prompts.js';
 
 const qs = new URLSearchParams(location.search);
 const todayISO = () => qs.get('today') || new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
@@ -179,6 +180,8 @@ async function boot() {
     step('단어 목록'); const cat = await fetch(DATA + (doc.catalogue || 'catalog.json')).then(json);       // the real file names catalogue.json; the small demo file names none and uses its own catalog.json
     // Card fields this game reads: track ("sight" = hear-and-pick card) and groups (confusion groups, never offered as wrong answers).
     G.words = cat.words.map((w) => ({ ...w, track: w.track || (w.answerMode === 'listen-spelling' || w.learningKind === 'sight' ? 'sight' : 'vocab'), groups: w.groups || (w.confusionGroups?.length ? w.confusionGroups : undefined) }));
+    G.byForm = new Map();
+    for (const w of G.words) G.byForm.set(w.form, G.byForm.has(w.form) ? null : w);
     if (qs.get('houses') === 'sight') setLeftOutKinds([]);            // test-only: bring the hear-and-pick houses back
     if (qs.get('triage') === 'off') TRIAGE.on = false;                 // test-only: every new word one card at a time, as before the word list
     if (qs.get('triage') === 'tile') TRIAGE.sort = false;
@@ -210,6 +213,7 @@ async function boot() {
   // so two open tabs never answer each other's saves.
   window.addEventListener('storage', (e) => { if (!G.st || !G.pid || G.readonly || e.key !== KEY(G.pid) || e.newValue == null) return; try { catchUp(e.newValue, false); } catch {} });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { G.sync?.flush().catch(() => {}); return; } G.sync?.flush().catch(() => {}); if (G.view === 'card' && !G.busy) speak(true); });
+  window.addEventListener('resize', fitCardWord);
   home();
 }
 
@@ -1056,6 +1060,7 @@ function begin(node, rng) {
   const items = takeBag(G.st); G.node = node; startTile(G.st, node, todayISO()); if (!save() && G.readonly) return;   // the mark is saved before any word is
   if (!G.boss || G.boss.day !== todayISO() || G.boss.pid !== G.pid) G.boss = { idx: 0, hp: CFG.bossHp, defeated: 0, day: todayISO(), pid: G.pid };
   G.run = new Run({ state: G.st, words: G.words, today: todayISO(), rng, boss: G.boss, scope: node.scope, items, tag: node.tag });
+  G.reviewPlan = ['tile','monster','review'].includes(node.kind) ? {next:ORIGINALS_BETWEEN_PROMPTS,slot:G.st.runs.length} : null;
   clearPresentation(); G.displayBoss = displayMonster(node, G.run.queue.length); G.ending = false; G.view = 'card'; band(true); G.shieldSeen = 0; G.sound.sfxPlay('step'); G.sound.scene(['castle', 'bat', 'finale'].includes(node.kind) ? 'castle' : 'study', node.kind === 'finale' ? { variant: 'continent-castle' } : {});
   $('#app').innerHTML = `<div class="run">
   <header class="hud"><button class="x" data-act="quit" aria-label="그만하기">✕</button>
@@ -1091,22 +1096,58 @@ function bossPic(w, i) {
 }
 const TAG = { castle: '박쥐·성 시험', new: '새 카드', review: '다시 만난 카드', likely: '다시 만난 카드', relearn: '방금 배운 카드', practice: '한 번 더', retry: '다시 도전' };
 const HEAR = `<button class="hear" data-act="hear" aria-label="다시 듣기"><svg class="spr" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg></button>`;
+const REVIEW_TAG = {
+  'meaning-to-word':'뜻에 맞는 영어를 골라요',
+  'similar-words':'헷갈리는 두 단어 중 골라요',
+  'sentence-meaning':'문장에서 굵은 단어의 뜻을 골라요',
+};
+function fitCardWord() {
+  const word = $('#card .word');
+  if (!word) return;
+  word.classList.add('fit-word');
+  word.classList.remove('wrap-word');
+  word.style.removeProperty('font-size');
+  const width = word.clientWidth, measured = word.scrollWidth;
+  if (measured <= width || !width) return;
+  const base = parseFloat(getComputedStyle(word).fontSize);
+  const minimum = word.classList.contains('small') ? 22 : 28;
+  const fitted = Math.max(minimum, Math.floor(base * (width - 1) / measured));
+  word.style.fontSize = `${fitted}px`;
+  if (word.scrollWidth > width) {
+    word.style.fontSize = `${Math.max(minimum,fitted - 1)}px`;
+    if (word.scrollWidth > width) word.classList.add('wrap-word');
+  }
+}
+
 function front(it, w) {
   const g = gradeOf(G.st.words[w.id]); const chk = it.form === 'check' || it.verifying; const listen = chk && isSight(w) && !it.shown;   // a function word: hear it, pick the spelling
-  $('#card').className = `card g${g} ${listen ? 'listen' : ''}`;
-  $('#card').innerHTML = `<div class="tag ${chk ? 'chk' : ''}" id="tag">${chk ? (isSight(w) ? '확인! 글자를 골라요' : '확인! 뜻을 골라요') : TAG[it.role]}</div>
-    ${listen ? `<div class="ear" id="word" data-hidden="1"><svg class="spr" width="96" height="96" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg><span>소리를 듣고 글자를 골라요</span></div>` : `<div class="word" id="word">${esc(w.form)}</div>`}${HEAR}`;
+  const card = $('#card'), prompt = G.reviewPrompt;
+  card.dataset.prompt = prompt?.type || 'original';
+  if (prompt) {
+    card.className = `card g${g} study-variant`;
+    const sentence = prompt.sentence;
+    const question = sentence ? `<p class="study-sentence" id="word" lang="en">${esc(sentence[0])}<mark>${esc(sentence[1])}</mark>${esc(sentence[2])}</p>` :
+      `<div class="ko study-meaning" id="word">${esc(w.ko)}</div>`;
+    card.innerHTML = `<div class="tag chk" id="tag">${REVIEW_TAG[prompt.type]}</div>${question}`;
+    return;
+  }
+  card.className = `card g${g} ${listen ? 'listen' : ''}`;
+  card.innerHTML = `<div class="tag ${chk ? 'chk' : ''}" id="tag">${chk ? (isSight(w) ? '확인! 글자를 골라요' : '확인! 뜻을 골라요') : TAG[it.role]}</div>
+    ${listen ? `<div class="ear" id="word" data-hidden="1"><svg class="spr" width="96" height="96" viewBox="0 0 32 32" aria-hidden="true"><use href="#sound" width="32" height="32"/></svg><span>소리를 듣고 글자를 골라요</span></div>` : `<div class="word" id="word" lang="en">${esc(w.form)}</div>`}${HEAR}`;
+  fitCardWord();
 }
 // A word the child marked as unknown is not asked again: one button shows the meaning (judge(false)).
 function judgeButtons(it) { $('#actions').innerHTML = it?.taught ? `<button class="act yes see" data-act="no">뜻 보기</button>` : `<button class="act no" data-act="no">몰라요</button><button class="act yes" data-act="yes">알아요</button>`; }
 function optionButtons(it) {
-  const en = isSight(G.byId[it.id]) ? 'en' : '';
-  $('#actions').innerHTML = `<div class="opts">${it.options.map((o, i) => `<button class="act opt ${en}${o.ko.length >= 15 ? ' long-option' : ''}" data-act="opt" data-i="${i}">${esc(o.ko)}</button>`).join('')}</div>
+  const prompt = G.reviewPrompt;
+  const english = prompt ? !prompt.sentence : isSight(G.byId[it.id]);
+  const choices = prompt?.choices || it.options.map((o,i) => ({label:o.ko,i}));
+  $('#actions').innerHTML = `<div class="opts${prompt?.contrast ? ' two-options' : ''}">${choices.map(({label,i}) => `<button class="act opt${english ? ' en' : ''}${label.length >= 15 ? ' long-option' : ''}" ${english ? 'lang="en"' : ''} data-act="opt" data-i="${i}">${esc(label)}</button>`).join('')}</div>
     <button class="link" data-act="opt" data-i="-1">몰라요</button>`;
 }
 const lock = (on) => document.querySelectorAll('.act').forEach((b) => { b.disabled = on; });
 async function speak(force) {
-  const it = G.run?.current; if (!it) return; const w = G.byId[it.id];
+  const it = G.run?.current; if (!it || G.reviewPrompt) return; const w = G.byId[it.id];
   const r = await G.sound.play(w.id, w.form);
   if (r.stale) return r;
   if (r.ok) { it.sound = r.source; hideBanner(); if (G.view === 'card' && !G.busy) { lock(false); if (G.run.t0 == null || !force) G.run.t0 = Date.now(); } }
@@ -1116,8 +1157,23 @@ async function speak(force) {
 function showCard() {
   const it = G.run.show(); if (!it) return endRun('done');
   G.busy = false; G.run.t0 = null; const w = G.byId[it.id];
+  const plan = G.reviewPlan, turn = G.run.i;
+  G.reviewPrompt = plan && turn >= plan.next ? reviewPrompt(it, {
+    byId:G.byId, byForm:G.byForm, words:G.st.words, turn:turn + G.st.runs.length, slot:plan.slot,
+    allowReverse:turn - plan.next >= 3 || G.run.left === 1,
+  }) : null;
+  if (G.reviewPrompt) {
+    plan.next = turn + ORIGINALS_BETWEEN_PROMPTS + 1;
+    plan.slot++;
+  }
   front(it, w); if (it.form === 'check') optionButtons(it); else judgeButtons(it);
-  lock(true); paintHud(); $('#card').classList.add('in'); speak(false);
+  paintHud(); $('#card').classList.add('in');
+  if (G.reviewPrompt) {
+    G.sound.stop();
+    it.fmt = G.reviewPrompt.type;
+    it.sound = 'after';
+    G.run.t0 = Date.now();
+  } else { lock(true); speak(false); }
 }
 function onJudge(know) {
   if (G.busy || G.view !== 'card') return; G.sound.sfxPlay('flip'); const it = G.run.current;
@@ -1139,7 +1195,8 @@ function playCardMotion(res, line) {
     return;
   }
   const two = res.combo > 0 && res.combo % 3 === 0;
-  layer.innerHTML = `<span class="last-answer">${esc(res.word.ko || res.word.form)}${line ? ' · ' + esc(line) : ''}</span><span class="mail-flight ${motionOff() ? 'quick' : ''}"><span class="thrower">${courier('throw',58)}</span>${spr('c014-mail',28,'air-mail')}${two ? spr('c014-mail',25,'air-mail second') + spr('c014-star',30,'combo-glint') : ''}</span>`;
+  const note = G.reviewPrompt ? '' : `<span class="last-answer">${esc(res.word.ko || res.word.form)}${line ? ' · ' + esc(line) : ''}</span>`;
+  layer.innerHTML = `${note}<span class="mail-flight ${motionOff() ? 'brief-flight' : ''}"><span class="thrower">${courier('throw',58)}</span>${spr('c014-mail',28,'air-mail')}${two ? spr('c014-mail',25,'air-mail second') + spr('c014-star',30,'combo-glint') : ''}</span>`;
 }
 function reveal(res) {
   G.busy = true; lock(true); save(); const w = res.word; const card = $('#card'); const shielded = G.run.shieldUsed > (G.shieldSeen || 0); G.shieldSeen = G.run.shieldUsed;
@@ -1147,10 +1204,14 @@ function reveal(res) {
   const line = res.ok ? (up ? `${GRADE[up]} 카드!` : res.verified ? '확인 성공!' : '') : res.said === 'wrong' ? (sight ? '이 글자예요' : '이 뜻이에요') : '이제 배워요';
   card.classList.remove('in'); card.classList.add('flip');
   const answered = G.run.current;
-  if (FAST || !res.ok) setTimeout(() => {
+  const prompt = G.reviewPrompt, contrast = prompt?.contrast;
+  if (FAST || !res.ok || prompt) setTimeout(() => {
     if (G.view !== 'card' || !G.busy || G.run?.current !== answered || !card.isConnected) return;
-    card.className = `card back g${gradeOf(G.st.words[w.id])} ${res.ok ? 'ok' : 'learn'} ${up ? 'up' : ''}`;
-    card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${sight ? `<div class="word">${esc(w.form)}</div>` : `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small">${esc(w.form)}</div>`}${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
+    card.className = `card back g${gradeOf(G.st.words[w.id])} ${res.ok ? 'ok' : 'learn'} ${up ? 'up' : ''}${contrast ? ' comparison-back' : ''}`;
+    const compared = contrast ? `<p class="study-contrast"><span lang="en">${esc(contrast.form)}</span> · ${esc(contrast.ko)}</p>` : '';
+    const context = prompt?.sentence ? `<p class="study-example" lang="en">${esc(prompt.sentence[0])}<mark>${esc(prompt.sentence[1])}</mark>${esc(prompt.sentence[2])}</p>` : '';
+    card.innerHTML = `${up ? `<span class="sparkle">${anim('sparkle-a', 'sparkle-b', 48, 'fast')}</span><span class="sparkle l">${anim('sparkle-b', 'sparkle-a', 48, 'fast')}</span>` : ''}${sight ? `<div class="word" lang="en">${esc(w.form)}</div>` : `${w.emoji ? `<div class="emoji">${pimg(w.emoji, 88)}</div>` : ''}<div class="ko">${esc(w.ko)}</div><div class="word small" lang="en">${esc(w.form)}</div>`}${compared}${context}${line ? `<div class="line">${up ? spr(MEDAL[up], 24) : ''}${line}</div>` : ''}`;
+    fitCardWord();
   }, FAST ? 0 : 90);
   if (res.ok) { G.displayBoss.hp = Math.max(1,G.displayBoss.hp-1); const f = $('#floater'); f.textContent = '-1'; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
     $('#boss').classList.remove('hit'); void $('#boss').offsetWidth; $('#boss').classList.add('hit'); G.sound.sfxPlay('correct');   // a right answer sounds bright, not like a blow (user feedback 2026-11-18); a miss keeps its heavier sound
@@ -1159,12 +1220,13 @@ function reveal(res) {
   if (up) setTimeout(() => G.sound.jingle('grade'), 250);
   paintHud();
   playCardMotion(res, line);
-  if (res.ok) { $('#actions').innerHTML = ''; if (FAST) G.timer = setTimeout(next, 30); else next(); }
-  else {                                                 // leave the meaning up until the child taps Next
+  if (res.ok && !prompt) { $('#actions').innerHTML = ''; if (FAST) G.timer = setTimeout(next, 30); else next(); }
+  else {                                                 // misses wait for Next; new checks briefly show the meaning after a correct answer
     $('#actions').innerHTML = `<button class="act goon" data-act="next" id="goon">다음 ▶</button>`;
     setTimeout(() => {
       if (G.view === 'card' && G.run?.current === answered && G.busy) G.sound.play(w.id, w.form);
-    }, FAST ? 0 : 350);
+    }, FAST ? 0 : prompt ? 130 : 350);
+    if (res.ok) G.timer = setTimeout(next, FAST ? 30 : 1100);
   }
 }
 function next() { clearTimeout(G.timer); if (G.view !== 'card' || !G.busy) return; G.run.advance(); showCard(); }   // busy guards a tap racing the timer
@@ -1251,6 +1313,7 @@ function stormCard() {
   G.busy = false; $('#left').textContent = `남은 카드 ${r.left}`;
   $('#card').className = 'card in storm-card';
   $('#card').innerHTML = `<div class="tag" id="tag">${r.queue[r.i].again ? '한 번 더! ' : ''}원래 단어를 골라요</div><span class="letters">${spr('fx-storm-letters', 48)}</span><div class="word" id="word">${esc(c.form)}</div>`;
+  fitCardWord();
   $('#actions').innerHTML = `<div class="opts">${c.options.map((o, i) => `<button class="act opt en" data-act="st-opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
   // The form's own sound if a file was made for it (tools/cards_say_audio.sh, cards/audio/forms.tsv); otherwise silent.
   if (G.sound.files[c.id]) G.sound.play(c.id, c.form).catch(() => {});
@@ -1289,7 +1352,7 @@ async function startLightning() {
   <footer class="actions"><button class="act no" data-act="lt-no">아니에요 ✕</button><button class="act yes" data-act="lt-yes">맞아요 ○</button></footer></div>`;
   ltNext(); G.timer = setInterval(ltTick, 100);
 }
-function ltNext() { const c = G.lt.next(); $('#card').className = 'card in'; $('#card').innerHTML = `<div class="tag">단어와 뜻이 맞을까요?</div><div class="word">${esc(c.form)}</div><div class="ko mid">${esc(c.ko)}</div>`; G.sound.play(c.id, c.form); }
+function ltNext() { const c = G.lt.next(); $('#card').className = 'card in'; $('#card').innerHTML = `<div class="tag">단어와 뜻이 맞을까요?</div><div class="word">${esc(c.form)}</div><div class="ko mid">${esc(c.ko)}</div>`; fitCardWord(); G.sound.play(c.id, c.form); }
 function ltTick() { const left = G.ltEnd - Date.now(); const bar = $('#ltbar'); if (bar) bar.style.width = `${Math.max(0, left) / (LT_SECONDS * 10)}%`; if (left <= 0) ltEnd(); }
 function ltAnswer(says) {
   if (G.view !== 'lightning') return; const ok = G.lt.answer(says); G.sound.blip(ok ? 'hit' : 'miss'); $('#ltscore').textContent = G.lt.score;
