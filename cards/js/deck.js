@@ -281,7 +281,7 @@ export class Run {
     let defeated = 0;
     if (res.dmg) { this.boss.hp -= res.dmg; while (this.boss.hp <= 0) { this.boss.hp += this.cfg.bossHp; this.boss.idx++; this.boss.defeated++; this.stats.bosses++; defeated++; } }
     this.s.log.push({ t: new Date(this.now()).toISOString(), day: this.today, id: it.id, role: it.role, form: it.form, ok: res.ok,
-      verified: !!res.verified, said: res.said || 'know', ms, sound: it.sound || null });
+      verified: !!res.verified, said: res.said || 'know', ms, sound: it.sound || null, ...(it.fmt ? { fmt: it.fmt } : {}) });
     if (this.s.log.length > this.cfg.logCap) this.s.log = this.s.log.slice(-this.cfg.logCap);
     it.done = true;
     return { ...res, next: 'reveal', word: this.byId[it.id], combo: this.combo, defeated, boss: { ...this.boss }, role: it.role, final: !!it.final };

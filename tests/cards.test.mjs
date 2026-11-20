@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Run, newState, planRun, gradeOf, gradeCounts, verifyRate, addDays, mulberry32, CFG, INTERVALS, bunchLeft } from '../cards/js/deck.js';
+import { reviewPrompt } from '../cards/js/study_prompts.js';
 import { ensureMap, settleRun, chooseBag, takeBag, dueCount, overdueCount, batState, tileDue, Lightning, settleLightning, batPool, MONSTER_AT, ITEMS, BAT, RULES, TRIAGE, triagePlan, triageScope, auditPick, setHardness, checkPick } from '../cards/js/map.js';
 import { indexWorlds, worldView, atlasView, currentWorld, nodeRun, finaleRun, settleWorld, enterWorld, stampGame, worldWords, worldOpen, reach, crowned, FINALE, setLeftOutKinds, leftOutKinds, startTile, sortView, sortPage, FINAL, finishCastle, finishFinale, examPending } from '../cards/js/world.js';
 // The castle word games (FINAL, docs/MINIGAMES.md 7) are tested in their own section (CF*); the older castle tests pass on the exam alone.
@@ -28,6 +29,28 @@ function play(run, knows, claim = knows) {
   }
   assert.ok(guard < 500); return seen;
 }
+
+test('C022 R1: comparison rejects overlapping glosses in both directions and excludes hear/listen', () => {
+  const prompt = (a, b, koA, koB) => {
+    const left = { id: a, form: a, ko: koA };
+    const right = { id: b, form: b, ko: koB };
+    return reviewPrompt({ id: a, form: 'check', role: 'review', options: [left, right, { id: 'other', ko: '집' }] }, {
+      byId: { [a]: left, [b]: right }, byForm: new Map([[a, left], [b, right]]),
+      words: { [b]: {} }, turn: 0, slot: 1, allowReverse: false,
+    });
+  };
+  assert.equal(prompt('ship', 'sheep', '큰 배', '양')?.type, 'similar-words');
+  assert.equal(prompt('ship', 'sheep', '큰 배', '커다란 큰배'), null);
+  assert.equal(prompt('sheep', 'ship', '커다란 큰배', '큰 배'), null);
+  assert.equal(prompt('ship', 'sheep', '큰 배', '큰배'), null);
+  assert.equal(prompt('hear', 'listen', '들리다', '귀 기울이다'), null);
+  assert.equal(prompt('listen', 'hear', '귀 기울이다', '들리다'), null);
+});
+
+test('C022 R4: WORKLOG section 3 first rule records the approved prompt exception', () => {
+  const worklog = fs.readFileSync(new URL('../docs/WORKLOG.md', import.meta.url), 'utf8');
+  assert.match(worklog, /^## 3\. [^\r\n]+\r?\n\r?\n- 답을 먼저 보여 주지 않는다\.[^\r\n]*사용자가 승인한 C-022 예외로 뜻→영어와 문장 속 뜻 형식은 각각 뜻과 문장을 먼저 보이며, 발음은 답을 고른 뒤에 들려준다\./m);
+});
 
 test('K1: deck has 86 cards with unique ids; 80 have a Korean gloss of their own, 6 are function words without one', () => {
   assert.equal(WORDS.length, 86); assert.equal(new Set(WORDS.map((w) => w.id)).size, 86); const vocab = WORDS.filter((w) => w.ko);

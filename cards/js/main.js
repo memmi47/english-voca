@@ -1170,7 +1170,8 @@ function showCard() {
   paintHud(); $('#card').classList.add('in');
   if (G.reviewPrompt) {
     G.sound.stop();
-    it.sound = 'none';
+    it.fmt = G.reviewPrompt.type;
+    it.sound = 'after';
     G.run.t0 = Date.now();
   } else { lock(true); speak(false); }
 }

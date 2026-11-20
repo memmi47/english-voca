@@ -4,7 +4,7 @@ const ORDER = ['meaning-to-word', 'similar-words', 'meaning-to-word', 'sentence-
 const PAIRS = Object.fromEntries([
   ['borrow', 'lend'], ['quiet', 'quite'], ['lose', 'loose'], ['ship', 'sheep'],
   ['walk', 'work'], ['weather', 'whether'], ['accept', 'except'], ['desert', 'dessert'],
-  ['hear', 'listen'], ['bring', 'take'], ['arrive', 'leave'], ['floor', 'flower'],
+  ['bring', 'take'], ['arrive', 'leave'], ['floor', 'flower'],
   ['think', 'thing'], ['read', 'ride'],
 ].flatMap(([a,b]) => [[a,b],[b,a]]));
 
@@ -78,7 +78,8 @@ export function reviewPrompt(item, {byId, byForm, words, turn, slot, allowRevers
   const preferred = ORDER[slot % ORDER.length];
   if (preferred === 'similar-words') {
     const contrast = byForm.get(PAIRS[word.form]);
-    if (contrast?.ko && contrast.track !== 'sight' && words[contrast.id] && normalize(contrast.ko) !== normalize(word.ko)) {
+    const target = normalize(word.ko), other = normalize(contrast?.ko || '');
+    if (other && contrast.track !== 'sight' && words[contrast.id] && !target.includes(other) && !other.includes(target)) {
       const choices = [{label:word.form,i:correct},{label:contrast.form,i:wrong}];
       if (turn % 2) choices.reverse();
       return {type:preferred, choices, contrast};

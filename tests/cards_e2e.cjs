@@ -1858,6 +1858,7 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await formPage.waitForSelector('.card.back.learn');
   const pairBack = await formPage.textContent('#card');
   const afterPair = (await state(formPage,'son')).words;
+  const pairRecord = (await state(formPage,'son')).log.at(-1);
   ok('C022: the contrast card shows both meanings and grades only the scheduled word using the old miss rule',
     pairShown && pairBack.includes('lend') && pairBack.includes('빌려주다') &&
     pairBack.includes('borrow · 빌리다') && JSON.stringify(beforePair[borrowId])===JSON.stringify(afterPair[borrowId]) &&
@@ -1886,6 +1887,13 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('C022: the sentence highlights the catalogue sense, shows its meaning after the right choice and then moves on automatically',
     contextShown && feedback==='I light a candle.' && (await state(formPage,'son')).words[contextId].step===stepBefore+1 &&
     await mode()==='original');
+  const contextRecord = (await state(formPage,'son')).log.at(-1);
+  const newFormatRecords = [reverseRecords.log[6], pairRecord, contextRecord];
+  ok('C022 R2: only new-form answers persist fmt and all three values match the displayed form',
+    reverseRecords.log.slice(0,6).length===6 && reverseRecords.log.slice(0,6).every(r=>!Object.hasOwn(r,'fmt')) &&
+    newFormatRecords.every((r,i)=>r?.fmt===['meaning-to-word','similar-words','sentence-meaning'][i]));
+  ok('C022 R3: delayed pronunciation is logged as after, not the parent mute override',
+    newFormatRecords.every(r=>r?.sound==='after') && reverseRecords.log.slice(0,6).every(r=>r.sound!=='after'));
 
   const wordFits = () => formPage.locator('#word').evaluate(word => {
     const range=document.createRange();
