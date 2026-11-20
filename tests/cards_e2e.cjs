@@ -33,6 +33,8 @@ const nodeStatus = (page, id) => page.$eval(`[data-act=node][data-id=${id}]`, (b
 const nextCard = page => page.locator('[data-act=next]');
 async function acknowledgeMeaning(page) {
   if (await nextCard(page).isVisible()) {
+    // A correct answer on a new review format can also show Next while briefly displaying the meaning.
+    if (await page.evaluate(() => window.__cards.st.log.at(-1)?.ok === true)) return;
     await page.locator('#card.back.learn').waitFor();
     await nextCard(page).click();
   }
@@ -1786,6 +1788,127 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await play(po); await po.waitForSelector('.tiles'); await toMap(po);
   ok('PO6: the tile is cleared and no post office comes back for the world', (await nodeStatus(po, 'A1')) === 'cleared' && !(await po.$('.letters')));
   await poCtx.close();
+
+  // C-022. Use the real catalogue and a review run opened from its map button.
+  const formCtx = await browser.newContext({ viewport:{width:1180,height:820}, reducedMotion:'reduce' });
+  const formPage = await formCtx.newPage();
+  formPage.on('pageerror', e => errs.push(String(e)));
+  const formScreens = '/tmp/c022-screens';
+  fs.mkdirSync(formScreens,{recursive:true});
+  const shotForm = name => formPage.screenshot({path:path.join(formScreens,name+'.png'), animations:'disabled'});
+  const mode = () => formPage.locator('#card').getAttribute('data-prompt');
+  const visibleChoices = () => formPage.locator('.opt').allTextContents();
+  const answerRight = async () => answer(formPage,`.opt[data-i="${(await cur(formPage)).ans}"]`);
+  async function reviewFixture(forms, turn, known = []) {
+    await formPage.goto(BASE+'?today=2026-11-20&nosync=1&triage=off&storm=off&sound=off&seed=47');
+    await formPage.waitForSelector('.profiles');
+    await formPage.evaluate(async ({forms,turn,known}) => {
+      const { newState } = await import('./js/deck.js');
+      const g = window.__cards, s = newState('son');
+      s.runs = Array.from({length:turn}, (_,i) => ({ day:'2026-11-01', n:i+1, reason:'left' }));
+      for (const form of known) s.words[g.byForm.get(form).id] = { st:'done', due:null, misses:2, miss:'2026-11-02', lapses:1 };
+      for (const [i,form] of forms.entries()) {
+        const word = g.byForm.get(form);
+        if (!word) throw Error('Missing fixture word '+form);
+        s.words[word.id] = { st:'review', step:2, due:`2026-11-${String(20-i).padStart(2,'0')}`,
+          firstDay:'2026-10-01', lastDay:'2026-10-13', miss:'2026-10-01', misses:2, lapses:1 };
+      }
+      localStorage.setItem('cards.v0.p.son',JSON.stringify(s));
+    },{forms,turn,known});
+    await formPage.click('[data-act=pick][data-id=son]');
+    await formPage.click(`[data-act=node][data-id=${forms.length>=8 ? 'monster' : 'review'}]`);
+    await formPage.waitForSelector(READY);
+  }
+  const warmup = ['apple','dog','garden','table','chair','bird'];
+  const rest = ['river','frog','snake','window','desk','house','tree'];
+  async function warmupRounds() {
+    const played = [];
+    for (let i=0;i<6;i++) { played.push(await mode()); await answerRight(); }
+    return played;
+  }
+
+  await reviewFixture([...warmup,'bread',...rest],0);
+  const rhythm = await warmupRounds();
+  const englishChoices = await visibleChoices();
+  const startMeaning = await formPage.textContent('#word');
+  const heardBefore = await formPage.locator('[data-act=hear]').count();
+  const firstMode = await mode();
+  await shotForm('meaning-to-word');
+  await answerRight();
+  while (!await formPage.locator('.tiles').count()) {
+    rhythm.push(await mode());
+    await answerRight();
+  }
+  const reverseRecords = await state(formPage,'son');
+  ok('C022: six originals before a reverse check; any other new card stays at least six originals away, with the same 14 reviews',
+    firstMode==='meaning-to-word' && startMeaning==='빵' && englishChoices.includes('bread') &&
+    englishChoices.length===3 && englishChoices.every(c=>/^[a-z]+$/i.test(c)) && heardBefore===0 &&
+    rhythm.slice(0,12).every(x=>x==='original') && reverseRecords.runs.at(-1).reviews===14 &&
+    reverseRecords.runs.at(-1).cards===14);
+
+  await reviewFixture([...warmup,'lend',...rest],1,['borrow']);
+  await warmupRounds();
+  const pairId = (await cur(formPage)).id;
+  const borrowId = await formPage.evaluate(() => window.__cards.byForm.get('borrow').id);
+  const beforePair = (await state(formPage,'son')).words;
+  const pairShown = await mode()==='similar-words' && await formPage.textContent('#word')==='빌려주다' &&
+    JSON.stringify((await visibleChoices()).sort())==='["borrow","lend"]' && await formPage.locator('[data-act=hear]').count()===0;
+  await shotForm('similar-words');
+  await formPage.getByRole('button',{name:'borrow',exact:true}).click();
+  await formPage.waitForSelector('.card.back.learn');
+  const pairBack = await formPage.textContent('#card');
+  const afterPair = (await state(formPage,'son')).words;
+  ok('C022: the contrast card shows both meanings and grades only the scheduled word using the old miss rule',
+    pairShown && pairBack.includes('lend') && pairBack.includes('빌려주다') &&
+    pairBack.includes('borrow · 빌리다') && JSON.stringify(beforePair[borrowId])===JSON.stringify(afterPair[borrowId]) &&
+    afterPair[pairId].miss==='2026-11-20' && afterPair[pairId].misses===3 && afterPair[pairId].lapses===2 &&
+    afterPair[pairId].due==='2026-11-21');
+  await nextCard(formPage).click();
+  await formPage.waitForSelector(READY);
+  ok('C022: when the contrasting word has no record the ordinary card remains and the contrast word is not learned by implication',
+    await (async () => {
+      await reviewFixture([...warmup,'lend',...rest],1);
+      await warmupRounds();
+      return await mode()==='original' && !(await state(formPage,'son')).words[borrowId];
+    })());
+
+  await reviewFixture([...warmup,'light',...rest],3);
+  await warmupRounds();
+  const contextId = (await cur(formPage)).id;
+  const contextShown = await mode()==='sentence-meaning' && await formPage.textContent('#word')==='I light a candle.' &&
+    await formPage.textContent('#word mark')==='light' && (await visibleChoices()).includes('불을 붙이다');
+  await shotForm('sentence-meaning');
+  const stepBefore = (await state(formPage,'son')).words[contextId].step;
+  await formPage.getByRole('button',{name:'불을 붙이다',exact:true}).click();
+  await formPage.waitForSelector('.card.back.ok');
+  const feedback = await formPage.textContent('.study-example');
+  await formPage.waitForFunction(() => window.__cards.run.i===7);
+  ok('C022: the sentence highlights the catalogue sense, shows its meaning after the right choice and then moves on automatically',
+    contextShown && feedback==='I light a candle.' && (await state(formPage,'son')).words[contextId].step===stepBefore+1 &&
+    await mode()==='original');
+
+  const wordFits = () => formPage.locator('#word').evaluate(word => {
+    const range=document.createRange();
+    range.selectNodeContents(word);
+    return { lines:range.getClientRects().length, size:parseFloat(getComputedStyle(word).fontSize), over:word.scrollWidth>word.clientWidth };
+  });
+  const layouts = [];
+  for (const form of ['classification','responsibility','parent-teacher conference']) {
+    await formPage.setViewportSize({width:1180,height:820});
+    await reviewFixture([form],0);
+    const wide = await wordFits();
+    await formPage.setViewportSize({width:650,height:820});
+    await formPage.waitForFunction(() => innerWidth===650);
+    const small = await wordFits();
+    layouts.push(wide.lines===1 && wide.size>=28 && !wide.over && small.lines===1 && small.size>=28 && !small.over);
+  }
+  await shotForm('long-expression');
+  await formPage.setViewportSize({width:360,height:800});
+  await formPage.waitForFunction(() => document.querySelector('#word').classList.contains('wrap-word'));
+  const wrapped = await wordFits();
+  ok('C022: long real spellings fit on one line on Mac-sized viewports and wrap only when the 28px minimum cannot fit',
+    layouts.every(Boolean) && wrapped.size===28 && wrapped.lines>1 && !wrapped.over);
+  await formCtx.close();
 
   ok('no uncaught page errors / console errors', errs.length === 0, errs.slice(0, 3).join(' | '));
   await browser.close(); server.kill();

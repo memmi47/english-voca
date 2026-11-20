@@ -71,7 +71,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .hpbar,.ltbar{flex:1;max-width:340px;height:22px;background:var(--paper);border:4px solid var(--ink);overflow:hidden}.hpbar i,.ltbar i{display:block;height:100%;background:var(--bad)}.ltbar{max-width:none}.ltbar i{background:var(--teal);width:100%;transition:width .1s linear}
 .floater{position:absolute;left:62px;top:-8px;font-weight:700;font-size:26px;color:var(--cream);text-shadow:3px 3px 0 var(--bad);opacity:0;pointer-events:none}.floater.go{animation:float .7s steps(7)}
 .combo{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-weight:700;color:var(--fg);min-width:70px;text-align:right;text-shadow:2px 2px 0 var(--fg-sh);font-size:18px}.combo.hot{color:var(--coral)}.combo .spr{width:24px;height:24px}.left{color:var(--fg);font-size:14px;white-space:nowrap;text-shadow:1px 1px 0 var(--fg-sh)}
-.stage{display:flex;align-items:center;justify-content:center;padding:6px 20px;min-height:0}
+.stage{display:flex;align-items:center;justify-content:center;padding:6px 20px;min-height:0;min-width:0}
 .card{position:relative;width:min(100%,600px);height:min(100%,380px);min-height:190px;background:var(--card);border:8px solid var(--ink);outline:8px solid var(--g0);box-shadow:10px 10px 0 var(--ink);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px;text-align:center}
 .card.g1{outline-color:var(--g1)}.card.g2{outline-color:var(--g2)}.card.g3{outline-color:var(--g3)}
@@ -81,6 +81,16 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .tag{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--paper);border:3px solid var(--ink);padding:2px 12px;font-size:14px;font-weight:700;white-space:nowrap}
 .tag.chk{background:var(--go);color:var(--cream)}
 .word{font-family:var(--word);font-size:clamp(44px,11vw,92px);font-weight:800;line-height:1.05;word-break:break-word}.word.small{font-size:clamp(22px,5vw,34px);color:var(--mut);font-weight:700}
+.word.fit-word{align-self:stretch;white-space:nowrap;word-break:normal}
+.word.fit-word.wrap-word{white-space:normal;overflow-wrap:anywhere}
+.study-variant .tag{max-width:calc(100% - 24px);white-space:normal;text-align:center}
+.study-sentence,.study-example,.study-contrast span{font-family:var(--word)}
+.study-sentence,.study-meaning{margin:38px 0 0;overflow-wrap:break-word}
+.study-sentence{font-size:clamp(24px,4.5vw,46px);font-weight:750;line-height:1.2}
+.study-sentence mark,.study-example mark{background:#ffdf88;color:var(--ink);font-weight:850}
+.study-example,.study-contrast{font-size:clamp(14px,2.8vw,24px);margin:4px 0 14px}
+.study-contrast span{font-weight:750}
+.comparison-back .ko{font-size:clamp(26px,6vw,52px)}
 .hear{position:absolute;right:12px;bottom:12px;width:58px;height:58px;background:var(--paper);border:4px solid var(--ink);box-shadow:3px 3px 0 var(--ink);display:flex;align-items:center;justify-content:center}.hear .spr{width:32px;height:32px}
 .emoji img.px{width:min(22vw,88px);height:min(22vw,88px)}.ko{font-size:clamp(33px,8vw,66px);font-weight:700;line-height:1.15}.ko.mid{font-size:clamp(28px,6vw,44px)}
 .line{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-weight:700;color:var(--yes2);white-space:nowrap;font-size:20px;display:flex;align-items:center;gap:6px}.card.learn .line{color:var(--no2)}
@@ -93,6 +103,7 @@ img.px{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
 .act.opt.right{background:#c8e8d2}.act.opt.wrong{background:#f6cfc6}
 .actions .link{flex-basis:100%;padding:4px}
 @media (min-width:760px){.opts{grid-template-columns:repeat(3,1fr)}.act.opt{min-height:100px}}
+@media (min-width:760px){.opts.two-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-height:560px){.actions{min-height:120px}.act{min-height:84px}}
 
 /* end / album / parent */
@@ -327,7 +338,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid #a54e30;outli
 .air-mail { animation: postal-mail .5s steps(10) both; }
 .air-mail.second { animation-delay: .06s; }
 .combo-glint { animation: postal-combo .56s steps(8) both; }
-.mail-flight.quick > * { animation-duration: .16s; animation-delay: 0s; }
+.mail-flight.brief-flight > * { animation-duration: .16s; animation-delay: 0s; }
 .guard-taunt { position: absolute; top: 4vh; left: max(20px,calc(50vw - 420px)); animation: postal-toss .36s steps(6) both; }
 .guardian-entry { position: absolute; pointer-events: auto; border: 0; background: transparent; top: 17vh; left: max(10px,calc(50vw - 430px)); display: inline-flex; animation: postal-entry .9s steps(15) both; }
 .entry-guard, .torch { animation: postal-sway .2s steps(3) infinite alternate; }
