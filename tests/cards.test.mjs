@@ -47,6 +47,15 @@ test('C022 R1: comparison rejects overlapping glosses in both directions and exc
   assert.equal(prompt('listen', 'hear', '귀 기울이다', '들리다'), null);
 });
 
+test('C022 F1: new formats also ride on village, sample and retry checks; never on castle, bat, practice or self-judged cards', () => {
+  const bread = { id: 'bread', form: 'bread', ko: '빵', pos: '명사' }, cake = { id: 'cake', form: 'cake', ko: '케이크', pos: '명사' }, milk = { id: 'milk', form: 'milk', ko: '우유', pos: '명사' };
+  const ask = (role, form = 'check') => reviewPrompt({ id: 'bread', form, role, options: [bread, cake, milk] }, {
+    byId: { bread, cake, milk }, byForm: new Map(), words: {}, turn: 0, slot: 0, allowReverse: true })?.type ?? null;
+  for (const role of ['review', 'likely', 'spot', 'audit', 'retry']) assert.equal(ask(role), 'meaning-to-word', role);
+  for (const role of ['castle', 'practice', 'new', 'relearn']) assert.equal(ask(role), null, role);
+  assert.equal(ask('review', 'judge'), null);
+});
+
 test('C022 R4: WORKLOG section 3 first rule records the approved prompt exception', () => {
   const worklog = fs.readFileSync(new URL('../docs/WORKLOG.md', import.meta.url), 'utf8');
   assert.match(worklog, /^## 3\. [^\r\n]+\r?\n\r?\n- 답을 먼저 보여 주지 않는다\.[^\r\n]*사용자가 승인한 C-022 예외로 뜻→영어와 문장 속 뜻 형식은 각각 뜻과 문장을 먼저 보이며, 발음은 답을 고른 뒤에 들려준다\./m);

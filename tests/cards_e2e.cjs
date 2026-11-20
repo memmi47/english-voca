@@ -1823,11 +1823,15 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     await formPage.click(`[data-act=node][data-id=${forms.length>=8 ? 'monster' : 'review'}]`);
     await formPage.waitForSelector(READY);
   }
-  const warmup = ['apple','dog','garden','table','chair','bird'];
-  const rest = ['river','frog','snake','window','desk','house','tree'];
+  // The number of ordinary cards between new formats comes from the game (study_prompts.js, 4 since 2026-11-20).
+  await formPage.goto(BASE+'?today=2026-11-20&nosync=1&triage=off&storm=off&sound=off&seed=47'); await formPage.waitForSelector('.profiles');
+  const GAP = await formPage.evaluate(async () => (await import('./js/study_prompts.js')).ORIGINALS_BETWEEN_PROMPTS);
+  const warmupAll = ['apple','dog','garden','table','chair','bird'];
+  const warmup = warmupAll.slice(0,GAP);
+  const rest = [...warmupAll.slice(GAP),'river','frog','snake','window','desk','house','tree'];
   async function warmupRounds() {
     const played = [];
-    for (let i=0;i<6;i++) { played.push(await mode()); await answerRight(); }
+    for (let i=0;i<GAP;i++) { played.push(await mode()); await answerRight(); }
     return played;
   }
 
@@ -1844,11 +1848,13 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
     await answerRight();
   }
   const reverseRecords = await state(formPage,'son');
-  ok('C022: six originals before a reverse check; any other new card stays at least six originals away, with the same 14 reviews',
+  const sequence = [...rhythm.slice(0,GAP), firstMode, ...rhythm.slice(GAP)];
+  const promptAt = sequence.map((x,i) => x==='original' ? -1 : i).filter(i => i >= 0);
+  ok('C022: GAP originals before a reverse check; every other new card stays at least GAP originals away, with the same 14 reviews',
     firstMode==='meaning-to-word' && startMeaning==='빵' && englishChoices.includes('bread') &&
     englishChoices.length===3 && englishChoices.every(c=>/^[a-z]+$/i.test(c)) && heardBefore===0 &&
-    rhythm.slice(0,12).every(x=>x==='original') && reverseRecords.runs.at(-1).reviews===14 &&
-    reverseRecords.runs.at(-1).cards===14);
+    promptAt[0]===GAP && promptAt.every((p,k) => !k || p - promptAt[k-1] > GAP) && reverseRecords.runs.at(-1).reviews===14 &&
+    reverseRecords.runs.at(-1).cards===14, JSON.stringify({GAP,sequence}));
 
   await reviewFixture([...warmup,'lend',...rest],1,['borrow']);
   await warmupRounds();
@@ -1887,17 +1893,17 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   await formPage.getByRole('button',{name:'불을 붙이다',exact:true}).click();
   await formPage.waitForSelector('.card.back.ok');
   const feedback = await formPage.textContent('.study-example');
-  await formPage.waitForFunction(() => window.__cards.run.i===7);
+  await formPage.waitForFunction((n) => window.__cards.run.i===n, GAP+1);
   ok('C022: the sentence highlights the catalogue sense, shows its meaning after the right choice and then moves on automatically',
     contextShown && feedback==='I light a candle.' && (await state(formPage,'son')).words[contextId].step===stepBefore+1 &&
     await mode()==='original');
   const contextRecord = (await state(formPage,'son')).log.at(-1);
-  const newFormatRecords = [reverseRecords.log[6], pairRecord, contextRecord];
+  const newFormatRecords = [reverseRecords.log[GAP], pairRecord, contextRecord];
   ok('C022 R2: only new-form answers persist fmt and all three values match the displayed form',
-    reverseRecords.log.slice(0,6).length===6 && reverseRecords.log.slice(0,6).every(r=>!Object.hasOwn(r,'fmt')) &&
+    reverseRecords.log.slice(0,GAP).length===GAP && reverseRecords.log.slice(0,GAP).every(r=>!Object.hasOwn(r,'fmt')) &&
     newFormatRecords.every((r,i)=>r?.fmt===['meaning-to-word','similar-words','sentence-meaning'][i]));
   ok('C022 R3: delayed pronunciation is logged as after, not the parent mute override',
-    newFormatRecords.every(r=>r?.sound==='after') && reverseRecords.log.slice(0,6).every(r=>r.sound!=='after'));
+    newFormatRecords.every(r=>r?.sound==='after') && reverseRecords.log.slice(0,GAP).every(r=>r.sound!=='after'));
 
   const wordFits = () => formPage.locator('#word').evaluate(word => {
     const range=document.createRange();

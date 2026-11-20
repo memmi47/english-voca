@@ -1,5 +1,9 @@
 // Optional presentations of existing meaning checks. Keep the Run's word, queue and scoring.
-export const ORIGINALS_BETWEEN_PROMPTS = 6;
+// User 2026-11-20: more often. 6 -> 4 originals between new formats, and any meaning check of a known word can carry one
+// (not only 7-day reviews, which children meet only from about day 11): passed-word checks in a village ('spot'), bunch
+// samples ('audit') and words learned earlier coming back ('retry'). Castle, bat and practice cards stay as they are.
+export const ORIGINALS_BETWEEN_PROMPTS = 4;
+export const PROMPT_ROLES = ['likely', 'review', 'spot', 'audit', 'retry'];
 const ORDER = ['meaning-to-word', 'similar-words', 'meaning-to-word', 'sentence-meaning', 'meaning-to-word'];
 const PAIRS = Object.fromEntries([
   ['borrow', 'lend'], ['quiet', 'quite'], ['lose', 'loose'], ['ship', 'sheep'],
@@ -69,7 +73,7 @@ function reverseChoices(word, options, byId) {
 }
 
 export function reviewPrompt(item, {byId, byForm, words, turn, slot, allowReverse}) {
-  if (item.form !== 'check' || !['likely','review'].includes(item.role)) return null;
+  if (item.form !== 'check' || !PROMPT_ROLES.includes(item.role)) return null;
   const word = byId[item.id];
   if (!word?.ko || word.track === 'sight') return null;
   const correct = item.options?.findIndex(option => option.id === item.id) ?? -1;
