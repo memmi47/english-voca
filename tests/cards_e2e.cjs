@@ -1680,9 +1680,10 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   const wrongL = 'zqxjvkwy'.split('').filter((c) => !hw.word.includes(c));
   const hearNone = !(await fn.$('[data-say]')); for (const c of wrongL.slice(0, 4)) await fn.click(`[data-key="${c}"]`);
   const nearEnd = await fn.evaluate(() => ({ hear: !!document.querySelector('[data-say]'), close: !!document.querySelector('.danger.close'), scared: !!document.querySelector('.danger use[href="#face-scared"]') }));
+  await fn.click(`[data-key="${wrongL[4]}"]`); const lastChance = !!(await fn.$('[data-say]'));   // the listen comes only at the last chance (user 2026-11-20)
   await fn.click('[data-say]'); const hearAfter = !!(await fn.$('[data-say]'));
-  ok('FN2b: no listen button at first; with two chances left the picture warns, the courier is scared, and the word can be heard once', hearNone && nearEnd.hear && nearEnd.close && nearEnd.scared && !hearAfter, JSON.stringify(nearEnd));
-  for (const c of wrongL.slice(4, 6)) await fn.click(`[data-key="${c}"]`);
+  ok('FN2b: no listen button at first or with two chances left (the picture warns, the courier is scared); at the last chance the word can be heard once', hearNone && !nearEnd.hear && nearEnd.close && nearEnd.scared && lastChance && !hearAfter, JSON.stringify({ nearEnd, lastChance }));
+  for (const c of wrongL.slice(5, 6)) await fn.click(`[data-key="${c}"]`);
   await fn.waitForSelector('[data-act=final-practice]');
   const fnS2 = await state(fn, 'son'); const lostId = Object.keys(fnS2.words).find((id) => fnS2.words[id].misses && fnS2.words[id].miss === '2026-12-01');
   ok('FN3: six wrong letters lose the letter: a bat comes (the courier looks sad), the word gets its "not known" record only, the castle is still not passed', /박쥐가 나타났어요/.test(await fn.textContent('h1')) && !!(await fn.$('.final-bat use[href="#face-sad"]')) && !!lostId && fnS2.words[lostId].st === 'done' && !fnS2.map.worlds['d1-01'].castle, lostId);
@@ -1714,14 +1715,17 @@ const toMap = async (page) => { await page.click('[data-act=today]'); await page
   ok('DV2: a game starts at the chosen level', /5단계 · 놀이터/.test(await dv.textContent('#glevel')));
   await dv.click('[data-act=dev]'); await dv.click('[data-act=dev-hang]'); await dv.waitForSelector('.finalbox[data-final=hang]');
   const dvWord = await dv.evaluate(() => window.__cards.game.api.peek().word);
-  // Hangman hints open a little at a time (user 2026-11-20): nothing at first, the shape after two misses, all with two chances left.
-  const clueNow = () => dv.evaluate(() => { const c = document.querySelector('.hclue'); return { stage: c.dataset.stage, meaning: c.querySelector('b').textContent }; });
+  // Hangman hints open late (user 2026-11-20): nothing until 3 chances are left, a little at 3, all at 2; one listen at the last.
+  const clueNow = () => dv.evaluate(() => { const c = document.querySelector('.hclue'); return { stage: c.dataset.stage, meaning: c.querySelector('b').textContent, hear: !!c.querySelector('.hear-once') }; });
   const misses = [...'zqxjvkwy'].filter((c) => !dvWord.includes(c));
-  const clue0 = await clueNow(); for (const c of misses.slice(0, 2)) await dv.click(`[data-key="${c}"]`);
-  const clue1 = await clueNow(); for (const c of misses.slice(2, 4)) await dv.click(`[data-key="${c}"]`);
-  const clue3 = await clueNow();
-  ok('DV3b: hangman shows no meaning at first, part of it after two misses and all of it with two chances left', clue0.stage === '0' && clue0.meaning === '???' &&
-    clue1.stage === '1' && /○/.test(clue1.meaning) && clue3.stage === '3' && !/○/.test(clue3.meaning) && clue3.meaning !== '???', JSON.stringify({ clue0, clue1, clue3 }));
+  const press = async (n) => { for (const c of misses.splice(0, n)) await dv.click(`[data-key="${c}"]`); };
+  await press(2); const clue4 = await clueNow();
+  await press(1); const clue3 = await clueNow();
+  await press(1); const clue2 = await clueNow();
+  await press(1); const clue1 = await clueNow();
+  ok('DV3b: hangman shows no meaning with 4 chances left, a little at 3, all at 2, and the one-time listen only at the last chance',
+    clue4.stage === '0' && clue4.meaning === '???' && !clue4.hear && clue3.stage === '1' && /○/.test(clue3.meaning) && !clue3.hear &&
+    clue2.stage === '2' && !/○/.test(clue2.meaning) && clue2.meaning !== '???' && !clue2.hear && clue1.hear, JSON.stringify({ clue4, clue3, clue2, clue1 }));
   for (const c of [...new Set(dvWord)]) await dv.click(`[data-key="${c}"]`);
   await dv.waitForFunction(() => /관문을 넘었어요/.test(document.querySelector('h1').textContent));
   ok('DV3: a world\'s hangman can be played straight from the playground', /^[a-z]{4,}$/.test(dvWord), dvWord);

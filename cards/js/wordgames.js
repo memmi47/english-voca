@@ -107,24 +107,24 @@ function danger(style, wrong, lives, ctx) {
     <span class="d-courier ${close ? 'tremble' : ''}" style="left:${8 + (at + 0.5) * step}%">${ctx.courier(face, 72)}${close ? '<i class="sweat"></i>' : ''}${lost ? '<i class="splash"></i>' : ''}</span>${warn}${lost ? '<b class="d-say">퐁당! 헤엄쳐 나왔어요</b>' : ''}</div>`;
 }
 
-// The meaning opens a little at a time (user 2026-11-20: showing it from the start made hangman too easy). By chances left:
-// 5 or more nothing; 4 the kind of word and the meaning's shape with its first syllable (a 1-2 syllable meaning shows
-// only its length); 3 half the syllables; 2 or fewer the whole meaning (and the one-time sound, as before).
+// The meaning opens late and a little at a time (user 2026-11-20, twice: showing it from the start made hangman too easy).
+// By chances left: 4 or more nothing; 3 the kind of word and the meaning's shape with its first syllable (a one- or
+// two-syllable meaning shows only its length); 2 or fewer the whole meaning. The one-time sound comes at the last chance.
 const POS_HINT = { 명사: '이름을 나타내는 말', 동사: '움직임을 나타내는 말', 형용사: '모습을 나타내는 말', 부사: '어떻게를 나타내는 말' };
 export function hangmanClue(word, left) {
   const ko = word.ko || '', syll = [...ko].filter((c) => /[가-힣]/.test(c)).length;
-  const stage = left >= 5 ? 0 : left === 4 ? 1 : left === 3 ? 2 : 3;
-  if (stage === 3 || !ko) return { stage, pos: POS_HINT[(word.pos || '').split('·')[0]] || '', meaning: ko || '?' };
+  const stage = left >= 4 ? 0 : left === 3 ? 1 : 2;
+  if (stage === 2 || !ko) return { stage, pos: POS_HINT[(word.pos || '').split('·')[0]] || '', meaning: ko || '?' };
   if (stage === 0) return { stage, pos: '', meaning: '' };
-  const open = stage === 1 ? (syll >= 3 ? 1 : 0) : (syll >= 2 ? Math.ceil(syll / 2) : 0);
+  const open = syll >= 3 ? 1 : 0;
   let n = 0; const meaning = [...ko].map((c) => (/[가-힣]/.test(c) ? (n++ < open ? c : '○') : c)).join('');
   return { stage, pos: POS_HINT[(word.pos || '').split('·')[0]] || '', meaning };
 }
 // words: [{ id, form, ko, pos }]. Several words share the lives (continent fallback).
 export function mountHangman(ctx, words, lives) {
   const h = new Hangman(words.map((w) => w.form), lives, ctx.reveal ? 1 : 0); const style = ctx.style || 'B'; const timers = []; let heard = false;
-  // The sound is no free help (user 2026-11-20): it is offered once, only when two chances or fewer are left.
-  const canHear = () => !heard && h.lives - h.wrong.length <= 2 && !h.over;
+  // The sound is no free help (user 2026-11-20): it is offered once, only at the last chance.
+  const canHear = () => !heard && h.lives - h.wrong.length <= 1 && !h.over;
   const cur = () => words[h.at];
   const paint = (msg = '') => {
     ctx.root.innerHTML = `${danger(style, h.wrong.length, h.lives, ctx)}
